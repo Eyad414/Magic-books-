@@ -12,9 +12,9 @@ interface Props { onPrev: () => void; }
 
 // Constant: Packages needed to correctly calculate and display the final checkout total price
 const BOOK_PACKAGES = [
-  { id: 'color', label: 'كتاب ملون', price: 99 },
-  { id: 'coloring', label: 'دفتر تلوين', price: 69 },
-  { id: 'pro', label: 'باقة Pro (النسختين)', price: 149 },
+  { id: 'color', label: 'كتاب ملون', price: 65 },
+  { id: 'coloring', label: 'دفتر تلوين', price: 45 },
+  { id: 'pro', label: 'باقة Pro (النسختين)', price: 100 },
 ];
 
 export default function Step5_OrderReview({ onPrev }: Props) { // To move back to the previous page in the steps
@@ -37,7 +37,8 @@ export default function Step5_OrderReview({ onPrev }: Props) { // To move back t
 
   // Derived State: Finding the total price again based on the saved customization selected in Step 3
   const selectedPkg = BOOK_PACKAGES.find(p => p.id === bookCustomization?.bookPackage) || BOOK_PACKAGES[0];
-  const totalPrice = selectedPkg.price;
+  const deliveryFee = 30;
+  const totalPrice = selectedPkg.price + deliveryFee;
 
   // Function: Handles the final submission, ensures the user is logged in, and submits the order to backend API
   const handleCheckout = async () => {
@@ -126,11 +127,11 @@ export default function Step5_OrderReview({ onPrev }: Props) { // To move back t
         {/* Price: Calculates the total cost before final checkout API call is made */}
         <div className="p-4 rounded-xl bg-gradient-to-l from-gold-500/20 to-gold-500/5 border border-gold-500/30 space-y-2">
           <h3 className="font-arabic font-bold text-white text-sm mb-3">💰 ملخص الأسعار</h3>
-          <Row label={selectedPkg.label} value={`${selectedPkg.price} ر.س`} />
-          <Row label="الشحن" value="يحسب لاحقاً" />
+          <Row label={selectedPkg.label} value={`${selectedPkg.price} ₪`} />
+          <Row label="رسوم التوصيل" value={`${deliveryFee} ₪`} />
           <div className="border-t border-gold-500/30 pt-2 flex items-center justify-between">
             <span className="font-arabic font-black text-white text-lg">الإجمالي</span>
-            <span className="font-arabic font-black text-gold-500 text-2xl">{totalPrice} ر.س</span>
+            <span className="font-arabic font-black text-gold-500 text-2xl">{totalPrice} ₪</span>
           </div>
         </div>
       </div>
@@ -153,7 +154,7 @@ export default function Step5_OrderReview({ onPrev }: Props) { // To move back t
           isLoading={isProcessing}
           icon={<CreditCard className="w-5 h-5" />}
         >
-          {isAuthenticated ? `ادفع ${totalPrice} ر.س الآن` : 'سجّل دخولك للدفع'}
+          {isAuthenticated ? `ادفع ${totalPrice} ₪ الآن` : 'سجّل دخولك للدفع'}
         </MagicButton>
       </div>
     </div>

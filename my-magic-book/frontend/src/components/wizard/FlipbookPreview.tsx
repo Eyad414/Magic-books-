@@ -5,58 +5,139 @@ interface Props {
   language?: 'ar' | 'en' | 'he';
 }
 
+interface PageData {
+  pageNumber: number;
+  type: 'text' | 'image' | 'cover';
+  content: string;
+  themeColor: string;
+}
+
+const storyData: PageData[] = [
+  { pageNumber: 1, type: 'cover', content: 'إياد وعالم المرآة السحري', themeColor: '#1B1F5E' },
+  { pageNumber: 2, type: 'image', content: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&q=80', themeColor: '#E0F2FE' },
+  { pageNumber: 3, type: 'text', content: 'فِي يَوْمٍ هَادِئٍ، وَجَدَ إِيَادٌ مِرْآةً قَدِيمَةً فِي العِلِّيَّةِ. كَانَتْ تَلْمَعُ بِأَلْوَانٍ غَرِيبَةٍ وَتَدْعُوهُ لِلاقْتِرَابِ مِنْهَا بِفُضُولٍ كَبِيرٍ.', themeColor: '#FDFCF0' },
+  { pageNumber: 4, type: 'image', content: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&q=80', themeColor: '#FEF3C7' },
+  { pageNumber: 5, type: 'text', content: 'لَمَسَ إِيَادٌ زُجَاجَ المِرْآةِ، وَفَجْأَةً شَعَرَ بِجَسَدِهِ يَنْزَلِقُ لِلدَّاخِلِ! وَجَدَ نَفْسَهُ فِي عَالَمٍ مَقْلُوبٍ، حَيْثُ تَمْشِي الأَشْجَارُ وَتَطِيرُ الأَسْمَاكُ.', themeColor: '#F0F9FF' },
+  { pageNumber: 6, type: 'image', content: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=800&q=80', themeColor: '#ECFDF5' },
+  { pageNumber: 7, type: 'text', content: 'قَابَلَ إِيَادٌ أَرْنَبًا يَرْتَدِي سَاعَةً كَبِيرَةً. قَالَ الأَرْنَبُ: "أَهْلًا بِكَ يَا إِيَادُ! هُنَا كُلُّ شَيْءٍ يَعْمَلُ بِالعَكْسِ، فَانْتَبِهْ لِخُطُوَاتِكَ السِّحْرِيَّةِ."', themeColor: '#FFF7ED' },
+  { pageNumber: 8, type: 'image', content: 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=800&q=80', themeColor: '#FFF1F2' },
+  { pageNumber: 9, type: 'text', content: 'وَصَلَ إِيَادٌ إِلَى نَهْرٍ مِنَ الحَلِيبِ. كَانَتِ القِطَطُ تَصْطَادُ البَسْكُوتَ مِنَ المَاءِ وَتَغْنِي أَلْحَانًا جَمِيلَةً تُشْعِرُ القَلْبَ بِالسَّعَادَةِ وَالمَرَحِ.', themeColor: '#F8FAFC' },
+  { pageNumber: 10, type: 'image', content: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=800&q=80', themeColor: '#F1F5F9' },
+  { pageNumber: 11, type: 'text', content: 'فِي الغَابَةِ، رَأَى إِيَادٌ فِيلًا صَغِيرًا يُحَاوِلُ الطَّيَرَانَ بِأُذُنَيْهِ. سَاعَدَهُ إِيَادٌ وَقَالَ لَهُ: "آمِنْ بِنَفْسِكَ، فَكُلُّ شَيْءٍ مُمْكِنٌ هُنَا."', themeColor: '#F5F3FF' },
+  { pageNumber: 12, type: 'image', content: 'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?w=800&q=80', themeColor: '#F3E8FF' },
+  { pageNumber: 13, type: 'text', content: 'تَسَلَّقَ إِيَادٌ جَبَلًا مِنَ الشُّوكُولاتَةِ. عِنْدَ القِمَّةِ، وَجَدَ مِفْتَاحًا ذَهَبِيًّا مُعَلَّقًا بِخَيْطٍ مِنَ الحَرِيرِ اللَّامِعِ وَسَطَ السَّحَابِ الوَرْدِيِّ.', themeColor: '#FFFBEB' },
+  { pageNumber: 14, type: 'image', content: 'https://images.unsplash.com/photo-1548509925-089304365b21?w=800&q=80', themeColor: '#FEF3C7' },
+  { pageNumber: 15, type: 'text', content: 'ظَهَرَ قِرْدٌ حَزِينٌ يَحْمِلُ مِذْيَاعًا مَكْسُورًا. قَالَ القِرْدُ: "لا أَسْتَطِيعُ سَمَاعَ الميوزيك، هَلْ تُسَاعِدُنِي يَا صَدِيقِي الصَّغِيرَ إِيَادُ؟"', themeColor: '#F0FDFA' },
+  { pageNumber: 16, type: 'image', content: 'https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=800&q=80', themeColor: '#CCFBF1' },
+  { pageNumber: 17, type: 'text', content: 'أَخَذَ إِيَادٌ المِذْيَاعَ وَأَصْلَحَهُ بِبَرَاعَةٍ. فَجْأَةً، انْطَلَقَتْ أَلْحَانٌ مَرِحَةٌ مَلأَتِ المَكَانَ، وَرَقَصَ القِرْدُ فَرَحًا وَشَكَرَ إِيَادَ كَثِيرًا.', themeColor: '#FEF2F2' },
+  { pageNumber: 18, type: 'image', content: 'https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=800&q=80', themeColor: '#FEE2E2' },
+  { pageNumber: 19, type: 'text', content: 'أَهْدَى القِرْدُ إِيَادَ بَوْصَلَةً سِحْرِيَّةً. قَالَتِ البَوْصَلَةُ: "الطَّرِيقُ إِلَى المَنْزِلِ يَمُرُّ عَبْرَ قَصْرِ الكْرِيسْتَالِ حَيْثُ تَنَامُ المَلِكَةُ الطَّيِّبَةُ."', themeColor: '#F0F9FF' },
+  { pageNumber: 20, type: 'image', content: 'https://images.unsplash.com/photo-1520038410233-7141be7e6f97?w=800&q=80', themeColor: '#E0F2FE' },
+  { pageNumber: 21, type: 'text', content: 'مَشَى إِيَادٌ تَحْتَ مَطَرٍ مِنَ الحَلْوَى المُلَوَّنَةِ. كَانَ يَجْمَعُهَا فِي جَيْبِهِ وَيُوَزِّعُهَا عَلَى العَصَافِيرِ الَّتِي كَانَتْ تُغَرِّدُ بِاسْمِهِ.', themeColor: '#FDF4FF' },
+  { pageNumber: 22, type: 'image', content: 'https://images.unsplash.com/photo-1511381939415-e44015466834?w=800&q=80', themeColor: '#FAE8FF' },
+  { pageNumber: 23, type: 'text', content: 'وَصَلَ أَخِيرًا إِلَى قَصْرِ الكْرِيسْتَالِ. كَانَتِ الجُدْرَانُ تَعْكِسُ صُوَرَ أَحْلَامِهِ الجَمِيلَةِ، وَوَجَدَ المَلِكَةَ تَنْتَظِرُهُ بِابْتِسَامَةٍ حَنُونَةٍ وَرَائِعَةٍ.', themeColor: '#F5F3FF' },
+  { pageNumber: 24, type: 'image', content: 'https://images.unsplash.com/photo-1506466010722-395aa2bef877?w=800&q=80', themeColor: '#EDE9FE' },
+  { pageNumber: 25, type: 'text', content: 'قَالَتِ المَلِكَةُ: "لَقَدْ كُنْتَ طِفْلًا طَيِّبًا وَسَاعَدْتَ الجَمِيعَ. خُذْ هَذِهِ المِرْآةَ الصَّغِيرَةَ، فَهِيَ مِفْتَاحُ عَوْدَتِكَ إِلَى عَالَمِكَ الحَقِيقِيِّ."', themeColor: '#FFF7ED' },
+  { pageNumber: 26, type: 'image', content: 'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=800&q=80', themeColor: '#FFEDD5' },
+  { pageNumber: 27, type: 'text', content: 'شَكَرَ إِيَادٌ المَلِكَةَ وَنَظَرَ فِي المِرْآةِ. تَخَيَّلَ غُرْفَتَهُ وَسَرِيرَهُ وَأَلْعَابَهُ، وَفَجْأَةً بَدَأَ العَالَمُ السِّحْرِيُّ يَتَلَاشَى بِلُطْفٍ وَهُدُوءٍ.', themeColor: '#ECFDF5' },
+  { pageNumber: 28, type: 'image', content: 'https://images.unsplash.com/photo-1521459467264-802e2ef3141f?w=800&q=80', themeColor: '#D1FAE5' },
+  { pageNumber: 29, type: 'text', content: 'فَتَحَ إِيَادٌ عَيْنَيْهِ لِيَجِدَ نَفْسَهُ فِي العِلِّيَّةِ مَرَّةً أُخْرَى. كَانَتِ المِرْآةُ القَدِيمَةُ كَمَا هِيَ، لَكِنَّ قَلْبَهُ كَانَ مَلِيئًا بِالمَغَامَرَاتِ.', themeColor: '#F8FAFC' },
+  { pageNumber: 30, type: 'image', content: 'https://images.unsplash.com/photo-1513584684374-8bdb74838a0f?w=800&q=80', themeColor: '#F1F5F9' },
+  { pageNumber: 31, type: 'text', content: 'نَزَلَ إِيَادٌ لِيُخْبِرَ أُمَّهُ عَنْ رِحْلَتِهِ. اِبْتَسَمَتْ وَقَالَتْ: "الخَيَالُ يَا بُنَيَّ هُاوَ أَجْمَلُ جَنَاحٍ نَطِيرُ بِهِ بَعِيدًا عَنِ الأَرْضِ."', themeColor: '#FDFCF0' },
+  { pageNumber: 32, type: 'image', content: 'https://images.unsplash.com/photo-1503431128947-61014bf19157?w=800&q=80', themeColor: '#1B1F5E' },
+];
+
 export default function FlipbookPreview({ text, language = 'ar' }: Props) {
   const isRTL = language === 'ar' || language === 'he';
-  const words = text ? text.split(' ') : [];
-  const previewWords = words.slice(0, Math.max(20, Math.floor(words.length * 0.3)));
-  
-  const pages = [
+  const coverImageUrl = '/Users/eyad414/.gemini/antigravity/brain/64ff8c80-9c85-4e66-baf0-b3a20edda245/eyad_mirror_world_cover_1777159655080.png';
+
+  // Use the provided text for the first text page if available
+  const dynamicStoryData = [...storyData];
+  if (text && dynamicStoryData[2]) {
+    dynamicStoryData[2] = { ...dynamicStoryData[2], content: text };
+  }
+
+  // Old simple pages structure (not used, kept for reference)
+  /*
+  const oldPages = [
     { type: 'cover', content: 'كتابي السحري', blurry: false },
-    { type: 'content', content: previewWords.join(' '), blurry: false },
-    { type: 'content', content: 'باقي القصة العجيبة ستأخذك في رحلة مذهلة مع الأصدقاء الجدد والمغامرات الشيقة...', blurry: true },
-    { type: 'content', content: 'حيث الألوان الساحرة والأسرار التي نكتشفها معاً في نهاية الطريق...', blurry: true },
+    { type: 'content', content: '...', blurry: false },
+    { type: 'content', content: '...', blurry: true },
+    { type: 'content', content: '...', blurry: true },
   ];
+  */
 
   return (
-    <div className="w-full flex justify-center py-6 overflow-hidden" dir="ltr">
-      {/* @ts-ignore - react-pageflip types mismatch with React 18 */}
-      <HTMLFlipBook
-        width={280}
-        height={380}
-        size="stretch"
-        minWidth={200}
-        maxWidth={350}
-        minHeight={300}
-        maxHeight={450}
-        maxShadowOpacity={0.5}
-        showCover={true}
-        mobileScrollSupport={true}
-        className="flipbook-container drop-shadow-2xl"
-      >
-        {pages.map((page, i) => (
-          <div key={i} className={`page-content border border-dark-900/10 shadow-sm ${page.type === 'cover' ? 'bg-gradient-to-br from-navy-800 to-magic-500 text-gold-500' : 'bg-neutral-50 text-dark-900'} p-6 rounded-r-md`}>
-            {page.type === 'cover' && (
-               <div className="absolute left-0 top-0 w-4 h-full bg-black/20" />
-            )}
-            <div className={`h-full font-arabic leading-relaxed flex flex-col justify-center ${page.blurry ? 'blur-md select-none opacity-60' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="w-full flex flex-col items-center justify-center py-6 overflow-hidden" dir="ltr">
+      <div className="relative shadow-2xl">
+        {/* Removed middle spine shadow as requested */}
+
+        {/* @ts-ignore */}
+        <HTMLFlipBook
+          width={300}
+          height={420}
+          size="stretch"
+          minWidth={250}
+          maxWidth={400}
+          minHeight={350}
+          maxHeight={550}
+          maxShadowOpacity={0.5}
+          showCover={true}
+          mobileScrollSupport={true}
+          className="flipbook-container"
+        >
+          {dynamicStoryData.map((page) => (
+            <div 
+              key={page.pageNumber} 
+              className="relative overflow-hidden bg-white"
+              style={{ backgroundColor: page.themeColor }}
+            >
               {page.type === 'cover' ? (
-                 <div className="flex flex-col items-center justify-center h-full border-2 border-gold-500/30 rounded-lg p-4">
-                    <span className="text-4xl mb-4">✨</span>
-                    <h2 className="text-2xl font-black text-center leading-relaxed text-white">{page.content}</h2>
-                 </div>
+                <div className="h-full w-full relative">
+                  <img 
+                    src={coverImageUrl} 
+                    alt="Cover" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col items-center justify-end pb-8 px-4">
+                    <h2 className="font-arabic font-black text-gold-500 text-xl text-center leading-tight drop-shadow-md">
+                      {page.content}
+                    </h2>
+                  </div>
+                </div>
+              ) : page.type === 'image' ? (
+                <div className="h-full w-full">
+                  <img 
+                    src={page.content} 
+                    alt={`Page ${page.pageNumber}`} 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,0.05)] pointer-events-none" />
+                </div>
               ) : (
-                <p className="text-lg text-center">{page.content}</p>
+                <div className="h-full w-full flex items-center justify-center p-4 relative">
+                  {/* Cloud Bubble (SVG-based) */}
+                  <div className="relative z-10 w-full max-w-[90%] aspect-square flex items-center justify-center">
+                    <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full text-white fill-current drop-shadow-lg opacity-90">
+                      <path d="M45,75 C45,55 65,45 85,45 C95,30 125,30 140,45 C160,45 180,55 180,75 C195,95 185,130 165,140 C165,160 145,175 120,175 C100,190 60,190 40,175 C20,175 5,160 5,140 C-5,120 10,95 45,75 Z" />
+                    </svg>
+                    <div className="relative z-20 px-6 text-center" dir={isRTL ? 'rtl' : 'ltr'}>
+                      <p className="font-arabic text-dark-900 text-xs sm:text-sm font-bold leading-relaxed">
+                        {page.content}
+                      </p>
+                    </div>
+                  </div>
+                  {/* Page number */}
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-dark-900/20 font-bold text-[10px]">
+                    {page.pageNumber}
+                  </div>
+                </div>
               )}
             </div>
-            {page.type === 'content' && (
-              <div className="absolute bottom-3 text-xs opacity-30 w-full text-center left-0 flex justify-center items-center gap-2">
-                {page.blurry && <span className="text-[10px]">🔒</span>}
-                {i}
-              </div>
-            )}
-          </div>
-        ))}
-      </HTMLFlipBook>
+          ))}
+        </HTMLFlipBook>
+      </div>
     </div>
   );
 }
+

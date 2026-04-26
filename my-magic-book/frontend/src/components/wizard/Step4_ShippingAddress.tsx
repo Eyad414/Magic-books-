@@ -7,10 +7,27 @@ import { ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
 interface Props { onNext: () => void; onPrev: () => void; }
 
 // Constant: List of supported cities for shipping validation and dropdowns
-const SAUDI_CITIES = [
-  'الرياض', 'جدة', 'مكة المكرمة', 'المدينة المنورة', 'الدمام', 'الخبر', 'الظهران',
-  'الطائف', 'تبوك', 'أبها', 'بريدة', 'حائل', 'الجبيل', 'ينبع', 'القطيف', 'خميس مشيط',
+const SUPPORTED_CITIES = [
+  'القدس', 'تل أبيب', 'حيفا', 'يافا', 'الناصرة', 'عكا', 'بئر السبع',
+  'الرملة', 'اللد', 'ريشون لتسيون', 'أسدود', 'نتانيا', 'الخضيرة',
+  'رام الله', 'نابلس', 'الخليل', 'بيت لحم', 'جنين', 'طولكرم', 'قلقيلية', 'أريحا'
 ];
+
+// Sub-component: A reusable input wrapper definition that renders labels, inputs, and error UI cleanly
+const Field = ({ id, label, placeholder, value, onChange, type = 'text', error }: any) => (
+  <div>
+    <label className="block font-arabic text-white/80 text-sm mb-2">{label}</label>
+    <input
+      type={type}
+      id={id}
+      className="magic-input"
+      placeholder={placeholder}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
+    {error && <p className="text-red-400 text-xs font-arabic mt-1">{error}</p>}
+  </div>
+);
 
 export default function Step4_ShippingAddress({ onNext, onPrev }: Props) { // To move to the next page in the steps
   const { progress, setShippingAddress } = useStoryProgress(); // To save User Choices in the steps
@@ -22,6 +39,7 @@ export default function Step4_ShippingAddress({ onNext, onPrev }: Props) { // To
     city: progress.shippingAddress?.city || '',
     district: progress.shippingAddress?.district || '',
     street: progress.shippingAddress?.street || '',
+
     buildingNo: progress.shippingAddress?.buildingNo || '',
     postalCode: progress.shippingAddress?.postalCode || '',
     country: progress.shippingAddress?.country || 'SA',
@@ -49,21 +67,7 @@ export default function Step4_ShippingAddress({ onNext, onPrev }: Props) { // To
     onNext();
   };
 
-  // Sub-component: A reusable input wrapper definition that renders labels, inputs, and error UI cleanly
-  const Field = ({ id, label, placeholder, value, onChange, type = 'text', error }: any) => (
-    <div>
-      <label className="block font-arabic text-white/80 text-sm mb-2">{label}</label>
-      <input
-        type={type}
-        id={id}
-        className="magic-input"
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
-      {error && <p className="text-red-400 text-xs font-arabic mt-1">{error}</p>}
-    </div>
-  );
+
 
   return (
     <div className="space-y-6">
@@ -96,7 +100,7 @@ export default function Step4_ShippingAddress({ onNext, onPrev }: Props) { // To
           placeholder="05XXXXXXXX"
           type="tel"
           value={form.phone}
-          onChange={(v: string) => setForm({ ...form, phone: v })}
+          onChange={(v: string) => setForm({ ...form, phone: v.replace(/\D/g, '') })}
           error={errors.phone}
         />
 
@@ -110,7 +114,7 @@ export default function Step4_ShippingAddress({ onNext, onPrev }: Props) { // To
             onChange={(e) => setForm({ ...form, city: e.target.value })}
           >
             <option value="">اختر المدينة</option>
-            {SAUDI_CITIES.map((city) => (
+            {SUPPORTED_CITIES.map((city) => (
               <option key={city} value={city}>{city}</option>
             ))}
           </select>

@@ -37,20 +37,30 @@ export default function Policy() {
           <p><strong className="text-white">الاستخدام المسموح:</strong> يُسمح باستخدام المنصة للأغراض الشخصية والعائلية فقط.</p>
           <p><strong className="text-white">الملكية الفكرية:</strong> القصص المُولّدة هي ملك للمستخدم بعد الدفع الكامل. نحتفظ بحق استخدام بيانات مجهولة لتحسين النموذج.</p>
           <p><strong className="text-white">المحتوى:</strong> يُحظر استخدام المنصة لإنشاء محتوى مسيء أو غير لائق للأطفال.</p>
-          <p><strong className="text-white">التسعير:</strong> الأسعار بالريال السعودي وتشمل ضريبة القيمة المضافة. نحتفظ بحق تغيير الأسعار مع إخطار مسبق.</p>
+          <p><strong className="text-white">التسعير:</strong> الأسعار بالشيكل الإسرائيلي (₪) وتشمل ضريبة القيمة المضافة. نحتفظ بحق تغيير الأسعار مع إخطار مسبق.</p>
         </Section>
 
         <Section id="refund" icon={Eye} title="سياسة الاسترداد">
-          <p><strong className="text-white">قبل الطباعة:</strong> يمكنك إلغاء الطلب واسترداد المبلغ كاملاً خلال ٢٤ ساعة من الدفع وقبل إرسال الطلب للطباعة.</p>
-          <p><strong className="text-white">بعد الطباعة:</strong> لا يمكن استرداد المبلغ بعد بدء الطباعة لأن الكتاب مخصص لطفلك تحديداً.</p>
-          <p><strong className="text-white">تلف أو خطأ في الشحن:</strong> نضمن استبدال الكتاب مجاناً إذا وصل تالفاً أو كان هناك خطأ في المحتوى من طرفنا.</p>
-          <p>للاسترداد والشكاوى: راسلنا على <a href="mailto:refund@mymagicbook.sa" className="text-gold-500 hover:underline">refund@mymagicbook.sa</a></p>
+          <p>نعمل وفقًا لقانون حماية المستهلك الإسرائيلي لسنة 1981 ولأنظمة حماية المستهلك (إلغاء الصفقة) لسنة 2010.</p>
+          <p><strong className="text-white">المنتجات المخصصة:</strong> لذلك، ووفقًا للقانون، لا يمكن إلغاء الطلب أو استرجاع المبلغ بعد بدء عملية الإنتاج، لأن الكتاب مخصص ومطبوع خصيصاً لك.</p>
+          <p><strong className="text-white">تلف أو خطأ:</strong> نضمن استبدال الكتاب مجاناً إذا وصل تالفاً أو كان هناك خطأ في المحتوى من طرفنا.</p>
+          <p>للاستفسارات والشكاوى: راسلنا على <a href="mailto:refund@mymagicbook.sa" className="text-gold-500 hover:underline">refund@mymagicbook.sa</a></p>
         </Section>
 
         <Section id="shipping" icon={Shield} title="سياسة الشحن">
-          <p><strong className="text-white">منطقة الشحن:</strong> نشحن حالياً لجميع مناطق المملكة العربية السعودية مجاناً.</p>
+          <p><strong className="text-white">التوصيل:</strong> نشحن حالياً لجميع المناطق المدعومة.</p>
           <p><strong className="text-white">مدة الشحن:</strong> ٣-٥ أيام عمل من تاريخ تأكيد الدفع.</p>
-          <p><strong className="text-white">التتبع:</strong> ستصلك رسالة نصية برقم تتبع شحنتك فور إرسال الكتاب.</p>
+          <p><strong className="text-white">التتبع:</strong> ستصلك رسالة برقم تتبع شحنتك فور إرسال الكتاب.</p>
+        </Section>
+
+        <Section id="payment" icon={Shield} title="سياسة الدفع">
+          <p><strong className="text-white">طرق الدفع:</strong> نقبل الدفع عبر البطاقات الائتمانية وبوابات الدفع الإلكترونية المعتمدة والمشفرة بالكامل.</p>
+          <p><strong className="text-white">الأمان:</strong> لا نقوم بتخزين بيانات بطاقتك الائتمانية في خوادمنا؛ تتم جميع المعاملات عبر مزودي خدمة دفع آمنين ومعتمدين.</p>
+        </Section>
+
+        <Section id="data-deletion" icon={Lock} title="سياسة حذف البيانات">
+          <p><strong className="text-white">حقوقك:</strong> يحق لك في أي وقت طلب حذف حسابك وكافة بياناتك أو بيانات طفلك من خوادمنا.</p>
+          <p><strong className="text-white">طريقة الطلب:</strong> يمكنك إرسال طلب حذف البيانات عبر البريد الإلكتروني أو من خلال صفحة "تواصل معنا"، وسيتم معالجة الطلب ومسح البيانات نهائياً خلال ١٤ يوم عمل كحد أقصى.</p>
         </Section>
 
         <div className="text-center mt-10">

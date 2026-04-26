@@ -20,11 +20,15 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
   // Local State: Manages validation error strings for each input field
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Local State: Tracks if the user wants to add a photo
+  const [wantsPhoto, setWantsPhoto] = useState(!!progress.childDetails.childPhotoUrl);
+
   // Function: Validates that all required fields are filled correctly before proceeding
   const validate = () => {
     const errs: Record<string, string> = {};
     if (!form.childName.trim()) errs.childName = 'يرجى إدخال اسم الطفل';
     if (!form.childAge) errs.childAge = 'يرجى تحديد الفئة العمرية';
+    if (wantsPhoto && !form.childPhotoUrl) errs.childPhotoUrl = 'يرجى رفع صورة طفلك للمتابعة';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -117,27 +121,50 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
         </div>
       </div>
 
-      {/* Photo Upload: Allows user to upload child's image to be processed by AI into a cartoon character */}
+      {/* Photo Upload: Conditional rendering based on user choice */}
       <div>
-        <label className="block font-arabic text-white/80 text-sm mb-3">📸 تحويل صورة طفلك لكرتون (تريند)</label>
-        <div className="border-2 border-dashed border-white/20 rounded-xl p-6 text-center hover:bg-white/5 hover:border-gold-500/30 transition-all cursor-pointer relative">
-           <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={(e) => {
-              if (e.target.files?.[0]) {
-                 setForm({...form, childPhotoUrl: URL.createObjectURL(e.target.files[0])});
-              }
-           }} />
-           {form.childPhotoUrl ? (
-              <img src={form.childPhotoUrl} alt="Child" className="w-24 h-24 object-cover mx-auto rounded-full border-4 border-gold-500" />
-           ) : (
-              <div className="flex flex-col items-center">
-                 <div className="w-12 h-12 rounded-full bg-gold-500/10 flex items-center justify-center mb-2">
-                    <span className="text-2xl">📸</span>
-                 </div>
-                 <span className="font-arabic text-sm text-gold-500">ارفع صورة طفلك هنا</span>
-                 <span className="font-arabic text-xs text-white/40 mt-1">سيتم تحويلها لكرتون بضغطة زر</span>
-              </div>
-           )}
+        <label className="block font-arabic text-white/80 text-sm mb-3">هل ترغب بإضافة صورة لطفلك؟ (اختياري)</label>
+        <div className="flex gap-4 mb-4">
+          <button
+            type="button"
+            onClick={() => setWantsPhoto(true)}
+            className={`flex-1 py-2 rounded-xl border-2 transition-all font-arabic text-sm ${wantsPhoto ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-white/10 text-white/60 hover:border-white/30'}`}
+          >
+            نعم، أضف صورة 📸
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setWantsPhoto(false);
+              setForm({ ...form, childPhotoUrl: '' });
+            }}
+            className={`flex-1 py-2 rounded-xl border-2 transition-all font-arabic text-sm ${!wantsPhoto ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-white/10 text-white/60 hover:border-white/30'}`}
+          >
+            لا، تخطى ذلك
+          </button>
         </div>
+
+        {wantsPhoto && (
+          <div className="border-2 border-dashed border-white/20 rounded-xl p-6 text-center hover:bg-white/5 hover:border-gold-500/30 transition-all cursor-pointer relative animate-fade-in">
+             <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={(e) => {
+                if (e.target.files?.[0]) {
+                   setForm({...form, childPhotoUrl: URL.createObjectURL(e.target.files[0])});
+                }
+             }} />
+             {form.childPhotoUrl ? (
+                <img src={form.childPhotoUrl} alt="Child" className="w-24 h-24 object-cover mx-auto rounded-full border-4 border-gold-500 shadow-gold-glow" />
+             ) : (
+                <div className="flex flex-col items-center">
+                   <div className="w-12 h-12 rounded-full bg-gold-500/10 flex items-center justify-center mb-2">
+                      <span className="text-2xl">📸</span>
+                   </div>
+                   <span className="font-arabic text-sm text-gold-500">ارفع صورة طفلك هنا</span>
+                   <span className="font-arabic text-xs text-white/40 mt-1">سيتم تحويلها لكرتون بضغطة زر</span>
+                </div>
+             )}
+          </div>
+        )}
+        {errors.childPhotoUrl && <p className="text-red-400 text-xs font-arabic mt-2">{errors.childPhotoUrl}</p>}
       </div>
 
       {/* Preview */}

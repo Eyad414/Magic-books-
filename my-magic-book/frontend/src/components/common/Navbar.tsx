@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Menu, X, BookOpen, User, LogOut, LayoutDashboard, Sparkles, Sun, Moon, Globe } from 'lucide-react';
+import { Menu, X, BookOpen, User, LogOut, LayoutDashboard, Sparkles, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const navLinks = [
@@ -134,15 +134,6 @@ export default function Navbar() {
 
             {/* Theme Toggle & Language */}
             <div className="flex items-center gap-4 border-r border-white/10 pr-4 mr-2">
-              <div className="relative flex items-center text-white/80 hover:text-gold-500 transition-colors bg-white/5 rounded-lg px-2 py-1 border border-white/10">
-                <Globe className="w-4 h-4 ml-1" />
-                <select className="bg-transparent text-sm font-arabic outline-none cursor-pointer appearance-none ml-1 pl-2">
-                  <option value="ar" className="text-dark-900">عربي</option>
-                  <option value="en" className="text-dark-900">English</option>
-                  <option value="he" className="text-dark-900">עברית</option>
-                </select>
-              </div>
-              
               <button 
                 onClick={toggleTheme} 
                 className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/80 hover:text-gold-500 hover:border-gold-500/40 transition-all" 
@@ -170,16 +161,7 @@ export default function Navbar() {
           <div className="px-4 py-4 space-y-2">
             
             {/* Settings Mobile */}
-            <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-4 px-4 pt-2">
-              <div className="flex items-center text-white/80">
-                <Globe className="w-4 h-4 ml-2" />
-                <select className="bg-transparent text-sm font-arabic outline-none">
-                  <option value="ar" className="text-dark-900">عربي</option>
-                  <option value="en" className="text-dark-900">English</option>
-                  <option value="he" className="text-dark-900">עברית</option>
-                </select>
-              </div>
-              
+            <div className="flex items-center justify-center mb-4 border-b border-white/10 pb-4 pt-2">
               <button onClick={toggleTheme} className="text-white/80 hover:text-gold-500 transition-colors flex items-center gap-2">
                 <span className="font-arabic text-sm text-white/50">{isLightTheme ? 'الوضع المظلم' : 'الوضع الفاتح'}</span>
                 {isLightTheme ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}

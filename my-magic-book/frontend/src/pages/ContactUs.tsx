@@ -110,7 +110,7 @@ export default function ContactUs() {
                     className="magic-input"
                     placeholder="05XXXXXXXX"
                     value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '') })}
                   />
                 </div>
                 <div>

@@ -82,7 +82,6 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
   };
 
   const previewTextContent = generatedText ? generatedText : `قصة سحرية عن ${progress.childDetails.childName || 'الطفل'} يستكشف عوالم وألوان جديدة...`;
-
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -157,12 +156,13 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
       </div>
 
       {/* Live Preview: Interactive Flipbook to let parents visualize how the book will look */}
-      <div className="mt-8 flex flex-col items-center justify-center bg-dark-700/30 rounded-2xl border border-white/5 w-full py-8 overflow-hidden relative min-h-[500px]">
+      <div className="mt-8 flex flex-col items-center justify-center bg-dark-700/30 rounded-3xl border border-white/5 w-full py-12 relative min-h-[700px]">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gold-500/50 to-transparent" />
         <label className="block font-arabic text-white/80 text-sm mb-6 text-center w-full">📖 نظرة مبدئية على الكتاب</label>
         <div className="w-[350px] scale-110 sm:scale-125 transform origin-top transition-transform duration-500">
           <FlipbookPreview text={previewTextContent} language={form.language as any} />
         </div>
+
       </div>
 
       {/* Generate Button */}
@@ -195,6 +195,27 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
         >
           التالي — تخصيص الكتاب
         </MagicButton>
+      </div>
+
+      {/* Enhanced Information Section: Two distinct divs for page count and guidance (Moved to Lowest) */}
+      <div className="mt-8 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
+        {/* Card 1: Page Count */}
+        <div className="flex-1 w-full sm:w-auto bg-navy-800/50 border border-gold-500/20 rounded-2xl p-5 flex flex-col items-center text-center backdrop-blur-lg transition-transform hover:scale-105 max-w-sm">
+          <div className="w-10 h-10 rounded-full bg-gold-500/10 flex items-center justify-center mb-3">
+            <span className="text-xl">📖</span>
+          </div>
+          <span className="font-arabic text-gold-500 font-black text-base">٣٢ صفحة سحرية</span>
+          <span className="font-arabic text-white/40 text-xs mt-1">إجمالي صفحات كتابك المخصص</span>
+        </div>
+
+        {/* Card 2: Guidance */}
+        <div className="flex-1 w-full sm:w-auto bg-navy-800/50 border border-white/10 rounded-2xl p-5 flex flex-col items-center text-center backdrop-blur-lg transition-transform hover:scale-105 max-w-sm">
+          <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mb-3">
+            <span className="text-xl">🖱️</span>
+          </div>
+          <span className="font-arabic text-white font-bold text-base">استكشف القصة</span>
+          <span className="font-arabic text-white/40 text-xs mt-1">اسحب أو اضغط لقلب الصفحات</span>
+        </div>
       </div>
     </div>
   );

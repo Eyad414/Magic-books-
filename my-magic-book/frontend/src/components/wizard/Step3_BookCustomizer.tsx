@@ -21,9 +21,9 @@ const COVER_COLORS = [
 
 // Constant: Available physical product packages with pricing
 const BOOK_PACKAGES = [
-  { id: 'color', label: 'كتاب ملون', price: 99, emoji: '🌈', desc: 'كتاب ملون بالكامل بجودة عالية' },
-  { id: 'coloring', label: 'دفتر تلوين', price: 69, emoji: '🖍️', desc: 'رسومات غير ملونة جاهزة للتلوين' },
-  { id: 'pro', label: 'باقة Pro (النسختين)', price: 149, emoji: '✨', desc: 'الكتاب الملون + دفتر التلوين معاً' },
+  { id: 'color', label: 'كتاب ملون', price: 65, emoji: '🌈', desc: 'كتاب ملون بالكامل بجودة عالية' },
+  { id: 'coloring', label: 'دفتر تلوين', price: 45, emoji: '🖍️', desc: 'رسومات غير ملونة جاهزة للتلوين' },
+  { id: 'pro', label: 'باقة Pro (النسختين)', price: 100, emoji: '✨', desc: 'الكتاب الملون + دفتر التلوين معاً' },
 ];
 
 export default function Step3_BookCustomizer({ onNext, onPrev }: Props) { // To move to the next page in the steps 

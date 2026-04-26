@@ -70,17 +70,20 @@ export const StoryProgressProvider = ({ children }: { children: ReactNode }) => 
     }
   });
 
-  const save = (updated: StoryProgress) => {
-    setProgress(updated);
-    localStorage.setItem('mmb_story_progress', JSON.stringify(updated));
+  const updateProgress = (updater: (prev: StoryProgress) => StoryProgress) => {
+    setProgress((prev) => {
+      const updated = updater(prev);
+      localStorage.setItem('mmb_story_progress', JSON.stringify(updated));
+      return updated;
+    });
   };
 
-  const setStep = (step: number) => save({ ...progress, currentStep: step });
-  const setChildDetails = (data: Partial<ChildDetails>) => save({ ...progress, childDetails: { ...progress.childDetails, ...data } });
-  const setStoryConfig = (data: Partial<StoryConfig>) => save({ ...progress, storyConfig: { ...progress.storyConfig, ...data } });
-  const setBookCustomization = (data: Partial<BookCustomization>) => save({ ...progress, bookCustomization: { ...progress.bookCustomization, ...data } });
-  const setShippingAddress = (data: Partial<ShippingAddress>) => save({ ...progress, shippingAddress: { ...progress.shippingAddress, ...data } });
-  const resetProgress = () => { localStorage.removeItem('mmb_story_progress'); save(defaultProgress); };
+  const setStep = (step: number) => updateProgress(prev => ({ ...prev, currentStep: step }));
+  const setChildDetails = (data: Partial<ChildDetails>) => updateProgress(prev => ({ ...prev, childDetails: { ...prev.childDetails, ...data } }));
+  const setStoryConfig = (data: Partial<StoryConfig>) => updateProgress(prev => ({ ...prev, storyConfig: { ...prev.storyConfig, ...data } }));
+  const setBookCustomization = (data: Partial<BookCustomization>) => updateProgress(prev => ({ ...prev, bookCustomization: { ...prev.bookCustomization, ...data } }));
+  const setShippingAddress = (data: Partial<ShippingAddress>) => updateProgress(prev => ({ ...prev, shippingAddress: { ...prev.shippingAddress, ...data } }));
+  const resetProgress = () => { localStorage.removeItem('mmb_story_progress'); setProgress(defaultProgress); };
 
   return (
     <StoryProgressContext.Provider value={{ progress, setStep, setChildDetails, setStoryConfig, setBookCustomization, setShippingAddress, resetProgress }}>

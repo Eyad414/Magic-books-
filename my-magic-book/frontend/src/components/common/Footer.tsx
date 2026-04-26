@@ -6,9 +6,18 @@ export default function Footer() {
   const location = useLocation();
 
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, to: string) => {
-    if (location.pathname === to) {
-      e.preventDefault();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    const [path, hash] = to.split('#');
+    if (location.pathname === path) {
+      if (hash) {
+        const element = document.getElementById(hash);
+        if (element) {
+          e.preventDefault();
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      } else {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
   };
 
@@ -76,15 +85,21 @@ export default function Footer() {
 
           {/* Legal */}
           <div>
-            <h3 className="font-arabic font-bold text-white mb-4 text-sm">قانوني</h3>
+            <h3 className="font-arabic font-bold text-white mb-4 text-sm">السياسات والشروط</h3>
             <ul className="space-y-2">
               {[
                 { to: '/policy', label: 'سياسة الخصوصية' },
                 { to: '/policy#terms', label: 'شروط الاستخدام' },
                 { to: '/policy#refund', label: 'سياسة الاسترداد' },
+                { to: '/policy#payment', label: 'سياسة الدفع' },
+                { to: '/policy#data-deletion', label: 'حذف البيانات' },
               ].map((link) => (
                 <li key={link.to}>
-                  <Link to={link.to} className="text-white/50 text-sm font-arabic hover:text-gold-500 transition-colors">
+                  <Link 
+                    to={link.to} 
+                    className="text-white/50 text-sm font-arabic hover:text-gold-500 transition-colors"
+                    onClick={(e) => handleLinkClick(e, link.to)}
+                  >
                     {link.label}
                   </Link>
                 </li>
@@ -106,7 +121,7 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-3 text-white/50 text-sm font-arabic">
                 <MapPin className="w-4 h-4 text-gold-500 flex-shrink-0" />
-                <span>الرياض، المملكة العربية السعودية</span>
+                <span>القدس</span>
               </li>
             </ul>
           </div>
