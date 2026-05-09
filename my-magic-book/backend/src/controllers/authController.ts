@@ -31,7 +31,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       success: true,
       message: 'تم التسجيل بنجاح!',
       token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, location: user.location, createdAt: user.createdAt, lastLoginAt: user.lastLoginAt },
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'حدث خطأ في الخادم' });
@@ -56,11 +56,14 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     const token = signToken(user._id.toString());
 
+    user.lastLoginAt = new Date();
+    await user.save();
+
     res.json({
       success: true,
       message: 'تم تسجيل الدخول بنجاح!',
       token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, location: user.location, createdAt: user.createdAt, lastLoginAt: user.lastLoginAt },
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'حدث خطأ في الخادم' });
@@ -71,6 +74,21 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 export const getMe = async (req: Request, res: Response): Promise<void> => {
   try {
     const user = (req as any).user;
+    res.json({ success: true, user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, location: user.location, createdAt: user.createdAt, lastLoginAt: user.lastLoginAt } });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'حدث خطأ في الخادم' });
+  }
+};
+
+// @route PUT /api/auth/make-admin (Temporary endpoint for setup)
+export const makeMeAdmin = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user._id;
+    const user = await User.findByIdAndUpdate(userId, { role: 'admin' }, { new: true });
+    if (!user) {
+      res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
+      return;
+    }
     res.json({ success: true, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
   } catch (error) {
     res.status(500).json({ success: false, message: 'حدث خطأ في الخادم' });

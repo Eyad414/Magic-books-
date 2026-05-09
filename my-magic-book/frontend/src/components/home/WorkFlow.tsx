@@ -1,49 +1,62 @@
 import { CheckCircle } from 'lucide-react';
-
-const steps = [
-  {
-    number: '01',
-    emoji: '📝',
-    title: 'أدخل تفاصيل طفلك',
-    description: 'اكتب اسم طفلك وعمره وجنسه واختر صورته المفضلة لتخصيص القصة',
-    color: 'from-blue-500 to-blue-600',
-    glow: 'rgba(59,130,246,0.3)',
-  },
-  {
-    number: '02',
-    emoji: '✨',
-    title: 'الذكاء الاصطناعي يكتب القصة',
-    description: 'يبدع الذكاء الاصطناعي قصة سحرية فريدة بطلها طفلك تناسب عمره واهتماماته',
-    color: 'from-magic-500 to-magic-600',
-    glow: 'rgba(108,63,197,0.3)',
-  },
-  {
-    number: '03',
-    emoji: '🎨',
-    title: 'خصّص كتابك',
-    description: 'اختر ألوان الغلاف والخط وأضف إهداءً شخصياً يجعل الكتاب أكثر قيمة',
-    color: 'from-pink-500 to-pink-600',
-    glow: 'rgba(236,72,153,0.3)',
-  },
-  {
-    number: '04',
-    emoji: '📦',
-    title: 'أدخل عنوان الشحن',
-    description: 'أدخل عنوانك بدقة وسيصلك الكتاب المطبوع بجودة عالية خلال أيام',
-    color: 'from-orange-500 to-orange-600',
-    glow: 'rgba(249,115,22,0.3)',
-  },
-  {
-    number: '05',
-    emoji: '🚀',
-    title: 'استلم كتابك المطبوع',
-    description: 'يصلك كتابك السحري المطبوع بجودة احترافية مع غلاف مقوّى إلى باب منزلك',
-    color: 'from-gold-500 to-gold-600',
-    glow: 'rgba(245,166,35,0.3)',
-  },
-];
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { useStoryProgress } from '../../context/StoryProgressContext';
 
 export default function WorkFlow() {
+  const { t } = useTranslation();
+  const { resetProgress } = useStoryProgress();
+  const navigate = useNavigate();
+
+  const handleStartStory = (e: React.MouseEvent) => {
+    e.preventDefault();
+    resetProgress();
+    navigate('/create');
+  };
+
+  const steps = [
+    {
+      number: '01',
+      emoji: '📝',
+      title: t('workflow.step1_title'),
+      description: t('workflow.step1_desc'),
+      color: 'from-blue-500 to-blue-600',
+      glow: 'rgba(59,130,246,0.3)',
+    },
+    {
+      number: '02',
+      emoji: '✨',
+      title: t('workflow.step2_title'),
+      description: t('workflow.step2_desc'),
+      color: 'from-magic-500 to-magic-600',
+      glow: 'rgba(108,63,197,0.3)',
+    },
+    {
+      number: '03',
+      emoji: '🎨',
+      title: t('workflow.step3_title'),
+      description: t('workflow.step3_desc'),
+      color: 'from-pink-500 to-pink-600',
+      glow: 'rgba(236,72,153,0.3)',
+    },
+    {
+      number: '04',
+      emoji: '📦',
+      title: t('workflow.step4_title'),
+      description: t('workflow.step4_desc'),
+      color: 'from-orange-500 to-orange-600',
+      glow: 'rgba(249,115,22,0.3)',
+    },
+    {
+      number: '05',
+      emoji: '🚀',
+      title: t('workflow.step5_title'),
+      description: t('workflow.step5_desc'),
+      color: 'from-gold-500 to-gold-600',
+      glow: 'rgba(245,166,35,0.3)',
+    },
+  ];
+
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       <div className="max-w-7xl mx-auto">
@@ -51,14 +64,14 @@ export default function WorkFlow() {
         <div className="text-center mb-16 animate-fade-in-up">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-magic-500/10 border border-magic-500/30 text-magic-400 font-arabic text-sm mb-4">
             <CheckCircle className="w-4 h-4" />
-            <span>عملية بسيطة في ٥ خطوات</span>
+            <span>{t('workflow.badge')}</span>
           </div>
           <h2 className="font-arabic font-black text-white text-3xl md:text-4xl mb-4">
-            كيف يعمل{' '}
-            <span className="shimmer-text">كتابي السحري؟</span>
+            {t('workflow.how_it_works')}{' '}
+            <span className="shimmer-text">{t('workflow.my_magic_book')}</span>
           </h2>
           <p className="font-arabic text-white/50 text-lg max-w-2xl mx-auto">
-            من فكرة إلى كتاب مطبوع في يدي طفلك — عملية سهلة وممتعة لا تأخذ أكثر من دقائق
+            {t('workflow.description')}
           </p>
         </div>
 
@@ -105,15 +118,16 @@ export default function WorkFlow() {
 
         {/* CTA */}
         <div className="text-center mt-14">
-          <a
-            href="/create"
+          <button
             id="workflow-cta-btn"
+            onClick={handleStartStory}
             className="inline-flex items-center gap-3 px-10 py-4 rounded-2xl bg-gradient-to-l from-gold-500 to-gold-600 text-dark-900 font-arabic font-black text-lg transition-all duration-300 hover:shadow-gold-glow hover:-translate-y-1"
           >
-            <span>✨ ابدأ قصتك الآن</span>
-          </a>
+            <span>{t('workflow.start_now')}</span>
+          </button>
         </div>
       </div>
     </section>
   );
 }
+

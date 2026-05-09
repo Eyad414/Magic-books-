@@ -7,7 +7,7 @@ export interface IStory extends Document {
   userId: mongoose.Types.ObjectId;
   // Step 1: Child Details
   childName: string;
-  childAge: number;
+  childAge: string;
   childGender: 'male' | 'female';
   childPhotoUrl?: string;
   // Step 2: Story Config
@@ -35,7 +35,7 @@ const StorySchema = new Schema<IStory>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     childName: { type: String, required: true, trim: true },
-    childAge: { type: Number, required: true, min: 1, max: 15 },
+    childAge: { type: String, required: true },
     childGender: { type: String, enum: ['male', 'female'], required: true },
     childPhotoUrl: { type: String },
     theme: {

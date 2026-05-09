@@ -18,7 +18,11 @@ export interface StoryConfig {
 
 export interface BookCustomization {
   coverColor: string;
-  bookPackage: 'color' | 'coloring' | 'pro';
+  bookPackage: string;
+  packageType?: string;
+  quantity?: number;
+  couponDetails?: any;
+  extraBooks?: any[];
 }
 
 export interface ShippingAddress {
@@ -30,6 +34,10 @@ export interface ShippingAddress {
   buildingNo: string;
   postalCode: string;
   country: string;
+  floor?: string;
+  notes?: string;
+  deliveryMethod?: 'delivery' | 'pickup';
+  pickupLocation?: string;
 }
 
 export interface StoryProgress {
@@ -54,8 +62,8 @@ const defaultProgress: StoryProgress = {
   currentStep: 1,
   childDetails: { childAge: '3-5', childGender: 'male' },
   storyConfig: { theme: 'adventure', language: 'ar' },
-  bookCustomization: { coverColor: '#1B1F5E', bookPackage: 'color' },
-  shippingAddress: { country: 'SA' },
+  bookCustomization: { coverColor: '#1B1F5E', bookPackage: 'color', quantity: 1, extraBooks: [] },
+  shippingAddress: { country: 'SA', deliveryMethod: 'delivery' },
 };
 
 const StoryProgressContext = createContext<StoryProgressContextType | undefined>(undefined);

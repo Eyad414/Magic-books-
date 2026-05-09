@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import MagicButton from '../components/common/MagicButton';
 import { BookOpen, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -11,16 +12,17 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
       await login(form.email, form.password);
-      toast.success('مرحباً بعودتك! ✨');
+      toast.success(t('auth.login_success'));
       navigate('/dashboard');
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'البريد أو كلمة المرور غير صحيحة');
+      toast.error(err?.response?.data?.message || t('auth.login_error'));
     } finally {
       setIsLoading(false);
     }
@@ -36,18 +38,18 @@ export default function Login() {
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-navy-800 to-magic-500 flex items-center justify-center shadow-magic-glow">
             <BookOpen className="w-6 h-6 text-gold-500" />
           </div>
-          <div className="font-arabic font-black text-gold-500 text-xl">كتابي السحري</div>
+          <div className="font-arabic font-black text-gold-500 text-xl">{t('nav.home_brand')}</div>
         </Link>
 
         <div className="glass-card p-8">
           <div className="text-center mb-8">
-            <h1 className="font-arabic font-black text-white text-2xl mb-2">مرحباً بعودتك</h1>
-            <p className="font-arabic text-white/50 text-sm">سجّل دخولك لمتابعة قصصك السحرية</p>
+            <h1 className="font-arabic font-black text-white text-2xl mb-2">{t('auth.welcome_back')}</h1>
+            <p className="font-arabic text-white/50 text-sm">{t('auth.login_desc')}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block font-arabic text-white/70 text-sm mb-2">البريد الإلكتروني</label>
+              <label className="block font-arabic text-white/70 text-sm mb-2">{t('auth.email')}</label>
               <div className="relative">
                 <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                 <input
@@ -63,14 +65,14 @@ export default function Login() {
               </div>
             </div>
             <div>
-              <label className="block font-arabic text-white/70 text-sm mb-2">كلمة المرور</label>
+              <label className="block font-arabic text-white/70 text-sm mb-2">{t('auth.password')}</label>
               <div className="relative">
                 <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                 <input
                   id="login-password"
                   type={showPassword ? 'text' : 'password'}
                   className="magic-input pr-10 pl-10"
-                  placeholder="كلمة المرور"
+                  placeholder="********"
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   required
@@ -92,14 +94,14 @@ export default function Login() {
               size="lg"
               isLoading={isLoading}
             >
-              تسجيل الدخول
+              {t('auth.login_btn')}
             </MagicButton>
           </form>
 
           <p className="font-arabic text-white/40 text-sm text-center mt-6">
-            ليس لديك حساب؟{' '}
+            {t('auth.no_account')}
             <Link to="/register" className="text-gold-500 hover:underline font-bold">
-              أنشئ حساباً مجانياً
+              {t('auth.create_account')}
             </Link>
           </p>
         </div>

@@ -15,12 +15,25 @@ html {
   scroll-behavior: smooth;
 }
 
+html.lang-ar body {
+  font-family: 'Noto Kufi Arabic', sans-serif;
+  text-align: right;
+}
+
+html.lang-en body {
+  font-family: 'Inter', sans-serif;
+  text-align: left;
+}
+
+html.lang-he body {
+  font-family: 'Assistant', 'Heebo', sans-serif;
+  text-align: right;
+}
+
 body {
-  font-family: 'Noto Kufi Arabic', 'Inter', sans-serif;
+  font-family: 'Noto Kufi Arabic', sans-serif;
   background-color: #0D0F1A;
   color: #e8eaf6;
-  direction: rtl;
-  text-align: right;
   overflow-x: hidden;
   line-height: 1.7;
 }
@@ -68,6 +81,23 @@ body {
 .shimmer-btn {
   background-size: 200% auto;
   animation: shimmer 3s linear infinite;
+}
+
+/* Auto-flip navigation chevrons for LTR languages */
+.nav-icon {
+  transition: transform 0.2s ease;
+}
+[dir="ltr"] .nav-icon {
+  transform: rotate(180deg);
+}
+
+/* Hide scrollbar for horizontal scroll containers */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
 
 /* Glassmorphism card */
@@ -244,60 +274,57 @@ h3 {
 }
 
 /* =============================================
-   LIGHT THEME OVERRIDE (Creative)
+   LIGHT THEME OVERRIDE — ☀️ Morning Sunrise
    ============================================= */
-html.light-theme body {
-  background: linear-gradient(135deg, #fdfbfb 0%, #f3e8ff 100%);
-  color: #1a1a1a;
+@keyframes sunriseShift {
+  0%   { background-position: 0% 80%; }
+  50%  { background-position: 100% 20%; }
+  100% { background-position: 0% 80%; }
 }
 
-html.light-theme .bg-dark-900\/95,
-html.light-theme .bg-dark-900\/98,
-html.light-theme nav {
-  background-color: rgba(255, 255, 255, 0.85) !important;
-  backdrop-filter: blur(20px) !important;
-  border-bottom-color: rgba(108, 63, 197, 0.1) !important;
+@keyframes sunGlow {
+  0%   { opacity: 0.5; transform: scale(1); }
+  50%  { opacity: 0.8; transform: scale(1.15); }
+  100% { opacity: 0.5; transform: scale(1); }
 }
 
-html.light-theme .text-white,
-html.light-theme .text-white\/80,
-html.light-theme .text-white\/70,
-html.light-theme .text-white\/60,
-html.light-theme .text-white\/50,
-html.light-theme .text-white\/40,
-html.light-theme .text-white\/30,
-html.light-theme nav a.text-white\/80 {
-  color: #2d3748 !important;
+
+/* =============================================
+   ACCESSIBILITY MODES
+   ============================================= */
+html.high-contrast * {
+  border-color: #fff !important;
+}
+html.high-contrast body {
+  background: #000 !important;
+  color: #fff !important;
+}
+html.high-contrast .glass-card,
+html.high-contrast [class*="bg-dark"] {
+  background: #000 !important;
+  border-color: #fff !important;
+}
+html.high-contrast p, html.high-contrast span, html.high-contrast div {
+  color: #fff !important;
+}
+html.high-contrast a {
+  color: #ffff00 !important;
+}
+html.high-contrast button {
+  border-color: #fff !important;
 }
 
-html.light-theme .glass-card {
-  background: rgba(255, 255, 255, 0.6) !important;
-  backdrop-filter: blur(25px) !important;
-  border-color: rgba(108, 63, 197, 0.15) !important;
-  box-shadow: 0 10px 30px rgba(108, 63, 197, 0.08) !important;
+html.highlight-links a {
+  outline: 3px solid #ffff00 !important;
+  outline-offset: 2px;
+  text-decoration: underline !important;
+  color: #ffff00 !important;
 }
 
-html.light-theme .bg-dark-700,
-html.light-theme .bg-dark-700\/30 {
-  background-color: rgba(255, 255, 255, 0.7) !important;
-  border-color: rgba(108, 63, 197, 0.1) !important;
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-
-html.light-theme .bg-navy-800\/70 {
-  background-color: #f1f5f9 !important;
-  border-color: rgba(108, 63, 197, 0.2) !important;
-}
-
-html.light-theme input,
-html.light-theme textarea,
-html.light-theme select {
-  color: #2d3748 !important;
-}
-
-html.light-theme .shimmer-text {
-  background: linear-gradient(90deg, #F5A623 0%, #ff8a00 30%, #F5A623 60%, #e6951a 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: shimmer 3s linear infinite;
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
 }

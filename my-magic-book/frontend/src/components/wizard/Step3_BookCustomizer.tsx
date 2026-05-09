@@ -3,41 +3,53 @@ import { useStoryProgress } from '../../context/StoryProgressContext';
 import MagicButton from '../common/MagicButton';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import FlipbookPreview from './FlipbookPreview';
+import { useTranslation } from 'react-i18next';
 
 // Props Interface: Contains callbacks to navigate through the wizard
 interface Props { onNext: () => void; onPrev: () => void; }
 
-// Constant: Available hexadecimal cover colors for the physical book
-const COVER_COLORS = [
-  { value: '#1B1F5E', label: 'كحلي' },
-  { value: '#6C3FC5', label: 'بنفسجي' },
-  { value: '#1a237e', label: 'أزرق داكن' },
-  { value: '#1b5e20', label: 'أخضر داكن' },
-  { value: '#4a148c', label: 'أرجواني' },
-  { value: '#bf360c', label: 'برتقالي داكن' },
-  { value: '#006064', label: 'فيروزي' },
-  { value: '#ffffff', label: 'أبيض' },
-];
-
-// Constant: Available physical product packages with pricing
-const BOOK_PACKAGES = [
-  { id: 'color', label: 'كتاب ملون', price: 65, emoji: '🌈', desc: 'كتاب ملون بالكامل بجودة عالية' },
-  { id: 'coloring', label: 'دفتر تلوين', price: 45, emoji: '🖍️', desc: 'رسومات غير ملونة جاهزة للتلوين' },
-  { id: 'pro', label: 'باقة Pro (النسختين)', price: 100, emoji: '✨', desc: 'الكتاب الملون + دفتر التلوين معاً' },
-];
-
 export default function Step3_BookCustomizer({ onNext, onPrev }: Props) { // To move to the next page in the steps 
   const { progress, setBookCustomization } = useStoryProgress();// To save User Choices in the steps
+  const { t } = useTranslation();
+
+  // Constant: Available hexadecimal cover colors for the physical book
+  const COVER_COLORS = [
+    { value: '#1B1F5E', label: t('step3.color_navy') },
+    { value: '#6C3FC5', label: t('step3.color_purple') },
+    { value: '#1a237e', label: t('step3.color_darkblue') },
+    { value: '#1b5e20', label: t('step3.color_darkgreen') },
+    { value: '#4a148c', label: t('step3.color_magenta') },
+    { value: '#bf360c', label: t('step3.color_darkorange') },
+    { value: '#006064', label: t('step3.color_turquoise') },
+    { value: '#ffffff', label: t('step3.color_white') },
+  ];
+
+  const EXTRA_THEMES = [
+    { id: 'adventure', emoji: '🗺️', label: t('step2.theme_adventure') },
+    { id: 'space', emoji: '🚀', label: t('step2.theme_space') },
+    { id: 'ocean', emoji: '🌊', label: t('step2.theme_ocean') },
+    { id: 'forest', emoji: '🌿', label: t('step2.theme_forest') },
+    { id: 'princess', emoji: '👸', label: t('step2.theme_princess') },
+    { id: 'superhero', emoji: '⚡', label: t('step2.theme_superhero') },
+    { id: 'animals', emoji: '🦁', label: t('step2.theme_animals') },
+    { id: 'dinosaurs', emoji: '🦕', label: t('step2.theme_dinosaurs') },
+    { id: 'pirates', emoji: '🏴‍☠️', label: t('step2.theme_pirates') },
+    { id: 'magic', emoji: '🧙', label: t('step2.theme_magic') },
+  ];
+
+  const BOOK_PACKAGES = [
+    { id: 'color', label: t('step3.pkg_color'), price: 60, emoji: '🌈', desc: t('step3.pkg_color_desc') },
+    { id: 'coloring', label: t('step3.pkg_coloring'), price: 40, emoji: '🖍️', desc: t('step3.pkg_coloring_desc') },
+    { id: 'audio', label: t('step3.pkg_audio'), price: 20, emoji: '🎧', desc: t('step3.pkg_audio_desc') },
+    { id: 'ebook', label: t('step3.pkg_ebook'), price: 20, emoji: '📱', desc: t('step3.pkg_ebook_desc') },
+    { id: 'pro', label: t('step3.pkg_pro'), price: 120, originalPrice: 140, emoji: '✨', desc: t('step3.pkg_pro_desc') },
+  ];
   
   // Local State: Tracks the user's selected book customization options for this step
   const [form, setForm] = useState({
     coverColor: progress.bookCustomization?.coverColor || '#1B1F5E',
     bookPackage: progress.bookCustomization?.bookPackage || 'color',
   });
-
-  // Derived State: Calculates the total price dynamically based on the selected package state
-  const selectedPkg = BOOK_PACKAGES.find(p => p.id === form.bookPackage);
-  const totalPrice = selectedPkg ? selectedPkg.price : 99;
 
   // Function: Saves the aesthetic customization to the global context and moves to the Shipping Step
   const handleNext = () => {
@@ -49,25 +61,22 @@ export default function Step3_BookCustomizer({ onNext, onPrev }: Props) { // To 
     <div className="space-y-6">
       <div className="text-center">
         <div className="text-5xl mb-3">🎨</div>
-        <h2 className="font-arabic font-bold text-white text-xl mb-1">خصّص كتابك</h2>
-        <p className="font-arabic text-white/50 text-sm">اختر الألوان والخط وأضف لمسة شخصية</p>
+        <h2 className="font-arabic font-bold text-white text-xl mb-1">{t('step3.title')}</h2>
+        <p className="font-arabic text-white/50 text-sm">{t('step3.desc')}</p>
       </div>
 
-      <div className="flex gap-6 flex-col md:flex-row">
-        {/* Form */}
-        <div className="flex-1 space-y-5">
+      <div className="space-y-5">
           {/* Cover Color */}
           <div>
-            <label className="block font-arabic text-white/80 text-sm mb-3">🎨 لون غلاف الكتاب</label>
-            <div className="flex flex-wrap gap-3">
+            <label className="block font-arabic text-white/80 text-sm mb-3">{t('step3.cover_color_label')}</label>
+            <div className="flex gap-2 w-full">
               {COVER_COLORS.map((color) => (
                 <button
                   key={color.value}
                   id={`color-${color.label}`}
                   type="button"
                   onClick={() => setForm({ ...form, coverColor: color.value })}
-                  className={`w-10 h-10 rounded-xl transition-all ${form.coverColor === color.value ? 'ring-2 ring-gold-500 ring-offset-2 ring-offset-dark-900 scale-110' : 'hover:scale-105'
-                    }`}
+                  className={`flex-1 h-10 rounded-xl transition-all ${form.coverColor === color.value ? 'ring-2 ring-gold-500 ring-offset-2 ring-offset-dark-900 scale-110' : 'hover:scale-105'}`}
                   style={{ background: color.value }}
                   title={color.label}
                 />
@@ -77,77 +86,77 @@ export default function Step3_BookCustomizer({ onNext, onPrev }: Props) { // To 
 
           {/* Book Packages */}
           <div>
-            <label className="block font-arabic text-white/80 text-sm mb-3">⭐ باقات الكتاب</label>
-            <div className="space-y-3">
+            <label className="block font-arabic text-white/80 text-sm mb-3">{t('step3.packages_label')}</label>
+            <div className="flex gap-2 w-full">
               {BOOK_PACKAGES.map((pkg) => (
                 <button
                   key={pkg.id}
                   type="button"
                   onClick={() => setForm({ ...form, bookPackage: pkg.id as any })}
-                  className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all text-right ${form.bookPackage === pkg.id
-                      ? 'border-gold-500 bg-gold-500/10'
+                  className={`relative flex-1 flex flex-col items-center justify-center p-2 h-28 rounded-2xl border-2 transition-all text-center group ${form.bookPackage === pkg.id
+                      ? 'border-gold-500 bg-gold-500/10 shadow-gold-glow'
                       : 'border-white/10 hover:border-white/30 bg-dark-700/50'
                     }`}
                 >
-                  <div className="flex items-start gap-4">
-                    <span className="text-3xl mt-1">{pkg.emoji}</span>
-                    <div className="flex flex-col">
-                      <span className={`font-arabic text-lg font-bold ${form.bookPackage === pkg.id ? 'text-gold-500' : 'text-white'}`}>
-                        {pkg.label}
-                      </span>
-                      <span className="font-arabic text-white/50 text-sm mt-1">{pkg.desc}</span>
+                  <span className={`text-2xl mb-1 transition-transform duration-300 ${form.bookPackage === pkg.id ? 'scale-110' : 'group-hover:scale-110'}`}>
+                    {pkg.emoji}
+                  </span>
+                  <span className={`font-arabic text-xs font-bold leading-tight mb-1 ${form.bookPackage === pkg.id ? 'text-gold-500' : 'text-white'}`}>
+                    {pkg.label}
+                  </span>
+                  {'originalPrice' in pkg && pkg.originalPrice ? (
+                    <div className="flex items-center gap-1 justify-center">
+                      <span className="font-arabic text-white/30 text-xs line-through">{(pkg as any).originalPrice} ₪</span>
+                      <span className="font-arabic text-gold-500 font-bold text-xs">{pkg.price} ₪</span>
                     </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <span className="font-arabic text-gold-500 font-bold text-lg">{pkg.price} ر.س</span>
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${form.bookPackage === pkg.id ? 'border-gold-500 bg-gold-500' : 'border-white/20'
-                      }`}>
-                      {form.bookPackage === pkg.id && <span className="text-dark-900 text-xs">✓</span>}
+                  ) : (
+                    <span className="font-arabic text-gold-500 font-bold text-xs">{pkg.price} ₪</span>
+                  )}
+                  {form.bookPackage === pkg.id && (
+                    <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gold-500 text-dark-900 flex items-center justify-center shadow-lg animate-scale-in">
+                      <span className="text-xs font-bold">✓</span>
                     </div>
-                  </div>
+                  )}
                 </button>
               ))}
             </div>
           </div>
-        </div>
 
-        {/* Book Preview */}
-        <div className="md:w-72 flex flex-col items-center justify-center">
-          <p className="font-arabic text-white/50 text-xs mb-3 text-center">معاينة الكتاب</p>
-          {progress.storyConfig?.generatedText ? (
-            <div className="-mt-8 scale-75 transform origin-top w-[350px]">
-              <FlipbookPreview text={progress.storyConfig.generatedText} language={progress.storyConfig.language as any} />
-            </div>
-          ) : (
-            <div
-              className="w-36 h-48 rounded-2xl shadow-2xl flex flex-col items-center justify-center gap-3 transition-all duration-500"
-              style={{ background: `linear-gradient(135deg, ${form.coverColor}, ${form.coverColor}99)`, border: '2px solid rgba(245,166,35,0.3)' }}
-            >
-              <span className="text-4xl">✨</span>
-              <p className="font-arabic text-white font-bold text-sm text-center px-3 leading-tight">
-                {progress.childDetails.childName || 'اسم طفلك'}
-              </p>
-              <p className="font-arabic text-white/60 text-xs text-center px-2">كتابي السحري</p>
-            </div>
-          )}
-          <p className="font-arabic text-gold-500 font-black text-xl mt-4">{totalPrice} ر.س</p>
-          <p className="font-arabic text-white/30 text-xs">السعر الإجمالي</p>
+          {/* Book Live Preview — below packages */}
+          <div className="flex flex-col items-center pt-2">
+            <p className="font-arabic text-white/50 text-xs mb-3 text-center">{t('step3.book_preview_label')}</p>
+            {progress.storyConfig?.generatedText ? (
+              <div className="-mt-4 scale-75 transform origin-top w-[350px]">
+                <FlipbookPreview text={progress.storyConfig.generatedText} language={progress.storyConfig.language as any} />
+              </div>
+            ) : (
+              <div
+                className="w-36 h-48 rounded-2xl shadow-2xl flex flex-col items-center justify-center gap-3 transition-all duration-500"
+                style={{ background: `linear-gradient(135deg, ${form.coverColor}, ${form.coverColor}99)`, border: '2px solid rgba(245,166,35,0.3)' }}
+              >
+                <span className="text-4xl">✨</span>
+                <p className="font-arabic text-white font-bold text-sm text-center px-3 leading-tight">
+                  {progress.childDetails.childName || '...'}
+                </p>
+                <p className="font-arabic text-white/60 text-xs text-center px-2">{t('step3.book_brand')}</p>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
       {/* Navigation */}
       <div className="flex gap-3">
-        <MagicButton variant="outline" size="lg" onClick={onPrev} icon={<ChevronRight className="w-5 h-5" />}>
-          السابق
+        <MagicButton variant="outline" size="lg" onClick={onPrev} icon={<ChevronRight className="w-5 h-5 nav-icon" />}>
+          {t('wizard.prev_btn')}
         </MagicButton>
         <MagicButton
           id="step3-next-btn"
           fullWidth
           size="lg"
           onClick={handleNext}
-          icon={<ChevronLeft className="w-5 h-5" />}
+          icon={<ChevronLeft className="w-5 h-5 nav-icon" />}
         >
-          التالي — عنوان الشحن
+          {t('step3.next_btn')}
         </MagicButton>
       </div>
     </div>

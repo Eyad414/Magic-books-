@@ -1,4 +1,5 @@
 import HTMLFlipBook from 'react-pageflip';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   text: string;
@@ -48,6 +49,7 @@ const storyData: PageData[] = [
 ];
 
 export default function FlipbookPreview({ text, language = 'ar' }: Props) {
+  const { t } = useTranslation();
   const isRTL = language === 'ar' || language === 'he';
   const coverImageUrl = '/Users/eyad414/.gemini/antigravity/brain/64ff8c80-9c85-4e66-baf0-b3a20edda245/eyad_mirror_world_cover_1777159655080.png';
 
@@ -60,7 +62,7 @@ export default function FlipbookPreview({ text, language = 'ar' }: Props) {
   // Old simple pages structure (not used, kept for reference)
   /*
   const oldPages = [
-    { type: 'cover', content: 'كتابي السحري', blurry: false },
+    { type: 'cover', content: t('nav.home_brand'), blurry: false },
     { type: 'content', content: '...', blurry: false },
     { type: 'content', content: '...', blurry: true },
     { type: 'content', content: '...', blurry: true },
@@ -69,21 +71,23 @@ export default function FlipbookPreview({ text, language = 'ar' }: Props) {
 
   return (
     <div className="w-full flex flex-col items-center justify-center py-6 overflow-hidden" dir="ltr">
-      <div className="relative shadow-2xl">
+      <div className="relative shadow-2xl" style={{ width: '100%', maxWidth: '700px' }}>
         {/* Removed middle spine shadow as requested */}
 
         {/* @ts-ignore */}
         <HTMLFlipBook
-          width={300}
-          height={420}
+          width={250}
+          height={250}
           size="stretch"
-          minWidth={250}
-          maxWidth={400}
-          minHeight={350}
-          maxHeight={550}
+          minWidth={180}
+          maxWidth={280}
+          minHeight={180}
+          maxHeight={280}
           maxShadowOpacity={0.5}
           showCover={true}
           mobileScrollSupport={true}
+          usePortrait={false}
+          flippingTime={1800} // speed of the flip
           className="flipbook-container"
         >
           {dynamicStoryData.map((page) => (
@@ -116,10 +120,10 @@ export default function FlipbookPreview({ text, language = 'ar' }: Props) {
                 </div>
               ) : (
                 <div className="h-full w-full flex items-center justify-center p-4 relative">
-                  {/* Cloud Bubble (SVG-based) */}
+                  {/* Star Shape (SVG-based) */}
                   <div className="relative z-10 w-full max-w-[90%] aspect-square flex items-center justify-center">
-                    <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full text-white fill-current drop-shadow-lg opacity-90">
-                      <path d="M45,75 C45,55 65,45 85,45 C95,30 125,30 140,45 C160,45 180,55 180,75 C195,95 185,130 165,140 C165,160 145,175 120,175 C100,190 60,190 40,175 C20,175 5,160 5,140 C-5,120 10,95 45,75 Z" />
+                    <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full drop-shadow-lg" style={{ opacity: 0.9 }}>
+                      <path d="M100,10 L120,75 L190,75 L135,115 L155,180 L100,145 L45,180 L65,115 L10,75 L80,75 Z" fill="#FFF8E1" stroke="#F5A623" strokeWidth="1.5" />
                     </svg>
                     <div className="relative z-20 px-6 text-center" dir={isRTL ? 'rtl' : 'ltr'}>
                       <p className="font-arabic text-dark-900 text-xs sm:text-sm font-bold leading-relaxed">

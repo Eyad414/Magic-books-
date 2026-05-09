@@ -7,6 +7,10 @@ interface User {
   name: string;
   email: string;
   role: 'user' | 'admin';
+  phone?: string;
+  location?: string;
+  createdAt?: string;
+  lastLoginAt?: string;
 }
 
 interface AuthContextType {
@@ -16,6 +20,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
+  updateUser: (user: User) => void;
   logout: () => void;
 }
 
@@ -58,6 +63,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('mmb_token', data.token);
   };
 
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+  };
+
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -65,7 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, isAuthenticated: !!user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, isLoading, isAuthenticated: !!user, login, register, updateUser, logout }}>
       {children}
     </AuthContext.Provider>
   );

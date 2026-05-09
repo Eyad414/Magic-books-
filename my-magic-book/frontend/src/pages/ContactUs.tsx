@@ -3,8 +3,10 @@ import { contactApi } from '../api/orderApi';
 import MagicButton from '../components/common/MagicButton';
 import { Mail, Phone, Send, MessageCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 export default function ContactUs() {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ name: '', email: '', phone: '', subject: '', message: '' });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -13,10 +15,10 @@ export default function ContactUs() {
     setIsLoading(true);
     try {
       await contactApi.submit(form);
-      toast.success('تم إرسال رسالتك! سيتواصل معك فريقنا قريباً 💌');
+      toast.success(t('contact.toast_success'));
       setForm({ name: '', email: '', phone: '', subject: '', message: '' });
     } catch {
-      toast.error('فشل في إرسال الرسالة — يرجى المحاولة مجدداً');
+      toast.error(t('contact.toast_error'));
     } finally {
       setIsLoading(false);
     }
@@ -27,21 +29,21 @@ export default function ContactUs() {
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-14">
           <h1 className="font-arabic font-black text-white mb-4">
-            <span className="shimmer-text">تواصل معنا</span>
+            <span className="shimmer-text">{t('contact.title')}</span>
           </h1>
           <p className="font-arabic text-white/50 text-lg">
-            نحن هنا لمساعدتك! لا تتردد في التواصل معنا بأي وقت
+            {t('contact.desc')}
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Contact Info */}
           <div className="space-y-5">
-            <h2 className="font-arabic font-bold text-white text-xl">معلومات التواصل</h2>
+            <h2 className="font-arabic font-bold text-white text-xl">{t('contact.info_title')}</h2>
             {[
-              { icon: Mail, label: 'البريد الإلكتروني', value: 'hello@mymagicbook.sa', href: 'mailto:hello@mymagicbook.sa' },
-              { icon: Phone, label: 'رقم الهاتف', value: '+966 50 000 0000', href: 'tel:+966500000000' },
-              { icon: MessageCircle, label: 'واتساب', value: 'تواصل عبر واتساب', href: 'https://wa.me/966500000000' },
+              { icon: Mail, label: t('contact.info_email'), value: 'hello@mymagicbook.sa', href: 'mailto:hello@mymagicbook.sa' },
+              { icon: Phone, label: t('contact.info_phone'), value: '+966 50 000 0000', href: 'tel:+966500000000' },
+              { icon: MessageCircle, label: t('contact.info_whatsapp'), value: t('contact.whatsapp_value'), href: 'https://wa.me/966500000000' },
             ].map((item) => (
               <div key={item.label} className="glass-card p-4 flex items-start gap-4">
                 <div className="w-10 h-10 rounded-xl bg-gold-500/20 flex items-center justify-center flex-shrink-0">
@@ -62,38 +64,35 @@ export default function ContactUs() {
 
             {/* Quick Response */}
             <div className="glass-card p-4">
-              <h3 className="font-arabic font-bold text-white text-sm mb-3">💬 متواجدون دائماً</h3>
-              <p className="font-arabic text-white/50 text-xs leading-relaxed">
-                نعمل على مدار الساعة (24/7) لخدمتكم.<br />
-                سيتم الرد على استفسارك في أقرب وقت ممكن.
-              </p>
+              <h3 className="font-arabic font-bold text-white text-sm mb-3">{t('contact.quick_response_title')}</h3>
+              <p className="font-arabic text-white/50 text-xs leading-relaxed" dangerouslySetInnerHTML={{ __html: t('contact.quick_response_desc') }} />
             </div>
           </div>
 
           {/* Contact Form */}
           <div className="lg:col-span-2 glass-card p-8">
-            <h2 className="font-arabic font-bold text-white text-xl mb-6">أرسل لنا رسالة</h2>
+            <h2 className="font-arabic font-bold text-white text-xl mb-6">{t('contact.form_title')}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-arabic text-white/70 text-sm mb-2">الاسم *</label>
+                  <label className="block font-arabic text-white/70 text-sm mb-2">{t('contact.form_name')}</label>
                   <input
                     id="contact-name"
                     type="text"
                     className="magic-input"
-                    placeholder="اسمك الكامل"
+                    placeholder={t('contact.form_name_ph')}
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     required
                   />
                 </div>
                 <div>
-                  <label className="block font-arabic text-white/70 text-sm mb-2">البريد الإلكتروني *</label>
+                  <label className="block font-arabic text-white/70 text-sm mb-2">{t('contact.form_email')}</label>
                   <input
                     id="contact-email"
                     type="email"
                     className="magic-input"
-                    placeholder="email@example.com"
+                    placeholder={t('contact.form_email_ph')}
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
                     required
@@ -103,18 +102,18 @@ export default function ContactUs() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-arabic text-white/70 text-sm mb-2">رقم الهاتف</label>
+                  <label className="block font-arabic text-white/70 text-sm mb-2">{t('contact.form_phone')}</label>
                   <input
                     id="contact-phone"
                     type="tel"
                     className="magic-input"
-                    placeholder="05XXXXXXXX"
+                    placeholder={t('contact.form_phone_ph')}
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '') })}
                   />
                 </div>
                 <div>
-                  <label className="block font-arabic text-white/70 text-sm mb-2">الموضوع *</label>
+                  <label className="block font-arabic text-white/70 text-sm mb-2">{t('contact.form_subject')}</label>
                   <select
                     id="contact-subject"
                     className="magic-input"
@@ -122,23 +121,23 @@ export default function ContactUs() {
                     onChange={(e) => setForm({ ...form, subject: e.target.value })}
                     required
                   >
-                    <option value="">اختر الموضوع</option>
-                    <option value="استفسار عام">استفسار عام</option>
-                    <option value="مشكلة في الطلب">مشكلة في الطلب</option>
-                    <option value="مشكلة تقنية">مشكلة تقنية</option>
-                    <option value="إلغاء أو استرداد">إلغاء أو استرداد</option>
-                    <option value="اقتراح">اقتراح</option>
-                    <option value="أخرى">أخرى</option>
+                    <option value="">{t('contact.subject_ph')}</option>
+                    <option value="استفسار عام">{t('contact.subject_opt_1')}</option>
+                    <option value="مشكلة في الطلب">{t('contact.subject_opt_2')}</option>
+                    <option value="مشكلة تقنية">{t('contact.subject_opt_3')}</option>
+                    <option value="إلغاء أو استرداد">{t('contact.subject_opt_4')}</option>
+                    <option value="اقتراح">{t('contact.subject_opt_5')}</option>
+                    <option value="أخرى">{t('contact.subject_opt_6')}</option>
                   </select>
                 </div>
               </div>
               <div>
-                <label className="block font-arabic text-white/70 text-sm mb-2">الرسالة *</label>
+                <label className="block font-arabic text-white/70 text-sm mb-2">{t('contact.form_message')}</label>
                 <textarea
                   id="contact-message"
                   className="magic-input resize-none"
                   rows={5}
-                  placeholder="اكتب رسالتك هنا..."
+                  placeholder={t('contact.form_message_ph')}
                   value={form.message}
                   onChange={(e) => setForm({ ...form, message: e.target.value })}
                   required
@@ -152,7 +151,7 @@ export default function ContactUs() {
                 isLoading={isLoading}
                 icon={<Send className="w-4 h-4" />}
               >
-                إرسال الرسالة
+                {t('contact.form_btn')}
               </MagicButton>
             </form>
           </div>

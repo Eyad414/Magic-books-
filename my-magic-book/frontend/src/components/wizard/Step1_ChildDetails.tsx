@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { useStoryProgress } from '../../context/StoryProgressContext';
 import MagicButton from '../common/MagicButton';
 import { User, Baby, ChevronLeft } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 // Props Interface: Defines the properties this component expects to receive from its parent (CreateStory.tsx)
 interface Props { onNext: () => void; }
 
 export default function Step1_ChildDetails({ onNext }: Props) { // To move to the next page in the steps
   const { progress, setChildDetails } = useStoryProgress(); // To save User Choices in the steps
+  const { t } = useTranslation();
   
   // Local State: Manages the form inputs specifically for this step before saving them globally
   const [form, setForm] = useState({
@@ -26,9 +28,9 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
   // Function: Validates that all required fields are filled correctly before proceeding
   const validate = () => {
     const errs: Record<string, string> = {};
-    if (!form.childName.trim()) errs.childName = 'يرجى إدخال اسم الطفل';
-    if (!form.childAge) errs.childAge = 'يرجى تحديد الفئة العمرية';
-    if (wantsPhoto && !form.childPhotoUrl) errs.childPhotoUrl = 'يرجى رفع صورة طفلك للمتابعة';
+    if (!form.childName.trim()) errs.childName = t('step1.err_child_name');
+    if (!form.childAge) errs.childAge = t('step1.err_child_age');
+    if (wantsPhoto && !form.childPhotoUrl) errs.childPhotoUrl = t('step1.err_photo');
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -44,21 +46,21 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
     <div className="space-y-6">
       <div className="text-center">
         <div className="text-5xl mb-3">👶</div>
-        <h2 className="font-arabic font-bold text-white text-xl mb-1">أخبرنا عن طفلك</h2>
-        <p className="font-arabic text-white/50 text-sm">هذه المعلومات ستجعل القصة مخصصة تماماً لطفلك</p>
+        <h2 className="font-arabic font-bold text-white text-xl mb-1">{t('step1.title')}</h2>
+        <p className="font-arabic text-white/50 text-sm">{t('step1.desc')}</p>
       </div>
 
       {/* Name: Input field to capture the hero's name which will be used by AI in the story */}
       <div>
         <label className="block font-arabic text-white/80 text-sm mb-2">
           <User className="w-4 h-4 inline ml-1 text-gold-500" />
-          اسم طفلك *
+          {t('step1.child_name_label')}
         </label>
         <input
           type="text"
           id="child-name-input"
           className="magic-input"
-          placeholder="مثال: محمد، سارة، ريم..."
+          placeholder={t('step1.child_name_placeholder')}
           value={form.childName}
           onChange={(e) => setForm({ ...form, childName: e.target.value })}
           maxLength={30}
@@ -70,14 +72,14 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
       <div>
         <label className="block font-arabic text-white/80 text-sm mb-3">
           <Baby className="w-4 h-4 inline ml-1 text-gold-500" />
-          العمر المناسب
+          {t('step1.child_age_label')}
         </label>
         <div className="grid grid-cols-4 gap-2 sm:gap-3">
           {[
-            { id: '1-3', label: '١-٣ سنوات', emoji: '👶' },
-            { id: '3-5', label: '٣-٥ سنوات', emoji: '🧸' },
-            { id: '5-8', label: '٥-٨ سنوات', emoji: '🎠' },
-            { id: '8-10', label: '٨-١٠ سنوات', emoji: '🏆' },
+            { id: '1-3', label: t('step1.age_1_3'), emoji: '👶' },
+            { id: '3-5', label: t('step1.age_3_5'), emoji: '🧸' },
+            { id: '5-8', label: t('step1.age_5_8'), emoji: '🎠' },
+            { id: '8-10', label: t('step1.age_8_10'), emoji: '🏆' },
           ].map((age) => (
             <button
               key={age.id}
@@ -97,11 +99,11 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
 
       {/* Gender: Determines the pronouns (he/she) and character styling in the generated story */}
       <div>
-        <label className="block font-arabic text-white/80 text-sm mb-3">جنس طفلك</label>
+        <label className="block font-arabic text-white/80 text-sm mb-3">{t('step1.child_gender_label')}</label>
         <div className="grid grid-cols-2 gap-4">
           {[
-            { value: 'male', emoji: '👦', label: 'ولد' },
-            { value: 'female', emoji: '👧', label: 'بنت' },
+            { value: 'male', emoji: '👦', label: t('step1.gender_male') },
+            { value: 'female', emoji: '👧', label: t('step1.gender_female') },
           ].map((option) => (
             <button
               key={option.value}
@@ -123,14 +125,14 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
 
       {/* Photo Upload: Conditional rendering based on user choice */}
       <div>
-        <label className="block font-arabic text-white/80 text-sm mb-3">هل ترغب بإضافة صورة لطفلك؟ (اختياري)</label>
+        <label className="block font-arabic text-white/80 text-sm mb-3">{t('step1.photo_label')}</label>
         <div className="flex gap-4 mb-4">
           <button
             type="button"
             onClick={() => setWantsPhoto(true)}
             className={`flex-1 py-2 rounded-xl border-2 transition-all font-arabic text-sm ${wantsPhoto ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-white/10 text-white/60 hover:border-white/30'}`}
           >
-            نعم، أضف صورة 📸
+            {t('step1.photo_yes')}
           </button>
           <button
             type="button"
@@ -140,28 +142,28 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
             }}
             className={`flex-1 py-2 rounded-xl border-2 transition-all font-arabic text-sm ${!wantsPhoto ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-white/10 text-white/60 hover:border-white/30'}`}
           >
-            لا، تخطى ذلك
+            {t('step1.photo_no')}
           </button>
         </div>
 
         {wantsPhoto && (
           <div className="border-2 border-dashed border-white/20 rounded-xl p-6 text-center hover:bg-white/5 hover:border-gold-500/30 transition-all cursor-pointer relative animate-fade-in">
-             <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={(e) => {
+            <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={(e) => {
                 if (e.target.files?.[0]) {
-                   setForm({...form, childPhotoUrl: URL.createObjectURL(e.target.files[0])});
+                  setForm({...form, childPhotoUrl: URL.createObjectURL(e.target.files[0])});
                 }
-             }} />
-             {form.childPhotoUrl ? (
+            }} />
+            {form.childPhotoUrl ? (
                 <img src={form.childPhotoUrl} alt="Child" className="w-24 h-24 object-cover mx-auto rounded-full border-4 border-gold-500 shadow-gold-glow" />
-             ) : (
+            ) : (
                 <div className="flex flex-col items-center">
-                   <div className="w-12 h-12 rounded-full bg-gold-500/10 flex items-center justify-center mb-2">
+                  <div className="w-12 h-12 rounded-full bg-gold-500/10 flex items-center justify-center mb-2">
                       <span className="text-2xl">📸</span>
-                   </div>
-                   <span className="font-arabic text-sm text-gold-500">ارفع صورة طفلك هنا</span>
-                   <span className="font-arabic text-xs text-white/40 mt-1">سيتم تحويلها لكرتون بضغطة زر</span>
+                  </div>
+                  <span className="font-arabic text-sm text-gold-500">{t('step1.upload_photo')}</span>
+                  <span className="font-arabic text-xs text-white/40 mt-1">{t('step1.photo_hint')}</span>
                 </div>
-             )}
+            )}
           </div>
         )}
         {errors.childPhotoUrl && <p className="text-red-400 text-xs font-arabic mt-2">{errors.childPhotoUrl}</p>}
@@ -171,8 +173,10 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
       {form.childName && (
         <div className="p-4 rounded-xl bg-magic-500/10 border border-magic-500/20">
           <p className="font-arabic text-white/70 text-sm text-center">
-            ✨ سيكون بطل قصتنا: <strong className="text-gold-500">{form.childName}</strong>،{' '}
-            العمر {form.childAge}، {form.childGender === 'male' ? 'ولد شجاع 👦' : 'بنت رائعة 👧'}
+            {form.childGender === 'male'
+              ? <>{t('step1.preview_male')}<strong className="text-gold-500">{form.childName}</strong>{t('step1.preview_male_suffix')}</>
+              : <>{t('step1.preview_female')}<strong className="text-gold-500">{form.childName}</strong>{t('step1.preview_female_suffix')}</>
+            }
           </p>
         </div>
       )}
@@ -182,9 +186,9 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
         fullWidth
         size="lg"
         onClick={handleNext}
-        icon={<ChevronLeft className="w-5 h-5" />}
+        icon={<ChevronLeft className="w-5 h-5 nav-icon" />}
       >
-        التالي — اختر موضوع القصة
+        {t('step1.next_btn')}
       </MagicButton>
     </div>
   );

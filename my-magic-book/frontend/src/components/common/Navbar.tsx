@@ -1,31 +1,26 @@
 import { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Menu, X, BookOpen, User, LogOut, LayoutDashboard, Sparkles, Sun, Moon } from 'lucide-react';
+import { Menu, X, Flame, User, LogOut, LayoutDashboard, Sparkles } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useStoryProgress } from '../../context/StoryProgressContext';
+import LanguageSwitcher from './LanguageSwitcher';
+import { useTranslation } from 'react-i18next';
 
 const navLinks = [
-  { to: '/', label: 'الرئيسية' },
-  { to: '/stories', label: 'القصص' },
-  { to: '/about', label: 'من نحن' },
-  { to: '/contact', label: 'تواصل معنا' },
+  { to: '/', labelKey: 'home' },
+  { to: '/stories', labelKey: 'stories' },
+  { to: '/about', labelKey: 'about' },
+  { to: '/contact', labelKey: 'contact' },
 ];
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [isLightTheme, setIsLightTheme] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
+  const { resetProgress } = useStoryProgress();
   const navigate = useNavigate();
-
-  const toggleTheme = () => {
-    setIsLightTheme(!isLightTheme);
-    if (!isLightTheme) {
-      document.documentElement.classList.add('light-theme');
-    } else {
-      document.documentElement.classList.remove('light-theme');
-    }
-  };
+  const { t } = useTranslation();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -39,6 +34,13 @@ export default function Navbar() {
     setUserMenuOpen(false);
   };
 
+  const handleCreateNewStory = (e: React.MouseEvent) => {
+    e.preventDefault();
+    resetProgress();
+    navigate('/create');
+    setIsOpen(false);
+  };
+
   return (
     <nav
       className={`fixed top-0 right-0 left-0 z-50 transition-all duration-300 ${scrolled
@@ -50,12 +52,12 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-navy-800 to-magic-500 flex items-center justify-center shadow-gold-glow transition-transform group-hover:scale-110">
-              <BookOpen className="w-5 h-5 text-gold-500" />
+            <div className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center transition-transform group-hover:scale-110">
+              <img src="/logo.png" alt="Magic Fanoose" className="w-full h-full object-contain" />
             </div>
             <div className="flex flex-col">
-              <span className="font-arabic font-bold text-gold-500 text-lg leading-tight">كتابي السحري</span>
-              <span className="text-white/40 text-xs leading-tight">My Magic Book</span>
+              <span className="font-arabic font-bold text-gold-500 text-lg leading-tight">{t('nav.home_brand')}</span>
+              <span className="text-white/40 text-xs leading-tight">Magic Fanoose</span>
             </div>
           </Link>
 
@@ -73,21 +75,22 @@ export default function Navbar() {
                   }`
                 }
               >
-                {link.label}
+                {t(`nav.${link.labelKey}`)}
               </NavLink>
             ))}
           </div>
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
-            <Link
-              to="/create"
+            <LanguageSwitcher />
+            <button
               id="navbar-create-btn"
+              onClick={handleCreateNewStory}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-l from-gold-500 to-gold-600 text-dark-900 font-arabic font-bold text-sm transition-all duration-300 hover:shadow-gold-glow hover:-translate-y-0.5"
             >
               <Sparkles className="w-4 h-4" />
-              <span>ابدأ قصتك</span>
-            </Link>
+              <span>{t('nav.create_story')}</span>
+            </button>
 
             {isAuthenticated ? (
               <div className="relative">
@@ -110,14 +113,14 @@ export default function Navbar() {
                       onClick={() => setUserMenuOpen(false)}
                     >
                       <LayoutDashboard className="w-4 h-4" />
-                      لوحة التحكم
+                      {t('nav.dashboard')}
                     </Link>
                     <button
                       onClick={handleLogout}
                       className="w-full flex items-center gap-3 px-4 py-3 text-sm font-arabic text-red-400 hover:bg-red-500/10 transition-colors"
                     >
                       <LogOut className="w-4 h-4" />
-                      تسجيل الخروج
+                      {t('nav.logout')}
                     </button>
                   </div>
                 )}
@@ -128,27 +131,18 @@ export default function Navbar() {
                 id="navbar-login-btn"
                 className="px-4 py-2.5 rounded-xl border border-gold-500/40 text-gold-500 font-arabic font-medium text-sm hover:bg-gold-500/10 transition-all"
               >
-                تسجيل الدخول
+                {t('nav.login')}
               </Link>
             )}
 
-            {/* Theme Toggle & Language */}
-            <div className="flex items-center gap-4 border-r border-white/10 pr-4 mr-2">
-              <button 
-                onClick={toggleTheme} 
-                className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/80 hover:text-gold-500 hover:border-gold-500/40 transition-all" 
-                title="تغيير المظهر"
-              >
-                {isLightTheme ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-              </button>
-            </div>
+
           </div>
 
           {/* Mobile Menu Toggle */}
           <button
             className="md:hidden p-2 rounded-xl text-white/80 hover:text-gold-500 hover:bg-white/5"
             onClick={() => setIsOpen(!isOpen)}
-            aria-label="قائمة التنقل"
+            aria-label={t('nav.menu_label')}
           >
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -160,14 +154,9 @@ export default function Navbar() {
         <div className="md:hidden bg-dark-900/98 backdrop-blur-xl border-t border-white/10">
           <div className="px-4 py-4 space-y-2">
             
-            {/* Settings Mobile */}
-            <div className="flex items-center justify-center mb-4 border-b border-white/10 pb-4 pt-2">
-              <button onClick={toggleTheme} className="text-white/80 hover:text-gold-500 transition-colors flex items-center gap-2">
-                <span className="font-arabic text-sm text-white/50">{isLightTheme ? 'الوضع المظلم' : 'الوضع الفاتح'}</span>
-                {isLightTheme ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-              </button>
+            <div className="flex justify-end pb-2 mb-2 border-b border-white/5">
+              <LanguageSwitcher />
             </div>
-
             {navLinks.map((link) => (
               <NavLink
                 key={link.to}
@@ -179,28 +168,27 @@ export default function Navbar() {
                   }`
                 }
               >
-                {link.label}
+                {t(`nav.${link.labelKey}`)}
               </NavLink>
             ))}
-            <Link
-              to="/create"
-              onClick={() => setIsOpen(false)}
-              className="block px-4 py-3 rounded-xl bg-gold-500 text-dark-900 font-arabic font-bold text-center"
+            <button
+              onClick={handleCreateNewStory}
+              className="w-full block px-4 py-3 rounded-xl bg-gold-500 text-dark-900 font-arabic font-bold text-center"
             >
-              ✨ ابدأ قصتك الآن
-            </Link>
+              ✨ {t('home.final_cta_btn')}
+            </button>
             {isAuthenticated ? (
               <>
-                <Link to="/dashboard" onClick={() => setIsOpen(false)} className="block px-4 py-3 rounded-xl text-white/80 font-arabic">
-                  لوحة التحكم
+                <Link to="/dashboard" onClick={() => setIsOpen(false)} className="block px-4 py-3 rounded-xl text-white/80 font-arabic text-right">
+                  {t('nav.dashboard')}
                 </Link>
                 <button onClick={handleLogout} className="block w-full px-4 py-3 rounded-xl text-red-400 font-arabic text-right">
-                  تسجيل الخروج
+                  {t('nav.logout')}
                 </button>
               </>
             ) : (
               <Link to="/login" onClick={() => setIsOpen(false)} className="block px-4 py-3 rounded-xl border border-gold-500/40 text-gold-500 font-arabic text-center">
-                تسجيل الدخول
+                {t('nav.login')}
               </Link>
             )}
           </div>
@@ -209,3 +197,4 @@ export default function Navbar() {
     </nav>
   );
 }
+

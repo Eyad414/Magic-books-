@@ -11,7 +11,25 @@ import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
+import AdminDashboard from './pages/AdminDashboard';
+import AccessibilityWidget from './components/common/AccessibilityWidget';
+
+import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+
 export default function App() {
+  const { i18n } = useTranslation();
+
+  useEffect(() => {
+    // Determine the direction
+    const dir = i18n.dir();
+    document.documentElement.dir = dir;
+    document.documentElement.lang = i18n.language;
+
+    // Apply language-specific class to body/html for font styling
+    document.documentElement.className = `lang-${i18n.language.split('-')[0]}`;
+  }, [i18n.language]);
+
   return (
     <>
       <Toaster
@@ -22,8 +40,8 @@ export default function App() {
             color: '#e8eaf6',
             border: '1px solid rgba(245,166,35,0.3)',
             borderRadius: '12px',
-            fontFamily: 'Noto Kufi Arabic, sans-serif',
-            direction: 'rtl',
+            fontFamily: i18n.language.startsWith('ar') ? 'Noto Kufi Arabic, sans-serif' : 'Inter, sans-serif',
+            direction: i18n.dir(),
           },
           success: {
             iconTheme: { primary: '#F5A623', secondary: '#0D0F1A' },
@@ -42,10 +60,12 @@ export default function App() {
           <Route path="contact" element={<ContactUs />} />
           <Route path="policy" element={<Policy />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="admin" element={<AdminDashboard />} />
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
       </Routes>
+      <AccessibilityWidget />
     </>
   );
 }

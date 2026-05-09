@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import MagicButton from '../components/common/MagicButton';
 import { BookOpen, Mail, Lock, User, Eye, EyeOff, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 export default function Register() {
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
@@ -11,24 +12,25 @@ export default function Register() {
   const [isLoading, setIsLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (form.password !== form.confirmPassword) {
-      toast.error('كلمتا المرور غير متطابقتين');
+      toast.error(t('auth.passwords_not_match'));
       return;
     }
     if (form.password.length < 6) {
-      toast.error('كلمة المرور يجب أن تكون ٦ أحرف على الأقل');
+      toast.error(t('auth.password_min_length'));
       return;
     }
     setIsLoading(true);
     try {
       await register(form.name, form.email, form.password);
-      toast.success(`مرحباً ${form.name}! تم إنشاء حسابك ✨`);
+      toast.success(t('auth.register_success').replace('{name}', form.name));
       navigate('/create');
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'فشل في إنشاء الحساب');
+      toast.error(err?.response?.data?.message || t('auth.register_error'));
     } finally {
       setIsLoading(false);
     }
@@ -46,26 +48,26 @@ export default function Register() {
             <BookOpen className="w-6 h-6 text-gold-500" />
           </div>
           <div>
-            <div className="font-arabic font-black text-gold-500 text-xl">كتابي السحري</div>
+            <div className="font-arabic font-black text-gold-500 text-xl">{t('nav.home_brand')}</div>
           </div>
         </Link>
 
         <div className="glass-card p-8">
           <div className="text-center mb-8">
-            <h1 className="font-arabic font-black text-white text-2xl mb-2">أنشئ حسابك</h1>
-            <p className="font-arabic text-white/50 text-sm">انضم وابدأ رحلة القصص السحرية</p>
+            <h1 className="font-arabic font-black text-white text-2xl mb-2">{t('auth.create_account_title')}</h1>
+            <p className="font-arabic text-white/50 text-sm">{t('auth.register_desc')}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block font-arabic text-white/70 text-sm mb-2">الاسم الكامل</label>
+              <label className="block font-arabic text-white/70 text-sm mb-2">{t('auth.full_name')}</label>
               <div className="relative">
                 <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                 <input
                   id="register-name"
                   type="text"
                   className="magic-input pr-10"
-                  placeholder="اسمك الكامل"
+                  placeholder={t('auth.full_name')}
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   required
@@ -73,7 +75,7 @@ export default function Register() {
               </div>
             </div>
             <div>
-              <label className="block font-arabic text-white/70 text-sm mb-2">البريد الإلكتروني</label>
+              <label className="block font-arabic text-white/70 text-sm mb-2">{t('auth.email')}</label>
               <div className="relative">
                 <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                 <input
@@ -89,14 +91,14 @@ export default function Register() {
               </div>
             </div>
             <div>
-              <label className="block font-arabic text-white/70 text-sm mb-2">كلمة المرور</label>
+              <label className="block font-arabic text-white/70 text-sm mb-2">{t('auth.password')}</label>
               <div className="relative">
                 <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                 <input
                   id="register-password"
                   type={showPassword ? 'text' : 'password'}
                   className="magic-input pr-10 pl-10"
-                  placeholder="٦ أحرف على الأقل"
+                  placeholder="******"
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   required
@@ -111,14 +113,14 @@ export default function Register() {
               </div>
             </div>
             <div>
-              <label className="block font-arabic text-white/70 text-sm mb-2">تأكيد كلمة المرور</label>
+              <label className="block font-arabic text-white/70 text-sm mb-2">{t('auth.confirm_password')}</label>
               <div className="relative">
                 <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                 <input
                   id="register-confirm-password"
                   type={showPassword ? 'text' : 'password'}
                   className="magic-input pr-10"
-                  placeholder="أعد كلمة المرور"
+                  placeholder={t('auth.confirm_password')}
                   value={form.confirmPassword}
                   onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
                   required
@@ -135,14 +137,14 @@ export default function Register() {
               icon={<Sparkles className="w-4 h-4" />}
               className="mt-2"
             >
-              إنشاء الحساب
+              {t('auth.register_btn')}
             </MagicButton>
           </form>
 
           <p className="font-arabic text-white/40 text-sm text-center mt-6">
-            لديك حساب بالفعل؟{' '}
+            {t('auth.have_account')}
             <Link to="/login" className="text-gold-500 hover:underline font-bold">
-              سجّل دخولك
+              {t('auth.login_link')}
             </Link>
           </p>
         </div>

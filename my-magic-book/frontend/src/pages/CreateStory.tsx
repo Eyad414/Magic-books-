@@ -5,18 +5,20 @@ import Step3_BookCustomizer from '../components/wizard/Step3_BookCustomizer';
 import Step4_ShippingAddress from '../components/wizard/Step4_ShippingAddress';
 import Step5_OrderReview from '../components/wizard/Step5_OrderReview';
 import { CheckCircle } from 'lucide-react';
-
-const STEPS = [
-  { number: 1, label: 'تفاصيل الطفل', emoji: '👶' },
-  { number: 2, label: 'توليد القصة', emoji: '✨' },
-  { number: 3, label: 'تخصيص الكتاب', emoji: '🎨' },
-  { number: 4, label: 'عنوان الشحن', emoji: '📦' },
-  { number: 5, label: 'مراجعة الطلب', emoji: '🚀' },
-];
+import { useTranslation } from 'react-i18next';
 
 export default function CreateStory() {
   const { progress, setStep } = useStoryProgress();
   const currentStep = progress.currentStep;
+  const { t } = useTranslation();
+
+  const STEPS = [
+    { number: 1, label: t('wizard.step1_label'), emoji: '👶' },
+    { number: 2, label: t('wizard.step2_label'), emoji: '✨' },
+    { number: 3, label: t('wizard.step3_label'), emoji: '🎨' },
+    { number: 4, label: t('wizard.step4_label'), emoji: '📦' },
+    { number: 5, label: t('wizard.step5_label'), emoji: '🚀' },
+  ];
 
   const goNext = () => {
     if (currentStep < 5) setStep(currentStep + 1);
@@ -32,9 +34,9 @@ export default function CreateStory() {
         {/* Header */}
         <div className="text-center mb-10">
           <h1 className="font-arabic font-black text-white mb-2">
-            ابنِ <span className="shimmer-text">قصتك السحرية</span>
+            {t('wizard.build')} <span className="shimmer-text">{t('wizard.your_magic_story')}</span>
           </h1>
-          <p className="font-arabic text-white/50">أكمل الخطوات الخمس لإنشاء كتاب مخصص لطفلك</p>
+          <p className="font-arabic text-white/50">{t('wizard.header_desc')}</p>
         </div>
 
         {/* Step Progress */}
@@ -84,7 +86,8 @@ export default function CreateStory() {
 
           {/* Step counter */}
           <p className="text-center font-arabic text-white/40 text-sm mt-3">
-            الخطوة {currentStep} من {STEPS.length} — {STEPS[currentStep - 1].label}
+            {t('wizard.step_x_of_y').replace('{current}', String(currentStep)).replace('{total}', String(STEPS.length))}
+            {STEPS[currentStep - 1].label}
           </p>
         </div>
 

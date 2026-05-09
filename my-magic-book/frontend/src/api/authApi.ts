@@ -15,4 +15,8 @@ export const authApi = {
     });
     return data;
   },
+  makeMeAdmin: async () => {
+    const { data } = await api.put('/auth/make-admin');
+    return data;
+  },
 };

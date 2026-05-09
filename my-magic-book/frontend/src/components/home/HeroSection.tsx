@@ -1,7 +1,19 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, Star, ArrowLeft } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { useStoryProgress } from '../../context/StoryProgressContext';
 
 export default function HeroSection() {
+  const { t } = useTranslation();
+  const { resetProgress } = useStoryProgress();
+  const navigate = useNavigate();
+
+  const handleStartStory = (e: React.MouseEvent) => {
+    e.preventDefault();
+    resetProgress();
+    navigate('/create');
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
       {/* Radial background glow */}
@@ -16,54 +28,54 @@ export default function HeroSection() {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold-500/10 border border-gold-500/30 text-gold-500 font-arabic text-sm mb-6">
               <Sparkles className="w-4 h-4 animate-sparkle" />
-              <span>مدعوم بالذكاء الاصطناعي ✨</span>
+              <span>{t('hero.ai_powered')}</span>
             </div>
 
             <h1 className="font-arabic font-black text-white mb-6">
-              اصنع{' '}
-              <span className="shimmer-text">قصة سحرية</span>
+              {t('hero.create')}{' '}
+              <span className="shimmer-text">{t('hero.magic_story')}</span>
               <br />
-              مخصصة لطفلك
+              {t('hero.for_your_child')}
             </h1>
 
             <p className="font-arabic text-white/60 text-lg md:text-xl leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0">
-              اصنع كتاب طفلك بشخصية كرتونية بأفضل جودة، وسيكتب الذكاء الاصطناعي قصة مخصصة لك - تُطبع وتُشحن إلى باب منزلك! 🚀📚
+              {t('hero.description')}
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-end gap-4">
-              <Link
-                to="/create"
+              <button
                 id="hero-cta-btn"
+                onClick={handleStartStory}
                 className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-l from-gold-500 to-gold-600 text-dark-900 font-arabic font-black text-lg transition-all duration-300 hover:shadow-gold-glow hover:-translate-y-1 group"
               >
                 <Sparkles className="w-5 h-5 group-hover:animate-sparkle" />
-                <span>ابدأ قصتك السحرية</span>
-              </Link>
+                <span>{t('hero.start_magic_story')}</span>
+              </button>
               <Link
                 to="/stories"
                 id="hero-stories-btn"
                 className="flex items-center gap-2 px-6 py-4 rounded-2xl border border-white/20 text-white/80 font-arabic font-medium text-lg hover:border-gold-500/40 hover:text-gold-500 transition-all"
               >
-                <span>استعرض القصص</span>
-                <ArrowLeft className="w-4 h-4" />
+                <span>{t('hero.browse_stories')}</span>
+                <ArrowLeft className="w-4 h-4 rtl:rotate-0 ltr:rotate-180 transition-transform" />
               </Link>
             </div>
 
             {/* Stats */}
             <div className="flex items-center justify-center lg:justify-end gap-8 mt-10">
               {[
-                { value: '+٥٠٠', label: 'قصة مُنشأة' },
-                { value: '+١٠٠', label: 'عائلة سعيدة' },
-                { value: '٥ ⭐', label: 'تقييم متوسط' },
+                { value: '+500', label: t('hero.stats_stories_created') },
+                { value: '+100', label: t('hero.stats_happy_families') },
+                { value: '+20', label: t('hero.stats_ready_stories') },
+                { value: '5 ⭐', label: t('hero.stats_rating') },
               ].map((stat) => (
                 <div key={stat.label} className="text-center">
-                  <div className="font-arabic font-black text-gold-500 text-2xl">{stat.value}</div>
+                  <div className="font-arabic font-black text-gold-500 text-2xl" dir="ltr">{stat.value}</div>
                   <div className="font-arabic text-white/40 text-xs mt-1">{stat.label}</div>
                 </div>
               ))}
             </div>
           </div>
-
           {/* Floating Book Illustration */}
           <div className="flex items-center justify-center animate-float">
             <div className="relative">
@@ -90,12 +102,11 @@ export default function HeroSection() {
                       </div>
                     </div>
                     <div className="border-t border-white/10 pt-4">
-                      <div className="text-gold-500 font-arabic text-sm font-bold">📖 قصة مخصصة</div>
+                      <div className="text-gold-500 font-arabic text-sm font-bold">{t('hero.custom_story')}</div>
                       <div className="h-2 bg-white/10 rounded-full w-1/2 mt-2" />
                     </div>
                   </div>
                 </div>
-
                 {/* Floating sparkles */}
                 {[
                   { top: '-12px', right: '-12px', delay: '0s', size: 'w-8 h-8' },
@@ -116,12 +127,12 @@ export default function HeroSection() {
           </div>
         </div>
       </div>
-
       {/* Scroll indicator */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/30 animate-bounce-slow">
-        <span className="font-arabic text-xs">اكتشف المزيد</span>
+        <span className="font-arabic text-xs">{t('hero.discover_more')}</span>
         <div className="w-0.5 h-8 bg-gradient-to-b from-white/20 to-transparent" />
       </div>
     </section>
   );
 }
+

@@ -1,62 +1,65 @@
 import { Star, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-const bestSellers = [
-  {
-    id: 1,
-    title: 'بطل الفضاء',
-    theme: 'space',
-    emoji: '🚀',
-    description: 'رحلة مثيرة في أعماق الكون بحثاً عن نجم ضائع',
-    rating: 4.9,
-    reviews: 128,
-    price: 99,
-    tag: 'الأكثر مبيعاً',
-    colors: ['#1a237e', '#311b92'],
-    age: '٤-١٢ سنة',
-  },
-  {
-    id: 2,
-    title: 'أميرة الغابة',
-    theme: 'forest',
-    emoji: '🌿',
-    description: 'مغامرة ساحرة في غابة سرية مليئة بالحيوانات الناطقة',
-    rating: 4.8,
-    reviews: 94,
-    price: 99,
-    tag: 'جديد',
-    colors: ['#1b5e20', '#2e7d32'],
-    age: '٣-١٠ سنة',
-  },
-  {
-    id: 3,
-    title: 'البطل الخارق',
-    theme: 'superhero',
-    emoji: '⚡',
-    description: 'يكتشف طفلك قوى خارقة ويصبح منقذ المدينة',
-    rating: 5.0,
-    reviews: 76,
-    price: 99,
-    tag: 'مميز',
-    colors: ['#4a148c', '#6a1b9a'],
-    age: '٥-١٢ سنة',
-  },
-  {
-    id: 4,
-    title: 'مغامرة المحيط',
-    theme: 'ocean',
-    emoji: '🌊',
-    description: 'رحلة تحت الماء مع أصدقاء البحر الودودين',
-    rating: 4.7,
-    reviews: 61,
-    price: 99,
-    tag: '',
-    colors: ['#006064', '#00838f'],
-    age: '٢-٩ سنة',
-  },
-];
+import { useTranslation } from 'react-i18next';
 
 export default function BestSellers() {
+  const { t } = useTranslation();
+
+  const bestSellers = [
+    {
+      id: 1,
+      title: t('bestsellers.books.1.title'),
+      theme: 'space',
+      emoji: '🚀',
+      description: t('bestsellers.books.1.desc'),
+      rating: 4.9,
+      reviews: 128,
+      price: 65,
+      tag: t('bestsellers.tag_best_seller'),
+      colors: ['#1a237e', '#311b92'],
+      age: t('bestsellers.books.1.age'),
+    },
+    {
+      id: 2,
+      title: t('bestsellers.books.2.title'),
+      theme: 'forest',
+      emoji: '🌿',
+      description: t('bestsellers.books.2.desc'),
+      rating: 4.8,
+      reviews: 94,
+      price: 65,
+      tag: t('bestsellers.tag_new'),
+      colors: ['#1b5e20', '#2e7d32'],
+      age: t('bestsellers.books.2.age'),
+    },
+    {
+      id: 3,
+      title: t('bestsellers.books.3.title'),
+      theme: 'superhero',
+      emoji: '⚡',
+      description: t('bestsellers.books.3.desc'),
+      rating: 5.0,
+      reviews: 76,
+      price: 65,
+      tag: t('bestsellers.tag_featured'),
+      colors: ['#4a148c', '#6a1b9a'],
+      age: t('bestsellers.books.3.age'),
+    },
+    {
+      id: 4,
+      title: t('bestsellers.books.4.title'),
+      theme: 'ocean',
+      emoji: '🌊',
+      description: t('bestsellers.books.4.desc'),
+      rating: 4.7,
+      reviews: 61,
+      price: 65,
+      tag: '',
+      colors: ['#006064', '#00838f'],
+      age: t('bestsellers.books.4.age'),
+    },
+  ];
+
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -65,14 +68,14 @@ export default function BestSellers() {
           <div>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold-500/10 border border-gold-500/30 text-gold-500 font-arabic text-sm mb-4">
               <TrendingUp className="w-4 h-4" />
-              <span>الأكثر طلباً</span>
+              <span>{t('bestsellers.badge')}</span>
             </div>
             <h2 className="font-arabic font-black text-white">
-              قصص <span className="shimmer-text">يحبها الأطفال</span>
+              {t('bestsellers.stories')} <span className="shimmer-text">{t('bestsellers.kids_love')}</span>
             </h2>
           </div>
           <Link to="/stories" className="font-arabic text-gold-500 text-sm hover:underline hidden sm:block">
-            عرض الكل ←
+            {t('bestsellers.view_all')}
           </Link>
         </div>
 
@@ -118,7 +121,7 @@ export default function BestSellers() {
                   id={`bestseller-cta-${book.id}`}
                   className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gold-500/10 border border-gold-500/30 text-gold-500 font-arabic font-bold text-sm hover:bg-gold-500/20 transition-all"
                 >
-                  اطلب مخصصاً ✨
+                  {t('bestsellers.order_custom')} ✨
                 </Link>
               </div>
             </div>

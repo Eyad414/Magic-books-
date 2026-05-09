@@ -1,9 +1,11 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, Heart, Mail, Phone, MapPin } from 'lucide-react';
+import { Flame, Heart, Mail, Phone, MapPin } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function Footer() {
   const location = useLocation();
+  const { t } = useTranslation();
 
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, to: string) => {
     const [path, hash] = to.split('#');
@@ -28,13 +30,13 @@ export default function Footer() {
           {/* Brand */}
           <div className="md:col-span-1">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-navy-800 to-magic-500 flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-gold-500" />
+              <div className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center">
+                <img src="/logo.png" alt="Magic Fanoose" className="w-full h-full object-contain" />
               </div>
-              <span className="font-arabic font-bold text-gold-500 text-lg">كتابي السحري</span>
+              <span className="font-arabic font-bold text-gold-500 text-lg">{t('nav.home_brand')}</span>
             </div>
             <p className="text-white/50 text-sm font-arabic leading-relaxed">
-              اصنع قصة سحرية مخصصة لطفلك مع الذكاء الاصطناعي. قصص تُطبع وتُشحن إلى باب منزلك.
+              {t('footer.description')}
             </p>
             <div className="flex items-center gap-3 mt-5">
               <a href="https://instagram.com/mymagicbook.sa" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-gold-500 hover:border-gold-500/40 transition-all">
@@ -62,13 +64,13 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="font-arabic font-bold text-white mb-4 text-sm">روابط سريعة</h3>
+            <h3 className="font-arabic font-bold text-white mb-4 text-sm">{t('footer.quick_links')}</h3>
             <ul className="space-y-2">
               {[
-                { to: '/', label: 'الرئيسية' },
-                { to: '/stories', label: 'القصص' },
-                { to: '/create', label: 'ابدأ قصتك' },
-                { to: '/about', label: 'من نحن' },
+                { to: '/', label: t('nav.home') },
+                { to: '/stories', label: t('nav.stories') },
+                { to: '/create', label: t('nav.create_story') },
+                { to: '/about', label: t('nav.about') },
               ].map((link) => (
                 <li key={link.to}>
                   <Link 
@@ -85,14 +87,13 @@ export default function Footer() {
 
           {/* Legal */}
           <div>
-            <h3 className="font-arabic font-bold text-white mb-4 text-sm">السياسات والشروط</h3>
+            <h3 className="font-arabic font-bold text-white mb-4 text-sm">{t('footer.legal_title')}</h3>
             <ul className="space-y-2">
               {[
-                { to: '/policy', label: 'سياسة الخصوصية' },
-                { to: '/policy#terms', label: 'شروط الاستخدام' },
-                { to: '/policy#refund', label: 'سياسة الاسترداد' },
-                { to: '/policy#payment', label: 'سياسة الدفع' },
-                { to: '/policy#data-deletion', label: 'حذف البيانات' },
+                { to: '/policy', label: t('footer.privacy') },
+                { to: '/policy#terms', label: t('footer.terms') },
+                { to: '/policy#payment', label: t('footer.payment_policy') },
+                { to: '/policy#data-deletion', label: t('footer.data_deletion') },
               ].map((link) => (
                 <li key={link.to}>
                   <Link 
@@ -109,7 +110,7 @@ export default function Footer() {
 
           {/* Contact */}
           <div>
-            <h3 className="font-arabic font-bold text-white mb-4 text-sm">تواصل معنا</h3>
+            <h3 className="font-arabic font-bold text-white mb-4 text-sm">{t('footer.contact_title')}</h3>
             <ul className="space-y-3">
               <li className="flex items-center gap-3 text-white/50 text-sm font-arabic">
                 <Mail className="w-4 h-4 text-gold-500 flex-shrink-0" />
@@ -121,7 +122,7 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-3 text-white/50 text-sm font-arabic">
                 <MapPin className="w-4 h-4 text-gold-500 flex-shrink-0" />
-                <span>القدس</span>
+                <span>Jerusalem</span>
               </li>
             </ul>
           </div>
@@ -129,10 +130,10 @@ export default function Footer() {
 
         <div className="border-t border-white/10 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-white/30 text-sm font-arabic">
-            © ٢٠٢٦ كتابي السحري. جميع الحقوق محفوظة.
+            {t('footer.copyright')}
           </p>
           <p className="text-white/30 text-sm font-arabic flex items-center gap-1">
-            صُنع بـ <Heart className="w-3 h-3 text-gold-500 mx-1 inline" /> للأطفال في كل مكان
+            {t('footer.made_with')} <Heart className="w-3 h-3 text-gold-500 mx-1 inline" /> {t('footer.for_kids')}
           </p>
         </div>
       </div>

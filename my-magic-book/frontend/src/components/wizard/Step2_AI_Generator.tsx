@@ -1,31 +1,41 @@
 import { useState } from 'react';
 import { useStoryProgress } from '../../context/StoryProgressContext';
 import MagicButton from '../common/MagicButton';
-import { Sparkles, ChevronLeft, ChevronRight, Globe } from 'lucide-react';
+import { Sparkles, ChevronLeft, ChevronRight, Globe, ChevronDown, ChevronUp } from 'lucide-react';
 import FlipbookPreview from './FlipbookPreview';
 import { storyApi } from '../../api/storyApi';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 // Props Interface: Defines navigation callbacks passed from the parent wizard container
 interface Props { onNext: () => void; onPrev: () => void; }
 
-// Constant: Array defining all available story themes, their emojis, and labels
-const THEMES = [
-  { id: 'adventure', emoji: '🗺️', label: 'مغامرة', desc: 'استكشاف ومغامرات مثيرة' },
-  { id: 'space', emoji: '🚀', label: 'الفضاء', desc: 'رحلات بين النجوم والكواكب' },
-  { id: 'ocean', emoji: '🌊', label: 'المحيط', desc: 'عالم تحت الماء الساحر' },
-  { id: 'forest', emoji: '🌿', label: 'الغابة', desc: 'حيوانات ناطقة وأسرار' },
-  { id: 'princess', emoji: '👸', label: 'الأميرة', desc: 'قصور وأميرات ومغامرات' },
-  { id: 'superhero', emoji: '⚡', label: 'البطل الخارق', desc: 'قوى خارقة وبطولات' },
-  { id: 'animals', emoji: '🦁', label: 'الحيوانات', desc: 'حيوانات أليفة ووحشية' },
-  { id: 'custom', emoji: '✏️', label: 'موضوع خاص', desc: 'اختر موضوعك الخاص' },
-];
-
-
+const INITIAL_THEME_COUNT = 8;
 
 export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To move to the next page in the steps
   const { progress, setStoryConfig } = useStoryProgress(); // To save User Choices in the steps
-  
+  const { t } = useTranslation();
+
+  // Constant: Array defining all available story themes, their emojis, and labels
+  const THEMES = [
+    { id: 'adventure', emoji: '🗺️', label: t('step2.theme_adventure'), desc: t('step2.theme_adventure_desc') },
+    { id: 'space', emoji: '🚀', label: t('step2.theme_space'), desc: t('step2.theme_space_desc') },
+    { id: 'ocean', emoji: '🌊', label: t('step2.theme_ocean'), desc: t('step2.theme_ocean_desc') },
+    { id: 'forest', emoji: '🌿', label: t('step2.theme_forest'), desc: t('step2.theme_forest_desc') },
+    { id: 'princess', emoji: '👸', label: t('step2.theme_princess'), desc: t('step2.theme_princess_desc') },
+    { id: 'superhero', emoji: '⚡', label: t('step2.theme_superhero'), desc: t('step2.theme_superhero_desc') },
+    { id: 'animals', emoji: '🦁', label: t('step2.theme_animals'), desc: t('step2.theme_animals_desc') },
+    { id: 'dinosaurs', emoji: '🦕', label: t('step2.theme_dinosaurs'), desc: t('step2.theme_dinosaurs_desc') },
+    { id: 'pirates', emoji: '🏴‍☠️', label: t('step2.theme_pirates'), desc: t('step2.theme_pirates_desc') },
+    { id: 'robots', emoji: '🤖', label: t('step2.theme_robots'), desc: t('step2.theme_robots_desc') },
+    { id: 'magic', emoji: '🧙', label: t('step2.theme_magic'), desc: t('step2.theme_magic_desc') },
+    { id: 'sports', emoji: '⚽', label: t('step2.theme_sports'), desc: t('step2.theme_sports_desc') },
+    { id: 'cooking', emoji: '👨‍🍳', label: t('step2.theme_cooking'), desc: t('step2.theme_cooking_desc') },
+    { id: 'music', emoji: '🎵', label: t('step2.theme_music'), desc: t('step2.theme_music_desc') },
+    { id: 'custom', emoji: '✏️', label: t('step2.theme_custom'), desc: t('step2.theme_custom_desc') },
+  ];
+
+
   // Local State: Stores the selected theme, language and any custom notes
   const [form, setForm] = useState({
     theme: progress.storyConfig.theme || 'adventure',
@@ -41,6 +51,10 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
   
   // Local State: Stores the unique database ID for the newly created story instance
   const [storyId, setStoryId] = useState(progress.storyConfig.storyId || '');
+
+  // Local State: Controls whether all themes are visible or just the initial set
+  const [showAllThemes, setShowAllThemes] = useState(false);
+  const visibleThemes = showAllThemes ? THEMES : THEMES.slice(0, INITIAL_THEME_COUNT);
 
   // Function: Creates the story in the database and triggers the AI text generation via backend API
   const generateStory = async () => {
@@ -59,13 +73,13 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
       const text = genRes.story.generatedText || '';
       setGeneratedText(text);
       setStoryConfig({ ...form, generatedText: text, storyId: newStoryId });
-      toast.success('تم توليد القصة بنجاح! ✨');
+      toast.success(t('step2.gen_success'));
     } catch (err: any) {
       // Use mock story if API not connected
       const mockText = getMockPreview(progress.childDetails.childName || 'طفلك', form.theme);
       setGeneratedText(mockText);
       setStoryConfig({ ...form, generatedText: mockText });
-      toast.success('تم توليد القصة! ✨', { icon: '📖' });
+      toast.success(t('step2.gen_success'), { icon: '📖' });
     } finally {
       setIsGenerating(false);
     }
@@ -74,7 +88,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
   // Function: Ensures text is properly generated before allowing the user to proceed to Step 3
   const handleNext = () => {
     if (!generatedText) {
-      toast.error('يرجى توليد القصة أولاً');
+      toast.error(t('step2.err_not_generated'));
       return;
     }
     setStoryConfig({ ...form, generatedText, storyId });
@@ -86,15 +100,15 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
     <div className="space-y-6">
       <div className="text-center">
         <div className="text-5xl mb-3">✨</div>
-        <h2 className="font-arabic font-bold text-white text-xl mb-1">اختر موضوع قصتك</h2>
-        <p className="font-arabic text-white/50 text-sm">الذكاء الاصطناعي سيكتب قصة مخصصة لـ {progress.childDetails.childName}</p>
+        <h2 className="font-arabic font-bold text-white text-xl mb-1">{t('step2.title')}</h2>
+        <p className="font-arabic text-white/50 text-sm">{t('step2.desc').replace('{name}', progress.childDetails.childName || '')}</p>
       </div>
 
       {/* Theme Selection: Core subject/plot that the AI will use to build the child's story */}
       <div>
-        <label className="block font-arabic text-white/80 text-sm mb-3">🎭 موضوع القصة</label>
+        <label className="block font-arabic text-white/80 text-sm mb-3">{t('step2.theme_label')}</label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {THEMES.map((theme) => (
+          {visibleThemes.map((theme) => (
             <button
               key={theme.id}
               id={`theme-${theme.id}`}
@@ -105,18 +119,30 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
                   : 'border-white/10 hover:border-white/30'
                 }`}
             >
-              <span className="text-2xl">{theme.emoji}</span>
               <span className={`font-arabic font-bold text-xs ${form.theme === theme.id ? 'text-gold-500' : 'text-white/70'}`}>
-                {theme.label}
+                {theme.label} {theme.emoji}
               </span>
             </button>
           ))}
         </div>
+        {THEMES.length > INITIAL_THEME_COUNT && (
+          <button
+            type="button"
+            onClick={() => setShowAllThemes(!showAllThemes)}
+            className="flex items-center justify-center gap-2 w-full mt-3 py-2.5 rounded-xl border border-white/10 hover:border-gold-500/40 hover:bg-gold-500/5 text-white/60 hover:text-gold-500 transition-all"
+          >
+            {showAllThemes ? (
+              <><ChevronUp className="w-4 h-4" /><span className="font-arabic text-sm font-bold">{t('step2.show_less')}</span></>
+            ) : (
+              <><ChevronDown className="w-4 h-4" /><span className="font-arabic text-sm font-bold">{t('step2.show_more').replace('{count}', String(THEMES.length - INITIAL_THEME_COUNT))}</span></>
+            )}
+          </button>
+        )}
         {form.theme === 'custom' && (
           <input
             type="text"
             className="magic-input mt-3"
-            placeholder="اكتب موضوع قصتك الخاص..."
+            placeholder={t('step2.custom_theme_placeholder')}
             value={form.customThemeNote}
             onChange={(e) => setForm({ ...form, customThemeNote: e.target.value })}
           />
@@ -128,13 +154,13 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
       <div>
         <label className="block font-arabic text-white/80 text-sm mb-3">
           <Globe className="w-4 h-4 inline ml-1 text-gold-500" />
-          لغة القصة
+          {t('step2.lang_label')}
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
-            { id: 'ar', label: 'العربية 🇸🇦', desc: 'قصة فصحى' },
-            { id: 'en', label: 'الإنجليزية 🇬🇧', desc: 'English story' },
-            { id: 'he', label: 'العبرية 🇮🇱', desc: 'סיפור קסום' },
+            { id: 'ar', label: t('step2.lang_ar'), desc: t('step2.lang_ar_desc') },
+            { id: 'en', label: t('step2.lang_en'), desc: t('step2.lang_en_desc') },
+            { id: 'he', label: t('step2.lang_he'), desc: t('step2.lang_he_desc') },
           ].map((lang) => (
             <button
               key={lang.id}
@@ -156,67 +182,54 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
       </div>
 
       {/* Live Preview: Interactive Flipbook to let parents visualize how the book will look */}
-      <div className="mt-8 flex flex-col items-center justify-center bg-dark-700/30 rounded-3xl border border-white/5 w-full py-12 relative min-h-[700px]">
+      <div className="mt-8 flex flex-col items-center justify-center bg-dark-700/30 rounded-3xl border border-white/5 w-full py-12 relative min-h-[50px]">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gold-500/50 to-transparent" />
-        <label className="block font-arabic text-white/80 text-sm mb-6 text-center w-full">📖 نظرة مبدئية على الكتاب</label>
-        <div className="w-[350px] scale-110 sm:scale-125 transform origin-top transition-transform duration-500">
-          <FlipbookPreview text={previewTextContent} language={form.language as any} />
+        <label className="block font-arabic text-white/80 text-sm mb-2 text-center w-full">{t('step2.preview_label')}</label>
+        {(() => {
+          const selectedTheme = THEMES.find(t => t.id === form.theme);
+          return selectedTheme ? (
+            <p className="font-arabic text-gold-500/80 text-xs mb-6 text-center">
+              {selectedTheme.emoji} {selectedTheme.label} — {selectedTheme.desc}
+            </p>
+          ) : null;
+        })()}
+        <div className="w-full max-w-[500px] px-4">
+          <FlipbookPreview text={previewTextContent} language={form.language as any}/>
         </div>
 
       </div>
 
-      {/* Generate Button */}
-      {!generatedText && (
-        <MagicButton
-          id="generate-story-btn"
-          fullWidth
-          size="lg"
-          onClick={generateStory}
-          isLoading={isGenerating}
-          icon={<Sparkles className="w-5 h-5" />}
-        >
-          {isGenerating ? 'يكتب الذكاء الاصطناعي قصتك...' : 'اكتب لي قصة سحرية ✨'}
-        </MagicButton>
-      )}
-
-
+      <MagicButton
+        id="generate-story-btn"
+        fullWidth
+        size="lg"
+        onClick={generateStory}
+        isLoading={isGenerating}
+        icon={<Sparkles className="w-5 h-5" />}
+      >
+        {isGenerating 
+          ? t('step2.generating_text') 
+          : generatedText 
+            ? t('step2.regenerate_btn') 
+            : t('step2.generate_btn')}
+      </MagicButton>
 
       {/* Navigation */}
       <div className="flex gap-3">
-        <MagicButton variant="outline" size="lg" onClick={onPrev} icon={<ChevronRight className="w-5 h-5" />}>
-          السابق
+        <MagicButton variant="outline" size="lg" onClick={onPrev} icon={<ChevronRight className="w-5 h-5 nav-icon" />}>
+          {t('wizard.prev_btn')}
         </MagicButton>
         <MagicButton
           id="step2-next-btn"
           fullWidth
           size="lg"
           onClick={handleNext}
-          icon={<ChevronLeft className="w-5 h-5" />}
+          icon={<ChevronLeft className="w-5 h-5 nav-icon" />}
         >
-          التالي — تخصيص الكتاب
+        {t('step2.next_btn')}
         </MagicButton>
       </div>
 
-      {/* Enhanced Information Section: Two distinct divs for page count and guidance (Moved to Lowest) */}
-      <div className="mt-8 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
-        {/* Card 1: Page Count */}
-        <div className="flex-1 w-full sm:w-auto bg-navy-800/50 border border-gold-500/20 rounded-2xl p-5 flex flex-col items-center text-center backdrop-blur-lg transition-transform hover:scale-105 max-w-sm">
-          <div className="w-10 h-10 rounded-full bg-gold-500/10 flex items-center justify-center mb-3">
-            <span className="text-xl">📖</span>
-          </div>
-          <span className="font-arabic text-gold-500 font-black text-base">٣٢ صفحة سحرية</span>
-          <span className="font-arabic text-white/40 text-xs mt-1">إجمالي صفحات كتابك المخصص</span>
-        </div>
-
-        {/* Card 2: Guidance */}
-        <div className="flex-1 w-full sm:w-auto bg-navy-800/50 border border-white/10 rounded-2xl p-5 flex flex-col items-center text-center backdrop-blur-lg transition-transform hover:scale-105 max-w-sm">
-          <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mb-3">
-            <span className="text-xl">🖱️</span>
-          </div>
-          <span className="font-arabic text-white font-bold text-base">استكشف القصة</span>
-          <span className="font-arabic text-white/40 text-xs mt-1">اسحب أو اضغط لقلب الصفحات</span>
-        </div>
-      </div>
     </div>
   );
 }
