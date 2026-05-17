@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStoryProgress } from '../../context/StoryProgressContext';
 import MagicButton from '../common/MagicButton';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import FlipbookPreview from './FlipbookPreview';
 import { useTranslation } from 'react-i18next';
+import { publicApi } from '../../api/publicApi';
 
 // Props Interface: Contains callbacks to navigate through the wizard
 interface Props { onNext: () => void; onPrev: () => void; }
@@ -28,6 +29,7 @@ export default function Step3_BookCustomizer({ onNext, onPrev }: Props) { // To 
     { id: 'adventure', emoji: '🗺️', label: t('step2.theme_adventure') },
     { id: 'space', emoji: '🚀', label: t('step2.theme_space') },
     { id: 'ocean', emoji: '🌊', label: t('step2.theme_ocean') },
+    { id: 'school_hero', emoji: '🏫', label: t('step2.theme_school_hero') },
     { id: 'forest', emoji: '🌿', label: t('step2.theme_forest') },
     { id: 'princess', emoji: '👸', label: t('step2.theme_princess') },
     { id: 'superhero', emoji: '⚡', label: t('step2.theme_superhero') },
@@ -37,7 +39,7 @@ export default function Step3_BookCustomizer({ onNext, onPrev }: Props) { // To 
     { id: 'magic', emoji: '🧙', label: t('step2.theme_magic') },
   ];
 
-  const BOOK_PACKAGES = [
+  const DEFAULT_PACKAGES = [
     { id: 'color', label: t('step3.pkg_color'), price: 60, emoji: '🌈', desc: t('step3.pkg_color_desc') },
     { id: 'coloring', label: t('step3.pkg_coloring'), price: 40, emoji: '🖍️', desc: t('step3.pkg_coloring_desc') },
     { id: 'audio', label: t('step3.pkg_audio'), price: 20, emoji: '🎧', desc: t('step3.pkg_audio_desc') },
@@ -45,6 +47,30 @@ export default function Step3_BookCustomizer({ onNext, onPrev }: Props) { // To 
     { id: 'pro', label: t('step3.pkg_pro'), price: 120, originalPrice: 140, emoji: '✨', desc: t('step3.pkg_pro_desc') },
   ];
   
+  const [packages, setPackages] = useState<any[]>(DEFAULT_PACKAGES);
+
+  useEffect(() => {
+    // Fetch live settings to get accurate prices
+    publicApi.getSettings().then(res => {
+      if (res.success && res.settings?.bookPackages) {
+        // Merge fetched prices/labels with our local structure (to keep emojis and translations fallback)
+        const updatedPackages = DEFAULT_PACKAGES.map(defaultPkg => {
+          const livePkg = res.settings.bookPackages.find((p: any) => p.id === defaultPkg.id);
+          if (livePkg) {
+            return {
+              ...defaultPkg,
+              price: livePkg.price,
+              label: livePkg.label || defaultPkg.label,
+              desc: livePkg.desc || defaultPkg.desc
+            };
+          }
+          return defaultPkg;
+        });
+        setPackages(updatedPackages);
+      }
+    }).catch(err => console.error('Failed to load pricing:', err));
+  }, []);
+
   // Local State: Tracks the user's selected book customization options for this step
   const [form, setForm] = useState({
     coverColor: progress.bookCustomization?.coverColor || '#1B1F5E',
@@ -88,7 +114,7 @@ export default function Step3_BookCustomizer({ onNext, onPrev }: Props) { // To 
           <div>
             <label className="block font-arabic text-white/80 text-sm mb-3">{t('step3.packages_label')}</label>
             <div className="flex gap-2 w-full">
-              {BOOK_PACKAGES.map((pkg) => (
+              {packages.map((pkg) => (
                 <button
                   key={pkg.id}
                   type="button"

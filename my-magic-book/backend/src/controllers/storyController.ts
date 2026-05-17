@@ -42,7 +42,7 @@ export const generateStory = async (req: Request, res: Response): Promise<void> 
 
     const generatedText = await generateStoryWithAI({
       childName: story.childName,
-      childAge: story.childAge,
+      childAge: Number(story.childAge) || 5,
       childGender: story.childGender,
       theme: story.theme,
       storyLength: story.storyLength,
@@ -122,5 +122,37 @@ export const getMyStories = async (req: Request, res: Response): Promise<void> =
     res.json({ success: true, stories });
   } catch (error) {
     res.status(500).json({ success: false, message: 'فشل في جلب القصص' });
+  }
+};
+
+// @route GET /api/public/test-pdf
+import { buildBookHtml, BookData } from '../services/HtmlTemplateBuilder';
+import { generateBookPdf } from '../services/PdfGenerator';
+
+export const testGeneratePdf = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const dummyPages: any[] = [];
+    for(let i = 0; i < 13; i++) {
+      dummyPages.push({ type: 'text', content: 'كان يا ما كان، طفل اسمه إياد، كان يحب المغامرات كثيراً... هذه الصفحة رقم ' + (i+1) });
+      dummyPages.push({ type: 'image', imageUrl: 'https://res.cloudinary.com/demo/image/upload/sample.jpg' });
+    }
+
+    const bookData: BookData = {
+      childName: 'إياد',
+      childPhotoUrl: 'https://ui-avatars.com/api/?name=إياد&background=D4A937&color=0a1628&size=300',
+      storyTitle: 'إياد في الغابة السحرية',
+      coverImageUrl: 'https://res.cloudinary.com/demo/image/upload/sample.jpg',
+      pages: dummyPages
+    };
+
+    const html = buildBookHtml(bookData);
+    const pdfBuffer = await generateBookPdf(html);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="magic-fanoose-book.pdf"');
+    res.send(pdfBuffer);
+  } catch (error: any) {
+    console.error('Error generating PDF:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };

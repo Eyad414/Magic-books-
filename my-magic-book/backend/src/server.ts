@@ -10,6 +10,7 @@ import orderRoutes from './routes/orderRoutes';
 import contactRoutes from './routes/contactRoutes';
 import adminRoutes from './routes/adminRoutes';
 import userRoutes from './routes/userRoutes';
+import publicRoutes from './routes/publicRoutes';
 
 dotenv.config();
 
@@ -43,6 +44,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/public', publicRoutes);
 
 // 404 handler
 app.use((_req, res) => {

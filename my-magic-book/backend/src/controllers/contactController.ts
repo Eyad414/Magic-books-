@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import ContactMessage from '../models/ContactMessage';
+import { sendAdminNotification } from '../utils/mailer';
 
 // @route POST /api/contact
 export const submitContact = async (req: Request, res: Response): Promise<void> => {
@@ -13,7 +14,10 @@ export const submitContact = async (req: Request, res: Response): Promise<void> 
 
     const contact = await ContactMessage.create({ name, email, phone, subject, message });
 
-    // TODO Phase 3: Send confirmation email via Nodemailer
+    // Send admin notification email asynchronously (non-blocking)
+    sendAdminNotification({ name, email, phone, subject, message }).catch(err => {
+      console.error('Failed to notify admin via email:', err);
+    });
 
     res.status(201).json({
       success: true,

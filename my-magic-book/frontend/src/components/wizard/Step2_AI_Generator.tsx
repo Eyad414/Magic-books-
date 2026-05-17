@@ -21,6 +21,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
     { id: 'adventure', emoji: '🗺️', label: t('step2.theme_adventure'), desc: t('step2.theme_adventure_desc') },
     { id: 'space', emoji: '🚀', label: t('step2.theme_space'), desc: t('step2.theme_space_desc') },
     { id: 'ocean', emoji: '🌊', label: t('step2.theme_ocean'), desc: t('step2.theme_ocean_desc') },
+    { id: 'school_hero', emoji: '🏫', label: t('step2.theme_school_hero'), desc: t('step2.theme_school_hero_desc') },
     { id: 'forest', emoji: '🌿', label: t('step2.theme_forest'), desc: t('step2.theme_forest_desc') },
     { id: 'princess', emoji: '👸', label: t('step2.theme_princess'), desc: t('step2.theme_princess_desc') },
     { id: 'superhero', emoji: '⚡', label: t('step2.theme_superhero'), desc: t('step2.theme_superhero_desc') },

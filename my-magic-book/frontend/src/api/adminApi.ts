@@ -29,4 +29,15 @@ export const adminApi = {
     const response = await axiosInstance.put('/admin/settings', settingsData);
     return response.data;
   },
+  getAllOrders: async () => {
+    const response = await axiosInstance.get('/admin/orders');
+    return response.data;
+  },
+};
+
+export const storyApi = {
+  getById: async (id: string) => {
+    const response = await axiosInstance.get(`/admin/stories/${id}`);
+    return response.data;
+  },
 };

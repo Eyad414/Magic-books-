@@ -3,6 +3,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStoryProgress } from '../context/StoryProgressContext';
 
+function ScrollIndicator() {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 text-white/30 animate-bounce-slow py-4 mb-10 -mt-10">
+      <span className="font-arabic text-xs">{t('home.discover_more')}</span>
+      <div className="w-0.5 h-10 bg-gradient-to-b from-gold-500/50 to-transparent" />
+    </div>
+  );
+}
+
 // FAQ section
 function FAQ() {
   const { t } = useTranslation();
@@ -85,6 +95,8 @@ export default function AboutUs() {
           </div>
         </div>
       </section>
+      
+      <ScrollIndicator />
 
       {/* Stats */}
       <section className="px-4 sm:px-6 lg:px-8 mb-20">
@@ -103,6 +115,8 @@ export default function AboutUs() {
           ))}
         </div>
       </section>
+
+      <ScrollIndicator />
 
       {/* Team */}
       <section className="px-4 sm:px-6 lg:px-8 mb-20">
@@ -137,6 +151,8 @@ export default function AboutUs() {
         </div>
       </section>
 
+      <ScrollIndicator />
+
       {/* Mission */}
       <section className="px-4 sm:px-6 lg:px-8 mb-20">
         <div className="max-w-3xl mx-auto glass-card p-10 text-center">
@@ -147,6 +163,8 @@ export default function AboutUs() {
           </p>
         </div>
       </section>
+
+      <ScrollIndicator />
 
       {/* Values */}
       <section className="px-4 sm:px-6 lg:px-8 mb-20">
@@ -169,7 +187,12 @@ export default function AboutUs() {
           </div>
         </div>
       </section>
+      
+      <ScrollIndicator />
+      
       <FAQ />
+
+      <ScrollIndicator />
 
       {/* CTA */}
       <section className="px-4 sm:px-6 lg:px-8 text-center">

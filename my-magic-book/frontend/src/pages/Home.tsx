@@ -36,8 +36,18 @@ export default function Home() {
       
       <BestSellers />
       <ScrollIndicator />
-      
-
+      <div className="max-w-3xl mx-auto px-4 mt-8 mb-16 flex justify-center">
+        <div className="glass-card glass-card-hover p-10 text-center w-full relative overflow-hidden border border-gold-500/20">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gold-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-red-500/10 rounded-full blur-3xl -ml-10 -mb-10"></div>
+          
+          <div className="text-5xl mb-6 relative z-10">✨📖</div>
+          <p className="font-arabic font-black text-white text-2xl leading-relaxed relative z-10">
+            "نحن لا نصنع قصصاً فقط، نحن نبني <span className="text-gold-500">ثقة الطفل</span> بنفسه وننمي لديه <span className="text-gold-500">حب القراءة</span>."
+          </p>
+        </div>
+      </div>
+      <ScrollIndicator />
       {/* Final CTA */}
       <section className="py-20 px-4 text-center">
         <div className="max-w-2xl mx-auto glass-card p-12">

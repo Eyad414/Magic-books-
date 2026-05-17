@@ -13,6 +13,7 @@ export interface ITheme {
   emoji: string;
   label: string;
   desc: string;
+  pages?: any[];
 }
 
 export interface ISiteSettings extends Document {
@@ -37,6 +38,7 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
         emoji: { type: String, required: true },
         label: { type: String, required: true },
         desc: { type: String, required: true },
+        pages: { type: Schema.Types.Mixed, default: [] },
       },
     ],
   },

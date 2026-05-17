@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 const SAMPLE_STORIES = [
+  { id: 99, childName: 'إياد', theme: 'space', emoji: '🚀', color: ['#1B1F5E', '#6C3FC5'], rating: 5.0, previewText: 'كان إياد يحلم دائماً بالنجوم. وفي ليلة هادئة، تحول سريره فجأة إلى مركبة فضائية متطورة مليئة بالأزرار اللامعة!...' },
   { id: 1, childName: 'محمد', theme: 'adventure', emoji: '🗺️', color: ['#1B1F5E', '#6C3FC5'], rating: 5.0, previewText: 'في صحراء لا حدود لها، انطلق محمد بشجاعة لم يعرفها أحد من قبل. كان قلبه يدق بسرعة وعيناه تلمعان بفضول المستكشف...' },
   { id: 2, childName: 'سارة', theme: 'princess', emoji: '👸', color: ['#4a148c', '#6a1b9a'], rating: 4.9, previewText: 'في مملكة حيث تتساقط الورود من السماء، كانت الأميرة سارة تنتظر مغامرة تختلف عن كل ما رأته...' },
   { id: 3, childName: 'علي', theme: 'space', emoji: '🚀', color: ['#006064', '#00838f'], rating: 5.0, previewText: 'ارتفعت مركبة الفضاء وعلي يمسك بها بكلتا يديه، أمامه الكون اللامتناهي وقلبه مليء بالتساؤلات...' },
@@ -205,8 +206,8 @@ export default function Dashboard() {
                 {t('dashboard.welcome')} <span className="shimmer-text">{user?.name?.split(' ')[0]}</span> 👋
               </h1>
               <div className="font-arabic text-white/50 mt-2 text-xs flex gap-4">
-                 <span>✨ {t('dashboard.register_date')} {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : t('dashboard.not_available')}</span>
-                 <span>🕒 {t('dashboard.last_login')} {user?.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : t('dashboard.now')}</span>
+                <span>✨ {t('dashboard.register_date')} {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : t('dashboard.not_available')}</span>
+                <span>🕒 {t('dashboard.last_login')} {user?.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : t('dashboard.now')}</span>
               </div>
             </div>
             {tab === 'stories' && (
@@ -218,32 +219,91 @@ export default function Dashboard() {
 
           {/* Tab Content */}
           <div className="glass-card p-6 min-h-[400px]">
+            {/* ── Admin Special: Demo Story Card ── */}
+            {user?.email === 'eyadat720@gmail.com' && tab === 'stories' && (
+              <div className="mb-8 p-6 rounded-2xl bg-gradient-to-br from-gold-500/20 to-navy-800/80 border border-gold-500/40 relative overflow-hidden group animate-fade-in">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gold-500/10 rounded-full blur-3xl" />
+                <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10">
+                  <div className="text-6xl">🚀</div>
+                  <div className="flex-1 text-center sm:text-right">
+                    <h3 className="font-arabic font-black text-gold-500 text-2xl mb-1">
+                      {t('stories_page.story_title', { name: t('stories_page.samples.99_name', { defaultValue: 'إياد' }) })}
+                    </h3>
+                    <p className="font-arabic text-white/70 text-sm">
+                      {t('dashboard.admin_special_desc', { defaultValue: 'هذه هي القصة التي طلبتها - جاهزة للعرض والطباعة (220×220 ملم)' })}
+                    </p>
+                  </div>
+                  <Link 
+                    to="/book/space" 
+                    className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-gold-500 text-dark-900 font-arabic font-bold text-lg hover:bg-gold-400 hover:scale-105 transition-all shadow-lg shadow-gold-500/20"
+                  >
+                    <BookOpen className="w-5 h-5" />
+                    {t('dashboard.admin_special_btn', { defaultValue: 'تصفح الكتاب كاملاً' })}
+                  </Link>
+                </div>
+              </div>
+            )}
+
             {isFetching && (tab === 'stories' || tab === 'orders') ? (
               <div className="text-center py-16">
                 <div className="book-loader mx-auto mb-4" />
                 <p className="font-arabic text-white/50 text-sm">{t('dashboard.loading')}</p>
               </div>
             ) : tab === 'stories' ? (
-              stories.length === 0 ? (
-                <EmptyState emoji="📖" title={t('dashboard.empty_stories_title')} desc={t('dashboard.empty_stories_desc')} cta={t('dashboard.empty_stories_cta')} onClick={handleStartStory} />
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {stories.map((story) => {
-                    const status = statusMap[story.status] || statusMap.draft;
-                    return (
-                      <div key={story._id} className="bg-dark-700/50 rounded-2xl border border-white/5 p-5 hover:-translate-y-1 transition-transform">
-                        <div className="text-4xl mb-3">📚</div>
-                        <h3 className="font-arabic font-bold text-white text-lg mb-1">{story.childName}</h3>
-                        <p className="font-arabic text-white/40 text-xs mb-3">{story.theme} • {new Date(story.createdAt).toLocaleDateString()}</p>
-                        <div className={`flex items-center gap-1.5 ${status.color}`}>
-                          <status.icon className="w-3.5 h-3.5" />
-                          <span className="font-arabic text-xs">{status.label}</span>
+              <>
+                {stories.length === 0 ? (
+                  <EmptyState emoji="📖" title={t('dashboard.empty_stories_title')} desc={t('dashboard.empty_stories_desc')} cta={t('dashboard.empty_stories_cta')} onClick={handleStartStory} />
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {stories.map((story) => {
+                      const status = statusMap[story.status] || statusMap.draft;
+                      return (
+                        <div key={story._id} className="bg-dark-700/50 rounded-2xl border border-white/5 p-5 hover:-translate-y-1 transition-transform group flex flex-col">
+                          <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">📚</div>
+                          <h3 className="font-arabic font-bold text-white text-lg mb-1">{story.childName}</h3>
+                          <p className="font-arabic text-white/40 text-xs mb-3">{story.theme} • {new Date(story.createdAt).toLocaleDateString()}</p>
+                          <div className="mt-auto pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-white/5">
+                            <div className={`flex items-center gap-1.5 ${status.color} bg-white/5 px-2.5 py-1.5 rounded-lg`}>
+                              <status.icon className="w-3.5 h-3.5" />
+                              <span className="font-arabic text-xs font-bold">{status.label}</span>
+                            </div>
+                            <Link 
+                              to={`/book/${story._id}`}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold-500 text-dark-900 hover:bg-gold-400 transition-colors font-arabic font-bold text-xs shadow-lg shadow-gold-500/20"
+                            >
+                              <BookOpen className="w-3.5 h-3.5" />
+                              تصفح الكتاب كاملاً
+                            </Link>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
+                )}
+                
+                {/* ── Sample Stories Section ── */}
+                <div className="mt-12 pt-8 border-t border-white/10">
+                  <h3 className="font-arabic font-bold text-white text-xl mb-6">{t('dashboard.sample_stories_title')}</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {SAMPLE_STORIES.slice(0, 6).map((story) => (
+                      <Link 
+                        to={`/book/${story.theme}?name=${encodeURIComponent(story.childName)}`} 
+                        key={`sample-${story.id}`} 
+                        className="bg-dark-700/50 rounded-2xl border border-white/5 p-5 hover:-translate-y-1 transition-transform group"
+                      >
+                        <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">{story.emoji}</div>
+                        <h3 className="font-arabic font-bold text-white text-lg mb-1">
+                          {t('stories_page.story_title', { name: t(`stories_page.samples.${story.id}_name`, { defaultValue: story.childName }) })}
+                        </h3>
+                        <p className="font-arabic text-gold-500 text-xs mb-3">{t(`step2.theme_${story.theme}`)}</p>
+                        <p className="font-arabic text-white/50 text-xs line-clamp-2 leading-relaxed">
+                          {t(`stories_page.samples.${story.id}_preview`, { defaultValue: story.previewText })}
+                        </p>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-              )
+              </>
             ) : tab === 'orders' ? (
               orders.length === 0 ? (
                 <EmptyState emoji="📦" title={t('dashboard.empty_orders_title')} desc={t('dashboard.empty_orders_desc')} cta={t('dashboard.empty_stories_cta')} onClick={handleStartStory} />

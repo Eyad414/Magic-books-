@@ -12,7 +12,9 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 
 import AdminDashboard from './pages/AdminDashboard';
+import StoryBookPage from './pages/StoryBookPage';
 import AccessibilityWidget from './components/common/AccessibilityWidget';
+import AdminBookGuard from './components/common/AdminBookGuard';
 
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -61,6 +63,8 @@ export default function App() {
           <Route path="policy" element={<Policy />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="admin" element={<AdminDashboard />} />
+          <Route path="book" element={<AdminBookGuard><StoryBookPage /></AdminBookGuard>} />
+          <Route path="book/:storyId" element={<AdminBookGuard><StoryBookPage /></AdminBookGuard>} />
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
