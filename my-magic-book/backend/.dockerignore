@@ -1,0 +1,16 @@
+node_modules
+dist
+npm-debug.log
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+.DS_Store
+.vscode
+.idea
+*.log
+test-puppeteer.js
+test_db.ts
+reset_pwd.ts
+README.md

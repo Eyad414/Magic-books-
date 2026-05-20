@@ -1,0 +1,15 @@
+node_modules
+dist
+npm-debug.log
+.env
+.env.*
+.git
+.gitignore
+.DS_Store
+.vscode
+.idea
+*.log
+README.md
+fix_*.cjs
+update_*.cjs
+update_*.js
