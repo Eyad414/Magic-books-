@@ -8,11 +8,6 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-# VITE_API_URL must be baked in at build time — Vite inlines env vars
-# prefixed with VITE_. Pass it via --build-arg when running gcloud builds.
-ARG VITE_API_URL
-ENV VITE_API_URL=${VITE_API_URL}
-
 COPY . .
 RUN npm run build
 
