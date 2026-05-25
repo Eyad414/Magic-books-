@@ -21,8 +21,9 @@ const PORT = process.env.PORT || 5001;
 connectDB();
 
 // Middleware
+const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:5173';
 app.use(cors({
-  origin: true, // Allow any origin dynamically (reflects the request origin)
+  origin: allowedOrigin,
   credentials: true,
 }));
 
