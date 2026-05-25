@@ -2,6 +2,8 @@ import { Router } from 'express';
 import {
   createStory,
   generateStory,
+  generateIllustrations,
+  getIllustrationStatus,
   customizeStory,
   getStoryPreview,
   getFullStory,
@@ -14,6 +16,8 @@ const router = Router();
 router.get('/my', protect, getMyStories);
 router.post('/create', protect, createStory);
 router.post('/:id/generate', protect, generateStory);
+router.post('/:id/generate-illustrations', protect, generateIllustrations);
+router.get('/:id/illustration-status', protect, getIllustrationStatus);
 router.put('/:id/customize', protect, customizeStory);
 router.get('/:id/preview', getStoryPreview);
 router.get('/:id/full', protect, getFullStory);

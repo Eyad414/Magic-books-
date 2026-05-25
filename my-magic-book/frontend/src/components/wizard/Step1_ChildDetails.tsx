@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 interface Props { onNext: () => void; }
 
 export default function Step1_ChildDetails({ onNext }: Props) { // To move to the next page in the steps
-  const { progress, setChildDetails } = useStoryProgress(); // To save User Choices in the steps
+  const { progress, setChildDetails, setChildPhotoFile } = useStoryProgress();
   const { t } = useTranslation();
   
   // Local State: Manages the form inputs specifically for this step before saving them globally
@@ -149,8 +149,11 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
         {wantsPhoto && (
           <div className="border-2 border-dashed border-white/20 rounded-xl p-6 text-center hover:bg-white/5 hover:border-gold-500/30 transition-all cursor-pointer relative animate-fade-in">
             <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={(e) => {
-                if (e.target.files?.[0]) {
-                  setForm({...form, childPhotoUrl: URL.createObjectURL(e.target.files[0])});
+                const file = e.target.files?.[0];
+                if (file) {
+                  // Store File object in context (for upload later) + local URL for preview
+                  setChildPhotoFile(file);
+                  setForm({ ...form, childPhotoUrl: URL.createObjectURL(file) });
                 }
             }} />
             {form.childPhotoUrl ? (

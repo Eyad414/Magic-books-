@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useRef } from 'react';
 import type { ReactNode } from 'react';
 
 export interface ChildDetails {
@@ -56,6 +56,9 @@ interface StoryProgressContextType {
   setBookCustomization: (data: Partial<BookCustomization>) => void;
   setShippingAddress: (data: Partial<ShippingAddress>) => void;
   resetProgress: () => void;
+  /** The raw File selected in Step 1 (not persisted, lives only in memory) */
+  childPhotoFile: File | null;
+  setChildPhotoFile: (file: File | null) => void;
 }
 
 const defaultProgress: StoryProgress = {
@@ -69,6 +72,9 @@ const defaultProgress: StoryProgress = {
 const StoryProgressContext = createContext<StoryProgressContextType | undefined>(undefined);
 
 export const StoryProgressProvider = ({ children }: { children: ReactNode }) => {
+  // File object — not serializable, kept only in memory
+  const [childPhotoFile, setChildPhotoFile] = useState<File | null>(null);
+
   const [progress, setProgress] = useState<StoryProgress>(() => {
     try {
       const saved = localStorage.getItem('mmb_story_progress');
@@ -94,7 +100,11 @@ export const StoryProgressProvider = ({ children }: { children: ReactNode }) => 
   const resetProgress = () => { localStorage.removeItem('mmb_story_progress'); setProgress(defaultProgress); };
 
   return (
-    <StoryProgressContext.Provider value={{ progress, setStep, setChildDetails, setStoryConfig, setBookCustomization, setShippingAddress, resetProgress }}>
+    <StoryProgressContext.Provider value={{
+      progress, setStep, setChildDetails, setStoryConfig,
+      setBookCustomization, setShippingAddress, resetProgress,
+      childPhotoFile, setChildPhotoFile,
+    }}>
       {children}
     </StoryProgressContext.Provider>
   );

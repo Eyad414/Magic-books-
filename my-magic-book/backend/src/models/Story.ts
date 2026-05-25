@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export type StoryStatus = 'draft' | 'generating' | 'ready' | 'ordered';
+export type StoryStatus = 'draft' | 'generating' | 'illustrating' | 'ready' | 'ordered';
 export type StoryTheme = 'adventure' | 'space' | 'ocean' | 'forest' | 'princess' | 'superhero' | 'animals' | 'custom';
 
 export interface IStory extends Document {
@@ -24,6 +24,11 @@ export interface IStory extends Document {
   fontStyle?: string;
   dedicationMessage?: string;
   addons?: string[];
+  // Illustration pipeline
+  storyTemplateId?: string;           // e.g. "zoo_adventure"
+  illustrationUrls: string[];         // 13 Cloudinary URLs after face-swap
+  illustrationStatus: 'pending' | 'generating' | 'done' | 'failed';
+  illustrationError?: string;
   // Pricing
   basePrice: number;
   totalPrice: number;
@@ -50,9 +55,17 @@ const StorySchema = new Schema<IStory>(
     coverImageUrl: { type: String },
     status: {
       type: String,
-      enum: ['draft', 'generating', 'ready', 'ordered'],
+      enum: ['draft', 'generating', 'illustrating', 'ready', 'ordered'],
       default: 'draft',
     },
+    storyTemplateId: { type: String },
+    illustrationUrls: { type: [String], default: [] },
+    illustrationStatus: {
+      type: String,
+      enum: ['pending', 'generating', 'done', 'failed'],
+      default: 'pending',
+    },
+    illustrationError: { type: String },
     coverColor: { type: String, default: '#1B1F5E' },
     fontStyle: { type: String, default: 'noto-kufi' },
     dedicationMessage: { type: String },

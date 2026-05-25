@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useStoryProgress } from '../../context/StoryProgressContext';
 import MagicButton from '../common/MagicButton';
-import { Sparkles, ChevronLeft, ChevronRight, Globe, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sparkles, ChevronLeft, ChevronRight, Globe, ChevronDown, ChevronUp, Image } from 'lucide-react';
 import FlipbookPreview from './FlipbookPreview';
-import { storyApi } from '../../api/storyApi';
+import { storyApi, uploadApi } from '../../api/storyApi';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -12,8 +12,8 @@ interface Props { onNext: () => void; onPrev: () => void; }
 
 const INITIAL_THEME_COUNT = 8;
 
-export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To move to the next page in the steps
-  const { progress, setStoryConfig } = useStoryProgress(); // To save User Choices in the steps
+export default function Step2_AI_Generator({ onNext, onPrev }: Props) {
+  const { progress, setStoryConfig, childPhotoFile } = useStoryProgress();
   const { t } = useTranslation();
 
   // Constant: Array defining all available story themes, their emojis, and labels
@@ -46,10 +46,14 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
   
   // Local State: Tracks if the AI is currently generating the text to show a loading indicator
   const [isGenerating, setIsGenerating] = useState(false);
-  
-  // Local State: Stores the generated text returned from the backend API 
+  // Local State: Tracks illustration generation progress
+  const [isGeneratingIllustrations, setIsGeneratingIllustrations] = useState(false);
+  const [illustrationsDone, setIllustrationsDone] = useState(false);
+  const [illustrationUrls, setIllustrationUrls] = useState<string[]>([]);
+
+  // Local State: Stores the generated text returned from the backend API
   const [generatedText, setGeneratedText] = useState(progress.storyConfig.generatedText || '');
-  
+
   // Local State: Stores the unique database ID for the newly created story instance
   const [storyId, setStoryId] = useState(progress.storyConfig.storyId || '');
 
@@ -57,26 +61,61 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
   const [showAllThemes, setShowAllThemes] = useState(false);
   const visibleThemes = showAllThemes ? THEMES : THEMES.slice(0, INITIAL_THEME_COUNT);
 
-  // Function: Creates the story in the database and triggers the AI text generation via backend API
+  /**
+   * Full generation pipeline:
+   *  1. Upload child's photo to Cloudinary (if a File is available)
+   *  2. Create story in DB
+   *  3. Generate story text (Claude AI)
+   *  4. Generate 13 personalised illustrations (fal.ai face-swap)
+   */
   const generateStory = async () => {
     setIsGenerating(true);
+    setIllustrationsDone(false);
     try {
-      // First create the story record, then generate
-      const childDetails = progress.childDetails;
+      // ── Step 1: Upload photo ───────────────────────────────────────────────
+      let cloudPhotoUrl = progress.childDetails.childPhotoUrl || '';
+      if (childPhotoFile) {
+        try {
+          cloudPhotoUrl = await uploadApi.uploadPhoto(childPhotoFile);
+        } catch {
+          // Non-fatal: continue without photo; illustrations will use placeholder
+        }
+      }
+
+      // ── Step 2: Create story record ────────────────────────────────────────
       const createRes = await storyApi.create({
-        ...childDetails,
+        ...progress.childDetails,
+        childPhotoUrl: cloudPhotoUrl,
         ...form,
+        storyTemplateId: form.theme,
       });
       const newStoryId = createRes.story._id;
       setStoryId(newStoryId);
 
+      // ── Step 3: Generate text ──────────────────────────────────────────────
       const genRes = await storyApi.generate(newStoryId);
       const text = genRes.story.generatedText || '';
       setGeneratedText(text);
       setStoryConfig({ ...form, generatedText: text, storyId: newStoryId });
       toast.success(t('step2.gen_success'));
+
+      // ── Step 4: Generate illustrations (if photo available) ────────────────
+      if (cloudPhotoUrl) {
+        setIsGenerating(false);
+        setIsGeneratingIllustrations(true);
+        try {
+          const illRes = await storyApi.generateIllustrations(newStoryId, cloudPhotoUrl);
+          setIllustrationUrls(illRes.illustrationUrls || []);
+          setIllustrationsDone(true);
+          toast.success('🎨 تم توليد الصور!', { duration: 4000 });
+        } catch {
+          toast.error('تعذّر توليد الصور — يمكنك المتابعة بدونها', { duration: 5000 });
+        } finally {
+          setIsGeneratingIllustrations(false);
+        }
+      }
     } catch (err: any) {
-      // Use mock story if API not connected
+      // Fallback to mock if backend unavailable
       const mockText = getMockPreview(progress.childDetails.childName || 'طفلك', form.theme);
       setGeneratedText(mockText);
       setStoryConfig({ ...form, generatedText: mockText });
@@ -205,15 +244,57 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
         fullWidth
         size="lg"
         onClick={generateStory}
-        isLoading={isGenerating}
+        isLoading={isGenerating || isGeneratingIllustrations}
         icon={<Sparkles className="w-5 h-5" />}
       >
-        {isGenerating 
-          ? t('step2.generating_text') 
-          : generatedText 
-            ? t('step2.regenerate_btn') 
-            : t('step2.generate_btn')}
+        {isGenerating
+          ? t('step2.generating_text')
+          : isGeneratingIllustrations
+            ? '🎨 جاري رسم الصور المخصصة… (قد يستغرق دقيقة)'
+            : generatedText
+              ? t('step2.regenerate_btn')
+              : t('step2.generate_btn')}
       </MagicButton>
+
+      {/* Illustration generation progress indicator */}
+      {isGeneratingIllustrations && (
+        <div className="p-4 rounded-2xl bg-magic-500/10 border border-magic-500/20 animate-pulse">
+          <div className="flex items-center gap-3 mb-3">
+            <Image className="w-5 h-5 text-gold-500 shrink-0" />
+            <p className="font-arabic text-white/80 text-sm font-bold">
+              جاري توليد ١٣ صورة مخصصة بوجه طفلك…
+            </p>
+          </div>
+          <p className="font-arabic text-white/40 text-xs">
+            نستخدم الذكاء الاصطناعي لرسم كل مشهد مع وجه طفلك.
+            يستغرق ذلك عادةً من ٣٠ ثانية إلى دقيقة واحدة.
+          </p>
+        </div>
+      )}
+
+      {/* Illustrations ready preview */}
+      {illustrationsDone && illustrationUrls.length > 0 && (
+        <div className="p-4 rounded-2xl bg-green-500/10 border border-green-500/20">
+          <p className="font-arabic text-green-400 text-sm font-bold mb-3 text-center">
+            ✅ تم توليد {illustrationUrls.length} صورة مخصصة!
+          </p>
+          <div className="grid grid-cols-4 gap-2">
+            {illustrationUrls.slice(0, 4).map((url, i) => (
+              <img
+                key={i}
+                src={url}
+                alt={`illustration ${i + 1}`}
+                className="w-full aspect-square object-cover rounded-xl border-2 border-green-500/30"
+              />
+            ))}
+          </div>
+          {illustrationUrls.length > 4 && (
+            <p className="font-arabic text-white/40 text-xs text-center mt-2">
+              + {illustrationUrls.length - 4} صور أخرى
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Navigation */}
       <div className="flex gap-3">
