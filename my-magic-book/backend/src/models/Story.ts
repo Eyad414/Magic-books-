@@ -1,7 +1,8 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export type StoryStatus = 'draft' | 'generating' | 'illustrating' | 'ready' | 'ordered';
-export type StoryTheme = 'adventure' | 'space' | 'ocean' | 'forest' | 'princess' | 'superhero' | 'animals' | 'custom';
+// Open-ended string so any theme from the frontend is accepted
+export type StoryTheme = string;
 
 export interface IStory extends Document {
   userId: mongoose.Types.ObjectId;
@@ -13,7 +14,7 @@ export interface IStory extends Document {
   // Step 2: Story Config
   theme: StoryTheme;
   storyLength: 'short' | 'medium' | 'long';
-  language: 'ar' | 'en';
+  language: 'ar' | 'en' | 'he';
   customThemeNote?: string;
   // Generated Content
   generatedText?: string;
@@ -25,8 +26,8 @@ export interface IStory extends Document {
   dedicationMessage?: string;
   addons?: string[];
   // Illustration pipeline
-  storyTemplateId?: string;           // e.g. "zoo_adventure"
-  illustrationUrls: string[];         // 13 Cloudinary URLs after face-swap
+  storyTemplateId?: string;
+  illustrationUrls: string[];
   illustrationStatus: 'pending' | 'generating' | 'done' | 'failed';
   illustrationError?: string;
   // Pricing
@@ -43,16 +44,13 @@ const StorySchema = new Schema<IStory>(
     childAge: { type: String, required: true },
     childGender: { type: String, enum: ['male', 'female'], required: true },
     childPhotoUrl: { type: String },
-    theme: {
-      type: String,
-      enum: ['adventure', 'space', 'ocean', 'forest', 'princess', 'superhero', 'animals', 'custom'],
-      default: 'adventure',
-    },
-    storyLength: { type: String, enum: ['short', 'medium', 'long'], default: 'medium' },
-    language: { type: String, enum: ['ar', 'en'], default: 'ar' },
+    // No enum restriction — any theme string is valid
+    theme:        { type: String, default: 'adventure' },
+    storyLength:  { type: String, enum: ['short', 'medium', 'long'], default: 'medium' },
+    language:     { type: String, enum: ['ar', 'en', 'he'], default: 'ar' },
     customThemeNote: { type: String },
-    generatedText: { type: String },
-    coverImageUrl: { type: String },
+    generatedText:   { type: String },
+    coverImageUrl:   { type: String },
     status: {
       type: String,
       enum: ['draft', 'generating', 'illustrating', 'ready', 'ordered'],
@@ -66,11 +64,11 @@ const StorySchema = new Schema<IStory>(
       default: 'pending',
     },
     illustrationError: { type: String },
-    coverColor: { type: String, default: '#1B1F5E' },
-    fontStyle: { type: String, default: 'noto-kufi' },
+    coverColor:   { type: String, default: '#1B1F5E' },
+    fontStyle:    { type: String, default: 'noto-kufi' },
     dedicationMessage: { type: String },
     addons: [{ type: String }],
-    basePrice: { type: Number, default: 99 },
+    basePrice:  { type: Number, default: 99 },
     totalPrice: { type: Number, default: 99 },
   },
   { timestamps: true }

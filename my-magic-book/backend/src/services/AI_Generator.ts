@@ -4,7 +4,7 @@ interface StoryGeneratorOptions {
   childGender: 'male' | 'female';
   theme: string;
   storyLength: 'short' | 'medium' | 'long';
-  language: 'ar' | 'en';
+  language: 'ar' | 'en' | 'he';
   customThemeNote?: string;
 }
 
@@ -72,7 +72,7 @@ export const generateStoryWithAI = async (options: StoryGeneratorOptions): Promi
   }
 };
 
-const getMockStory = (childName: string, theme: string, language: 'ar' | 'en'): string => {
+const getMockStory = (childName: string, theme: string, language: 'ar' | 'en' | 'he'): string => {
   if (language === 'ar') {
     return `في مملكة بعيدة، حيث تتلألأ النجوم كالألماس في السماء، كان يعيش طفل شجاع اسمه ${childName}.
 

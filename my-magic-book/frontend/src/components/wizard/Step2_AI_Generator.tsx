@@ -72,22 +72,29 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) {
     setIsGenerating(true);
     setIllustrationsDone(false);
     try {
-      // ── Step 1: Upload photo ───────────────────────────────────────────────
-      let cloudPhotoUrl = progress.childDetails.childPhotoUrl || '';
+      // ── Step 1: Upload photo to Cloudinary ────────────────────────────────
+      // childPhotoFile is the raw File from Step 1; progress.childDetails.childPhotoUrl
+      // might be a blob: URL (local only) — never send that to the backend.
+      let cloudPhotoUrl = '';
       if (childPhotoFile) {
         try {
           cloudPhotoUrl = await uploadApi.uploadPhoto(childPhotoFile);
         } catch {
-          // Non-fatal: continue without photo; illustrations will use placeholder
+          // Non-fatal — continue without photo
         }
       }
 
       // ── Step 2: Create story record ────────────────────────────────────────
       const createRes = await storyApi.create({
-        ...progress.childDetails,
-        childPhotoUrl: cloudPhotoUrl,
-        ...form,
+        childName:   progress.childDetails.childName,
+        childAge:    progress.childDetails.childAge,
+        childGender: progress.childDetails.childGender,
+        childPhotoUrl: cloudPhotoUrl || undefined,
+        theme:           form.theme,
+        language:        form.language,
+        customThemeNote: form.customThemeNote,
         storyTemplateId: form.theme,
+        storyLength: 'medium',
       });
       const newStoryId = createRes.story._id;
       setStoryId(newStoryId);

@@ -11,24 +11,34 @@ import { getScenesForTemplate } from '../data/storyScenes';
 export const createStory = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).user._id;
-    const { childName, childAge, childGender, childPhotoUrl, theme, storyLength, language, customThemeNote } = req.body;
+    const {
+      childName, childAge, childGender, childPhotoUrl,
+      theme, storyLength, language, customThemeNote, storyTemplateId,
+    } = req.body;
+
+    // Reject blob: URLs — they are browser-local and meaningless on the server
+    const safePhotoUrl = childPhotoUrl && !childPhotoUrl.startsWith('blob:')
+      ? childPhotoUrl
+      : undefined;
 
     const story = await Story.create({
       userId,
       childName,
       childAge,
       childGender,
-      childPhotoUrl,
+      childPhotoUrl: safePhotoUrl,
       theme: theme || 'adventure',
       storyLength: storyLength || 'medium',
       language: language || 'ar',
       customThemeNote,
+      storyTemplateId: storyTemplateId || theme || 'adventure',
       status: 'draft',
     });
 
     res.status(201).json({ success: true, story });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'فشل في إنشاء القصة' });
+  } catch (error: any) {
+    console.error('[createStory]', error);
+    res.status(500).json({ success: false, message: 'فشل في إنشاء القصة', error: error.message });
   }
 };
 

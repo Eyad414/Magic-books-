@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useStoryProgress } from '../../context/StoryProgressContext';
 import MagicButton from '../common/MagicButton';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import FlipbookPreview from './FlipbookPreview';
 import { useTranslation } from 'react-i18next';
 import { publicApi } from '../../api/publicApi';
 
@@ -148,26 +147,6 @@ export default function Step3_BookCustomizer({ onNext, onPrev }: Props) { // To 
             </div>
           </div>
 
-          {/* Book Live Preview — below packages */}
-          <div className="flex flex-col items-center pt-2">
-            <p className="font-arabic text-white/50 text-xs mb-3 text-center">{t('step3.book_preview_label')}</p>
-            {progress.storyConfig?.generatedText ? (
-              <div className="-mt-4 scale-75 transform origin-top w-[350px]">
-                <FlipbookPreview text={progress.storyConfig.generatedText} language={progress.storyConfig.language as any} />
-              </div>
-            ) : (
-              <div
-                className="w-36 h-48 rounded-2xl shadow-2xl flex flex-col items-center justify-center gap-3 transition-all duration-500"
-                style={{ background: `linear-gradient(135deg, ${form.coverColor}, ${form.coverColor}99)`, border: '2px solid rgba(245,166,35,0.3)' }}
-              >
-                <span className="text-4xl">✨</span>
-                <p className="font-arabic text-white font-bold text-sm text-center px-3 leading-tight">
-                  {progress.childDetails.childName || '...'}
-                </p>
-                <p className="font-arabic text-white/60 text-xs text-center px-2">{t('step3.book_brand')}</p>
-              </div>
-            )}
-          </div>
         </div>
 
       {/* Navigation */}
