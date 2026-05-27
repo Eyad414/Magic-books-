@@ -132,6 +132,7 @@ export default function Step5_OrderReview({ onPrev }: Props) {
         storyId: storyConfig?.storyId,
         shippingAddress,
         totalPrice,
+        bookPackage: bookCustomization?.bookPackage || 'color',
       });
       setIsSuccess(true);
       toast.success(t('step5.success_toast'));

@@ -145,7 +145,7 @@ export default function StoryBook({
       {/* ══════════════════════ ALL 34 PAGES ═══════════════════════════════════ */}
 
       {/* 1 — Front Cover */}
-      <FrontCover childName={childName} storyTitle={storyTitle} coverImage={story.coverImage} />
+      <FrontCover childName={childName} storyTitle={storyTitle} coverImage={story.coverImage} childPhoto={resolvedPhoto} />
 
       {/* 2 — Inside Title Page */}
       <TitlePage storyTitle={storyTitle} childName={childName} />

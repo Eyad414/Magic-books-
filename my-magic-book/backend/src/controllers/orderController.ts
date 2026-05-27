@@ -6,7 +6,7 @@ import Story from '../models/Story';
 export const createCheckout = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).user._id;
-    const { storyId, shippingAddress } = req.body;
+    const { storyId, shippingAddress, bookPackage } = req.body;
 
     const story = await Story.findById(storyId);
     if (!story) {
@@ -18,6 +18,7 @@ export const createCheckout = async (req: Request, res: Response): Promise<void>
     const order = await Order.create({
       userId,
       storyId,
+      bookPackage: bookPackage || 'color',
       shippingAddress,
       totalPrice: story.totalPrice || 99,
       currency: 'SAR',
@@ -55,5 +56,36 @@ export const getMyOrders = async (req: Request, res: Response): Promise<void> =>
     res.json({ success: true, orders });
   } catch (error) {
     res.status(500).json({ success: false, message: 'فشل في جلب الطلبات' });
+  }
+};
+
+// @route GET /api/orders/story/:storyId/access
+// Returns whether the authenticated user has e-book / audio access for this story
+export const getStoryAccess = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user._id;
+    const { storyId } = req.params;
+
+    // Find the most recent paid order for this story by this user
+    const order = await Order.findOne({
+      userId,
+      storyId,
+      paymentStatus: 'paid',
+    }).sort({ createdAt: -1 });
+
+    const pkg = order?.bookPackage || null;
+
+    res.json({
+      success: true,
+      hasAccess: !!order,
+      bookPackage: pkg,
+      // Convenience flags
+      hasEbook: pkg === 'ebook' || pkg === 'pro',
+      hasAudio: pkg === 'audio' || pkg === 'pro',
+      hasColorBook: pkg === 'color' || pkg === 'pro',
+      hasColoringBook: pkg === 'coloring',
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'فشل في التحقق من الصلاحية' });
   }
 };

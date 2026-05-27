@@ -9,6 +9,19 @@ export const orderApi = {
     const res = await api.get('/orders/my');
     return res.data;
   },
+  /** Check if user has paid e-book / audio access for a specific story */
+  getStoryAccess: async (storyId: string) => {
+    const res = await api.get(`/orders/story/${storyId}/access`);
+    return res.data as {
+      success: boolean;
+      hasAccess: boolean;
+      bookPackage: string | null;
+      hasEbook: boolean;
+      hasAudio: boolean;
+      hasColorBook: boolean;
+      hasColoringBook: boolean;
+    };
+  },
 };
 
 export const contactApi = {

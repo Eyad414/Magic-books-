@@ -13,9 +13,13 @@ export interface IShippingAddress {
   country: string;
 }
 
+// Package IDs: 'color' | 'coloring' | 'audio' | 'ebook' | 'pro'
+export type BookPackage = 'color' | 'coloring' | 'audio' | 'ebook' | 'pro';
+
 export interface IOrder extends Document {
   userId: mongoose.Types.ObjectId;
   storyId: mongoose.Types.ObjectId;
+  bookPackage: BookPackage;         // which package the customer purchased
   shippingAddress: IShippingAddress;
   totalPrice: number;
   currency: string;
@@ -43,6 +47,11 @@ const OrderSchema = new Schema<IOrder>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     storyId: { type: Schema.Types.ObjectId, ref: 'Story', required: true },
+    bookPackage: {
+      type: String,
+      enum: ['color', 'coloring', 'audio', 'ebook', 'pro'],
+      default: 'color',
+    },
     shippingAddress: { type: ShippingAddressSchema, required: true },
     totalPrice: { type: Number, required: true },
     currency: { type: String, default: 'SAR' },

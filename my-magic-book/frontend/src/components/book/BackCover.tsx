@@ -1,252 +1,422 @@
+// ─── Page 34: Back Cover ─────────────────────────────────────────────────────
+// Layout (220 × 220 mm square — real printed-book format):
+//   • Dark premium background matching the book brand
+//   • "Congratulations" message + child's name
+//   • Barcode / QR placeholder strip
+//   • "More Adventures" recommended stories (3 cards)
+//   • Magic Fanoose logo + website
+//
+// Fixed design — only childName + childPhoto change per order.
+
 import { useTranslation } from 'react-i18next';
 import type { StoryDefinition } from '../../data/stories/types';
 
 interface BackCoverProps {
   childName: string;
   childPhoto: string;
-  /** The 3 stories to show as "More Adventures" recommendations */
   recommendedStories: StoryDefinition[];
 }
 
 export default function BackCover({ childName, childPhoto, recommendedStories }: BackCoverProps) {
   const { t, i18n } = useTranslation();
 
+  const photoSrc = childPhoto ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(childName)}&background=D4A937&color=0a1628&size=300&bold=true`;
+
   return (
-    <section className="book-page back-cover" aria-label={t('storybook.back_cover_aria', 'الغلاف الخلفي')} dir={i18n.dir()}>
+    <section
+      className="book-page bc-root"
+      aria-label={t('storybook.back_cover_aria', 'الغلاف الخلفي')}
+      dir={i18n.dir()}
+    >
+      {/* ── Ambient background ─────────────────────────────────────────────── */}
+      <div className="bc-ambient" aria-hidden="true">
+        <div className="bc-glow bc-glow-1" />
+        <div className="bc-glow bc-glow-2" />
+        <div className="bc-glow bc-glow-3" />
+        <div className="bc-stars" />
+      </div>
 
-      {/* Background gradient */}
-      <div className="bc-bg" aria-hidden="true" />
+      {/* ── Gold top border ────────────────────────────────────────────────── */}
+      <div className="bc-top-border" aria-hidden="true" />
 
-      {/* Child photo + greeting */}
+      {/* ── Logo header ───────────────────────────────────────────────────── */}
+      <div className="bc-header">
+        <img
+          src="/logo.png"
+          alt="Magic Fanoose"
+          className="bc-header-logo"
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+        />
+        <span className="bc-header-brand">Magic Fanoose</span>
+      </div>
+
+      {/* ── Hero — child photo + message ───────────────────────────────────── */}
       <div className="bc-hero">
-        <div className="bc-photo-frame">
+        <div className="bc-photo-wrap">
           <img
-            src={childPhoto}
-            alt={t('storybook.photo_alt', 'صورة {{name}}', { name: childName })}
+            src={photoSrc}
+            alt={childName}
             className="bc-photo"
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).src =
                 `https://ui-avatars.com/api/?name=${encodeURIComponent(childName)}&background=D4A937&color=0a1628&size=200&bold=true`;
             }}
           />
-          <div className="bc-photo-glow" aria-hidden="true" />
+          <div className="bc-photo-ring" aria-hidden="true" />
+          {/* Star badge */}
+          <div className="bc-star-badge" aria-hidden="true">⭐</div>
         </div>
-        <h2 className="bc-greeting">{t('storybook.congrats', 'أحسنت يا {{name}}! 🌟', { name: childName })}</h2>
-        <p className="bc-sub">{t('storybook.completed_desc', 'أتممت قراءة قصتك السحرية — استمر في المغامرة!')}</p>
+
+        <div className="bc-message-block">
+          <h2 className="bc-congrats">
+            {t('storybook.congrats', 'أحسنت يا {{name}}!', { name: childName })} 🌟
+          </h2>
+          <p className="bc-sub">
+            {t('storybook.completed_desc', 'أتممت قراءة قصتك السحرية — استمر في المغامرة!')}
+          </p>
+        </div>
       </div>
 
+      {/* ── Divider ───────────────────────────────────────────────────────── */}
       <div className="bc-divider" aria-hidden="true" />
 
-      {/* Recommended stories */}
-      <div className="bc-stories-section">
-        <h3 className="bc-stories-head">{t('storybook.more_adventures', '✨ مغامرات أخرى تنتظرك')}</h3>
+      {/* ── Recommended stories ───────────────────────────────────────────── */}
+      <div className="bc-stories">
+        <p className="bc-stories-label">
+          ✨ {t('storybook.more_adventures', 'مغامرات أخرى تنتظرك')}
+        </p>
         <div className="bc-stories-grid">
-          {recommendedStories.slice(0, 3).map((story) => (
-            <div key={story.id} className="bc-story-card">
-              <div className="bc-story-thumb-wrap">
-                <img
-                  src={story.thumbnail}
-                  alt={t(`stories.${story.id}.title`, story.titleAr).replace(/\[NAME\]/gi, childName)}
-                  className="bc-story-thumb"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src =
-                      `https://placehold.co/120x120/111840/D4A937?text=🏮&font=sans`;
-                  }}
-                />
+          {recommendedStories.slice(0, 3).map((story) => {
+            const title = t(`stories.${story.id}.title`, story.titleAr).replace(/\[NAME\]/gi, '...');
+            return (
+              <div key={story.id} className="bc-story-card">
+                <div className="bc-thumb-wrap">
+                  <img
+                    src={story.thumbnail}
+                    alt={title}
+                    className="bc-thumb"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src =
+                        'https://placehold.co/80x80/111840/D4A937?text=🏮';
+                    }}
+                  />
+                </div>
+                <p className="bc-card-title">{title}</p>
               </div>
-              <p className="bc-story-title">
-                {t(`stories.${story.id}.title`, story.titleAr).replace(/\[NAME\]/gi, childName)}
-              </p>
-              <p className="bc-story-tag">{t(`stories.${story.id}.tagline`, story.taglineAr)}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
+      {/* ── Divider ───────────────────────────────────────────────────────── */}
       <div className="bc-divider" aria-hidden="true" />
 
-      {/* Footer */}
+      {/* ── Footer strip ─────────────────────────────────────────────────── */}
       <div className="bc-footer">
-        <img src="/logo.png" alt="Magic Fanoose" className="bc-footer-logo" />
-        <div className="bc-footer-text">
-          <span className="bc-footer-brand">Magic Fanoose</span>
-          <span className="bc-footer-url">🌐 MagicFanoose.com</span>
+        <div className="bc-footer-left">
+          <img
+            src="/logo.png"
+            alt="Magic Fanoose"
+            className="bc-footer-logo"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+          />
+          <div>
+            <p className="bc-footer-brand">Magic Fanoose</p>
+            <p className="bc-footer-url">🌐 MagicFanoose.com</p>
+          </div>
+        </div>
+        {/* Barcode placeholder (printed books have ISBN/barcode here) */}
+        <div className="bc-barcode" aria-hidden="true">
+          <div className="bc-barcode-lines">
+            {[...Array(18)].map((_, i) => (
+              <div
+                key={i}
+                className="bc-barcode-line"
+                style={{ width: i % 3 === 0 ? '3px' : '2px' }}
+              />
+            ))}
+          </div>
+          <p className="bc-barcode-text">MagicFanoose</p>
         </div>
       </div>
+
+      {/* ── Gold bottom border ─────────────────────────────────────────────── */}
+      <div className="bc-bottom-border" aria-hidden="true" />
 
       <style>{`
-        .back-cover {
+        .bc-root {
           position: relative;
-          background: linear-gradient(180deg, #0a1628 0%, #060d1a 60%, #03060e 100%);
-          border: 1px solid rgba(212,169,55,0.2);
+          aspect-ratio: 1 / 1;
+          background: linear-gradient(160deg, #070d1e 0%, #0a1628 45%, #040810 100%);
+          border-radius: 12px;
+          overflow: hidden;
           display: flex;
           flex-direction: column;
-          align-items: center;
-          gap: 1.5rem;
-          padding: 2.2rem 1.8rem;
-          min-height: 580px;
-          overflow: hidden;
-          text-align: center;
-          direction: rtl;
+          align-items: stretch;
+          padding: 0;
+          box-shadow:
+            0 32px 80px rgba(0,0,0,0.65),
+            0 0 0 3px rgba(212,169,55,0.4),
+            inset 0 0 0 1px rgba(212,169,55,0.1);
         }
 
-        .back-cover[dir="ltr"] {
-          direction: ltr;
+        /* Ambient glows */
+        .bc-ambient { position: absolute; inset: 0; pointer-events: none; }
+        .bc-glow {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(40px);
+          opacity: 0.5;
         }
-        .back-cover[dir="ltr"] .bc-footer-text {
-          align-items: flex-start;
+        .bc-glow-1 {
+          width: 40%; height: 40%;
+          top: -10%; right: 10%;
+          background: radial-gradient(circle, rgba(212,169,55,0.12) 0%, transparent 70%);
+          animation: bc-drift 8s ease-in-out infinite;
+        }
+        .bc-glow-2 {
+          width: 35%; height: 35%;
+          bottom: 15%; left: 5%;
+          background: radial-gradient(circle, rgba(100,100,255,0.08) 0%, transparent 70%);
+          animation: bc-drift 11s ease-in-out infinite reverse;
+        }
+        .bc-glow-3 {
+          width: 50%; height: 30%;
+          bottom: 0; right: 20%;
+          background: radial-gradient(ellipse, rgba(212,169,55,0.07) 0%, transparent 70%);
+        }
+        @keyframes bc-drift {
+          0%, 100% { transform: translate(0, 0); }
+          50%       { transform: translate(5%, 8%); }
         }
 
-        /* Background shimmer */
-        .bc-bg {
+        /* Stars (tiny dots) */
+        .bc-stars {
           position: absolute;
           inset: 0;
-          background: radial-gradient(ellipse at 50% 20%, rgba(212,169,55,0.08) 0%, transparent 65%);
-          pointer-events: none;
+          background-image:
+            radial-gradient(1.5px 1.5px at 10% 15%, rgba(255,255,255,0.4) 0%, transparent 100%),
+            radial-gradient(1px 1px at 30% 40%, rgba(255,255,255,0.3) 0%, transparent 100%),
+            radial-gradient(1.5px 1.5px at 55% 20%, rgba(255,255,255,0.35) 0%, transparent 100%),
+            radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,0.25) 0%, transparent 100%),
+            radial-gradient(1px 1px at 85% 30%, rgba(255,255,255,0.3) 0%, transparent 100%),
+            radial-gradient(1.5px 1.5px at 20% 75%, rgba(255,255,255,0.2) 0%, transparent 100%),
+            radial-gradient(1px 1px at 90% 80%, rgba(255,255,255,0.3) 0%, transparent 100%),
+            radial-gradient(1px 1px at 45% 88%, rgba(255,255,255,0.2) 0%, transparent 100%);
         }
 
-        /* Hero */
+        /* Top/bottom gold borders */
+        .bc-top-border,
+        .bc-bottom-border {
+          height: 3px;
+          background: linear-gradient(90deg, transparent, #D4A937, rgba(255,238,160,0.8), #D4A937, transparent);
+          flex-shrink: 0;
+          position: relative;
+          z-index: 2;
+        }
+
+        /* Header */
+        .bc-header {
+          position: relative;
+          z-index: 2;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          padding: 0.6rem 1rem 0.3rem;
+        }
+        .bc-header-logo {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          filter: drop-shadow(0 0 6px rgba(212,169,55,0.6));
+        }
+        .bc-header-brand {
+          font-size: clamp(0.65rem, 2.2vw, 0.82rem);
+          font-weight: 800;
+          color: rgba(212,169,55,0.8);
+          letter-spacing: 0.08em;
+        }
+
+        /* Hero section */
         .bc-hero {
           position: relative;
-          z-index: 1;
+          z-index: 2;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 0.7rem;
+          gap: 0.6rem;
+          padding: 0.4rem 1rem 0.5rem;
         }
-        .bc-photo-frame { position: relative; }
+        .bc-photo-wrap {
+          position: relative;
+          width: clamp(60px, 18%, 90px);
+          aspect-ratio: 1;
+          flex-shrink: 0;
+        }
         .bc-photo {
-          width: 100px;
-          height: 100px;
+          width: 100%;
+          height: 100%;
           border-radius: 50%;
           object-fit: cover;
-          border: 3px solid #D4A937;
-          box-shadow: 0 0 0 6px rgba(212,169,55,0.18);
+          object-position: center top;
+          border: 2.5px solid #D4A937;
         }
-        .bc-photo-glow {
+        .bc-photo-ring {
           position: absolute;
-          inset: -12px;
+          inset: -5px;
           border-radius: 50%;
-          background: radial-gradient(circle, rgba(212,169,55,0.18) 0%, transparent 70%);
+          border: 1.5px solid rgba(212,169,55,0.3);
           pointer-events: none;
-          animation: bc-pulse 3s ease-in-out infinite;
         }
-        .bc-greeting {
-          font-size: clamp(1.3rem, 4vw, 1.9rem);
+        .bc-star-badge {
+          position: absolute;
+          bottom: -2px;
+          right: -2px;
+          font-size: 0.9rem;
+          background: #D4A937;
+          width: 20px; height: 20px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.65rem;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        .bc-message-block { text-align: center; }
+        .bc-congrats {
+          font-size: clamp(0.85rem, 3vw, 1.25rem);
           font-weight: 900;
           color: #D4A937;
-          margin: 0;
+          margin: 0 0 0.2rem;
         }
         .bc-sub {
-          font-size: 0.88rem;
-          color: rgba(255,255,255,0.55);
+          font-size: clamp(0.58rem, 1.9vw, 0.75rem);
+          color: rgba(255,255,255,0.5);
           margin: 0;
         }
 
         /* Divider */
         .bc-divider {
           position: relative;
-          z-index: 1;
-          width: 90%;
+          z-index: 2;
           height: 1px;
+          margin: 0 5%;
           background: linear-gradient(90deg, transparent, rgba(212,169,55,0.3), transparent);
+          flex-shrink: 0;
         }
 
-        /* Stories section */
-        .bc-stories-section {
+        /* Recommended stories */
+        .bc-stories {
           position: relative;
-          z-index: 1;
-          width: 100%;
+          z-index: 2;
+          padding: 0.5rem 0.8rem;
+          flex: 1;
         }
-        .bc-stories-head {
-          font-size: 0.88rem;
+        .bc-stories-label {
+          font-size: clamp(0.55rem, 1.8vw, 0.7rem);
           font-weight: 800;
-          color: rgba(212,169,55,0.85);
-          margin: 0 0 1rem;
+          color: rgba(212,169,55,0.75);
+          margin: 0 0 0.5rem;
+          text-align: center;
         }
         .bc-stories-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 0.8rem;
+          gap: 0.5rem;
         }
         .bc-story-card {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(212,169,55,0.15);
-          border-radius: 12px;
-          padding: 0.7rem 0.5rem;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(212,169,55,0.12);
+          border-radius: 8px;
+          padding: 0.4rem 0.3rem;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 0.45rem;
-          transition: border-color 0.2s, transform 0.2s;
+          gap: 0.3rem;
         }
-        .bc-story-card:hover {
-          border-color: rgba(212,169,55,0.4);
-          transform: translateY(-2px);
-        }
-        .bc-story-thumb-wrap {
-          width: 64px;
-          height: 64px;
-          border-radius: 10px;
+        .bc-thumb-wrap {
+          width: clamp(36px, 10%, 50px);
+          aspect-ratio: 1;
+          border-radius: 6px;
           overflow: hidden;
-          border: 1.5px solid rgba(212,169,55,0.25);
+          border: 1px solid rgba(212,169,55,0.2);
           flex-shrink: 0;
         }
-        .bc-story-thumb {
+        .bc-thumb {
           width: 100%;
           height: 100%;
           object-fit: cover;
         }
-        .bc-story-title {
-          font-size: 0.7rem;
+        .bc-card-title {
+          font-size: clamp(0.5rem, 1.6vw, 0.62rem);
           font-weight: 700;
-          color: rgba(255,255,255,0.82);
-          line-height: 1.4;
-          margin: 0;
-        }
-        .bc-story-tag {
-          font-size: 0.6rem;
-          color: rgba(212,169,55,0.65);
-          margin: 0;
+          color: rgba(255,255,255,0.75);
+          text-align: center;
           line-height: 1.3;
+          margin: 0;
         }
 
         /* Footer */
         .bc-footer {
           position: relative;
-          z-index: 1;
+          z-index: 2;
           display: flex;
           align-items: center;
-          gap: 0.75rem;
-          margin-top: auto;
+          justify-content: space-between;
+          padding: 0.45rem 0.9rem;
+          background: rgba(5,12,30,0.6);
+          border-top: 1px solid rgba(212,169,55,0.15);
+        }
+        .bc-footer-left {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
         }
         .bc-footer-logo {
-          width: 42px;
-          height: 42px;
+          width: 22px;
+          height: 22px;
           border-radius: 50%;
-          object-fit: contain;
-          filter: drop-shadow(0 0 8px rgba(212,169,55,0.5));
-        }
-        .bc-footer-text {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 0.1rem;
+          filter: drop-shadow(0 0 5px rgba(212,169,55,0.5));
         }
         .bc-footer-brand {
-          font-size: 0.9rem;
+          font-size: clamp(0.52rem, 1.7vw, 0.68rem);
           font-weight: 800;
           color: #D4A937;
+          margin: 0;
+          line-height: 1.2;
         }
         .bc-footer-url {
-          font-size: 0.72rem;
-          color: rgba(212,169,55,0.6);
-          font-weight: 600;
+          font-size: clamp(0.45rem, 1.5vw, 0.58rem);
+          color: rgba(212,169,55,0.55);
+          margin: 0;
+          line-height: 1.2;
         }
 
-        @keyframes bc-pulse {
-          0%, 100% { opacity: 0.5; transform: scale(0.97); }
-          50%       { opacity: 1;   transform: scale(1.03); }
+        /* Barcode placeholder */
+        .bc-barcode {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.15rem;
+        }
+        .bc-barcode-lines {
+          display: flex;
+          align-items: stretch;
+          gap: 1.5px;
+          height: 22px;
+        }
+        .bc-barcode-line {
+          background: rgba(255,255,255,0.5);
+          border-radius: 1px;
+        }
+        .bc-barcode-text {
+          font-size: 0.42rem;
+          color: rgba(255,255,255,0.35);
+          letter-spacing: 0.1em;
+          margin: 0;
+          font-family: monospace;
         }
       `}</style>
     </section>
