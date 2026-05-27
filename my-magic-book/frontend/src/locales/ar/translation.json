@@ -15,7 +15,11 @@
     "discover_more": "اكتشف المزيد",
     "final_cta_title": "جاهز لصنع قصة لا تُنسى؟",
     "final_cta_desc": "انضم لمئات العائلات السعيدة واصنع ذكرى تعيش مع طفلك إلى الأبد",
-    "final_cta_btn": "✨ ابدأ قصتك الآن"
+    "final_cta_btn": "✨ ابدأ قصتك الآن",
+    "quote_pre": "نحن لا نصنع قصصاً فقط، نحن نبني ",
+    "quote_bold1": "ثقة الطفل",
+    "quote_mid": " بنفسه وننمي لديه ",
+    "quote_bold2": "حب القراءة"
   },
   "hero": {
     "ai_powered": "مدعوم بالذكاء الاصطناعي ✨",
@@ -233,7 +237,11 @@
     "messages_desc": "لا توجد رسائل جديدة.",
     "error_update": "فشل في تحديث البيانات",
     "error_password_match": "كلمتا المرور الجديدة غير متطابقتين",
-    "error_password_change": "فشل في تغيير كلمة المرور"
+    "error_password_change": "فشل في تغيير كلمة المرور",
+    "delete_story": "حذف القصة",
+    "story_deleted": "تم حذف القصة بنجاح",
+    "story_delete_error": "فشل في حذف القصة",
+    "browse_book": "تصفح الكتاب كاملاً"
   },
   "wizard": {
     "step1_label": "تفاصيل الطفل",

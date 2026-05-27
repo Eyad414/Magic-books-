@@ -15,7 +15,11 @@
     "discover_more": "Discover More",
     "final_cta_title": "Ready to create an unforgettable story?",
     "final_cta_desc": "Join hundreds of happy families and create a memory that will live with your child forever.",
-    "final_cta_btn": "✨ Start Your Story Now"
+    "final_cta_btn": "✨ Start Your Story Now",
+    "quote_pre": "We don't just create stories, we build ",
+    "quote_bold1": "a child's confidence",
+    "quote_mid": " and nurture their ",
+    "quote_bold2": "love of reading"
   },
   "hero": {
     "ai_powered": "AI Powered ✨",
@@ -233,7 +237,11 @@
     "messages_desc": "No new messages.",
     "error_update": "Failed to update profile",
     "error_password_match": "New passwords do not match",
-    "error_password_change": "Failed to change password"
+    "error_password_change": "Failed to change password",
+    "delete_story": "Delete Story",
+    "story_deleted": "Story deleted successfully",
+    "story_delete_error": "Failed to delete story",
+    "browse_book": "Browse Full Book"
   },
   "wizard": {
     "step1_label": "Child Details",

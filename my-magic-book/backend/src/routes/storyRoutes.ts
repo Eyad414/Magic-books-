@@ -8,6 +8,7 @@ import {
   getStoryPreview,
   getFullStory,
   getMyStories,
+  deleteStory,
 } from '../controllers/storyController';
 import { protect } from '../utils/authMiddleware';
 
@@ -21,5 +22,6 @@ router.get('/:id/illustration-status', protect, getIllustrationStatus);
 router.put('/:id/customize', protect, customizeStory);
 router.get('/:id/preview', getStoryPreview);
 router.get('/:id/full', protect, getFullStory);
+router.delete('/:id', protect, deleteStory);
 
 export default router;

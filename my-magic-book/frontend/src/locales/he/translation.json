@@ -15,7 +15,11 @@
     "discover_more": "גלה עוד",
     "final_cta_title": "מוכנים ליצור סיפור בלתי נשכח?",
     "final_cta_desc": "הצטרפו למאות משפחות מאושרות וצרו זיכרון שיישאר עם ילדכם לנצח.",
-    "final_cta_btn": "✨ התחל את הסיפור שלך עכשיו"
+    "final_cta_btn": "✨ התחל את הסיפור שלך עכשיו",
+    "quote_pre": "אנחנו לא רק יוצרים סיפורים, אנחנו בונים ",
+    "quote_bold1": "ביטחון הילד",
+    "quote_mid": " ומטפחים את ",
+    "quote_bold2": "אהבת הקריאה"
   },
   "hero": {
     "ai_powered": "מופעל על ידי בינה מלאכותית ✨",
@@ -233,7 +237,11 @@
     "messages_desc": "אין הודעות חדשות.",
     "error_update": "עדכון הפרופיל נכשל",
     "error_password_match": "הסיסמאות החדשות אינן תואמות",
-    "error_password_change": "שינוי הסיסמה נכשל"
+    "error_password_change": "שינוי הסיסמה נכשל",
+    "delete_story": "מחק סיפור",
+    "story_deleted": "הסיפור נמחק בהצלחה",
+    "story_delete_error": "מחיקת הסיפור נכשלה",
+    "browse_book": "עיין בספר המלא"
   },
   "wizard": {
     "step1_label": "פרטי הילד",

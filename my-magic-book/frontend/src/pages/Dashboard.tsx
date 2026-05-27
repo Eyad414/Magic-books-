@@ -50,6 +50,9 @@ export default function Dashboard() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
+  // Story delete state
+  const [deletingStoryId, setDeletingStoryId] = useState<string | null>(null);
+
   // Password form state
   const [passForm, setPassForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [isSavingPass, setIsSavingPass] = useState(false);
@@ -88,6 +91,19 @@ export default function Dashboard() {
     e.preventDefault();
     resetProgress();
     navigate('/create');
+  };
+
+  const handleDeleteStory = async (storyId: string) => {
+    setDeletingStoryId(storyId);
+    try {
+      await storyApi.deleteStory(storyId);
+      setStories(prev => prev.filter(s => s._id !== storyId));
+      toast.success(t('dashboard.story_deleted'));
+    } catch {
+      toast.error(t('dashboard.story_delete_error'));
+    } finally {
+      setDeletingStoryId(null);
+    }
   };
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
@@ -258,7 +274,16 @@ export default function Dashboard() {
                     {stories.map((story) => {
                       const status = statusMap[story.status] || statusMap.draft;
                       return (
-                        <div key={story._id} className="bg-dark-700/50 rounded-2xl border border-white/5 p-5 hover:-translate-y-1 transition-transform group flex flex-col">
+                        <div key={story._id} className="relative bg-dark-700/50 rounded-2xl border border-white/5 p-5 hover:-translate-y-1 transition-transform group flex flex-col">
+                          {/* Delete button */}
+                          <button
+                            onClick={() => handleDeleteStory(story._id)}
+                            disabled={deletingStoryId === story._id}
+                            className="absolute top-3 left-3 w-7 h-7 rounded-full bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 z-10 disabled:opacity-50"
+                            title={t('dashboard.delete_story')}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
                           <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">📚</div>
                           <h3 className="font-arabic font-bold text-white text-lg mb-1">{story.childName}</h3>
                           <p className="font-arabic text-white/40 text-xs mb-3">{story.theme} • {new Date(story.createdAt).toLocaleDateString()}</p>
@@ -267,12 +292,12 @@ export default function Dashboard() {
                               <status.icon className="w-3.5 h-3.5" />
                               <span className="font-arabic text-xs font-bold">{status.label}</span>
                             </div>
-                            <Link 
+                            <Link
                               to={`/book/${story._id}`}
                               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold-500 text-dark-900 hover:bg-gold-400 transition-colors font-arabic font-bold text-xs shadow-lg shadow-gold-500/20"
                             >
                               <BookOpen className="w-3.5 h-3.5" />
-                              تصفح الكتاب كاملاً
+                              {t('dashboard.browse_book')}
                             </Link>
                           </div>
                         </div>

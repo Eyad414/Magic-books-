@@ -31,6 +31,10 @@ export const storyApi = {
     const res = await api.get('/stories/my');
     return res.data;
   },
+  deleteStory: async (storyId: string) => {
+    const res = await api.delete(`/stories/${storyId}`);
+    return res.data;
+  },
 };
 
 /** Upload a File (from <input type="file">) to Cloudinary via backend. */

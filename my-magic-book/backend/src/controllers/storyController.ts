@@ -297,3 +297,19 @@ export const testGeneratePdf = async (req: Request, res: Response): Promise<void
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// @route DELETE /api/stories/:id
+export const deleteStory = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user._id;
+    const story = await Story.findOne({ _id: req.params.id, userId });
+    if (!story) {
+      res.status(404).json({ success: false, message: 'القصة غير موجودة أو ليس لديك صلاحية لحذفها' });
+      return;
+    }
+    await Story.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'تم حذف القصة بنجاح' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'فشل في حذف القصة' });
+  }
+};
