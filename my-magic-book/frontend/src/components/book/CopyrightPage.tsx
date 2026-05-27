@@ -1,11 +1,11 @@
-// ─── Page 8: Copyright / Info Page ───────────────────────────────────────────
-// Layout: website, email, policy links, QR code to website.
+import { useTranslation } from 'react-i18next';
 
 export default function CopyrightPage() {
+  const { t, i18n } = useTranslation();
   const websiteUrl = 'https://magicfanoose.com';
 
   return (
-    <section className="book-page copyright-page" aria-label="صفحة حقوق النشر">
+    <section className="book-page copyright-page" aria-label={t('storybook.copyright_page_aria', 'صفحة حقوق النشر')} dir={i18n.dir()}>
 
       {/* Logo */}
       <div className="cp-logo-row">
@@ -31,13 +31,13 @@ export default function CopyrightPage() {
 
       {/* Policy links */}
       <div className="cp-policy">
-        <h3 className="cp-policy-head">سياسات المنصة</h3>
+        <h3 className="cp-policy-head">{t('storybook.platform_policies', 'سياسات المنصة')}</h3>
         <div className="cp-policy-links">
           {[
-            { label: 'سياسة الخصوصية', anchor: '#privacy' },
-            { label: 'شروط الاستخدام', anchor: '#terms' },
-            { label: 'سياسة الدفع', anchor: '#payment' },
-            { label: 'حذف البيانات', anchor: '#data-deletion' },
+            { label: t('storybook.policy_privacy', 'سياسة الخصوصية'), anchor: '#privacy' },
+            { label: t('storybook.policy_terms', 'شروط الاستخدام'), anchor: '#terms' },
+            { label: t('storybook.policy_payment', 'سياسة الدفع'), anchor: '#payment' },
+            { label: t('storybook.policy_deletion', 'حذف البيانات'), anchor: '#data-deletion' },
           ].map(({ label, anchor }) => (
             <a
               key={anchor}
@@ -55,10 +55,10 @@ export default function CopyrightPage() {
       {/* QR code to website */}
       <div className="cp-qr-row">
         <div className="cp-qr-text">
-          <p className="cp-qr-label">🏮 زر موقعنا</p>
-          <p className="cp-qr-sub">امسح الكود لزيارة MagicFanoose.com واكتشاف المزيد من القصص</p>
+          <p className="cp-qr-label">{t('storybook.visit_website', '🏮 زر موقعنا')}</p>
+          <p className="cp-qr-sub">{t('storybook.scan_website', 'امسح الكود لزيارة MagicFanoose.com واكتشاف المزيد من القصص')}</p>
         </div>
-        <div className="cp-qr-box" aria-label="QR code لموقع MagicFanoose.com">
+        <div className="cp-qr-box" aria-label={t('storybook.qr_website_aria', 'QR code لموقع MagicFanoose.com')}>
           <img
             src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(websiteUrl)}&bgcolor=0a1628&color=D4A937`}
             alt="QR code"
@@ -72,8 +72,8 @@ export default function CopyrightPage() {
 
       {/* Copyright notice */}
       <p className="cp-copy">
-        © {new Date().getFullYear()} Magic Fanoose. جميع الحقوق محفوظة.<br />
-        هذه القصة مُولَّدة بواسطة الذكاء الاصطناعي وتم تخصيصها خصيصًا لطفلك.
+        © {new Date().getFullYear()} Magic Fanoose. {t('storybook.all_rights_reserved', 'جميع الحقوق محفوظة.')}<br />
+        {t('storybook.ai_generated_notice', 'هذه القصة مُولَّدة بواسطة الذكاء الاصطناعي وتم تخصيصها خصيصًا لطفلك.')}
       </p>
 
       <style>{`
@@ -88,6 +88,13 @@ export default function CopyrightPage() {
           min-height: 520px;
           text-align: center;
           direction: rtl;
+        }
+
+        .copyright-page[dir="ltr"] {
+          direction: ltr;
+        }
+        .copyright-page[dir="ltr"] .cp-qr-text {
+          text-align: left;
         }
 
         /* Logo */

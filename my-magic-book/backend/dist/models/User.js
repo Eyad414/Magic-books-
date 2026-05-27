@@ -44,6 +44,9 @@ const UserSchema = new mongoose_1.Schema({
     passwordHash: { type: String, required: true, select: false },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     avatar: { type: String },
+    phone: { type: String, trim: true },
+    location: { type: String, trim: true },
+    lastLoginAt: { type: Date },
 }, { timestamps: true });
 UserSchema.pre('save', async function (next) {
     if (!this.isModified('passwordHash'))

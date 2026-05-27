@@ -12,14 +12,17 @@ const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const storyRoutes_1 = __importDefault(require("./routes/storyRoutes"));
 const orderRoutes_1 = __importDefault(require("./routes/orderRoutes"));
 const contactRoutes_1 = __importDefault(require("./routes/contactRoutes"));
+const adminRoutes_1 = __importDefault(require("./routes/adminRoutes"));
+const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
+const publicRoutes_1 = __importDefault(require("./routes/publicRoutes"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 // Connect Database
 (0, db_1.connectDB)();
 // Middleware
 app.use((0, cors_1.default)({
-    origin: process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
+    origin: true, // Allow any origin dynamically (reflects the request origin)
     credentials: true,
 }));
 // Stripe webhook needs raw body — must be before json middleware
@@ -35,6 +38,9 @@ app.use('/api/auth', authRoutes_1.default);
 app.use('/api/stories', storyRoutes_1.default);
 app.use('/api/orders', orderRoutes_1.default);
 app.use('/api/contact', contactRoutes_1.default);
+app.use('/api/admin', adminRoutes_1.default);
+app.use('/api/user', userRoutes_1.default);
+app.use('/api/public', publicRoutes_1.default);
 // 404 handler
 app.use((_req, res) => {
     res.status(404).json({ success: false, message: 'Route not found' });

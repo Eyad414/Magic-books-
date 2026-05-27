@@ -1,5 +1,5 @@
 // ─── StoryBook — Main Orchestrator ────────────────────────────────────────────
-// Renders all 35 pages in the correct order for a given story + child data.
+// Renders all 34 pages in the correct order for a given story + child data.
 // Admin-only: protected by AdminBookGuard in App.tsx.
 //
 // PRINT FORMAT: 220mm × 220mm square (Tali Toons style).
@@ -7,6 +7,7 @@
 // becomes its own 220mm×220mm page automatically via @page + print CSS.
 
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import FrontCover        from './FrontCover';
 import TitlePage         from './TitlePage';
@@ -48,6 +49,7 @@ export default function StoryBook({
   customPages    = undefined,
 }: StoryBookProps) {
 
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.email === 'eyadat720@gmail.com';
 
@@ -60,15 +62,25 @@ export default function StoryBook({
     [storyId],
   );
 
-  // ── Memoize name-replaced strings ─────────────────────────────────────────
-  const storyTitle  = useMemo(() => replaceName(story.titleAr,     childName), [story, childName]);
-  const dedication  = useMemo(() => replaceName(story.dedicationAr, childName), [story, childName]);
-  const moral       = useMemo(() => replaceName(story.moralAr,      childName), [story, childName]);
-  const conclusion  = useMemo(() => replaceName(story.conclusionAr, childName), [story, childName]);
-  const questions   = useMemo(
-    () => story.questionsAr.map((q) => replaceName(q, childName)),
-    [story, childName],
-  );
+  // ── Resolve localized static story fields ──────────────────────────────────
+  const translatedTitle = useMemo(() => t(`stories.${story.id}.title`, story.titleAr), [story.id, story.titleAr, t]);
+  const translatedDedication = useMemo(() => t(`stories.${story.id}.dedication`, story.dedicationAr), [story.id, story.dedicationAr, t]);
+  const translatedMoral = useMemo(() => t(`stories.${story.id}.moral`, story.moralAr), [story.id, story.moralAr, t]);
+  const translatedConclusion = useMemo(() => t(`stories.${story.id}.conclusion`, story.conclusionAr), [story.id, story.conclusionAr, t]);
+
+  const storyTitle  = useMemo(() => replaceName(translatedTitle,     childName), [translatedTitle, childName]);
+  const dedication  = useMemo(() => replaceName(translatedDedication, childName), [translatedDedication, childName]);
+  const moral       = useMemo(() => replaceName(translatedMoral,      childName), [translatedMoral, childName]);
+  const conclusion  = useMemo(() => replaceName(translatedConclusion, childName), [translatedConclusion, childName]);
+
+  const questions   = useMemo(() => {
+    return story.questionsAr.map((q, idx) => {
+      const qKey = `stories.${story.id}.questions.${idx}`;
+      const translatedQ = t(qKey);
+      const activeQ = translatedQ && translatedQ !== qKey ? translatedQ : q;
+      return replaceName(activeQ, childName);
+    });
+  }, [story, childName, t]);
 
   // ── Pick 3 recommended stories ────────────────────────────────────────────
   const recommended = useMemo(
@@ -86,7 +98,7 @@ export default function StoryBook({
   const handlePrint = () => window.print();
 
   return (
-    <div className="sb-root" dir="rtl">
+    <div className="sb-root" dir={i18n.dir()}>
 
       {/* ── Admin toolbar (hidden on print) ────────────────────────────────── */}
       {isAdmin && (
@@ -95,17 +107,17 @@ export default function StoryBook({
           {/* Name input */}
           {showNameInput && (
             <div className="sb-name-bar">
-              <label htmlFor="sb-name-input" className="sb-name-label">✨ اسم الطفل:</label>
+              <label htmlFor="sb-name-input" className="sb-name-label">{t('storybook.child_name', '✨ اسم الطفل:')}</label>
               <input
                 id="sb-name-input"
                 type="text"
                 value={childName}
                 onChange={(e) => setChildName(e.target.value || 'الطفل')}
-                placeholder="اكتب الاسم هنا"
+                placeholder={t('storybook.placeholder_name', 'اكتب الاسم هنا')}
                 className="sb-name-input"
                 maxLength={30}
               />
-              <span className="sb-story-badge">{story.titleAr.replace('[NAME]', '…')}</span>
+              <span className="sb-story-badge">{storyTitle.replace('[NAME]', '…')}</span>
             </div>
           )}
 
@@ -115,22 +127,22 @@ export default function StoryBook({
             className="sb-print-btn"
             aria-label="طباعة الكتاب بحجم 220×220 ملم"
           >
-            🖨️ طباعة الكتاب
+            🖨️ {t('storybook.print_book', 'طباعة الكتاب')}
             <span className="sb-print-size">220 × 220 mm</span>
           </button>
 
           {/* Info strip */}
           <div className="sb-info-strip">
-            <span>📄 35 صفحة</span>
+            <span>📄 {t('storybook.pages_count', '34 صفحة')}</span>
             <span>·</span>
-            <span>🖊️ قصة: {storyTitle}</span>
+            <span>🖊️ {t('storybook.story_title', 'قصة')}: {storyTitle}</span>
             <span>·</span>
             <span>👦 {childName}</span>
           </div>
         </div>
       )}
 
-      {/* ══════════════════════ ALL 35 PAGES ═══════════════════════════════════ */}
+      {/* ══════════════════════ ALL 34 PAGES ═══════════════════════════════════ */}
 
       {/* 1 — Front Cover */}
       <FrontCover childName={childName} storyTitle={storyTitle} coverImage={story.coverImage} />
@@ -164,11 +176,16 @@ export default function StoryBook({
         ) : (
           story.pages.map((page) => {
             if (page.type === 'text' && page.text) {
+              // Check if a localized translation exists for this page number
+              const pageKey = `stories.${story.id}.pages.${page.pageNumber}`;
+              const translatedPage = t(pageKey);
+              const activeText = translatedPage && translatedPage !== pageKey ? translatedPage : page.text;
+              
               return (
                 <StoryTextPage
                   key={page.pageNumber}
                   pageNumber={page.pageNumber}
-                  text={replaceName(page.text, childName)}
+                  text={replaceName(activeText, childName)}
                   childName={childName}
                 />
               );

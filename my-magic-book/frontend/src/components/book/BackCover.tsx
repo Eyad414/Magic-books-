@@ -1,7 +1,4 @@
-// ─── Page 10: Back Cover ──────────────────────────────────────────────────────
-// Layout: child's photo top-center, 3 "recommended stories" cards in a row,
-// website name at the bottom.
-
+import { useTranslation } from 'react-i18next';
 import type { StoryDefinition } from '../../data/stories/types';
 
 interface BackCoverProps {
@@ -12,8 +9,10 @@ interface BackCoverProps {
 }
 
 export default function BackCover({ childName, childPhoto, recommendedStories }: BackCoverProps) {
+  const { t, i18n } = useTranslation();
+
   return (
-    <section className="book-page back-cover" aria-label="الغلاف الخلفي">
+    <section className="book-page back-cover" aria-label={t('storybook.back_cover_aria', 'الغلاف الخلفي')} dir={i18n.dir()}>
 
       {/* Background gradient */}
       <div className="bc-bg" aria-hidden="true" />
@@ -23,7 +22,7 @@ export default function BackCover({ childName, childPhoto, recommendedStories }:
         <div className="bc-photo-frame">
           <img
             src={childPhoto}
-            alt={`صورة ${childName}`}
+            alt={t('storybook.photo_alt', 'صورة {{name}}', { name: childName })}
             className="bc-photo"
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).src =
@@ -32,22 +31,22 @@ export default function BackCover({ childName, childPhoto, recommendedStories }:
           />
           <div className="bc-photo-glow" aria-hidden="true" />
         </div>
-        <h2 className="bc-greeting">أحسنت يا {childName}! 🌟</h2>
-        <p className="bc-sub">أتممت قراءة قصتك السحرية — استمر في المغامرة!</p>
+        <h2 className="bc-greeting">{t('storybook.congrats', 'أحسنت يا {{name}}! 🌟', { name: childName })}</h2>
+        <p className="bc-sub">{t('storybook.completed_desc', 'أتممت قراءة قصتك السحرية — استمر في المغامرة!')}</p>
       </div>
 
       <div className="bc-divider" aria-hidden="true" />
 
       {/* Recommended stories */}
       <div className="bc-stories-section">
-        <h3 className="bc-stories-head">✨ مغامرات أخرى تنتظرك</h3>
+        <h3 className="bc-stories-head">{t('storybook.more_adventures', '✨ مغامرات أخرى تنتظرك')}</h3>
         <div className="bc-stories-grid">
           {recommendedStories.slice(0, 3).map((story) => (
             <div key={story.id} className="bc-story-card">
               <div className="bc-story-thumb-wrap">
                 <img
                   src={story.thumbnail}
-                  alt={story.titleAr.replace('[NAME]', childName)}
+                  alt={t(`stories.${story.id}.title`, story.titleAr).replace(/\[NAME\]/gi, childName)}
                   className="bc-story-thumb"
                   onError={(e) => {
                     (e.currentTarget as HTMLImageElement).src =
@@ -56,9 +55,9 @@ export default function BackCover({ childName, childPhoto, recommendedStories }:
                 />
               </div>
               <p className="bc-story-title">
-                {story.titleAr.replace('[NAME]', childName)}
+                {t(`stories.${story.id}.title`, story.titleAr).replace(/\[NAME\]/gi, childName)}
               </p>
-              <p className="bc-story-tag">{story.taglineAr}</p>
+              <p className="bc-story-tag">{t(`stories.${story.id}.tagline`, story.taglineAr)}</p>
             </div>
           ))}
         </div>
@@ -89,6 +88,13 @@ export default function BackCover({ childName, childPhoto, recommendedStories }:
           overflow: hidden;
           text-align: center;
           direction: rtl;
+        }
+
+        .back-cover[dir="ltr"] {
+          direction: ltr;
+        }
+        .back-cover[dir="ltr"] .bc-footer-text {
+          align-items: flex-start;
         }
 
         /* Background shimmer */

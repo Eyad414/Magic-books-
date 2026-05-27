@@ -37,7 +37,7 @@ const mongoose_1 = __importStar(require("mongoose"));
 const StorySchema = new mongoose_1.Schema({
     userId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User', required: true },
     childName: { type: String, required: true, trim: true },
-    childAge: { type: Number, required: true, min: 1, max: 15 },
+    childAge: { type: String, required: true },
     childGender: { type: String, enum: ['male', 'female'], required: true },
     childPhotoUrl: { type: String },
     theme: {

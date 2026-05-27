@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { adminApi } from '../api/adminApi';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle } from 'lucide-react';
+import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2 } from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { findStory } from '../data/stories';
 
 export default function AdminDashboard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -25,7 +25,6 @@ export default function AdminDashboard() {
   // Story Editor — separate draft state so we never corrupt settings while editing
   const [editingStory, setEditingStory] = useState<number | null>(null);
   const [draftPages, setDraftPages] = useState<{ text: string; imageSrc: string }[]>([]);
-  const [confirmClear, setConfirmClear] = useState(false);
 
   // Helper to load default pages from the static story registry
   const loadDefaultPages = (themeId: string) => {
@@ -38,7 +37,7 @@ export default function AdminDashboard() {
       for (let i = 0; i < len; i++) {
         pages.push({
           text: (textPages[i]?.text ?? '').replace(/\[NAME\]/g, '{{name}}'),
-          imageSrc: imagePages[i]?.imageSrc ?? imagePages[i]?.image ?? '',
+          imageSrc: imagePages[i]?.imageSrc ?? '',
         });
       }
       return pages;
@@ -56,9 +55,63 @@ export default function AdminDashboard() {
       pages = loadDefaultPages(theme.id);
     }
     setDraftPages(pages);
-    setConfirmClear(false);
-    setEditingStory(index);
   };
+
+  const deleteTheme = (index: number) => {
+    if (window.confirm(t('admin.delete_confirm', 'هل أنت متأكد من رغبتك في حذف هذا الموضوع؟'))) {
+      const newThemes = settings.themes.filter((_: any, idx: number) => idx !== index);
+      setSettings({ ...settings, themes: newThemes });
+      toast.success(t('admin.theme_deleted', 'تم حذف الموضوع بنجاح!'));
+    }
+  };
+
+  const getLocalizedThemeLabel = (theme: any) => {
+    const defaultArabicNames = ['مغامرة', 'مغامرة حديقة الحيوان', 'الفضاء', 'بطل المدرسة'];
+    const isCustomized = theme.label && !defaultArabicNames.includes(theme.label);
+    if (isCustomized) return theme.label;
+    const key = `step2.theme_${theme.id}`;
+    const translated = t(key);
+    return translated !== key ? translated : theme.label;
+  };
+
+  const getLocalizedThemeDesc = (theme: any) => {
+    const defaultArabicDescs = [
+      'استكشاف ومغامرات مثيرة',
+      'رحلة مثيرة بين الحيوانات اللطيفة',
+      'رحلة بين النجوم والكواكب',
+      'مساعدة الآخرين ونشر اللطف والألوان في المدرسة'
+    ];
+    const isCustomized = theme.desc && !defaultArabicDescs.includes(theme.desc);
+    if (isCustomized) return theme.desc;
+    const key = `step2.theme_${theme.id}_desc`;
+    const translated = t(key);
+    return translated !== key ? translated : theme.desc;
+  };
+
+  const getLocalizedPkgLabel = (pkg: any) => {
+    const defaultArabicNames = ['قصة ملونة', 'دفتر تلوين', 'ملف صوتي (Audio)', 'نسخة رقمية (E-Book)', 'باقة Pro الشاملة'];
+    const isCustomized = pkg.label && !defaultArabicNames.includes(pkg.label);
+    if (isCustomized) return pkg.label;
+    const key = `step3.pkg_${pkg.id}`;
+    const translated = t(key);
+    return translated !== key ? translated : pkg.label;
+  };
+
+  const getLocalizedPkgDesc = (pkg: any) => {
+    const defaultArabicDescs = [
+      'كتاب ملون بالكامل بجودة عالية',
+      'رسومات غير ملونة جاهزة للتلوين',
+      'تسجيل صوتي احترافي لقصتك',
+      'كتاب إلكتروني للقراءة على الأجهزة',
+      'جميع النسخ (الملون + التلوين + الصوتي + الرقمي)'
+    ];
+    const isCustomized = pkg.desc && !defaultArabicDescs.includes(pkg.desc);
+    if (isCustomized) return pkg.desc;
+    const key = `step3.pkg_${pkg.id}_desc`;
+    const translated = t(key);
+    return translated !== key ? translated : pkg.desc;
+  };
+
 
   useEffect(() => {
     if (!isLoading) {
@@ -286,7 +339,7 @@ export default function AdminDashboard() {
                     <div key={pkg.id} className="p-4 bg-white/5 rounded-xl border border-white/10 grid grid-cols-1 sm:grid-cols-4 gap-4 items-center">
                       <div className="sm:col-span-1">
                         <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.name')}</label>
-                        <input type="text" className="magic-input w-full" value={pkg.label} onChange={(e) => {
+                        <input type="text" className="magic-input w-full" value={getLocalizedPkgLabel(pkg)} onChange={(e) => {
                           const newPkgs = [...settings.bookPackages];
                           newPkgs[index].label = e.target.value;
                           setSettings({...settings, bookPackages: newPkgs});
@@ -302,7 +355,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="sm:col-span-2">
                         <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.description')}</label>
-                        <input type="text" className="magic-input w-full" value={pkg.desc} onChange={(e) => {
+                        <input type="text" className="magic-input w-full" value={getLocalizedPkgDesc(pkg)} onChange={(e) => {
                           const newPkgs = [...settings.bookPackages];
                           newPkgs[index].desc = e.target.value;
                           setSettings({...settings, bookPackages: newPkgs});
@@ -321,7 +374,7 @@ export default function AdminDashboard() {
                     <div key={theme.id} className="p-4 bg-white/5 rounded-xl border border-white/10 grid grid-cols-1 sm:grid-cols-4 gap-4 items-center">
                       <div className="sm:col-span-1">
                         <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.name')}</label>
-                        <input type="text" className="magic-input w-full" value={theme.label} onChange={(e) => {
+                        <input type="text" className="magic-input w-full" value={getLocalizedThemeLabel(theme)} onChange={(e) => {
                           const newThemes = [...settings.themes];
                           newThemes[index].label = e.target.value;
                           setSettings({...settings, themes: newThemes});
@@ -337,25 +390,63 @@ export default function AdminDashboard() {
                       </div>
                       <div className="sm:col-span-2">
                         <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.description')}</label>
-                        <input type="text" className="magic-input w-full" value={theme.desc} onChange={(e) => {
+                        <input type="text" className="magic-input w-full" value={getLocalizedThemeDesc(theme)} onChange={(e) => {
                           const newThemes = [...settings.themes];
                           newThemes[index].desc = e.target.value;
                           setSettings({...settings, themes: newThemes});
                         }} />
                       </div>
-                      <div className="sm:col-span-4 flex items-center gap-3 mt-2">
+                      <div className="sm:col-span-4 flex flex-wrap items-center gap-3 mt-2">
                         <Link 
-                          to={`/book/${theme.id}?name=إياد`} 
+                          to={`/book/${theme.id}?name=${i18n.language === 'en' ? 'Ahmad' : (i18n.language === 'he' ? 'עדי' : 'إياد')}`} 
                           target="_blank"
                           className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white font-arabic text-sm transition-colors border border-white/10"
                         >
-                          <Eye className="w-4 h-4" /> عرض الكتاب
+                          <Eye className="w-4 h-4" /> {t('admin.book_presentation', 'عرض الكتاب')}
                         </Link>
+                        
+                        {/* More Preview Languages */}
+                        {i18n.language !== 'ar' && (
+                          <Link 
+                            to={`/book/${theme.id}?name=إياد&lng=ar`} 
+                            target="_blank"
+                            className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-xl text-emerald-400 font-arabic text-sm transition-colors border border-emerald-500/30"
+                          >
+                            {t('admin.preview_arabic', '🇸🇦 عرض بالعربية')}
+                          </Link>
+                        )}
+                        {i18n.language !== 'en' && (
+                          <Link 
+                            to={`/book/${theme.id}?name=Ahmad&lng=en`} 
+                            target="_blank"
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 rounded-xl text-blue-400 font-arabic text-sm transition-colors border border-blue-500/30"
+                          >
+                            {t('admin.preview_english', '🇬🇧 Preview in English')}
+                          </Link>
+                        )}
+                        {i18n.language !== 'he' && (
+                          <Link 
+                            to={`/book/${theme.id}?name=עדי&lng=he`} 
+                            target="_blank"
+                            className="flex items-center gap-2 px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 rounded-xl text-purple-400 font-arabic text-sm transition-colors border border-purple-500/30"
+                          >
+                            {t('admin.preview_hebrew', '🇮🇱 תצוגה בעברית')}
+                          </Link>
+                        )}
+
                         <button 
                           onClick={() => openEditor(index)}
                           className="flex items-center gap-2 px-4 py-2 bg-gold-500/20 hover:bg-gold-500/30 text-gold-500 rounded-xl font-arabic text-sm transition-colors border border-gold-500/30"
                         >
-                          <BookOpen className="w-4 h-4" /> تعديل محتوى القصة
+                          <BookOpen className="w-4 h-4" /> {t('admin.edit_content_story', 'تعديل محتوى القصة')}
+                        </button>
+
+                        <button 
+                          onClick={() => deleteTheme(index)}
+                          className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl font-arabic text-sm transition-colors border border-red-500/30"
+                          title={t('admin.delete_theme', 'حذف الموضوع')}
+                        >
+                          <Trash2 className="w-4 h-4" /> {t('admin.delete_theme', 'حذف الموضوع')}
                         </button>
                       </div>
                     </div>

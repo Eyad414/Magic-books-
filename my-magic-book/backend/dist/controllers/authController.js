@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMe = exports.login = exports.register = void 0;
+exports.makeMeAdmin = exports.getMe = exports.login = exports.register = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const User_1 = __importDefault(require("../models/User"));
 const signToken = (id) => {
@@ -30,7 +30,7 @@ const register = async (req, res) => {
             success: true,
             message: 'تم التسجيل بنجاح!',
             token,
-            user: { id: user._id, name: user.name, email: user.email, role: user.role },
+            user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, location: user.location, createdAt: user.createdAt, lastLoginAt: user.lastLoginAt },
         });
     }
     catch (error) {
@@ -52,11 +52,13 @@ const login = async (req, res) => {
             return;
         }
         const token = signToken(user._id.toString());
+        user.lastLoginAt = new Date();
+        await user.save();
         res.json({
             success: true,
             message: 'تم تسجيل الدخول بنجاح!',
             token,
-            user: { id: user._id, name: user.name, email: user.email, role: user.role },
+            user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, location: user.location, createdAt: user.createdAt, lastLoginAt: user.lastLoginAt },
         });
     }
     catch (error) {
@@ -68,11 +70,27 @@ exports.login = login;
 const getMe = async (req, res) => {
     try {
         const user = req.user;
-        res.json({ success: true, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+        res.json({ success: true, user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, location: user.location, createdAt: user.createdAt, lastLoginAt: user.lastLoginAt } });
     }
     catch (error) {
         res.status(500).json({ success: false, message: 'حدث خطأ في الخادم' });
     }
 };
 exports.getMe = getMe;
+// @route PUT /api/auth/make-admin (Temporary endpoint for setup)
+const makeMeAdmin = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const user = await User_1.default.findByIdAndUpdate(userId, { role: 'admin' }, { new: true });
+        if (!user) {
+            res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
+            return;
+        }
+        res.json({ success: true, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, message: 'حدث خطأ في الخادم' });
+    }
+};
+exports.makeMeAdmin = makeMeAdmin;
 //# sourceMappingURL=authController.js.map

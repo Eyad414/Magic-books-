@@ -1,24 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useStoryProgress } from '../../context/StoryProgressContext';
 import { useAuth } from '../../context/AuthContext';
 import MagicButton from '../common/MagicButton';
 import { ChevronRight, CreditCard, Shield, Package, CheckCircle, Tag, Minus, Plus, Truck } from 'lucide-react';
 import { orderApi } from '../../api/orderApi';
+import { publicApi } from '../../api/publicApi';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 // Props Interface: Needs only 'onPrev' as 'onNext' is dynamically handled by Checkout submissions
 interface Props { onPrev: () => void; }
-
-// Constant: Packages needed to correctly calculate and display the final checkout total price
-const BOOK_PACKAGES = [
-  { id: 'color', label: 'قصة ملونة', price: 60, emoji: '🌈', desc: 'كتاب ملون بالكامل بجودة عالية' },
-  { id: 'coloring', label: 'دفتر تلوين', price: 40, emoji: '🖍️', desc: 'رسومات غير ملونة جاهزة للتلوين' },
-  { id: 'audio', label: 'ملف صوتي (Audio)', price: 20, emoji: '🎧', desc: 'تسجيل صوتي احترافي لقصتك' },
-  { id: 'ebook', label: 'نسخة رقمية (E-Book)', price: 20, emoji: '📱', desc: 'كتاب إلكتروني للقراءة على الأجهزة' },
-  { id: 'pro', label: 'باقة Pro الشاملة', price: 120, originalPrice: 140, emoji: '✨', desc: 'جميع النسخ (الملون + التلوين + الصوتي + الرقمي)' },
-];
 
 const EXTRA_THEMES = [
   { id: 'adventure', emoji: '🗺️', label: 'مغامرة' },
@@ -43,6 +35,43 @@ export default function Step5_OrderReview({ onPrev }: Props) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal' | 'applepay' | 'cash'>('card');
+  const [liveSettings, setLiveSettings] = useState<any>(null);
+
+  useEffect(() => {
+    // Fetch live settings to get accurate prices
+    publicApi.getSettings().then(res => {
+      if (res.success && res.settings) {
+        setLiveSettings(res.settings);
+      }
+    }).catch(err => console.error('Failed to load pricing:', err));
+  }, []);
+
+  // Dynamically resolve package labels and prices on language changes
+  const packages = useMemo(() => {
+    const DEFAULT_PACKAGES = [
+      { id: 'color', label: t('step3.pkg_color', 'قصة ملونة'), price: 60, emoji: '🌈', desc: t('step3.pkg_color_desc') },
+      { id: 'coloring', label: t('step3.pkg_coloring', 'دفتر تلوين'), price: 40, emoji: '🖍️', desc: t('step3.pkg_coloring_desc') },
+      { id: 'audio', label: t('step3.pkg_audio', 'ملف صوتي (Audio)'), price: 20, emoji: '🎧', desc: t('step3.pkg_audio_desc') },
+      { id: 'ebook', label: t('step3.pkg_ebook', 'نسخة رقمية (E-Book)'), price: 20, emoji: '📱', desc: t('step3.pkg_ebook_desc') },
+      { id: 'pro', label: t('step3.pkg_pro', 'باقة Pro الشاملة'), price: 120, originalPrice: 140, emoji: '✨', desc: t('step3.pkg_pro_desc') },
+    ];
+
+    if (liveSettings?.bookPackages) {
+      return DEFAULT_PACKAGES.map(defaultPkg => {
+        const livePkg = liveSettings.bookPackages.find((p: any) => p.id === defaultPkg.id);
+        if (livePkg) {
+          return {
+            ...defaultPkg,
+            price: livePkg.price,
+            label: t(`step3.pkg_${defaultPkg.id}`, defaultPkg.label),
+            desc: t(`step3.pkg_${defaultPkg.id}_desc`, defaultPkg.desc)
+          };
+        }
+        return defaultPkg;
+      });
+    }
+    return DEFAULT_PACKAGES;
+  }, [liveSettings, t]);
 
   // Quantity & Extra Books State
   const [quantity, setQuantity] = useState(1);
@@ -80,7 +109,7 @@ export default function Step5_OrderReview({ onPrev }: Props) {
   const { childDetails, storyConfig, bookCustomization, shippingAddress } = progress;
 
   // Price Calculation
-  const selectedPkg = BOOK_PACKAGES.find(p => p.id === bookCustomization?.bookPackage) || BOOK_PACKAGES[0];
+  const selectedPkg = packages.find(p => p.id === bookCustomization?.bookPackage) || packages[0];
   const isDigital = selectedPkg.id === 'audio' || selectedPkg.id === 'ebook';
   const isPickup = shippingAddress?.deliveryMethod === 'pickup';
   const freeBooks = Math.floor(quantity / 5);
@@ -147,10 +176,6 @@ export default function Step5_OrderReview({ onPrev }: Props) {
           <Row label={t('step5.theme')} value={storyConfig?.theme ? t(`step2.theme_${storyConfig.theme}`) || storyConfig.theme : t('step2.theme_adventure')} />
           <Row label={t('step5.language')} value={storyConfig?.language === 'en' ? t('step5.lang_en') : storyConfig?.language === 'he' ? t('step5.lang_he') : t('step5.lang_ar')} />
           <Row label={t('step5.package_type')} value={`${selectedPkg.emoji} ${t(`step3.pkg_${selectedPkg.id}`) || selectedPkg.label}`} />
-          <div className="flex items-center gap-3">
-            <span className="font-arabic text-white/50 text-sm">{t('step5.page_color')}:</span>
-            <div className="w-6 h-6 rounded-lg border border-white/20" style={{ background: bookCustomization?.coverColor }} />
-          </div>
         </div>
 
         {/* Shipping */}

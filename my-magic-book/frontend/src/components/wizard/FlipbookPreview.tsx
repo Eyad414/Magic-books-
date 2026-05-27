@@ -1,5 +1,4 @@
 import HTMLFlipBook from 'react-pageflip';
-import { useTranslation } from 'react-i18next';
 
 interface Props {
   text: string;
@@ -49,7 +48,6 @@ const storyData: PageData[] = [
 ];
 
 export default function FlipbookPreview({ text, language = 'ar' }: Props) {
-  const { t } = useTranslation();
   const isRTL = language === 'ar' || language === 'he';
   const coverImageUrl = '/Users/eyad414/.gemini/antigravity/brain/64ff8c80-9c85-4e66-baf0-b3a20edda245/eyad_mirror_world_cover_1777159655080.png';
 
