@@ -5,6 +5,9 @@ export interface IUser extends Document {
     passwordHash: string;
     role: 'user' | 'admin';
     avatar?: string;
+    phone?: string;
+    location?: string;
+    lastLoginAt?: Date;
     createdAt: Date;
     comparePassword(candidatePassword: string): Promise<boolean>;
 }

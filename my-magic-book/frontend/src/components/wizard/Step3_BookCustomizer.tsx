@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useStoryProgress } from '../../context/StoryProgressContext';
 import MagicButton from '../common/MagicButton';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -13,63 +13,43 @@ export default function Step3_BookCustomizer({ onNext, onPrev }: Props) { // To 
   const { progress, setBookCustomization } = useStoryProgress();// To save User Choices in the steps
   const { t } = useTranslation();
 
-  // Constant: Available hexadecimal cover colors for the physical book
-  const COVER_COLORS = [
-    { value: '#1B1F5E', label: t('step3.color_navy') },
-    { value: '#6C3FC5', label: t('step3.color_purple') },
-    { value: '#1a237e', label: t('step3.color_darkblue') },
-    { value: '#1b5e20', label: t('step3.color_darkgreen') },
-    { value: '#4a148c', label: t('step3.color_magenta') },
-    { value: '#bf360c', label: t('step3.color_darkorange') },
-    { value: '#006064', label: t('step3.color_turquoise') },
-    { value: '#ffffff', label: t('step3.color_white') },
-  ];
-
-  const EXTRA_THEMES = [
-    { id: 'adventure', emoji: '🗺️', label: t('step2.theme_adventure') },
-    { id: 'space', emoji: '🚀', label: t('step2.theme_space') },
-    { id: 'ocean', emoji: '🌊', label: t('step2.theme_ocean') },
-    { id: 'school_hero', emoji: '🏫', label: t('step2.theme_school_hero') },
-    { id: 'forest', emoji: '🌿', label: t('step2.theme_forest') },
-    { id: 'princess', emoji: '👸', label: t('step2.theme_princess') },
-    { id: 'superhero', emoji: '⚡', label: t('step2.theme_superhero') },
-    { id: 'animals', emoji: '🦁', label: t('step2.theme_animals') },
-    { id: 'dinosaurs', emoji: '🦕', label: t('step2.theme_dinosaurs') },
-    { id: 'pirates', emoji: '🏴‍☠️', label: t('step2.theme_pirates') },
-    { id: 'magic', emoji: '🧙', label: t('step2.theme_magic') },
-  ];
-
-  const DEFAULT_PACKAGES = [
-    { id: 'color', label: t('step3.pkg_color'), price: 60, emoji: '🌈', desc: t('step3.pkg_color_desc') },
-    { id: 'coloring', label: t('step3.pkg_coloring'), price: 40, emoji: '🖍️', desc: t('step3.pkg_coloring_desc') },
-    { id: 'audio', label: t('step3.pkg_audio'), price: 20, emoji: '🎧', desc: t('step3.pkg_audio_desc') },
-    { id: 'ebook', label: t('step3.pkg_ebook'), price: 20, emoji: '📱', desc: t('step3.pkg_ebook_desc') },
-    { id: 'pro', label: t('step3.pkg_pro'), price: 120, originalPrice: 140, emoji: '✨', desc: t('step3.pkg_pro_desc') },
-  ];
-  
-  const [packages, setPackages] = useState<any[]>(DEFAULT_PACKAGES);
+  const [liveSettings, setLiveSettings] = useState<any>(null);
 
   useEffect(() => {
     // Fetch live settings to get accurate prices
     publicApi.getSettings().then(res => {
-      if (res.success && res.settings?.bookPackages) {
-        // Merge fetched prices/labels with our local structure (to keep emojis and translations fallback)
-        const updatedPackages = DEFAULT_PACKAGES.map(defaultPkg => {
-          const livePkg = res.settings.bookPackages.find((p: any) => p.id === defaultPkg.id);
-          if (livePkg) {
-            return {
-              ...defaultPkg,
-              price: livePkg.price,
-              label: livePkg.label || defaultPkg.label,
-              desc: livePkg.desc || defaultPkg.desc
-            };
-          }
-          return defaultPkg;
-        });
-        setPackages(updatedPackages);
+      if (res.success && res.settings) {
+        setLiveSettings(res.settings);
       }
     }).catch(err => console.error('Failed to load pricing:', err));
   }, []);
+
+  // Dynamically resolve package labels and prices on language changes
+  const packages = useMemo(() => {
+    const DEFAULT_PACKAGES = [
+      { id: 'color', label: t('step3.pkg_color'), price: 60, emoji: '🌈', desc: t('step3.pkg_color_desc') },
+      { id: 'coloring', label: t('step3.pkg_coloring'), price: 40, emoji: '🖍️', desc: t('step3.pkg_coloring_desc') },
+      { id: 'audio', label: t('step3.pkg_audio'), price: 20, emoji: '🎧', desc: t('step3.pkg_audio_desc') },
+      { id: 'ebook', label: t('step3.pkg_ebook'), price: 20, emoji: '📱', desc: t('step3.pkg_ebook_desc') },
+      { id: 'pro', label: t('step3.pkg_pro'), price: 120, originalPrice: 140, emoji: '✨', desc: t('step3.pkg_pro_desc') },
+    ];
+
+    if (liveSettings?.bookPackages) {
+      return DEFAULT_PACKAGES.map(defaultPkg => {
+        const livePkg = liveSettings.bookPackages.find((p: any) => p.id === defaultPkg.id);
+        if (livePkg) {
+          return {
+            ...defaultPkg,
+            price: livePkg.price,
+            label: t(`step3.pkg_${defaultPkg.id}`, defaultPkg.label),
+            desc: t(`step3.pkg_${defaultPkg.id}_desc`, defaultPkg.desc)
+          };
+        }
+        return defaultPkg;
+      });
+    }
+    return DEFAULT_PACKAGES;
+  }, [liveSettings, t]);
 
   // Local State: Tracks the user's selected book customization options for this step
   const [form, setForm] = useState({
@@ -92,25 +72,7 @@ export default function Step3_BookCustomizer({ onNext, onPrev }: Props) { // To 
       </div>
 
       <div className="space-y-5">
-          {/* Cover Color */}
-          <div>
-            <label className="block font-arabic text-white/80 text-sm mb-3">{t('step3.cover_color_label')}</label>
-            <div className="flex gap-2 w-full">
-              {COVER_COLORS.map((color) => (
-                <button
-                  key={color.value}
-                  id={`color-${color.label}`}
-                  type="button"
-                  onClick={() => setForm({ ...form, coverColor: color.value })}
-                  className={`flex-1 h-10 rounded-xl transition-all ${form.coverColor === color.value ? 'ring-2 ring-gold-500 ring-offset-2 ring-offset-dark-900 scale-110' : 'hover:scale-105'}`}
-                  style={{ background: color.value }}
-                  title={color.label}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Book Packages */}
+        {/* Book Packages */}
           <div>
             <label className="block font-arabic text-white/80 text-sm mb-3">{t('step3.packages_label')}</label>
             <div className="flex gap-2 w-full">
@@ -153,7 +115,10 @@ export default function Step3_BookCustomizer({ onNext, onPrev }: Props) { // To 
             <p className="font-arabic text-white/50 text-xs mb-3 text-center">{t('step3.book_preview_label')}</p>
             {progress.storyConfig?.generatedText ? (
               <div className="-mt-4 scale-75 transform origin-top w-[350px]">
-                <FlipbookPreview text={progress.storyConfig.generatedText} language={progress.storyConfig.language as any} />
+                <FlipbookPreview 
+                  text={progress.storyConfig.generatedText} 
+                  language={progress.storyConfig.language as any} 
+                />
               </div>
             ) : (
               <div

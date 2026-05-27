@@ -2,6 +2,8 @@
 // Two sub-components: StoryTextPage & StoryImagePage.
 // Used for pages 5-30 (26 pages, alternating text → image).
 
+import starSvg from '../../assets/star-image-stroy 1.svg';
+
 // ── Text page ─────────────────────────────────────────────────────────────────
 interface StoryTextPageProps {
   pageNumber: number;
@@ -18,23 +20,25 @@ export function StoryTextPage({ pageNumber, text, childName }: StoryTextPageProp
       {/* Page number badge */}
       <span className="stp-badge">{pageNumber}</span>
 
-      {/* Decorative star ornament */}
-      <div className="stp-star-ornament" aria-hidden="true">
-        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" className="stp-star-svg">
-          <polygon
-            points="60,5 74,45 115,45 83,70 95,110 60,88 25,110 37,70 5,45 46,45"
-            fill="none"
-            stroke="#D4A937"
-            strokeWidth="2"
-            opacity="0.35"
-          />
-        </svg>
-      </div>
+      {/* Floating sparkles */}
+      <span className="stp-sparkle stp-sparkle--1" aria-hidden="true">✦</span>
+      <span className="stp-sparkle stp-sparkle--2" aria-hidden="true">✦</span>
+      <span className="stp-sparkle stp-sparkle--3" aria-hidden="true">✧</span>
 
-      {/* Story text */}
-      <div className="stp-content">
-        <div className="stp-name-tag">{childName}</div>
-        <p className="stp-text">{text}</p>
+      {/* Star container */}
+      <div className="stp-star-wrapper">
+        <img
+          src={starSvg}
+          alt=""
+          aria-hidden="true"
+          className="stp-star-bg-img"
+        />
+
+        {/* Story text sits above the star, constrained to the inner ellipse */}
+        <div className="stp-content">
+          <div className="stp-name-tag">{childName}</div>
+          <p className="stp-text">{text}</p>
+        </div>
       </div>
 
       {/* Bottom ornament */}
@@ -49,8 +53,8 @@ export function StoryTextPage({ pageNumber, text, childName }: StoryTextPageProp
           align-items: center;
           justify-content: center;
           gap: 1.2rem;
-          padding: 2.5rem 2rem;
-          min-height: 380px;
+          padding: 2.5rem 1.5rem;
+          min-height: 480px;
           position: relative;
           overflow: hidden;
           text-align: center;
@@ -68,50 +72,78 @@ export function StoryTextPage({ pageNumber, text, childName }: StoryTextPageProp
           padding: 3px 10px;
           border-radius: 999px;
           border: 1px solid rgba(212,169,55,0.3);
+          z-index: 5;
         }
 
-        /* Star ornament (background) */
-        .stp-star-ornament {
-          position: absolute;
-          inset: 0;
+        /* Star container */
+        .stp-star-wrapper {
+          position: relative;
+          width: 100%;
+          max-width: 460px;
+          aspect-ratio: 1 / 1;
           display: flex;
           align-items: center;
           justify-content: center;
-          pointer-events: none;
-        }
-        .stp-star-svg {
-          width: clamp(180px, 55%, 280px);
-          height: auto;
-          opacity: 0.5;
+          z-index: 2;
         }
 
-        /* Content */
+        /* Star SVG background floats */
+        .stp-star-bg-img {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          z-index: 0;
+          animation: stp-float 5s ease-in-out infinite;
+          filter: drop-shadow(0 8px 24px rgba(245,166,35,0.35));
+          user-select: none;
+          pointer-events: none;
+        }
+
+        /* Content sits in the inner golden area */
         .stp-content {
           position: relative;
           z-index: 1;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 0.9rem;
-          max-width: 380px;
+          gap: 0.6rem;
+          max-width: 62%;
+          margin-top: -6%;
+          animation: stp-text-in 0.5s ease-out both;
         }
+
         .stp-name-tag {
-          background: rgba(212,169,55,0.15);
-          color: #D4A937;
-          font-size: 0.78rem;
+          background: rgba(59, 40, 0, 0.08);
+          color: #5c4203;
+          font-size: 0.72rem;
           font-weight: 800;
-          padding: 4px 16px;
+          padding: 3px 12px;
           border-radius: 999px;
-          border: 1px solid rgba(212,169,55,0.35);
-          letter-spacing: 0.06em;
+          border: 1px solid rgba(59, 40, 0, 0.18);
+          letter-spacing: 0.04em;
         }
+
         .stp-text {
-          font-size: clamp(1rem, 3vw, 1.2rem);
-          line-height: 1.9;
-          color: rgba(255,255,255,0.9);
-          font-weight: 600;
+          font-size: clamp(0.72rem, 2vw, 0.95rem);
+          line-height: 1.65;
+          color: #3B2800;
+          font-weight: 700;
           direction: rtl;
         }
+
+        /* Sparkles */
+        .stp-sparkle {
+          position: absolute;
+          color: #F5C97A;
+          pointer-events: none;
+          z-index: 1;
+          animation: stp-twinkle 3s ease-in-out infinite;
+        }
+        .stp-sparkle--1 { top: 15%;   left: 10%;   font-size: 1.2rem; animation-delay: 0s;   }
+        .stp-sparkle--2 { top: 12%;   right: 12%;  font-size: 0.8rem; animation-delay: 1.2s; }
+        .stp-sparkle--3 { bottom: 12%; left: 16%;  font-size: 0.9rem; animation-delay: 0.6s; }
 
         /* Divider */
         .stp-divider {
@@ -121,6 +153,22 @@ export function StoryTextPage({ pageNumber, text, childName }: StoryTextPageProp
           height: 2px;
           background: linear-gradient(90deg, transparent, #D4A937, transparent);
           border-radius: 999px;
+        }
+
+        /* Animations */
+        @keyframes stp-float {
+          0%, 100% { transform: translateY(0) rotate(-0.8deg); }
+          50%       { transform: translateY(-6px) rotate(0.8deg); }
+        }
+
+        @keyframes stp-text-in {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0);   }
+        }
+
+        @keyframes stp-twinkle {
+          0%, 100% { opacity: 0.3; transform: scale(0.8); }
+          50%       { opacity: 1;   transform: scale(1.2); }
         }
       `}</style>
     </section>

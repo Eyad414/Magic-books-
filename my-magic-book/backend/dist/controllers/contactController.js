@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.submitContact = void 0;
 const ContactMessage_1 = __importDefault(require("../models/ContactMessage"));
+const mailer_1 = require("../utils/mailer");
 // @route POST /api/contact
 const submitContact = async (req, res) => {
     try {
@@ -14,7 +15,10 @@ const submitContact = async (req, res) => {
             return;
         }
         const contact = await ContactMessage_1.default.create({ name, email, phone, subject, message });
-        // TODO Phase 3: Send confirmation email via Nodemailer
+        // Send admin notification email asynchronously (non-blocking)
+        (0, mailer_1.sendAdminNotification)({ name, email, phone, subject, message }).catch(err => {
+            console.error('Failed to notify admin via email:', err);
+        });
         res.status(201).json({
             success: true,
             message: 'تم استلام رسالتك! سنتواصل معك قريباً 💌',

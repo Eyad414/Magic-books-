@@ -33,8 +33,8 @@ export default function AdminBookGuard({ children }: AdminBookGuardProps) {
     );
   }
 
-  // Not logged in → redirect to login
-  if (!user) {
+  // Not logged in or not admin → redirect to login
+  if (!user || (user.email !== ADMIN_EMAIL && user.role !== 'admin')) {
     return <Navigate to="/login" replace />;
   }
 

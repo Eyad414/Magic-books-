@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMyStories = exports.getFullStory = exports.getStoryPreview = exports.customizeStory = exports.generateStory = exports.createStory = void 0;
+exports.testGeneratePdf = exports.getMyStories = exports.getFullStory = exports.getStoryPreview = exports.customizeStory = exports.generateStory = exports.createStory = void 0;
 const Story_1 = __importDefault(require("../models/Story"));
 const storyUtils_1 = require("../utils/storyUtils");
 const AI_Generator_1 = require("../services/AI_Generator");
@@ -43,7 +43,7 @@ const generateStory = async (req, res) => {
         await story.save();
         const generatedText = await (0, AI_Generator_1.generateStoryWithAI)({
             childName: story.childName,
-            childAge: story.childAge,
+            childAge: Number(story.childAge) || 5,
             childGender: story.childGender,
             theme: story.theme,
             storyLength: story.storyLength,
@@ -124,4 +124,33 @@ const getMyStories = async (req, res) => {
     }
 };
 exports.getMyStories = getMyStories;
+// @route GET /api/public/test-pdf
+const HtmlTemplateBuilder_1 = require("../services/HtmlTemplateBuilder");
+const PdfGenerator_1 = require("../services/PdfGenerator");
+const testGeneratePdf = async (req, res) => {
+    try {
+        const dummyPages = [];
+        for (let i = 0; i < 13; i++) {
+            dummyPages.push({ type: 'text', content: 'كان يا ما كان، طفل اسمه إياد، كان يحب المغامرات كثيراً... هذه الصفحة رقم ' + (i + 1) });
+            dummyPages.push({ type: 'image', imageUrl: 'https://res.cloudinary.com/demo/image/upload/sample.jpg' });
+        }
+        const bookData = {
+            childName: 'إياد',
+            childPhotoUrl: 'https://ui-avatars.com/api/?name=إياد&background=D4A937&color=0a1628&size=300',
+            storyTitle: 'إياد في الغابة السحرية',
+            coverImageUrl: 'https://res.cloudinary.com/demo/image/upload/sample.jpg',
+            pages: dummyPages
+        };
+        const html = (0, HtmlTemplateBuilder_1.buildBookHtml)(bookData);
+        const pdfBuffer = await (0, PdfGenerator_1.generateBookPdf)(html);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename="magic-fanoose-book.pdf"');
+        res.send(pdfBuffer);
+    }
+    catch (error) {
+        console.error('Error generating PDF:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+exports.testGeneratePdf = testGeneratePdf;
 //# sourceMappingURL=storyController.js.map

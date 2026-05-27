@@ -1,15 +1,16 @@
-// ─── Fanoose Separator Page ───────────────────────────────────────────────────
-// A full decorative page with a large glowing Fanoose (Aladdin lamp) SVG
-// illustration. Used twice: after the title page and before the final page.
+import { useTranslation } from 'react-i18next';
 
 interface FanoosPageProps {
   /** Optional label for screen readers */
   label?: string;
 }
 
-export default function FanoosPage({ label = 'صفحة الفانوس' }: FanoosPageProps) {
+export default function FanoosPage({ label }: FanoosPageProps) {
+  const { t } = useTranslation();
+  const resolvedLabel = label || t('storybook.fanoos_label', 'صفحة الفانوس');
+
   return (
-    <section className="book-page fanoose-page" aria-label={label}>
+    <section className="book-page fanoose-page" aria-label={resolvedLabel}>
 
       {/* Ambient glow orbs */}
       <div className="fp-orb fp-orb--1" aria-hidden="true" />
@@ -93,7 +94,7 @@ export default function FanoosPage({ label = 'صفحة الفانوس' }: Fanoos
       </div>
 
       {/* Caption */}
-      <p className="fp-caption">✦ فانوس السحر ✦</p>
+      <p className="fp-caption">{t('storybook.magic_fanoos_caption', '✦ فانوس السحر ✦')}</p>
 
       <style>{`
         .fanoose-page {

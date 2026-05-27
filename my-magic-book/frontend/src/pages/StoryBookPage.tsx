@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import StoryBook from '../components/book/StoryBook';
 import { adminApi } from '../api/adminApi';
 import { storyApi } from '../api/storyApi';
@@ -18,6 +19,15 @@ export default function StoryBookPage() {
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
   const [customPages, setCustomPages] = useState<any[]>([]);
+  const { i18n } = useTranslation();
+
+  const lngParam = searchParams.get('lng');
+
+  useEffect(() => {
+    if (lngParam) {
+      i18n.changeLanguage(lngParam);
+    }
+  }, [lngParam, i18n]);
 
   useEffect(() => {
     if (storyId && storyId !== 'zoo_adventure') {

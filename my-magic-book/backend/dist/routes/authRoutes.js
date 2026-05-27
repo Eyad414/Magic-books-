@@ -7,5 +7,6 @@ const router = (0, express_1.Router)();
 router.post('/register', authController_1.register);
 router.post('/login', authController_1.login);
 router.get('/me', authMiddleware_1.protect, authController_1.getMe);
+router.put('/make-admin', authMiddleware_1.protect, authController_1.makeMeAdmin);
 exports.default = router;
 //# sourceMappingURL=authRoutes.js.map

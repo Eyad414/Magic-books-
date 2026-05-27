@@ -4,7 +4,7 @@ export type StoryTheme = 'adventure' | 'space' | 'ocean' | 'forest' | 'princess'
 export interface IStory extends Document {
     userId: mongoose.Types.ObjectId;
     childName: string;
-    childAge: number;
+    childAge: string;
     childGender: 'male' | 'female';
     childPhotoUrl?: string;
     theme: StoryTheme;

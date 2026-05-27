@@ -1,5 +1,4 @@
-// ─── Page 7: Final Story Page ─────────────────────────────────────────────────
-// Layout: story title, moral/lesson text, parent questions, conclusion, QR code.
+import { useTranslation } from 'react-i18next';
 
 interface FinalStoryPageProps {
   storyTitle: string;
@@ -19,12 +18,14 @@ export default function FinalStoryPage({
   audioUrl = 'https://magicfanoose.com',
   childName,
 }: FinalStoryPageProps) {
+  const { t, i18n } = useTranslation();
+
   return (
-    <section className="book-page final-story-page" aria-label="الصفحة الختامية للقصة">
+    <section className="book-page final-story-page" aria-label={t('storybook.final_page_aria', 'الصفحة الختامية للقصة')} dir={i18n.dir()}>
 
       {/* Header: story title */}
       <div className="fsp-header">
-        <span className="fsp-label">✦ نهاية القصة ✦</span>
+        <span className="fsp-label">{t('storybook.end_story', '✦ نهاية القصة ✦')}</span>
         <h2 className="fsp-title">{storyTitle}</h2>
       </div>
 
@@ -32,7 +33,7 @@ export default function FinalStoryPage({
 
       {/* Moral */}
       <div className="fsp-moral">
-        <h3 className="fsp-section-head">💡 الدرس المستفاد</h3>
+        <h3 className="fsp-section-head">💡 {t('storybook.moral_title', 'الدرس المستفاد')}</h3>
         <p className="fsp-moral-text">{moralText}</p>
       </div>
 
@@ -40,7 +41,7 @@ export default function FinalStoryPage({
 
       {/* Questions for parent */}
       <div className="fsp-questions">
-        <h3 className="fsp-section-head">🤔 أسئلة للتفكير معًا</h3>
+        <h3 className="fsp-section-head">🤔 {t('storybook.questions_title', 'أسئلة للتفكير معًا')}</h3>
         <ol className="fsp-q-list">
           {questions.map((q, i) => (
             <li key={i} className="fsp-q-item">{q}</li>
@@ -53,7 +54,7 @@ export default function FinalStoryPage({
       {/* Conclusion */}
       <div className="fsp-conclusion">
         <p className="fsp-conclusion-text">{conclusionText}</p>
-        <p className="fsp-child-star">⭐ أحسنت يا {childName}! ⭐</p>
+        <p className="fsp-child-star">{t('storybook.well_done', '⭐ أحسنت يا {{name}}! ⭐', { name: childName })}</p>
       </div>
 
       <div className="fsp-divider" aria-hidden="true" />
@@ -61,14 +62,14 @@ export default function FinalStoryPage({
       {/* QR Code row */}
       <div className="fsp-qr-row">
         <div className="fsp-qr-info">
-          <p className="fsp-qr-label">📱 استمع لمغامرتك</p>
-          <p className="fsp-qr-sub">امسح الكود لسماع قصة {childName} بصوت ساحر!</p>
+          <p className="fsp-qr-label">{t('storybook.listen_adventure', '📱 استمع لمغامرتك')}</p>
+          <p className="fsp-qr-sub">{t('storybook.scan_qr', 'امسح الكود لسماع قصة {{name}} بصوت ساحر!', { name: childName })}</p>
         </div>
         {/* QR placeholder — replace src with real QR image in production */}
-        <div className="fsp-qr-box" aria-label="QR code">
+        <div className="fsp-qr-box" aria-label={t('storybook.qr_alt', 'QR code')}>
           <img
             src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(audioUrl)}&bgcolor=0a1628&color=D4A937`}
-            alt="QR code لرابط القصة الصوتية"
+            alt={t('storybook.qr_alt', 'QR code لرابط القصة الصوتية')}
             className="fsp-qr-img"
             loading="lazy"
           />
@@ -213,6 +214,24 @@ export default function FinalStoryPage({
           height: 80px;
           display: block;
           border-radius: 4px;
+        }
+
+        /* LTR Layout Overrides */
+        .final-story-page[dir="ltr"] {
+          direction: ltr;
+        }
+        .final-story-page[dir="ltr"] .fsp-moral-text {
+          border-right: none;
+          border-left: 3px solid #D4A937;
+          border-radius: 8px 0 0 8px;
+        }
+        .final-story-page[dir="ltr"] .fsp-q-item {
+          padding-right: 0;
+          padding-left: 1.1rem;
+        }
+        .final-story-page[dir="ltr"] .fsp-q-item::before {
+          right: auto;
+          left: 0;
         }
       `}</style>
     </section>

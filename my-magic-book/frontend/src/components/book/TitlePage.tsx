@@ -2,14 +2,18 @@
 // Layout: no background photo. Centered story title + logo + brand name.
 // Dark navy / starfield aesthetic.
 
+import { useTranslation } from 'react-i18next';
+
 interface TitlePageProps {
   storyTitle: string;   // already has child's name baked in
   childName: string;
 }
 
 export default function TitlePage({ storyTitle, childName }: TitlePageProps) {
+  const { t } = useTranslation();
+  
   return (
-    <section className="book-page title-page" aria-label="صفحة العنوان الداخلية">
+    <section className="book-page title-page" aria-label={t('storybook.title_page_label', 'صفحة العنوان الداخلية')}>
 
       {/* Decorative twinkling stars */}
       <div className="tp-stars" aria-hidden="true">
@@ -33,9 +37,9 @@ export default function TitlePage({ storyTitle, childName }: TitlePageProps) {
 
       {/* Story title */}
       <div className="tp-center">
-        <p className="tp-presents">✦ يُقدّم لـ {childName} ✦</p>
+        <p className="tp-presents">✦ {t('title_page.presents', 'يُقدّم لـ')} {childName} ✦</p>
         <h1 className="tp-title">{storyTitle}</h1>
-        <p className="tp-tagline">قصة مُهداة إليك وحدك</p>
+        <p className="tp-tagline">{t('title_page.dedicated_to_you', 'قصة مُهداة إليك وحدك')}</p>
       </div>
 
       {/* Bottom divider */}

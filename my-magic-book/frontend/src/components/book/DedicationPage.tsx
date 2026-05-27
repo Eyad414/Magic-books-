@@ -1,6 +1,8 @@
 // ─── Page 4: Dedication Page ──────────────────────────────────────────────────
 // Layout: child's photo (circular frame), dedication text, handwriting space.
 
+import { useTranslation } from 'react-i18next';
+
 interface DedicationPageProps {
   childName: string;
   childPhoto: string;   // URL / path to child photo
@@ -8,8 +10,15 @@ interface DedicationPageProps {
 }
 
 export default function DedicationPage({ childName, childPhoto, dedicationText }: DedicationPageProps) {
+  const { t, i18n } = useTranslation();
+  const isRtl = i18n.language === 'ar' || i18n.language === 'he';
+  
   return (
-    <section className="book-page dedication-page" aria-label="صفحة الإهداء">
+    <section 
+      className="book-page dedication-page" 
+      aria-label={t('storybook.dedication_page', 'صفحة الإهداء')}
+      style={{ direction: isRtl ? 'rtl' : 'ltr' }}
+    >
 
       {/* Decorative corner ornaments */}
       <span className="ded-corner ded-corner--tl" aria-hidden="true">✦</span>
@@ -21,7 +30,7 @@ export default function DedicationPage({ childName, childPhoto, dedicationText }
       <div className="ded-photo-frame">
         <img
           src={childPhoto}
-          alt={`صورة ${childName}`}
+          alt={t('storybook.child_photo_alt', 'صورة {{name}}', { name: childName })}
           className="ded-photo"
           onError={(e) => {
             (e.currentTarget as HTMLImageElement).src =
@@ -32,17 +41,17 @@ export default function DedicationPage({ childName, childPhoto, dedicationText }
       </div>
 
       {/* Title */}
-      <h2 className="ded-heading">🌟 إهداء خاص 🌟</h2>
+      <h2 className="ded-heading">🌟 {t('storybook.special_dedication_title', 'إهداء خاص')} 🌟</h2>
 
       {/* Divider */}
       <div className="ded-divider" aria-hidden="true" />
 
       {/* Dedication text */}
-      <p className="ded-text">{dedicationText}</p>
+      <p className="ded-text" style={{ direction: isRtl ? 'rtl' : 'ltr' }}>{dedicationText}</p>
 
       {/* Handwriting lines — parents can write a personal message on the printed book */}
       <div className="ded-write-section">
-        <p className="ded-write-label">✍️ رسالتك الخاصة:</p>
+        <p className="ded-write-label" style={{ textAlign: isRtl ? 'right' : 'left' }}>✍️ {t('storybook.custom_message_label', 'رسالتك الخاصة:')}</p>
         <div className="ded-lines">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="ded-line" />

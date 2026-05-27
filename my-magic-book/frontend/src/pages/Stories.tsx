@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Star, Lock, BookOpen, Eye, X, Sparkles, Heart } from 'lucide-react';
+import { Star, Lock, BookOpen, Eye, X, Heart } from 'lucide-react';
 import FlipbookPreview from '../components/wizard/FlipbookPreview';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStoryProgress } from '../context/StoryProgressContext';
 import toast from 'react-hot-toast';
