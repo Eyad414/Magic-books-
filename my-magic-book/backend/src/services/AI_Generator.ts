@@ -14,6 +14,70 @@ const STORY_LENGTH_MAP = {
   long: 1000,
 };
 
+// ── Script detection helpers ──────────────────────────────────────────────────
+const isArabicScript  = (s: string) => /[؀-ۿ]/.test(s);
+const isHebrewScript  = (s: string) => /[֐-׿]/.test(s);
+const isLatinScript   = (s: string) => /[a-zA-Z]/.test(s);
+
+/**
+ * Transliterates a child's name into the story language so it reads naturally.
+ * Examples:  "Ahmad"  + 'ar'  →  "أحمد"
+ *            "إياد"   + 'en'  →  "Eyad"
+ *            "Mohamed" + 'he' →  "מוחמד"
+ *
+ * - If the name is ALREADY in the correct script, returns it unchanged.
+ * - Uses Claude to do the transliteration (small, cheap call).
+ * - Falls back to the original name if the API key is missing or call fails.
+ */
+export const transliterateNameForLanguage = async (
+  name: string,
+  targetLanguage: 'ar' | 'en' | 'he',
+): Promise<string> => {
+  const trimmed = name.trim();
+  if (!trimmed) return trimmed;
+
+  // Check if already in the right script — skip API call
+  if (targetLanguage === 'ar' && isArabicScript(trimmed))  return trimmed;
+  if (targetLanguage === 'he' && isHebrewScript(trimmed))  return trimmed;
+  if (targetLanguage === 'en' && isLatinScript(trimmed) &&
+      !isArabicScript(trimmed) && !isHebrewScript(trimmed)) return trimmed;
+
+  // Needs transliteration — call Claude
+  if (!process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY === 'your_anthropic_api_key_here') {
+    return trimmed; // no API key — return original
+  }
+
+  try {
+    const Anthropic = (await import('@anthropic-ai/sdk')).default;
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const targetDesc =
+      targetLanguage === 'ar' ? 'Arabic script (حروف عربية)' :
+      targetLanguage === 'he' ? 'Hebrew script (אותיות עבריות)' :
+      'Latin/English script';
+
+    const prompt =
+      `Transliterate only the name "${trimmed}" into ${targetDesc}. ` +
+      `Output ONLY the transliterated name — no explanation, no punctuation, no extra words.`;
+
+    const msg = await client.messages.create({
+      model: 'claude-3-5-haiku-20241022',   // fast + cheap for single-word tasks
+      max_tokens: 30,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    const result = msg.content[0];
+    if (result.type === 'text') {
+      const clean = result.text.trim().replace(/^["']|["']$/g, ''); // strip any quotes
+      return clean || trimmed;
+    }
+    return trimmed;
+  } catch (err) {
+    console.error('[transliterateName] error:', err);
+    return trimmed; // safe fallback
+  }
+};
+
 const THEME_LABELS_AR: Record<string, string> = {
   adventure: 'المغامرة والاستكشاف',
   space: 'الفضاء والنجوم',

@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import Story from '../models/Story';
 import StoryTemplate from '../models/StoryTemplate';
 import { splitStoryPreview } from '../utils/storyUtils';
-import { generateStoryWithAI } from '../services/AI_Generator';
+import { generateStoryWithAI, transliterateNameForLanguage } from '../services/AI_Generator';
 import { generateBaseScene, generateAllIllustrations } from '../services/FalAIService';
 import { uploadFromUrl } from '../services/CloudinaryUploadService';
 import { getScenesForTemplate } from '../data/storyScenes';
@@ -54,8 +54,17 @@ export const generateStory = async (req: Request, res: Response): Promise<void> 
     story.status = 'generating';
     await story.save();
 
+    // Transliterate the child's name into the story's language
+    // e.g. "Ahmad" → "أحمد" for Arabic stories
+    const nameInStoryLang = await transliterateNameForLanguage(
+      story.childName,
+      story.language,
+    );
+    // Save it so the book renderer can use it
+    story.childNameInStory = nameInStoryLang;
+
     const generatedText = await generateStoryWithAI({
-      childName: story.childName,
+      childName: nameInStoryLang,   // use the transliterated name in the story
       childAge: Number(story.childAge) || 5,
       childGender: story.childGender,
       theme: story.theme,

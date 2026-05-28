@@ -8,6 +8,8 @@ export interface IStory extends Document {
   userId: mongoose.Types.ObjectId;
   // Step 1: Child Details
   childName: string;
+  /** Name transliterated to match the story language (auto-set at generation time) */
+  childNameInStory?: string;
   childAge: string;
   childGender: 'male' | 'female';
   childPhotoUrl?: string;
@@ -41,6 +43,7 @@ const StorySchema = new Schema<IStory>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     childName: { type: String, required: true, trim: true },
+    childNameInStory: { type: String },
     childAge: { type: String, required: true },
     childGender: { type: String, enum: ['male', 'female'], required: true },
     childPhotoUrl: { type: String },

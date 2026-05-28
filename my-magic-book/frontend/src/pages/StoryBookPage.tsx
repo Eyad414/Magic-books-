@@ -76,8 +76,8 @@ export default function StoryBookPage() {
     <div className="min-h-screen bg-[#03060e] pt-20 pb-20 px-2 sm:px-4">
       <StoryBook
         storyId={storyData?.theme || storyId || 'zoo_adventure'}
-        childName={storyData?.childName || searchParams.get('name') || 'إياد'}
-        childPhoto={storyData?.childPhoto || ''}
+        childName={storyData?.childNameInStory || storyData?.childName || searchParams.get('name') || 'إياد'}
+        childPhoto={storyData?.childPhotoUrl || storyData?.childPhoto || ''}
         audioUrl={storyData?.audioUrl || ''}
         showNameInput={!storyData}
         customPages={customPages.length > 0 ? customPages : undefined}
