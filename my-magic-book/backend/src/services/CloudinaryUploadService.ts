@@ -18,6 +18,23 @@ function configure() {
 }
 
 /**
+ * Returns true only when all three Cloudinary credentials are present and
+ * are not the placeholder values shipped in .env.example.
+ */
+function isCloudinaryConfigured(): boolean {
+  const { CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET } =
+    process.env;
+  const values = [
+    CLOUDINARY_CLOUD_NAME,
+    CLOUDINARY_API_KEY,
+    CLOUDINARY_API_SECRET,
+  ];
+  return values.every(
+    (v) => !!v && v.trim() !== '' && !v.startsWith('your_'),
+  );
+}
+
+/**
  * Upload an image from a remote URL to Cloudinary.
  * Returns the permanent secure Cloudinary URL.
  */
@@ -51,6 +68,14 @@ export async function uploadFromBuffer(
   filename?: string
 ): Promise<string> {
   configure();
+
+  if (!isCloudinaryConfigured()) {
+    throw new Error(
+      'Cloudinary is not configured. Set CLOUDINARY_CLOUD_NAME, ' +
+        'CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET (from your Cloudinary ' +
+        'dashboard) in the backend environment.',
+    );
+  }
 
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
