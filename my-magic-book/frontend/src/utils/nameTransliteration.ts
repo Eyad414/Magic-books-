@@ -8,7 +8,7 @@
 //   3. Return the original name             (safe last resort)
 
 // ── Script detection ──────────────────────────────────────────────────────────
-export const isArabic  = (s: string) => /[؀-ۿ؀-ۿ]/.test(s);
+export const isArabic  = (s: string) => /[؀-ۿ]/.test(s);
 export const isHebrew  = (s: string) => /[֐-׿]/.test(s);
 export const isLatin   = (s: string) =>  /[a-zA-Z]/.test(s);
 
