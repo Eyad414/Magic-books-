@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { adminApi } from '../api/adminApi';
-import { storyApi } from '../api/storyApi';
+import { storyApi, uploadApi } from '../api/storyApi';
 import { useNavigate, Link } from 'react-router-dom';
 import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2 } from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
@@ -27,8 +27,27 @@ export default function AdminDashboard() {
   const [editingStory, setEditingStory] = useState<number | null>(null);
   const [draftPages, setDraftPages] = useState<{ text: string; imageSrc: string }[]>([]);
   // Nano Banana (Gemini 2.5 Flash Image) page-illustration generation
-  const [refPhotoUrl, setRefPhotoUrl] = useState('');     // reference child photo
+  const [refPhotoUrl, setRefPhotoUrl] = useState('');     // reference child photo (real URL)
+  const [uploadingRef, setUploadingRef] = useState(false); // uploading the ref photo
   const [genIndex, setGenIndex] = useState<number | null>(null); // page being generated
+
+  // Upload a picked photo file straight to Cloudinary so Nano Banana can fetch it
+  const handleRefPhotoUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('الرجاء اختيار ملف صورة');
+      return;
+    }
+    setUploadingRef(true);
+    try {
+      const url = await uploadApi.uploadPhoto(file);
+      setRefPhotoUrl(url);
+      toast.success('تم رفع صورة الطفل ✅');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'فشل رفع الصورة');
+    } finally {
+      setUploadingRef(false);
+    }
+  };
 
   // Generate one page's illustration from its text + the reference child photo
   const handleGeneratePageImage = async (pIndex: number) => {
@@ -526,13 +545,47 @@ export default function AdminDashboard() {
               <label className="block font-arabic text-purple-200 text-xs mb-2">
                 🍌 صورة الطفل المرجعية (لتوليد صور الصفحات بالذكاء الاصطناعي — نانو بنانا)
               </label>
+
+              {/* Drag-drop / click to upload */}
+              <div className="flex items-center gap-4">
+                <div className="relative flex-1 border-2 border-dashed border-purple-400/30 rounded-xl p-4 text-center hover:bg-white/5 hover:border-purple-400/50 transition-all cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={uploadingRef}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleRefPhotoUpload(file);
+                    }}
+                  />
+                  <div className="flex flex-col items-center pointer-events-none">
+                    <span className="text-2xl mb-1">{uploadingRef ? '⏳' : '📸'}</span>
+                    <span className="font-arabic text-sm text-purple-200">
+                      {uploadingRef ? 'جارٍ الرفع…' : 'اختر صورة وجه الطفل أو اسحبها هنا'}
+                    </span>
+                    <span className="font-arabic text-[11px] text-white/40 mt-1">JPG / PNG</span>
+                  </div>
+                </div>
+
+                {refPhotoUrl && (
+                  <img
+                    src={refPhotoUrl}
+                    alt="صورة الطفل المرجعية"
+                    className="w-16 h-16 object-cover rounded-full border-2 border-purple-400 shadow-lg"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                )}
+              </div>
+
+              {/* Or paste a URL */}
               <input
                 type="text"
-                className="magic-input w-full font-mono text-sm"
+                className="magic-input w-full font-mono text-sm mt-3"
                 dir="ltr"
                 value={refPhotoUrl}
                 onChange={(e) => setRefPhotoUrl(e.target.value)}
-                placeholder="https://...  رابط صورة وجه الطفل"
+                placeholder="…أو الصق رابط صورة مباشرة  https://"
               />
               <p className="font-arabic text-white/40 text-[11px] mt-2 leading-relaxed">
                 اكتب نص كل صفحة ثم اضغط «توليد الصورة» بجانبها — سيُنشئ النموذج رسمة كتاب أطفال للمشهد مع وجه الطفل من هذه الصورة.
