@@ -60,13 +60,27 @@ export default function StoryBook({
     i18n.language.startsWith('he') ? 'he' : 'en'
   ) as 'ar' | 'en' | 'he';
 
-  // ── Editable name — always stored in the target script ────────────────────
-  const [childName, setChildName] = useState(() => transliterateName(initialName, lang));
+  // rawName: source-of-truth name (whatever script it arrived in / was typed)
+  const [rawName, setRawName] = useState(initialName);
+  // inputValue: what the admin name-bar input shows (free-form while typing)
+  const [inputValue, setInputValue] = useState(() => transliterateName(initialName, lang));
 
-  // Sync when parent prop changes (e.g. DB data arrives after mount)
+  // Sync both when the parent prop changes (e.g. DB data arrives after mount)
   useEffect(() => {
-    setChildName(transliterateName(initialName, lang));
+    setRawName(initialName);
+    setInputValue(transliterateName(initialName, lang));
   }, [initialName]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // When UI language changes, refresh the input bar display
+  useEffect(() => {
+    setInputValue(transliterateName(rawName, lang));
+  }, [lang]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // childName used inside the book — always in the current language's script
+  const childName = useMemo(
+    () => transliterateName(rawName, lang),
+    [rawName, lang],
+  );
 
   // ── Look up the story ──────────────────────────────────────────────────────
   const story: StoryDefinition = useMemo(
@@ -123,9 +137,13 @@ export default function StoryBook({
               <input
                 id="sb-name-input"
                 type="text"
-                value={childName}
-                onChange={(e) => setChildName(e.target.value || 'الطفل')}
-                onBlur={(e) => setChildName(transliterateName(e.target.value || 'الطفل', lang))}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value || 'الطفل')}
+                onBlur={(e) => {
+                  const v = e.target.value || 'الطفل';
+                  setRawName(v);
+                  setInputValue(transliterateName(v, lang));
+                }}
                 placeholder={t('storybook.placeholder_name', 'اكتب الاسم هنا')}
                 className="sb-name-input"
                 maxLength={30}

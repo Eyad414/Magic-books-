@@ -273,6 +273,18 @@ export function transliterateName(name: string, lang: 'ar' | 'en' | 'he'): strin
   if (lang === 'he') {
     if (nameIsHebrew) return trimmed; // already Hebrew
 
+    if (nameIsArabic) {
+      // Route: Arabic → reverse-lookup English → Hebrew
+      // e.g. "أحمد" → EN_AR["أحمد"] = "Ahmad" → HE_EN["ahmad"] = "אחמד"
+      const firstWord = trimmed.split(/\s+/)[0];
+      const enForm = EN_AR[trimmed] || EN_AR[firstWord];
+      if (enForm) {
+        const heKey = enForm.toLowerCase();
+        if (HE_EN[heKey]) return HE_EN[heKey];
+      }
+      return trimmed; // no Hebrew mapping found
+    }
+
     if (nameIsLatin) {
       const key = trimmed.toLowerCase().replace(/\s+/g, '');
       if (HE_EN[key]) return HE_EN[key];
