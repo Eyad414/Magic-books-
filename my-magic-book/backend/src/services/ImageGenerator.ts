@@ -91,8 +91,8 @@ export async function generateIllustration(
       },
     ],
     generationConfig: {
-      // Ask the model for an image back
-      responseModalities: ['IMAGE'],
+      // Gemini's image API rejects IMAGE-only requests — TEXT must be present too
+      responseModalities: ['TEXT', 'IMAGE'],
     },
   };
 
