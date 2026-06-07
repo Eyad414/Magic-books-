@@ -3,6 +3,7 @@ import {
   createStory,
   generateStory,
   generateIllustrations,
+  generatePageImage,
   getIllustrationStatus,
   customizeStory,
   getStoryPreview,
@@ -16,6 +17,8 @@ const router = Router();
 
 router.get('/my', protect, getMyStories);
 router.post('/create', protect, createStory);
+// Single-page AI image generation (Nano Banana) — static path, keep before /:id
+router.post('/generate-page-image', protect, generatePageImage);
 router.post('/:id/generate', protect, generateStory);
 router.post('/:id/generate-illustrations', protect, generateIllustrations);
 router.get('/:id/illustration-status', protect, getIllustrationStatus);

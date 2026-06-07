@@ -4,6 +4,7 @@ import StoryTemplate from '../models/StoryTemplate';
 import { splitStoryPreview } from '../utils/storyUtils';
 import { generateStoryWithAI, transliterateNameForLanguage } from '../services/AI_Generator';
 import { generateBaseScene, generateAllIllustrations } from '../services/FalAIService';
+import { generateIllustration } from '../services/ImageGenerator';
 import { uploadFromUrl } from '../services/CloudinaryUploadService';
 import { getScenesForTemplate } from '../data/storyScenes';
 
@@ -181,6 +182,34 @@ export const generateIllustrations = async (req: Request, res: Response): Promis
       });
     } catch (_) {}
     res.status(500).json({ success: false, message: error.message || 'فشل في توليد الصور' });
+  }
+};
+
+// @route POST /api/stories/generate-page-image
+// Generate (or regenerate) ONE page illustration from its text + a child photo
+// using Nano Banana (Gemini 2.5 Flash Image). Used by the admin page editor so
+// each page's image is built from that page's text with the child's likeness.
+export const generatePageImage = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { text, childPhotoUrl } = req.body as {
+      text?: string;
+      childPhotoUrl?: string;
+    };
+
+    if (!text || !text.trim()) {
+      res.status(400).json({ success: false, message: 'نص الصفحة مطلوب' });
+      return;
+    }
+    if (!childPhotoUrl || !childPhotoUrl.trim() || childPhotoUrl.startsWith('blob:')) {
+      res.status(400).json({ success: false, message: 'رابط صورة الطفل مطلوب (وغير صالح إن كان blob)' });
+      return;
+    }
+
+    const imageUrl = await generateIllustration(text, childPhotoUrl);
+    res.json({ success: true, imageUrl });
+  } catch (error: any) {
+    console.error('[generatePageImage]', error);
+    res.status(500).json({ success: false, message: error.message || 'فشل في توليد الصورة' });
   }
 };
 

@@ -19,6 +19,11 @@ export const storyApi = {
     const res = await api.get(`/stories/${storyId}/illustration-status`);
     return res.data;
   },
+  /** Generate one page illustration from its text + a child photo (Nano Banana). */
+  generatePageImage: async (text: string, childPhotoUrl: string) => {
+    const res = await api.post('/stories/generate-page-image', { text, childPhotoUrl });
+    return res.data as { success: boolean; imageUrl?: string; message?: string };
+  },
   customize: async (storyId: string, data: object) => {
     const res = await api.put(`/stories/${storyId}/customize`, data);
     return res.data;

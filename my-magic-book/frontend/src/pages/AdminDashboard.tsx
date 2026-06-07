@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { adminApi } from '../api/adminApi';
+import { storyApi } from '../api/storyApi';
 import { useNavigate, Link } from 'react-router-dom';
 import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2 } from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
@@ -25,6 +26,40 @@ export default function AdminDashboard() {
   // Story Editor — separate draft state so we never corrupt settings while editing
   const [editingStory, setEditingStory] = useState<number | null>(null);
   const [draftPages, setDraftPages] = useState<{ text: string; imageSrc: string }[]>([]);
+  // Nano Banana (Gemini 2.5 Flash Image) page-illustration generation
+  const [refPhotoUrl, setRefPhotoUrl] = useState('');     // reference child photo
+  const [genIndex, setGenIndex] = useState<number | null>(null); // page being generated
+
+  // Generate one page's illustration from its text + the reference child photo
+  const handleGeneratePageImage = async (pIndex: number) => {
+    const page = draftPages[pIndex];
+    if (!page?.text?.trim()) {
+      toast.error('اكتب نص الصفحة أولاً لتوليد صورة مطابقة');
+      return;
+    }
+    if (!refPhotoUrl.trim()) {
+      toast.error('أضف رابط صورة الطفل (للمعاينة) في الأعلى أولاً');
+      return;
+    }
+    setGenIndex(pIndex);
+    try {
+      const res = await storyApi.generatePageImage(page.text, refPhotoUrl.trim());
+      if (res.success && res.imageUrl) {
+        setDraftPages((prev) => {
+          const updated = [...prev];
+          updated[pIndex] = { ...updated[pIndex], imageSrc: res.imageUrl! };
+          return updated;
+        });
+        toast.success('✨ تم توليد الصورة بنانو بنانا');
+      } else {
+        toast.error(res.message || 'فشل توليد الصورة');
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'فشل توليد الصورة');
+    } finally {
+      setGenIndex(null);
+    }
+  };
 
   // Helper to load default pages from the static story registry
   const loadDefaultPages = (themeId: string) => {
@@ -486,6 +521,24 @@ export default function AdminDashboard() {
               {draftPages.length === 0 && <span className="block mt-1 text-white/40">إذا حفظت بصفحات فارغة، سيعرض الكتاب القصة الافتراضية الأصلية (الـ 32 صفحة).</span>}
             </p>
 
+            {/* Nano Banana reference photo */}
+            <div className="mb-6 bg-purple-500/10 border border-purple-400/30 rounded-xl px-4 py-3">
+              <label className="block font-arabic text-purple-200 text-xs mb-2">
+                🍌 صورة الطفل المرجعية (لتوليد صور الصفحات بالذكاء الاصطناعي — نانو بنانا)
+              </label>
+              <input
+                type="text"
+                className="magic-input w-full font-mono text-sm"
+                dir="ltr"
+                value={refPhotoUrl}
+                onChange={(e) => setRefPhotoUrl(e.target.value)}
+                placeholder="https://...  رابط صورة وجه الطفل"
+              />
+              <p className="font-arabic text-white/40 text-[11px] mt-2 leading-relaxed">
+                اكتب نص كل صفحة ثم اضغط «توليد الصورة» بجانبها — سيُنشئ النموذج رسمة كتاب أطفال للمشهد مع وجه الطفل من هذه الصورة.
+              </p>
+            </div>
+
             {/* Pages List */}
             <div className="space-y-5">
               {draftPages.map((page, pIndex) => (
@@ -515,8 +568,19 @@ export default function AdminDashboard() {
                     placeholder={`نص الصفحة ${pIndex + 1} — استخدم {{name}} لاسم الطفل`}
                   />
 
-                  {/* Image URL */}
-                  <label className="block font-arabic text-white/60 text-xs mb-1">رابط الصورة</label>
+                  {/* Image URL + AI generate */}
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-arabic text-white/60 text-xs">رابط الصورة</label>
+                    <button
+                      type="button"
+                      onClick={() => handleGeneratePageImage(pIndex)}
+                      disabled={genIndex !== null}
+                      className="text-xs font-arabic px-3 py-1 rounded-lg bg-purple-500/20 text-purple-200 border border-purple-400/30 hover:bg-purple-500/30 transition-colors disabled:opacity-40 flex items-center gap-1"
+                      title="توليد صورة من نص الصفحة + صورة الطفل (نانو بنانا)"
+                    >
+                      {genIndex === pIndex ? '⏳ جارٍ التوليد…' : '🍌 توليد الصورة بالذكاء الاصطناعي'}
+                    </button>
+                  </div>
                   <input
                     type="text"
                     className="magic-input w-full font-mono text-sm"
