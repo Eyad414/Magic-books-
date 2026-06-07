@@ -578,15 +578,6 @@ export default function AdminDashboard() {
                 )}
               </div>
 
-              {/* Or paste a URL */}
-              <input
-                type="text"
-                className="magic-input w-full font-mono text-sm mt-3"
-                dir="ltr"
-                value={refPhotoUrl}
-                onChange={(e) => setRefPhotoUrl(e.target.value)}
-                placeholder="…أو الصق رابط صورة مباشرة  https://"
-              />
               <p className="font-arabic text-white/40 text-[11px] mt-2 leading-relaxed">
                 اكتب نص كل صفحة ثم اضغط «توليد الصورة» بجانبها — سيُنشئ النموذج رسمة كتاب أطفال للمشهد مع وجه الطفل من هذه الصورة.
               </p>
