@@ -6,8 +6,9 @@
 // Click "🖨️ طباعة الكتاب" to open the browser print dialog — every .book-page
 // becomes its own 220mm×220mm page automatically via @page + print CSS.
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { transliterateName } from '../../utils/nameTransliteration';
 import { useAuth } from '../../context/AuthContext';
 import FrontCover        from './FrontCover';
 import TitlePage         from './TitlePage';
@@ -53,8 +54,19 @@ export default function StoryBook({
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.email === 'eyadat720@gmail.com';
 
-  // ── Editable name (demo — remove in production) ────────────────────────────
-  const [childName, setChildName] = useState(initialName);
+  // Normalize i18n language to the 3 supported codes
+  const lang = (
+    i18n.language.startsWith('ar') ? 'ar' :
+    i18n.language.startsWith('he') ? 'he' : 'en'
+  ) as 'ar' | 'en' | 'he';
+
+  // ── Editable name — always stored in the target script ────────────────────
+  const [childName, setChildName] = useState(() => transliterateName(initialName, lang));
+
+  // Sync when parent prop changes (e.g. DB data arrives after mount)
+  useEffect(() => {
+    setChildName(transliterateName(initialName, lang));
+  }, [initialName]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Look up the story ──────────────────────────────────────────────────────
   const story: StoryDefinition = useMemo(
@@ -113,6 +125,7 @@ export default function StoryBook({
                 type="text"
                 value={childName}
                 onChange={(e) => setChildName(e.target.value || 'الطفل')}
+                onBlur={(e) => setChildName(transliterateName(e.target.value || 'الطفل', lang))}
                 placeholder={t('storybook.placeholder_name', 'اكتب الاسم هنا')}
                 className="sb-name-input"
                 maxLength={30}
