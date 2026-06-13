@@ -9,9 +9,18 @@ export const storyApi = {
     const res = await api.post(`/stories/${storyId}/generate`);
     return res.data;
   },
-  generateIllustrations: async (storyId: string, childPhotoUrl: string) => {
-    const res = await api.post(`/stories/${storyId}/generate-illustrations`, {
+  /** Stage 1: generate the child's character avatar (Nano Banana). */
+  generateAvatar: async (storyId: string, childPhotoUrl: string, artStyle: string) => {
+    const res = await api.post(`/stories/${storyId}/generate-avatar`, {
       childPhotoUrl,
+      artStyle,
+    });
+    return res.data as { success: boolean; avatarUrl?: string; message?: string };
+  },
+  /** Stage 2: generate per-page illustrations from the approved avatar. */
+  generateIllustrations: async (storyId: string, avatarUrl: string) => {
+    const res = await api.post(`/stories/${storyId}/generate-illustrations`, {
+      avatarUrl,
     });
     return res.data;
   },

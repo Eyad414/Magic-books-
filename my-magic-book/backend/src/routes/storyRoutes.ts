@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   createStory,
   generateStory,
+  generateAvatar,
   generateIllustrations,
   generatePageImage,
   getIllustrationStatus,
@@ -20,6 +21,7 @@ router.post('/create', protect, createStory);
 // Single-page AI image generation (Nano Banana) — static path, keep before /:id
 router.post('/generate-page-image', protect, generatePageImage);
 router.post('/:id/generate', protect, generateStory);
+router.post('/:id/generate-avatar', protect, generateAvatar);
 router.post('/:id/generate-illustrations', protect, generateIllustrations);
 router.get('/:id/illustration-status', protect, getIllustrationStatus);
 router.put('/:id/customize', protect, customizeStory);

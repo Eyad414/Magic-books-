@@ -12,8 +12,12 @@ export interface StoryConfig {
   theme: string;
   language: 'ar' | 'en' | 'he';
   customThemeNote?: string;
+  /** Illustration art style (storybook | pixar3d | cartoon) */
+  artStyle?: string;
   generatedText?: string;
   storyId?: string;
+  /** Nano Banana character avatar generated from the child's photo */
+  avatarUrl?: string;
 }
 
 export interface BookCustomization {
@@ -64,7 +68,7 @@ interface StoryProgressContextType {
 const defaultProgress: StoryProgress = {
   currentStep: 1,
   childDetails: { childAge: '3-5', childGender: 'male' },
-  storyConfig: { theme: 'adventure', language: 'ar' },
+  storyConfig: { theme: 'adventure', language: 'ar', artStyle: 'storybook' },
   bookCustomization: { coverColor: '#1B1F5E', bookPackage: 'color', quantity: 1, extraBooks: [] },
   shippingAddress: { country: 'SA', deliveryMethod: 'delivery' },
 };

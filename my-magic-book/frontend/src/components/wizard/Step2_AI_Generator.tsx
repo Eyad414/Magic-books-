@@ -37,15 +37,28 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) {
   ];
 
 
+  // Constant: Illustration art styles the customer can pick (shape the Nano Banana look)
+  const ART_STYLES = [
+    { id: 'storybook', emoji: '🎨', label: t('step2.style_storybook') },
+    { id: 'pixar3d',   emoji: '🧸', label: t('step2.style_pixar3d') },
+    { id: 'cartoon',   emoji: '✏️', label: t('step2.style_cartoon') },
+  ];
+
   // Local State: Stores the selected theme, language and any custom notes
   const [form, setForm] = useState({
     theme: progress.storyConfig.theme || 'adventure',
     language: progress.storyConfig.language || 'ar' as 'ar' | 'en' | 'he',
     customThemeNote: progress.storyConfig.customThemeNote || '',
+    artStyle: progress.storyConfig.artStyle || 'storybook',
   });
-  
+
   // Local State: Tracks if the AI is currently generating the text to show a loading indicator
   const [isGenerating, setIsGenerating] = useState(false);
+  // Local State: Avatar (Nano Banana) generation + approval flow
+  const [cloudPhotoUrl, setCloudPhotoUrl] = useState('');
+  const [isGeneratingAvatar, setIsGeneratingAvatar] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [avatarApproved, setAvatarApproved] = useState(false);
   // Local State: Tracks illustration generation progress
   const [isGeneratingIllustrations, setIsGeneratingIllustrations] = useState(false);
   const [illustrationsDone, setIllustrationsDone] = useState(false);
@@ -62,37 +75,43 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) {
   const visibleThemes = showAllThemes ? THEMES : THEMES.slice(0, INITIAL_THEME_COUNT);
 
   /**
-   * Full generation pipeline:
+   * Nano Banana pipeline (avatar-first):
    *  1. Upload child's photo to Cloudinary (if a File is available)
    *  2. Create story in DB
    *  3. Generate story text (Claude AI)
-   *  4. Generate 13 personalised illustrations (fal.ai face-swap)
+   *  4. Generate the child's character avatar → show it for approval
+   *     (the 13 page illustrations are generated only after the user approves)
    */
   const generateStory = async () => {
     setIsGenerating(true);
     setIllustrationsDone(false);
+    setAvatarApproved(false);
+    setAvatarUrl('');
+    setIllustrationUrls([]);
     try {
       // ── Step 1: Upload photo to Cloudinary ────────────────────────────────
       // childPhotoFile is the raw File from Step 1; progress.childDetails.childPhotoUrl
       // might be a blob: URL (local only) — never send that to the backend.
-      let cloudPhotoUrl = '';
+      let photoUrl = '';
       if (childPhotoFile) {
         try {
-          cloudPhotoUrl = await uploadApi.uploadPhoto(childPhotoFile);
+          photoUrl = await uploadApi.uploadPhoto(childPhotoFile);
         } catch {
           // Non-fatal — continue without photo
         }
       }
+      setCloudPhotoUrl(photoUrl);
 
       // ── Step 2: Create story record ────────────────────────────────────────
       const createRes = await storyApi.create({
         childName:   progress.childDetails.childName,
         childAge:    progress.childDetails.childAge,
         childGender: progress.childDetails.childGender,
-        childPhotoUrl: cloudPhotoUrl || undefined,
+        childPhotoUrl: photoUrl || undefined,
         theme:           form.theme,
         language:        form.language,
         customThemeNote: form.customThemeNote,
+        artStyle:        form.artStyle,
         storyTemplateId: form.theme,
         storyLength: 'medium',
       });
@@ -106,20 +125,10 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) {
       setStoryConfig({ ...form, generatedText: text, storyId: newStoryId });
       toast.success(t('step2.gen_success'));
 
-      // ── Step 4: Generate illustrations (if photo available) ────────────────
-      if (cloudPhotoUrl) {
+      // ── Step 4: Generate avatar (needs a photo) ────────────────────────────
+      if (photoUrl) {
         setIsGenerating(false);
-        setIsGeneratingIllustrations(true);
-        try {
-          const illRes = await storyApi.generateIllustrations(newStoryId, cloudPhotoUrl);
-          setIllustrationUrls(illRes.illustrationUrls || []);
-          setIllustrationsDone(true);
-          toast.success('🎨 تم توليد الصور!', { duration: 4000 });
-        } catch {
-          toast.error('تعذّر توليد الصور — يمكنك المتابعة بدونها', { duration: 5000 });
-        } finally {
-          setIsGeneratingIllustrations(false);
-        }
+        await runAvatarGeneration(newStoryId, photoUrl, form.artStyle);
       }
     } catch (err: any) {
       // Fallback to mock if backend unavailable
@@ -129,6 +138,48 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) {
       toast.success(t('step2.gen_success'), { icon: '📖' });
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  /** Generate (or regenerate) the child's avatar and show it for approval. */
+  const runAvatarGeneration = async (sid: string, photoUrl: string, artStyle: string) => {
+    setIsGeneratingAvatar(true);
+    setAvatarApproved(false);
+    try {
+      const res = await storyApi.generateAvatar(sid, photoUrl, artStyle);
+      if (res.avatarUrl) {
+        setAvatarUrl(res.avatarUrl);
+        setStoryConfig({ avatarUrl: res.avatarUrl });
+        toast.success(t('step2.avatar_done'), { icon: '🧒' });
+      } else {
+        throw new Error(res.message || 'no avatar');
+      }
+    } catch {
+      toast.error(t('step2.avatar_error'), { duration: 5000 });
+    } finally {
+      setIsGeneratingAvatar(false);
+    }
+  };
+
+  const regenerateAvatar = () => {
+    if (!storyId || !cloudPhotoUrl) return;
+    runAvatarGeneration(storyId, cloudPhotoUrl, form.artStyle);
+  };
+
+  /** Approve the avatar → generate the per-page illustrations. */
+  const approveAvatarAndGenerate = async () => {
+    if (!storyId || !avatarUrl) return;
+    setAvatarApproved(true);
+    setIsGeneratingIllustrations(true);
+    try {
+      const illRes = await storyApi.generateIllustrations(storyId, avatarUrl);
+      setIllustrationUrls(illRes.illustrationUrls || []);
+      setIllustrationsDone(true);
+      toast.success('🎨 تم توليد الصور!', { duration: 4000 });
+    } catch {
+      toast.error('تعذّر توليد الصور — يمكنك المتابعة بدونها', { duration: 5000 });
+    } finally {
+      setIsGeneratingIllustrations(false);
     }
   };
 
@@ -228,6 +279,32 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) {
         </div>
       </div>
 
+      {/* Art Style: How the illustrations will be drawn (Nano Banana) */}
+      <div>
+        <label className="block font-arabic text-white/80 text-sm mb-3">
+          🖌️ {t('step2.style_label')}
+        </label>
+        <div className="grid grid-cols-3 gap-3">
+          {ART_STYLES.map((style) => (
+            <button
+              key={style.id}
+              id={`style-${style.id}`}
+              type="button"
+              onClick={() => setForm({ ...form, artStyle: style.id })}
+              className={`flex flex-col items-center gap-1 p-3 rounded-xl border transition-all text-center ${form.artStyle === style.id
+                  ? 'border-gold-500 bg-gold-500/10'
+                  : 'border-white/10 hover:border-white/30'
+                }`}
+            >
+              <span className="text-2xl">{style.emoji}</span>
+              <span className={`font-arabic font-bold text-xs ${form.artStyle === style.id ? 'text-gold-500' : 'text-white/70'}`}>
+                {style.label}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Live Preview: Interactive Flipbook to let parents visualize how the book will look */}
       <div className="mt-8 flex flex-col items-center justify-center bg-dark-700/30 rounded-3xl border border-white/5 w-full py-12 relative min-h-[50px]">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gold-500/50 to-transparent" />
@@ -251,17 +328,54 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) {
         fullWidth
         size="lg"
         onClick={generateStory}
-        isLoading={isGenerating || isGeneratingIllustrations}
+        isLoading={isGenerating || isGeneratingAvatar || isGeneratingIllustrations}
         icon={<Sparkles className="w-5 h-5" />}
       >
         {isGenerating
           ? t('step2.generating_text')
-          : isGeneratingIllustrations
-            ? '🎨 جاري رسم الصور المخصصة… (قد يستغرق دقيقة)'
-            : generatedText
-              ? t('step2.regenerate_btn')
-              : t('step2.generate_btn')}
+          : isGeneratingAvatar
+            ? `🧒 ${t('step2.avatar_generating')}`
+            : isGeneratingIllustrations
+              ? '🎨 جاري رسم الصور المخصصة… (قد يستغرق دقيقة)'
+              : generatedText
+                ? t('step2.regenerate_btn')
+                : t('step2.generate_btn')}
       </MagicButton>
+
+      {/* Avatar generation (loading) */}
+      {isGeneratingAvatar && (
+        <div className="p-4 rounded-2xl bg-magic-500/10 border border-magic-500/20 animate-pulse text-center">
+          <p className="font-arabic text-white/80 text-sm font-bold">🧒 {t('step2.avatar_generating')}</p>
+        </div>
+      )}
+
+      {/* Avatar approval card — shown after the avatar is generated, before pages */}
+      {avatarUrl && !avatarApproved && !isGeneratingAvatar && (
+        <div className="p-5 rounded-2xl bg-purple-500/10 border border-purple-400/30 text-center">
+          <p className="font-arabic text-purple-200 text-sm font-bold mb-3">{t('step2.avatar_approve')}</p>
+          <img
+            src={avatarUrl}
+            alt="avatar"
+            className="w-40 h-40 object-cover rounded-2xl border-2 border-purple-400 mx-auto mb-4 shadow-lg"
+          />
+          <div className="flex gap-3 justify-center">
+            <button
+              type="button"
+              onClick={regenerateAvatar}
+              className="px-4 py-2 rounded-xl border border-white/20 text-white/70 font-arabic text-sm hover:bg-white/5 transition-colors"
+            >
+              🔄 {t('step2.avatar_regenerate')}
+            </button>
+            <button
+              type="button"
+              onClick={approveAvatarAndGenerate}
+              className="px-5 py-2 rounded-xl bg-gold-500 text-dark-900 font-arabic font-bold text-sm hover:bg-gold-400 transition-colors"
+            >
+              ✅ {t('step2.avatar_use')}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Illustration generation progress indicator */}
       {isGeneratingIllustrations && (

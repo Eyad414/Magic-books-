@@ -18,9 +18,13 @@ export interface IStory extends Document {
   storyLength: 'short' | 'medium' | 'long';
   language: 'ar' | 'en' | 'he';
   customThemeNote?: string;
+  /** Illustration art style the customer chose (storybook | pixar3d | cartoon) */
+  artStyle?: string;
   // Generated Content
   generatedText?: string;
   coverImageUrl?: string;
+  /** Nano Banana character avatar generated from the child's photo (approved before pages) */
+  avatarUrl?: string;
   status: StoryStatus;
   // Step 3: Customization
   coverColor?: string;
@@ -52,8 +56,10 @@ const StorySchema = new Schema<IStory>(
     storyLength:  { type: String, enum: ['short', 'medium', 'long'], default: 'medium' },
     language:     { type: String, enum: ['ar', 'en', 'he'], default: 'ar' },
     customThemeNote: { type: String },
+    artStyle:     { type: String, default: 'storybook' },
     generatedText:   { type: String },
     coverImageUrl:   { type: String },
+    avatarUrl:       { type: String },
     status: {
       type: String,
       enum: ['draft', 'generating', 'illustrating', 'ready', 'ordered'],

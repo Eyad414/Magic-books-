@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
 import Story from '../models/Story';
-import StoryTemplate from '../models/StoryTemplate';
 import { splitStoryPreview } from '../utils/storyUtils';
 import { generateStoryWithAI, transliterateNameForLanguage } from '../services/AI_Generator';
-import { generateBaseScene, generateAllIllustrations } from '../services/FalAIService';
-import { generateIllustration } from '../services/ImageGenerator';
-import { uploadFromUrl } from '../services/CloudinaryUploadService';
+import {
+  generateIllustration,
+  generateAvatar as generateAvatarImage,
+  generateAllSceneIllustrations,
+} from '../services/ImageGenerator';
 import { getScenesForTemplate } from '../data/storyScenes';
 
 // @route POST /api/stories/create
@@ -14,7 +15,7 @@ export const createStory = async (req: Request, res: Response): Promise<void> =>
     const userId = (req as any).user._id;
     const {
       childName, childAge, childGender, childPhotoUrl,
-      theme, storyLength, language, customThemeNote, storyTemplateId,
+      theme, storyLength, language, customThemeNote, storyTemplateId, artStyle,
     } = req.body;
 
     // Reject blob: URLs — they are browser-local and meaningless on the server
@@ -32,6 +33,7 @@ export const createStory = async (req: Request, res: Response): Promise<void> =>
       storyLength: storyLength || 'medium',
       language: language || 'ar',
       customThemeNote,
+      artStyle: artStyle || 'storybook',
       storyTemplateId: storyTemplateId || theme || 'adventure',
       status: 'draft',
     });
@@ -84,10 +86,51 @@ export const generateStory = async (req: Request, res: Response): Promise<void> 
   }
 };
 
+// @route POST /api/stories/:id/generate-avatar
+// Stage 1 of the Nano Banana pipeline: turn the child's photo into a consistent
+// character avatar in the chosen art style. The customer approves it before the
+// per-page illustrations are generated.
+export const generateAvatar = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const story = await Story.findById(req.params.id);
+    if (!story) {
+      res.status(404).json({ success: false, message: 'القصة غير موجودة' });
+      return;
+    }
+
+    const childPhotoUrl: string = req.body.childPhotoUrl || story.childPhotoUrl || '';
+    if (!childPhotoUrl || childPhotoUrl.startsWith('blob:')) {
+      res.status(400).json({ success: false, message: 'رابط صورة الطفل مطلوب (وغير صالح إن كان blob)' });
+      return;
+    }
+
+    const artStyle: string = req.body.artStyle || story.artStyle || 'storybook';
+
+    const avatarUrl = await generateAvatarImage(childPhotoUrl, {
+      childName: story.childName,
+      childAge: story.childAge,
+      childGender: story.childGender,
+      artStyle,
+    });
+
+    // Persist for the illustration step + so the customer can re-fetch it
+    story.childPhotoUrl = childPhotoUrl;
+    story.artStyle = artStyle;
+    story.avatarUrl = avatarUrl;
+    await story.save();
+
+    res.json({ success: true, avatarUrl });
+  } catch (error: any) {
+    console.error('[generateAvatar]', error);
+    res.status(500).json({ success: false, message: error.message || 'فشل في توليد الأفاتار' });
+  }
+};
+
 // @route POST /api/stories/:id/generate-illustrations
-// Generates 13 personalised illustrations for the story using fal.ai:
-//  1. Ensures base scenes exist in DB (generate them once per story template)
-//  2. Face-swaps the child's photo into each base scene
+// Stage 2 of the Nano Banana pipeline: drop the approved avatar into every story
+// scene so each page shows the same recognisable child, matching the page event.
+//  1. Requires the avatar (from generate-avatar) — high character consistency
+//  2. Generates one illustration per scene from data/storyScenes.ts
 //  3. Uploads results to Cloudinary and stores the URLs
 export const generateIllustrations = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -97,9 +140,9 @@ export const generateIllustrations = async (req: Request, res: Response): Promis
       return;
     }
 
-    const childPhotoUrl: string = req.body.childPhotoUrl || story.childPhotoUrl || '';
-    if (!childPhotoUrl) {
-      res.status(400).json({ success: false, message: 'childPhotoUrl is required' });
+    const avatarUrl: string = req.body.avatarUrl || story.avatarUrl || '';
+    if (!avatarUrl || avatarUrl.startsWith('blob:')) {
+      res.status(400).json({ success: false, message: 'الأفاتار مطلوب — قم بتوليد أفاتار الطفل أولاً' });
       return;
     }
 
@@ -111,57 +154,26 @@ export const generateIllustrations = async (req: Request, res: Response): Promis
     story.status = 'illustrating';
     await story.save();
 
-    // ── Step 1: Ensure base scenes exist (shared across all children) ────────
-    let templateDoc = await StoryTemplate.findOne({ templateId });
+    // Build the per-scene jobs from the template's scene prompts
+    const childInfo = {
+      childName: story.childName,
+      childAge: story.childAge,
+      childGender: story.childGender,
+      artStyle: story.artStyle || 'storybook',
+    };
 
-    if (!templateDoc || templateDoc.scenes.length < sceneData.scenes.length) {
-      // Generate base scenes (admin one-time cost)
-      console.log(`[Illustrations] Generating ${sceneData.scenes.length} base scenes for template "${templateId}"...`);
-
-      const generatedScenes = await Promise.all(
-        sceneData.scenes.map(async (scene) => {
-          const { imageUrl } = await generateBaseScene(scene.scenePrompt);
-          // Upload to Cloudinary so we have a permanent URL
-          const cloudinaryUrl = await uploadFromUrl(imageUrl, `magic-fanoose/templates/${templateId}`);
-          return {
-            pageIndex: scene.pageIndex,
-            scenePrompt: scene.scenePrompt,
-            baseSceneUrl: cloudinaryUrl,
-          };
-        })
-      );
-
-      templateDoc = await StoryTemplate.findOneAndUpdate(
-        { templateId },
-        {
-          templateId,
-          titleAr: sceneData.titleAr,
-          scenes: generatedScenes,
-          scenesGeneratedAt: new Date(),
-        },
-        { upsert: true, new: true }
-      );
-    }
-
-    // ── Step 2: Face-swap child's photo into each base scene ─────────────────
-    console.log(`[Illustrations] Face-swapping child photo into ${templateDoc!.scenes.length} scenes...`);
-
-    const jobs = templateDoc!.scenes.map((scene) => ({
-      pageIndex: scene.pageIndex,
-      baseSceneUrl: scene.baseSceneUrl,
-      childPhotoUrl,
-    }));
-
-    const swappedUrls = await generateAllIllustrations(jobs, 3); // 3 in parallel
-
-    // ── Step 3: Upload results to Cloudinary ─────────────────────────────────
-    const finalUrls = await Promise.all(
-      swappedUrls.map((url) =>
-        uploadFromUrl(url, `magic-fanoose/stories/${story._id}`)
-      )
+    console.log(
+      `[Illustrations] Nano Banana: rendering ${sceneData.scenes.length} scenes for story ${story._id}...`,
     );
 
-    // ── Step 4: Save to story ─────────────────────────────────────────────────
+    const scenes = sceneData.scenes.map((scene) => ({
+      sceneText: scene.scenePrompt,
+      folder: `magic-fanoose/stories/${story._id}`,
+    }));
+
+    const finalUrls = await generateAllSceneIllustrations(avatarUrl, scenes, childInfo, 3);
+
+    // Save to story
     story.illustrationUrls = finalUrls;
     story.illustrationStatus = 'done';
     story.status = story.generatedText ? 'ready' : story.status === 'illustrating' ? 'generating' : story.status;
