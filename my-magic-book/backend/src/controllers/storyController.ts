@@ -203,9 +203,10 @@ export const generateIllustrations = async (req: Request, res: Response): Promis
 // each page's image is built from that page's text with the child's likeness.
 export const generatePageImage = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { text, childPhotoUrl } = req.body as {
+    const { text, childPhotoUrl, artStyle } = req.body as {
       text?: string;
       childPhotoUrl?: string;
+      artStyle?: string;
     };
 
     if (!text || !text.trim()) {
@@ -217,7 +218,7 @@ export const generatePageImage = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    const imageUrl = await generateIllustration(text, childPhotoUrl);
+    const imageUrl = await generateIllustration(text, childPhotoUrl, artStyle || 'storybook');
     res.json({ success: true, imageUrl });
   } catch (error: any) {
     console.error('[generatePageImage]', error);

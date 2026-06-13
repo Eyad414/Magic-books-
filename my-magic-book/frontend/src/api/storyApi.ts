@@ -29,8 +29,8 @@ export const storyApi = {
     return res.data;
   },
   /** Generate one page illustration from its text + a child photo (Nano Banana). */
-  generatePageImage: async (text: string, childPhotoUrl: string) => {
-    const res = await api.post('/stories/generate-page-image', { text, childPhotoUrl });
+  generatePageImage: async (text: string, childPhotoUrl: string, artStyle = 'storybook') => {
+    const res = await api.post('/stories/generate-page-image', { text, childPhotoUrl, artStyle });
     return res.data as { success: boolean; imageUrl?: string; message?: string };
   },
   customize: async (storyId: string, data: object) => {

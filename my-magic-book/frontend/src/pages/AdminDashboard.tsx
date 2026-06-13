@@ -30,6 +30,14 @@ export default function AdminDashboard() {
   const [refPhotoUrl, setRefPhotoUrl] = useState('');     // reference child photo (real URL)
   const [uploadingRef, setUploadingRef] = useState(false); // uploading the ref photo
   const [genIndex, setGenIndex] = useState<number | null>(null); // page being generated
+  const [genStyle, setGenStyle] = useState('storybook');  // art style for Nano Banana
+
+  // Art styles for the admin generator (mirrors the customer Step 2 picker)
+  const ADMIN_ART_STYLES = [
+    { id: 'storybook', emoji: '🎨', label: 'كتاب قصص' },
+    { id: 'pixar3d',   emoji: '🧸', label: 'ثلاثي الأبعاد' },
+    { id: 'cartoon',   emoji: '✏️', label: 'كرتون' },
+  ];
 
   // Upload a picked photo file straight to Cloudinary so Nano Banana can fetch it
   const handleRefPhotoUpload = async (file: File) => {
@@ -62,7 +70,7 @@ export default function AdminDashboard() {
     }
     setGenIndex(pIndex);
     try {
-      const res = await storyApi.generatePageImage(page.text, refPhotoUrl.trim());
+      const res = await storyApi.generatePageImage(page.text, refPhotoUrl.trim(), genStyle);
       if (res.success && res.imageUrl) {
         setDraftPages((prev) => {
           const updated = [...prev];
@@ -578,8 +586,29 @@ export default function AdminDashboard() {
                 )}
               </div>
 
+              {/* Art style picker for the generated images */}
+              <label className="block font-arabic text-purple-200 text-xs mt-3 mb-2">🖌️ نمط الرسم</label>
+              <div className="grid grid-cols-3 gap-2">
+                {ADMIN_ART_STYLES.map((style) => (
+                  <button
+                    key={style.id}
+                    type="button"
+                    onClick={() => setGenStyle(style.id)}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all text-center ${genStyle === style.id
+                        ? 'border-gold-500 bg-gold-500/10'
+                        : 'border-white/10 hover:border-white/30'
+                      }`}
+                  >
+                    <span className="text-lg">{style.emoji}</span>
+                    <span className={`font-arabic font-bold text-[11px] ${genStyle === style.id ? 'text-gold-500' : 'text-white/70'}`}>
+                      {style.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
               <p className="font-arabic text-white/40 text-[11px] mt-2 leading-relaxed">
-                اكتب نص كل صفحة ثم اضغط «توليد الصورة» بجانبها — سيُنشئ النموذج رسمة كتاب أطفال للمشهد مع وجه الطفل من هذه الصورة.
+                اكتب نص كل صفحة ثم اضغط «توليد الصورة» بجانبها — سيُنشئ النموذج رسمة كتاب أطفال للمشهد بالنمط المختار مع وجه الطفل من هذه الصورة.
               </p>
             </div>
 

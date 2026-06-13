@@ -247,6 +247,7 @@ export async function generateSceneIllustration(
 export async function generateIllustration(
   prompt: string,
   childPhotoUrl: string,
+  artStyle = 'storybook',
   folder = 'magic-fanoose/nano-banana',
 ): Promise<string> {
   if (!isNanoBananaConfigured()) {
@@ -256,7 +257,7 @@ export async function generateIllustration(
     return childPhotoUrl;
   }
   const photo = await fetchImageAsBase64(childPhotoUrl);
-  const buffer = await callNanoBanana(buildScenePrompt(prompt, {}), [photo]);
+  const buffer = await callNanoBanana(buildScenePrompt(prompt, { artStyle }), [photo]);
   return uploadFromBuffer(buffer, folder);
 }
 
