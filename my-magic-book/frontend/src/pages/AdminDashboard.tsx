@@ -29,6 +29,32 @@ export default function AdminDashboard() {
   // Which theme id is currently generating AI preview photos (for the spinner).
   const [generatingThemeId, setGeneratingThemeId] = useState<string | null>(null);
 
+  const handleGeneratePhotoreal = async (themeId: string) => {
+    setGeneratingThemeId(themeId);
+    const toastId = toast.loading('📸 توليد قوالب واقعية + تبديل الوجه... (قد يستغرق عدة دقائق)');
+    try {
+      const res = await adminApi.generateThemePhotoreal(themeId);
+      if (res.success) {
+        toast.success(`تم (نمط واقعي) ✨ — ${res.swaps} تبديل، التكلفة ~$${res.estimatedCostUsd ?? 0}`, { id: toastId });
+        setSettings((prev: any) => {
+          if (!prev) return prev;
+          const themes = prev.themes.map((th: any) =>
+            th.id === themeId
+              ? { ...th, generatedImages: res.generatedImages, generatedPortrait: res.generatedPortrait, generatedCover: res.generatedCover, previewStyle: 'photoreal' }
+              : th
+          );
+          return { ...prev, themes };
+        });
+      } else {
+        toast.error(res.message || 'فشل التوليد', { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || 'فشل التوليد', { id: toastId });
+    } finally {
+      setGeneratingThemeId(null);
+    }
+  };
+
   const handleGenerateTheme = async (themeId: string, force = false) => {
     setGeneratingThemeId(themeId);
     const toastId = toast.loading('🎨 جاري توليد الصور بالذكاء الاصطناعي... (قد يستغرق دقيقتين)');
@@ -510,6 +536,18 @@ export default function AdminDashboard() {
                             : (theme.generatedImages?.length ?? 0) > 0
                               ? `✅ ${t('admin.regenerate_ai', 'إعادة توليد الصور')}`
                               : `🎨 ${t('admin.generate_ai', 'توليد صور AI')}`}
+                        </button>
+
+                        {/* Generate photoreal (face-swap) — Style B / Taletoons */}
+                        <button
+                          onClick={() => handleGeneratePhotoreal(theme.id)}
+                          disabled={generatingThemeId === theme.id}
+                          className="flex items-center gap-2 px-4 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 rounded-xl font-arabic text-sm transition-colors border border-emerald-500/30 disabled:opacity-50"
+                          title={t('admin.generate_photoreal_help', 'توليد قوالب واقعية وتبديل وجه الطفل (نمط Taletoons)')}
+                        >
+                          {theme.previewStyle === 'photoreal'
+                            ? `📸 ${t('admin.regenerate_photoreal', 'إعادة النمط الواقعي')}`
+                            : `📸 ${t('admin.generate_photoreal', 'نمط واقعي (تبديل الوجه)')}`}
                         </button>
 
                         <button 

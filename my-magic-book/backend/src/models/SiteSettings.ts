@@ -22,6 +22,12 @@ export interface ITheme {
   generatedPortrait?: string;
   /** Cached Nano-Banana full-scene front-cover image (GCS object path). */
   generatedCover?: string;
+  /** Style-B: cached one-time PHOTOREALISTIC template scenes (face gets swapped onto these). */
+  photorealTemplates?: string[];
+  photorealCover?: string;
+  photorealPortrait?: string;
+  /** Which style is currently shown: 'cartoon' (3D gen) or 'photoreal' (face-swap). */
+  previewStyle?: 'cartoon' | 'photoreal';
 }
 
 export interface ISiteSettings extends Document {
@@ -51,6 +57,10 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
         generatedImages: { type: [String], default: undefined },
         generatedPortrait: { type: String, default: undefined },
         generatedCover: { type: String, default: undefined },
+        photorealTemplates: { type: [String], default: undefined },
+        photorealCover: { type: String, default: undefined },
+        photorealPortrait: { type: String, default: undefined },
+        previewStyle: { type: String, default: undefined },
       },
     ],
   },

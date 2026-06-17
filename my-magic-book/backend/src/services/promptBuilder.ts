@@ -15,6 +15,29 @@ export interface PromptInput {
 }
 
 /**
+ * Builds a PHOTOREALISTIC scene prompt (a real-photo-style template that a face
+ * will be swapped onto later). The kid here is generic — the customer's real
+ * face gets transplanted afterward — so we describe a believable photograph,
+ * NOT a 3D cartoon.
+ */
+export function buildPhotorealPrompt(input: PromptInput): string {
+  const { pageText, childAge, childGender, theme, pageNumber } = input;
+  const ageStr = String(childAge).split('-')[0];
+  const child = childGender === 'female' ? 'girl' : 'boy';
+  const scene = trimForPrompt(pageText, 280);
+
+  return [
+    `Ultra-photorealistic DSLR photograph for a personalized children's book, page ${pageNumber}.`,
+    `A happy ${ageStr}-year-old ${child} as the subject, waist-up, facing the camera with a warm natural smile,`,
+    `clear well-lit front-facing face suitable for face replacement (face unobstructed, looking forward).`,
+    scene ? `Scene context: "${scene}".` : '',
+    `Realistic natural lighting, lifelike skin and textures, shallow depth of field, 50mm lens, professional photography.`,
+    `Bright, colorful, cheerful ${theme} setting. Square 1:1. Real photographic quality, NOT a cartoon, NOT a 3D render, NOT an illustration.`,
+    `No text, no captions, no watermark.`,
+  ].filter(Boolean).join(' ');
+}
+
+/**
  * Splits a story into N page chunks of roughly equal length.
  *
  * Strategy:

@@ -43,6 +43,16 @@ export const adminApi = {
     );
     return response.data;
   },
+  // Style B (Taletoons): photoreal templates + face-swap. Templates cached;
+  // re-runs only re-swap. Long-running on first run.
+  generateThemePhotoreal: async (themeId: string, opts?: { forceTemplates?: boolean; childName?: string; referencePhoto?: string }) => {
+    const response = await axiosInstance.post(
+      `/admin/themes/${themeId}/generate-photoreal`,
+      { forceTemplates: opts?.forceTemplates ?? false, childName: opts?.childName, referencePhoto: opts?.referencePhoto },
+      { timeout: 8 * 60 * 1000 }
+    );
+    return response.data;
+  },
 };
 
 export const storyApi = {

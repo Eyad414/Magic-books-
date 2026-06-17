@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAllStories, updateStory, deleteStory, addAdmin, getTeam, getSettings, updateSettings, getAllOrders, buildOrderBook, generatePreviewIllustrations } from '../controllers/adminController';
+import { getAllStories, updateStory, deleteStory, addAdmin, getTeam, getSettings, updateSettings, getAllOrders, buildOrderBook, generatePreviewIllustrations, generatePhotorealPreview } from '../controllers/adminController';
 import { protect, adminOnly } from '../utils/authMiddleware';
 
 const router = Router();
@@ -19,5 +19,6 @@ router.get('/team', getTeam);
 router.get('/settings', getSettings);
 router.put('/settings', updateSettings);
 router.post('/themes/:themeId/generate-illustrations', generatePreviewIllustrations);
+router.post('/themes/:themeId/generate-photoreal', generatePhotorealPreview);
 
 export default router;

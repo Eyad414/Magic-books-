@@ -5,7 +5,8 @@ import Order from '../models/Order';
 import SiteSettings from '../models/SiteSettings';
 import { buildBookForOrder } from '../services/BookBuilder';
 import { generateIllustration, COST_PER_IMAGE_USD } from '../services/ImageGenerator';
-import { buildIllustrationPrompt } from '../services/promptBuilder';
+import { buildIllustrationPrompt, buildPhotorealPrompt } from '../services/promptBuilder';
+import { swapFace } from '../services/FaceSwapService';
 
 // The kid photo (already in the bucket) used as the reference face for ADMIN
 // PREVIEW generation only. Real customer orders use the customer's own photo.
@@ -373,6 +374,106 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
     });
   } catch (err: any) {
     console.error('generatePreviewIllustrations failed:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @route POST /api/admin/themes/:themeId/generate-photoreal
+// @desc  STYLE B (Taletoons): (1) generate/cache 13 PHOTOREALISTIC template scenes
+//        for the theme [one-time], (2) face-swap the reference photo onto each +
+//        cover + portrait, (3) store the swapped results as the displayed images.
+//        Templates are cached so re-runs only re-swap (cheap/free).
+export const generatePhotorealPreview = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { themeId } = req.params;
+    const forceTemplates = req.body?.forceTemplates === true;
+
+    const settings = await SiteSettings.findOne();
+    if (!settings) {
+      res.status(404).json({ success: false, message: 'settings not found' });
+      return;
+    }
+    const theme: any = settings.themes.find((t: any) => t.id === themeId);
+    if (!theme) {
+      res.status(404).json({ success: false, message: `theme ${themeId} not found` });
+      return;
+    }
+
+    const childName = req.body?.childName || theme.label || 'الطفل';
+    const referencePhoto: string = req.body?.referencePhoto || PREVIEW_REFERENCE_PHOTO;
+    const textPages: string[] = (theme.pages || [])
+      .filter((p: any) => p && (p.text || typeof p === 'string'))
+      .map((p: any) => substituteName(p.text || p, childName));
+
+    // ── Step 1: photoreal templates (one-time, cached) ──────────────────────
+    let templatesGenerated = 0;
+    if (forceTemplates || !theme.photorealTemplates || theme.photorealTemplates.length === 0) {
+      const templates: string[] = [];
+      for (let i = 0; i < PREVIEW_IMAGE_PAGES; i++) {
+        const prompt = buildPhotorealPrompt({
+          pageText: textPages[i] || textPages[textPages.length - 1] || `${childName} ${theme.label}`,
+          childName, childAge: '5', childGender: 'male',
+          theme: theme.label, language: 'ar', pageNumber: i + 1,
+        });
+        const t = await generateIllustration(prompt, referencePhoto, { storyId: `tmpl_${themeId}`, pageNumber: i + 1 });
+        templates.push(t.objectPath);
+        templatesGenerated++;
+      }
+      // cover + portrait templates
+      const coverT = await generateIllustration(
+        buildPhotorealPrompt({ pageText: `${childName} hero portrait`, childName, childAge: '5', childGender: 'male', theme: theme.label, language: 'ar', pageNumber: 0 }),
+        referencePhoto, { storyId: `tmpl_${themeId}`, pageNumber: 0 });
+      const portraitT = await generateIllustration(
+        buildPhotorealPrompt({ pageText: `${childName} close-up smiling portrait`, childName, childAge: '5', childGender: 'male', theme: theme.label, language: 'ar', pageNumber: 99 }),
+        referencePhoto, { storyId: `tmpl_${themeId}`, pageNumber: 99 });
+      templatesGenerated += 2;
+
+      theme.photorealTemplates = templates;
+      theme.photorealCover = coverT.objectPath;
+      theme.photorealPortrait = portraitT.objectPath;
+      settings.markModified('themes');
+      await settings.save();
+    }
+
+    // ── Step 2: face-swap the real photo onto every template ────────────────
+    const swappedImages: string[] = [];
+    for (let i = 0; i < theme.photorealTemplates.length; i++) {
+      const sw = await swapFace(referencePhoto, `gs://${process.env.GCS_BUCKET_NAME}/${theme.photorealTemplates[i]}`, {
+        storyId: `sb_${themeId}`, pageNumber: i + 1,
+      });
+      swappedImages.push(sw.objectPath);
+    }
+    let swapCover: string | undefined;
+    let swapPortrait: string | undefined;
+    if (theme.photorealCover) {
+      const c = await swapFace(referencePhoto, `gs://${process.env.GCS_BUCKET_NAME}/${theme.photorealCover}`, { storyId: `sb_${themeId}`, pageNumber: 0 });
+      swapCover = c.objectPath;
+    }
+    if (theme.photorealPortrait) {
+      const p = await swapFace(referencePhoto, `gs://${process.env.GCS_BUCKET_NAME}/${theme.photorealPortrait}`, { storyId: `sb_${themeId}`, pageNumber: 98 });
+      swapPortrait = p.objectPath;
+    }
+
+    // ── Step 3: store swapped results in the display fields ──────────────────
+    theme.generatedImages = swappedImages;
+    theme.generatedCover = swapCover;
+    theme.generatedPortrait = swapPortrait;
+    theme.previewStyle = 'photoreal';
+    settings.markModified('themes');
+    await settings.save();
+
+    res.json({
+      success: true,
+      style: 'photoreal',
+      templatesGenerated,            // Gemini images produced this run (cost)
+      swaps: swappedImages.length + (swapCover ? 1 : 0) + (swapPortrait ? 1 : 0),
+      estimatedCostUsd: Number((templatesGenerated * COST_PER_IMAGE_USD).toFixed(2)),
+      generatedImages: swappedImages,
+      generatedCover: swapCover,
+      generatedPortrait: swapPortrait,
+    });
+  } catch (err: any) {
+    console.error('generatePhotorealPreview failed:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
