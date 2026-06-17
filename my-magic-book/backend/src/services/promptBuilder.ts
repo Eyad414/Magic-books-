@@ -112,12 +112,13 @@ export function buildIllustrationPrompt(input: PromptInput): string {
   const styleHints = themeStyle(theme);
 
   const parts = [
-    `Vibrant, richly-colored children's book illustration, page ${pageNumber}.`,
-    characterAnchor + '.',
+    `High-quality 3D rendered children's book illustration in the style of a Pixar / DreamWorks animated movie, page ${pageNumber}.`,
+    characterAnchor +
+      ', rendered with a photorealistic, recognizable face that closely matches the reference photo (same facial features, skin tone and hair), set as a charming 3D animated character.',
     sceneHint ? `Scene from the story: "${sceneHint}".` : null,
     styleHints,
-    'Square 1:1 aspect ratio, 220x220mm print size. Bright, saturated, magical color palette with bold playful highlights and a sense of wonder. Cinematic lighting, dreamy glow, expressive joyful faces, child-safe.',
-    'High detail, polished professional storybook art. No text, no captions, no watermarks, no signatures.',
+    'Square 1:1 aspect ratio, 220x220mm print size. Rich vibrant saturated colors, cinematic depth-of-field lighting, soft realistic textures, volumetric glow, highly detailed background, professional CGI render quality.',
+    'Expressive joyful face, child-safe, polished and magical. No text, no captions, no watermarks, no signatures.',
   ].filter(Boolean);
 
   return parts.join(' ');

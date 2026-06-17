@@ -4,7 +4,7 @@ import Story from '../models/Story';
 import Order from '../models/Order';
 import SiteSettings from '../models/SiteSettings';
 import { buildBookForOrder } from '../services/BookBuilder';
-import { generateIllustration } from '../services/ImageGenerator';
+import { generateIllustration, COST_PER_IMAGE_USD } from '../services/ImageGenerator';
 import { buildIllustrationPrompt } from '../services/promptBuilder';
 
 // The kid photo (already in the bucket) used as the reference face for ADMIN
@@ -320,9 +320,10 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
 
     // Back-cover hero portrait — a clean, smiling close-up of the kid.
     const portraitPrompt =
-      `Children's book back-cover portrait of ${childName}, a happy 5-year-old, warm smile, ` +
-      `looking at the camera, soft studio lighting, gentle bokeh background in the ${theme.label} theme, ` +
-      `vibrant saturated storybook illustration style. Centered. No text, no watermark.`;
+      `High-quality 3D rendered Pixar / DreamWorks style children's book back-cover portrait of ${childName}, ` +
+      `a happy 5-year-old with a photorealistic recognizable face that closely matches the reference photo, ` +
+      `warm smile, looking at the camera, soft cinematic studio lighting, gentle bokeh background in the ${theme.label} theme, ` +
+      `rich vibrant saturated colors, professional CGI render quality. Centered. No text, no watermark.`;
     try {
       const portrait = await generateIllustration(portraitPrompt, PREVIEW_REFERENCE_PHOTO, {
         storyId: `theme_${themeId}`,
@@ -335,11 +336,12 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
 
     // Full-scene front cover — the hero kid inside the themed world (Taletoons style).
     const coverPrompt =
-      `Children's book FRONT COVER illustration. ${childName}, a joyful 5-year-old, shown waist-up and ` +
-      `centered as the hero, looking at the viewer with a big happy smile, surrounded by charming ` +
-      `${theme.label} characters and elements, set in a richly detailed ${theme.label} environment that ` +
-      `fills the entire frame. Vibrant saturated magical colors, cinematic lighting, dreamy glow, ` +
-      `professional polished children's book cover art, square 1:1. No text, no title, no watermark.`;
+      `High-quality 3D rendered Pixar / DreamWorks style children's book FRONT COVER. ${childName}, a joyful 5-year-old ` +
+      `with a photorealistic recognizable face that closely matches the reference photo, shown waist-up and centered as the hero, ` +
+      `looking at the viewer with a big happy smile, surrounded by charming friendly ${theme.label} characters and elements, ` +
+      `set in a richly detailed cinematic ${theme.label} environment that fills the entire frame. Rich vibrant saturated colors, ` +
+      `volumetric cinematic lighting, dreamy glow, soft realistic textures, professional CGI render quality, square 1:1. ` +
+      `No text, no title, no watermark.`;
     try {
       const cover = await generateIllustration(coverPrompt, PREVIEW_REFERENCE_PHOTO, {
         storyId: `theme_${themeId}`,
@@ -353,12 +355,21 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
     settings.markModified('themes');
     await settings.save();
 
+    // Count what we actually produced this run for the cost estimate.
+    const imageCount =
+      generatedImages.length +
+      (theme.generatedPortrait ? 1 : 0) +
+      (theme.generatedCover ? 1 : 0);
+    const estimatedCostUsd = Number((imageCount * COST_PER_IMAGE_USD).toFixed(2));
+
     res.json({
       success: true,
       cached: false,
       generatedImages,
       generatedPortrait: theme.generatedPortrait,
       generatedCover: theme.generatedCover,
+      imageCount,
+      estimatedCostUsd,
     });
   } catch (err: any) {
     console.error('generatePreviewIllustrations failed:', err);

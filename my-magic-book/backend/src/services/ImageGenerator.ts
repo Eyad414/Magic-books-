@@ -9,6 +9,16 @@ interface GenerateOpts {
 
 const MODEL = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image';
 
+// Gemini 2.5 Flash Image: each image is a flat 1290 output tokens at
+// $30 / 1M output tokens → ~$0.039 per generated image.
+export const COST_PER_IMAGE_USD = 0.039;
+
+// Running tally for the current process (visible in logs + admin response).
+let _imagesGenerated = 0;
+export function imagesGeneratedSoFar(): number {
+  return _imagesGenerated;
+}
+
 // Lazy-init so missing key only fails when an actual generation is attempted.
 let _client: GoogleGenAI | null = null;
 function client(): GoogleGenAI {
@@ -76,6 +86,12 @@ export async function generateIllustration(
     ? `page-${String(opts.pageNumber).padStart(2, '0')}.${ext}`
     : `${Date.now()}.${ext}`;
   const objectPath = pdfFolderPath(folder, filename);
+
+  _imagesGenerated += 1;
+  console.log(
+    `[ImageGenerator] image #${_imagesGenerated} → ${objectPath} ` +
+    `(~$${COST_PER_IMAGE_USD.toFixed(3)}, session total ~$${(_imagesGenerated * COST_PER_IMAGE_USD).toFixed(2)})`
+  );
 
   return uploadBuffer(imgBuffer, objectPath, contentType);
 }

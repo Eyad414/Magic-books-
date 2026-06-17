@@ -10,47 +10,63 @@ interface StoryTextPageProps {
   childName: string;
 }
 
+// Solid page colors cycled per page, Taletoons-style.
+const PAGE_COLORS = ['#F2607A', '#3FB8AF', '#F5B945', '#8E7CC3', '#6AAED6', '#7BC67E'];
+
+// White fluffy cloud (stretches to fill the text bubble).
+const CLOUD_BG =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 200' preserveAspectRatio='none'%3E%3Cg fill='%23ffffff'%3E%3Cellipse cx='80' cy='112' rx='62' ry='56'/%3E%3Cellipse cx='150' cy='80' rx='78' ry='72'/%3E%3Cellipse cx='220' cy='112' rx='62' ry='56'/%3E%3Cellipse cx='120' cy='152' rx='60' ry='50'/%3E%3Cellipse cx='185' cy='152' rx='60' ry='50'/%3E%3Crect x='52' y='106' width='200' height='78' rx='39'/%3E%3C/g%3E%3C/svg%3E\")";
+
 export function StoryTextPage({ pageNumber, text, childName }: StoryTextPageProps) {
+  const pageColor = PAGE_COLORS[Math.floor(pageNumber / 2) % PAGE_COLORS.length];
+
   return (
     <section
       className="book-page story-text-page"
       aria-label={`صفحة النص ${pageNumber}`}
+      style={{ ['--page-color' as any]: pageColor }}
     >
       {/* Page number badge */}
       <span className="stp-badge">{pageNumber}</span>
 
-      {/* Floating sparkles */}
-      <span className="stp-sparkle stp-sparkle--1" aria-hidden="true">✦</span>
-      <span className="stp-sparkle stp-sparkle--2" aria-hidden="true">✦</span>
-      <span className="stp-sparkle stp-sparkle--3" aria-hidden="true">✧</span>
-
-      {/* Storybook text panel (replaces the star) */}
-      <div className="stp-panel">
-        <span className="stp-corner stp-corner--tl" aria-hidden="true">❦</span>
-        <span className="stp-corner stp-corner--br" aria-hidden="true">❦</span>
+      {/* Cloud text bubble */}
+      <div className="stp-cloud">
         <div className="stp-content">
           <div className="stp-name-tag">{childName}</div>
           <p className="stp-text">{text}</p>
         </div>
       </div>
 
-      {/* Bottom ornament */}
-      <div className="stp-divider" aria-hidden="true" />
-
       <style>{`
         .story-text-page {
-          background: linear-gradient(145deg, #0d0f1a 0%, #111840 100%);
-          border: 1px solid rgba(212,169,55,0.18);
+          background:
+            radial-gradient(120% 90% at 50% 0%, rgba(255,255,255,0.18) 0%, transparent 55%),
+            var(--page-color, #F2607A);
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 1.2rem;
-          padding: 2.5rem 1.5rem;
+          padding: 2.5rem 2rem;
           min-height: 480px;
           position: relative;
           overflow: hidden;
           text-align: center;
+        }
+
+        /* Cloud bubble */
+        .stp-cloud {
+          position: relative;
+          width: 100%;
+          max-width: 430px;
+          background-image: ${CLOUD_BG};
+          background-size: 100% 100%;
+          background-repeat: no-repeat;
+          filter: drop-shadow(0 14px 28px rgba(0,0,0,0.25));
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 4rem 3rem;
+          animation: stp-float 6s ease-in-out infinite;
         }
 
         /* Page badge */
@@ -58,8 +74,8 @@ export function StoryTextPage({ pageNumber, text, childName }: StoryTextPageProp
           position: absolute;
           bottom: 14px;
           left: 18px;
-          background: rgba(212,169,55,0.12);
-          color: #D4A937;
+          background: rgba(255,255,255,0.85);
+          color: #333;
           font-size: 0.68rem;
           font-weight: 800;
           padding: 3px 10px;
@@ -68,36 +84,7 @@ export function StoryTextPage({ pageNumber, text, childName }: StoryTextPageProp
           z-index: 5;
         }
 
-        /* Storybook text panel */
-        .stp-panel {
-          position: relative;
-          width: 100%;
-          max-width: 440px;
-          background:
-            radial-gradient(120% 120% at 50% 0%, #fffdf6 0%, #fff4dc 55%, #ffe8bd 100%);
-          border: 2px solid rgba(212,169,55,0.55);
-          border-radius: 26px;
-          padding: 2.4rem 2rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 2;
-          box-shadow:
-            0 18px 50px rgba(0,0,0,0.45),
-            inset 0 0 0 6px rgba(255,255,255,0.5);
-          animation: stp-float 6s ease-in-out infinite;
-        }
-        /* Decorative corner flourishes */
-        .stp-corner {
-          position: absolute;
-          color: rgba(212,169,55,0.7);
-          font-size: 1.3rem;
-          line-height: 1;
-        }
-        .stp-corner--tl { top: 10px; right: 14px; }   /* RTL: visually top-right */
-        .stp-corner--br { bottom: 10px; left: 14px; }
-
-        /* Content */
+        /* Content inside the cloud */
         .stp-content {
           position: relative;
           z-index: 1;
@@ -106,49 +93,27 @@ export function StoryTextPage({ pageNumber, text, childName }: StoryTextPageProp
           align-items: center;
           gap: 0.7rem;
           width: 100%;
+          max-width: 78%;
           animation: stp-text-in 0.5s ease-out both;
         }
 
         .stp-name-tag {
-          background: rgba(59, 40, 0, 0.08);
-          color: #5c4203;
+          background: var(--page-color, #F2607A);
+          color: #fff;
           font-size: 0.72rem;
           font-weight: 800;
-          padding: 3px 12px;
+          padding: 3px 14px;
           border-radius: 999px;
-          border: 1px solid rgba(59, 40, 0, 0.18);
           letter-spacing: 0.04em;
         }
 
         .stp-text {
-          font-size: clamp(0.95rem, 2.6vw, 1.25rem);
-          line-height: 1.85;
-          color: #3B2800;
+          font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+          line-height: 1.9;
+          color: #2b2b2b;
           font-weight: 700;
           direction: rtl;
           margin: 0;
-        }
-
-        /* Sparkles */
-        .stp-sparkle {
-          position: absolute;
-          color: #F5C97A;
-          pointer-events: none;
-          z-index: 1;
-          animation: stp-twinkle 3s ease-in-out infinite;
-        }
-        .stp-sparkle--1 { top: 15%;   left: 10%;   font-size: 1.2rem; animation-delay: 0s;   }
-        .stp-sparkle--2 { top: 12%;   right: 12%;  font-size: 0.8rem; animation-delay: 1.2s; }
-        .stp-sparkle--3 { bottom: 12%; left: 16%;  font-size: 0.9rem; animation-delay: 0.6s; }
-
-        /* Divider */
-        .stp-divider {
-          position: relative;
-          z-index: 1;
-          width: 60px;
-          height: 2px;
-          background: linear-gradient(90deg, transparent, #D4A937, transparent);
-          border-radius: 999px;
         }
 
         /* Animations */
@@ -201,46 +166,40 @@ export function StoryImagePage({ pageNumber, imageSrc, imageAlt }: StoryImagePag
       </div>
 
       <style>{`
+        /* Full-bleed photo page (Taletoons style) */
         .story-image-page {
           background: #060a12;
-          border: 1px solid rgba(212,169,55,0.12);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 1rem;
-          min-height: 380px;
           position: relative;
+          aspect-ratio: 1 / 1;
+          overflow: hidden;
+          padding: 0;
         }
 
         .sip-img-wrapper {
-          position: relative;
+          position: absolute;
+          inset: 0;
           width: 100%;
-          max-width: 440px;
-          border-radius: 16px;
-          overflow: hidden;
-          box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+          height: 100%;
         }
         .sip-img {
           width: 100%;
-          height: auto;
+          height: 100%;
           display: block;
           object-fit: cover;
-          transition: transform 0.35s ease;
         }
-        .sip-img:hover { transform: scale(1.025); }
 
         .sip-badge {
           position: absolute;
-          bottom: 10px;
-          left: 12px;
-          background: rgba(10,22,40,0.78);
-          color: #D4A937;
+          bottom: 12px;
+          left: 14px;
+          background: rgba(10,22,40,0.7);
+          color: #fff;
           font-size: 0.68rem;
           font-weight: 800;
           padding: 3px 10px;
           border-radius: 999px;
-          border: 1px solid rgba(212,169,55,0.35);
           backdrop-filter: blur(6px);
+          z-index: 2;
         }
       `}</style>
     </section>

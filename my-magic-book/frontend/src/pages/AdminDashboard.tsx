@@ -35,7 +35,10 @@ export default function AdminDashboard() {
     try {
       const res = await adminApi.generateThemeIllustrations(themeId, { force });
       if (res.success) {
-        toast.success(res.cached ? 'تم تحميل الصور المحفوظة' : 'تم توليد الصور بنجاح ✨', { id: toastId });
+        const costMsg = res.cached
+          ? 'تم تحميل الصور المحفوظة'
+          : `تم توليد ${res.imageCount ?? ''} صورة ✨ (التكلفة ~$${res.estimatedCostUsd ?? '0'})`;
+        toast.success(costMsg, { id: toastId });
         // Reflect the new images in local settings so the ✓ badge shows.
         setSettings((prev: any) => {
           if (!prev) return prev;

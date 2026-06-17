@@ -72,7 +72,10 @@ export default function StoryBook({
     try {
       const res = await adminApi.generateThemeIllustrations(storyId, { force, childName });
       if (res.success) {
-        toast.success(res.cached ? 'تم تحميل الصور المحفوظة' : 'تم توليد الصور بنجاح ✨', { id: toastId });
+        const costMsg = res.cached
+          ? 'تم تحميل الصور المحفوظة'
+          : `تم توليد ${res.imageCount ?? ''} صورة ✨ (التكلفة ~$${res.estimatedCostUsd ?? '0'})`;
+        toast.success(costMsg, { id: toastId });
         onGenerated?.(
           (res.generatedImages || []).map(toDisplayUrl),
           res.generatedPortrait || '',
