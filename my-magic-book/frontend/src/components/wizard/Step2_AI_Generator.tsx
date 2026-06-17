@@ -1,41 +1,68 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useStoryProgress } from '../../context/StoryProgressContext';
 import MagicButton from '../common/MagicButton';
-import { Sparkles, ChevronLeft, ChevronRight, Globe, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sparkles, ChevronLeft, ChevronRight, Globe, ChevronDown, ChevronUp, Loader2, BookOpen } from 'lucide-react';
 import FlipbookPreview from './FlipbookPreview';
 import { storyApi } from '../../api/storyApi';
+import { publicApi } from '../../api/publicApi';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { STORY_TEMPLATES } from '../../data/stories/templates';
+import { buildBook } from '../../data/stories/builder';
+import type { StoryMode } from '../../context/StoryProgressContext';
 
 // Props Interface: Defines navigation callbacks passed from the parent wizard container
 interface Props { onNext: () => void; onPrev: () => void; }
 
 const INITIAL_THEME_COUNT = 8;
 
+interface ApiTheme { id: string; emoji: string; label: string; desc: string; ready?: boolean; }
+
 export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To move to the next page in the steps
   const { progress, setStoryConfig } = useStoryProgress(); // To save User Choices in the steps
   const { t } = useTranslation();
 
-  // Constant: Array defining all available story themes, their emojis, and labels
-  const THEMES = [
-    { id: 'adventure', emoji: '🗺️', label: t('step2.theme_adventure'), desc: t('step2.theme_adventure_desc') },
-    { id: 'space', emoji: '🚀', label: t('step2.theme_space'), desc: t('step2.theme_space_desc') },
-    { id: 'ocean', emoji: '🌊', label: t('step2.theme_ocean'), desc: t('step2.theme_ocean_desc') },
-    { id: 'school_hero', emoji: '🏫', label: t('step2.theme_school_hero'), desc: t('step2.theme_school_hero_desc') },
-    { id: 'forest', emoji: '🌿', label: t('step2.theme_forest'), desc: t('step2.theme_forest_desc') },
-    { id: 'princess', emoji: '👸', label: t('step2.theme_princess'), desc: t('step2.theme_princess_desc') },
-    { id: 'superhero', emoji: '⚡', label: t('step2.theme_superhero'), desc: t('step2.theme_superhero_desc') },
-    { id: 'animals', emoji: '🦁', label: t('step2.theme_animals'), desc: t('step2.theme_animals_desc') },
-    { id: 'dinosaurs', emoji: '🦕', label: t('step2.theme_dinosaurs'), desc: t('step2.theme_dinosaurs_desc') },
-    { id: 'pirates', emoji: '🏴‍☠️', label: t('step2.theme_pirates'), desc: t('step2.theme_pirates_desc') },
-    { id: 'robots', emoji: '🤖', label: t('step2.theme_robots'), desc: t('step2.theme_robots_desc') },
-    { id: 'magic', emoji: '🧙', label: t('step2.theme_magic'), desc: t('step2.theme_magic_desc') },
-    { id: 'sports', emoji: '⚽', label: t('step2.theme_sports'), desc: t('step2.theme_sports_desc') },
-    { id: 'cooking', emoji: '👨‍🍳', label: t('step2.theme_cooking'), desc: t('step2.theme_cooking_desc') },
-    { id: 'music', emoji: '🎵', label: t('step2.theme_music'), desc: t('step2.theme_music_desc') },
-    { id: 'custom', emoji: '✏️', label: t('step2.theme_custom'), desc: t('step2.theme_custom_desc') },
-  ];
+  // Themes come from the admin panel via /api/public/settings. The backend
+  // already filters to ready===true so half-finished stories never appear.
+  const [THEMES, setThemes] = useState<ApiTheme[]>([]);
+  const [themesLoading, setThemesLoading] = useState(true);
 
+  useEffect(() => {
+    publicApi.getSettings()
+      .then((res) => {
+        const fromApi: ApiTheme[] = (res?.settings?.themes ?? []).map((dbTheme: any) => {
+          const labelKey = `step2.theme_${dbTheme.id}`;
+          const descKey = `step2.theme_${dbTheme.id}_desc`;
+          const localizedLabel = t(labelKey);
+          const localizedDesc = t(descKey);
+          return {
+            id: dbTheme.id,
+            emoji: dbTheme.emoji,
+            // Prefer the i18n string if one exists, otherwise fall back to the admin-edited label.
+            label: localizedLabel !== labelKey ? localizedLabel : dbTheme.label,
+            desc: localizedDesc !== descKey ? localizedDesc : dbTheme.desc,
+          };
+        });
+        setThemes(fromApi);
+        // If a previously-saved theme is no longer ready, fall back to the first one.
+        setForm((prev) => {
+          if (prev.theme === 'custom') return prev;
+          const stillExists = fromApi.some((th) => th.id === prev.theme);
+          if (stillExists) return prev;
+          return { ...prev, theme: fromApi[0]?.id || '' };
+        });
+      })
+      .catch(() => {
+        setThemes([]);
+      })
+      .finally(() => setThemesLoading(false));
+    // i18n.language change triggers re-render naturally; we don't re-fetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
+  // Local State: Tracks how the customer wants to author the story.
+  const [mode, setMode] = useState<StoryMode>(progress.storyConfig.mode || 'template');
 
   // Local State: Stores the selected theme, language and any custom notes
   const [form, setForm] = useState({
@@ -66,6 +93,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
       const createRes = await storyApi.create({
         ...childDetails,
         ...form,
+        mode: 'ai',
       });
       const newStoryId = createRes.story._id;
       setStoryId(newStoryId);
@@ -73,30 +101,84 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
       const genRes = await storyApi.generate(newStoryId);
       const text = genRes.story.generatedText || '';
       setGeneratedText(text);
-      setStoryConfig({ ...form, generatedText: text, storyId: newStoryId });
+      setStoryConfig({ ...form, mode: 'ai', generatedText: text, storyId: newStoryId });
       toast.success(t('step2.gen_success'));
     } catch (err: any) {
       // Use mock story if API not connected
       const mockText = getMockPreview(progress.childDetails.childName || 'طفلك', form.theme);
       setGeneratedText(mockText);
-      setStoryConfig({ ...form, generatedText: mockText });
+      setStoryConfig({ ...form, mode: 'ai', generatedText: mockText });
       toast.success(t('step2.gen_success'), { icon: '📖' });
     } finally {
       setIsGenerating(false);
     }
   };
 
-  // Function: Ensures text is properly generated before allowing the user to proceed to Step 3
-  const handleNext = () => {
-    if (!generatedText) {
+  // Function: Looks up the handwritten template for the currently-selected theme
+  // and substitutes the kid's name. Returns null if no template exists.
+  const templatePagesForCurrentTheme = useMemo(() => {
+    const raw = STORY_TEMPLATES[form.theme];
+    if (!raw || raw.length === 0) return null;
+    return buildBook(raw, progress.childDetails.childName || '...', progress.childDetails.childPhotoUrl || '');
+  }, [form.theme, progress.childDetails.childName, progress.childDetails.childPhotoUrl]);
+
+  // Function: Ensures the story is ready before proceeding to Step 3.
+  // In template mode this is also where we create the Story in the DB
+  // (no separate "generate" step). The raw template (with {{name}} placeholders
+  // still intact) is sent — backend substitutes at PDF render time.
+  const handleNext = async () => {
+    if (mode === 'ai' && !generatedText) {
       toast.error(t('step2.err_not_generated'));
       return;
     }
-    setStoryConfig({ ...form, generatedText, storyId });
+    if (mode === 'template' && !STORY_TEMPLATES[form.theme]) {
+      toast.error(t('step2.err_template_missing', 'هذه القصة قيد الإعداد، الرجاء اختيار أخرى أو استخدام الذكاء الاصطناعي.'));
+      return;
+    }
+
+    let nextStoryId = storyId;
+    if (mode === 'template') {
+      // Only create the DB row if we haven't already (e.g. user returns to step 2).
+      if (!nextStoryId) {
+        setIsGenerating(true);
+        try {
+          const createRes = await storyApi.create({
+            ...progress.childDetails,
+            ...form,
+            mode: 'template',
+            templatePages: STORY_TEMPLATES[form.theme], // raw, placeholders intact
+          });
+          nextStoryId = createRes.story._id;
+          setStoryId(nextStoryId);
+        } catch (err: any) {
+          toast.error(err?.response?.data?.message || err.message || 'فشل في حفظ القصة');
+          setIsGenerating(false);
+          return;
+        }
+        setIsGenerating(false);
+      }
+    }
+
+    setStoryConfig({
+      ...form,
+      mode,
+      generatedText: mode === 'ai' ? generatedText : undefined,
+      storyId: nextStoryId,
+    });
     onNext();
   };
 
-  const previewTextContent = generatedText ? generatedText : `قصة سحرية عن ${progress.childDetails.childName || 'الطفل'} يستكشف عوالم وألوان جديدة...`;
+  // Preview text used inside the flipbook component.
+  const previewTextContent = (() => {
+    if (mode === 'template' && templatePagesForCurrentTheme) {
+      return templatePagesForCurrentTheme
+        .filter((p) => p.type === 'text')
+        .map((p) => (p as { content: string }).content)
+        .join('\n\n');
+    }
+    if (generatedText) return generatedText;
+    return `قصة سحرية عن ${progress.childDetails.childName || 'الطفل'} يستكشف عوالم وألوان جديدة...`;
+  })();
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -105,9 +187,51 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
         <p className="font-arabic text-white/50 text-sm">{t('step2.desc').replace('{name}', progress.childDetails.childName || '')}</p>
       </div>
 
+      {/* Mode Toggle: how the customer authors the story */}
+      <div>
+        <label className="block font-arabic text-white/80 text-sm mb-3">{t('step2.mode_label', 'كيف تريد إنشاء القصة؟')}</label>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            id="mode-template"
+            onClick={() => setMode('template')}
+            className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+              mode === 'template' ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-white/10 text-white/60 hover:border-white/30'
+            }`}
+          >
+            <BookOpen className="w-6 h-6" />
+            <span className="font-arabic font-bold text-sm">{t('step2.mode_template', 'قصة جاهزة')}</span>
+            <span className="font-arabic text-xs opacity-70 text-center">{t('step2.mode_template_desc', 'اختر من قصصنا المكتوبة بعناية')}</span>
+          </button>
+          <button
+            type="button"
+            id="mode-ai"
+            onClick={() => setMode('ai')}
+            className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+              mode === 'ai' ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-white/10 text-white/60 hover:border-white/30'
+            }`}
+          >
+            <Sparkles className="w-6 h-6" />
+            <span className="font-arabic font-bold text-sm">{t('step2.mode_ai', 'بالذكاء الاصطناعي')}</span>
+            <span className="font-arabic text-xs opacity-70 text-center">{t('step2.mode_ai_desc', 'الذكاء الاصطناعي يكتب قصة فريدة')}</span>
+          </button>
+        </div>
+      </div>
+
       {/* Theme Selection: Core subject/plot that the AI will use to build the child's story */}
       <div>
         <label className="block font-arabic text-white/80 text-sm mb-3">{t('step2.theme_label')}</label>
+        {themesLoading ? (
+          <div className="flex items-center justify-center py-8 text-white/50 font-arabic text-sm gap-2">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            {t('step2.themes_loading', 'جاري تحميل القصص المتاحة...')}
+          </div>
+        ) : THEMES.length === 0 ? (
+          <div className="text-center py-8 text-white/60 font-arabic text-sm">
+            {t('step2.themes_empty', 'لا توجد قصص متاحة الآن، يرجى المحاولة لاحقاً.')}
+          </div>
+        ) : (
+        <>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {visibleThemes.map((theme) => (
             <button
@@ -138,6 +262,8 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
               <><ChevronDown className="w-4 h-4" /><span className="font-arabic text-sm font-bold">{t('step2.show_more').replace('{count}', String(THEMES.length - INITIAL_THEME_COUNT))}</span></>
             )}
           </button>
+        )}
+        </>
         )}
         {form.theme === 'custom' && (
           <input
@@ -200,20 +326,32 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
 
       </div>
 
-      <MagicButton
-        id="generate-story-btn"
-        fullWidth
-        size="lg"
-        onClick={generateStory}
-        isLoading={isGenerating}
-        icon={<Sparkles className="w-5 h-5" />}
-      >
-        {isGenerating 
-          ? t('step2.generating_text') 
-          : generatedText 
-            ? t('step2.regenerate_btn') 
-            : t('step2.generate_btn')}
-      </MagicButton>
+      {mode === 'ai' ? (
+        <MagicButton
+          id="generate-story-btn"
+          fullWidth
+          size="lg"
+          onClick={generateStory}
+          isLoading={isGenerating}
+          icon={<Sparkles className="w-5 h-5" />}
+        >
+          {isGenerating
+            ? t('step2.generating_text')
+            : generatedText
+              ? t('step2.regenerate_btn')
+              : t('step2.generate_btn')}
+        </MagicButton>
+      ) : (
+        <div className={`p-4 rounded-xl border text-center font-arabic text-sm ${
+          templatePagesForCurrentTheme
+            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+            : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+        }`}>
+          {templatePagesForCurrentTheme
+            ? t('step2.template_loaded', 'القصة الجاهزة محملة. اضغط "التالي" للمتابعة.')
+            : t('step2.template_missing', 'هذه القصة قيد الإعداد. اختر قصة أخرى أو استخدم الذكاء الاصطناعي.')}
+        </div>
+      )}
 
       {/* Navigation */}
       <div className="flex gap-3">

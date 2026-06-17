@@ -1,162 +1,138 @@
 // ─── Page 1: Front Cover ──────────────────────────────────────────────────────
-// Layout: story photo fills the background, child's name as centered hero title,
-// MagicFanoose.com in the footer strip.
+// Taletoons-style full-bleed cover:
+//   • The kid photo/scene FILLS the entire cover (no circle frame)
+//   • A soft gradient at the bottom keeps the title readable
+//   • Story title overlaid near the bottom
+//   • Small "Magic Fanoose" brand line at the very bottom (logo + tagline)
+//
+// `coverImage` should be the generated full-scene cover when available; we fall
+// back to the kid portrait, then the theme background, then an avatar.
 
 interface FrontCoverProps {
   childName: string;
-  storyTitle: string;   // e.g. "مغامرة في حديقة الحيوانات"
-  coverImage: string;   // URL / path to the full-bleed cover illustration
+  storyTitle: string;   // e.g. "مغامرة سارة في حديقة الحيوانات"
+  coverImage: string;   // theme background (fallback)
+  childPhoto?: string;  // generated portrait / scene — preferred as the full-bleed image
 }
 
-export default function FrontCover({ childName, storyTitle, coverImage }: FrontCoverProps) {
+export default function FrontCover({ childName, storyTitle, coverImage, childPhoto }: FrontCoverProps) {
+  const fallbackPhoto = `https://ui-avatars.com/api/?name=${encodeURIComponent(childName)}&background=D4A937&color=0a1628&size=600&bold=true&font-size=0.4`;
+  // Prefer the generated kid image; otherwise the theme art; otherwise avatar.
+  const heroImage = childPhoto || coverImage || fallbackPhoto;
+
   return (
     <section className="book-page book-page--cover" aria-label="الغلاف الأمامي">
 
-      {/* ── Background illustration — full-bleed ── */}
-      <div className="cover-bg" aria-hidden="true">
-        <img
-          src={coverImage}
-          alt=""
-          className="cover-bg-img"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src =
-              'https://placehold.co/800x1100/0a1628/D4A937?text=🏮';
-          }}
-        />
-        {/* Gradient overlay so text stays readable */}
-        <div className="cover-overlay" />
-      </div>
+      {/* ── Full-bleed hero image ── */}
+      <img
+        src={heroImage}
+        alt={childName}
+        className="cover-fullimg"
+        onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackPhoto; }}
+      />
 
-      {/* ── Centered title block ── */}
-      <div className="cover-content">
-        <div className="cover-logo-row">
-          <img src="/logo.png" alt="Magic Fanoose" className="cover-logo" />
+      {/* Readability gradient over the bottom third */}
+      <div className="cover-scrim" aria-hidden="true" />
+
+      {/* ── Title + brand, overlaid at the bottom ── */}
+      <div className="cover-overlay-content">
+        <h1 className="cover-title">{storyTitle}</h1>
+
+        <div className="cover-brand">
+          <img src="/logo.png" alt="" className="cover-brand-logo" />
+          <div className="cover-brand-text">
+            <span className="cover-brand-name">Magic Fanoose</span>
+            <span className="cover-brand-tag">قصة بتصميم شخصي من Magic Fanoose</span>
+          </div>
         </div>
-
-        <div className="cover-title-block">
-          <p className="cover-presents">✦ Magic Fanoose يُقدّم ✦</p>
-          <h1 className="cover-name">{childName}</h1>
-          <p className="cover-story-title">{storyTitle}</p>
-        </div>
-      </div>
-
-      {/* ── Footer strip ── */}
-      <div className="cover-footer">
-        <span className="cover-website">🌐 MagicFanoose.com</span>
       </div>
 
       <style>{`
         .book-page--cover {
           position: relative;
           width: 100%;
-          aspect-ratio: 3 / 4;
+          aspect-ratio: 1 / 1;            /* square like the printed 220×220 book */
           border-radius: 20px;
           overflow: hidden;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
           box-shadow: 0 24px 80px rgba(0,0,0,0.55);
         }
 
-        /* Background */
-        .cover-bg {
+        /* Full-bleed image */
+        .cover-fullimg {
           position: absolute;
           inset: 0;
-          z-index: 0;
-        }
-        .cover-bg-img {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          object-position: center top;
+          object-position: center 35%;   /* favor the face */
+          z-index: 0;
         }
-        .cover-overlay {
+
+        /* Bottom scrim for text legibility */
+        .cover-scrim {
           position: absolute;
           inset: 0;
+          z-index: 1;
           background: linear-gradient(
-            to bottom,
-            rgba(10,22,40,0.35) 0%,
-            rgba(10,22,40,0.15) 35%,
-            rgba(10,22,40,0.65) 70%,
-            rgba(10,22,40,0.92) 100%
+            to top,
+            rgba(8,14,28,0.92) 0%,
+            rgba(8,14,28,0.72) 18%,
+            rgba(8,14,28,0.25) 38%,
+            rgba(8,14,28,0) 55%
           );
         }
 
-        /* Content */
-        .cover-content {
-          position: relative;
-          z-index: 1;
-          flex: 1;
+        /* Overlaid content */
+        .cover-overlay-content {
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 2;
           display: flex;
           flex-direction: column;
           align-items: center;
-          justify-content: flex-end;
-          padding: 1.5rem 1.5rem 2rem;
+          gap: 1rem;
+          padding: 1.5rem 1.5rem 1.8rem;
           text-align: center;
         }
-        .cover-logo-row {
-          position: absolute;
-          top: 1.2rem;
-          left: 50%;
-          transform: translateX(-50%);
-        }
-        .cover-logo {
-          width: 56px;
-          height: 56px;
-          border-radius: 50%;
-          object-fit: contain;
-          filter: drop-shadow(0 0 12px rgba(212,169,55,0.7));
-        }
-        .cover-title-block {
-          width: 100%;
-        }
-        .cover-presents {
-          font-size: 0.75rem;
-          color: rgba(212,169,55,0.8);
-          letter-spacing: 0.12em;
-          font-weight: 600;
-          margin-bottom: 0.4rem;
-        }
-        .cover-name {
-          font-size: clamp(2.2rem, 7vw, 3.6rem);
+        .cover-title {
+          margin: 0;
+          font-size: clamp(1.8rem, 6vw, 3rem);
           font-weight: 900;
-          line-height: 1.1;
-          background: linear-gradient(135deg, #fff8dc 0%, #D4A937 50%, #fff8dc 100%);
-          background-size: 200% auto;
-          -webkit-background-clip: text;
-          background-clip: text;
-          -webkit-text-fill-color: transparent;
-          animation: cover-shimmer 3s linear infinite;
-          margin: 0 0 0.35rem;
-          text-shadow: none;
-        }
-        .cover-story-title {
-          font-size: clamp(1rem, 3vw, 1.4rem);
-          color: rgba(255,255,255,0.88);
-          font-weight: 700;
-          line-height: 1.35;
+          line-height: 1.15;
+          color: #ffffff;
+          text-shadow: 0 3px 16px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,0.9);
         }
 
-        /* Footer strip */
-        .cover-footer {
-          position: relative;
-          z-index: 1;
-          background: rgba(10,22,40,0.72);
-          border-top: 1px solid rgba(212,169,55,0.3);
-          padding: 0.55rem 1.5rem;
-          text-align: center;
-          backdrop-filter: blur(8px);
+        /* Brand line (Taletoons-style) */
+        .cover-brand {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
         }
-        .cover-website {
-          font-size: 0.78rem;
-          color: rgba(212,169,55,0.9);
-          font-weight: 700;
-          letter-spacing: 0.08em;
+        .cover-brand-logo {
+          width: 34px;
+          height: 34px;
+          object-fit: contain;
+          border-radius: 50%;
+          filter: drop-shadow(0 0 8px rgba(212,169,55,0.7));
         }
-
-        @keyframes cover-shimmer {
-          0%   { background-position: 0% center; }
-          100% { background-position: 200% center; }
+        .cover-brand-text {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          line-height: 1.2;
+        }
+        .cover-brand-name {
+          font-size: 0.95rem;
+          font-weight: 800;
+          color: #f3d98f;
+          letter-spacing: 0.04em;
+        }
+        .cover-brand-tag {
+          font-size: 0.7rem;
+          color: rgba(255,255,255,0.75);
         }
       `}</style>
     </section>

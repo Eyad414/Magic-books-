@@ -3,6 +3,24 @@ import User from '../models/User';
 import Story from '../models/Story';
 import Order from '../models/Order';
 import SiteSettings from '../models/SiteSettings';
+import { buildBookForOrder } from '../services/BookBuilder';
+import { generateIllustration } from '../services/ImageGenerator';
+import { buildIllustrationPrompt } from '../services/promptBuilder';
+
+// The kid photo (already in the bucket) used as the reference face for ADMIN
+// PREVIEW generation only. Real customer orders use the customer's own photo.
+const PREVIEW_REFERENCE_PHOTO =
+  process.env.PREVIEW_REFERENCE_PHOTO ||
+  'gs://first-webapp-storage/magic-fanoose/child-photos/93a8030b-750b-4f91-943d-0d1423a09137.jpeg';
+
+const PREVIEW_IMAGE_PAGES = 13;
+
+function substituteName(s: string, name: string): string {
+  return (s || '')
+    .replace(/\[NAME\]/gi, name)
+    .replace(/\{\{\s*name\s*\}\}/gi, name)
+    .replace(/\{\s*name\s*\}/gi, name);
+}
 
 // @route GET /api/admin/stories
 // @desc Get all stories from all users
@@ -102,10 +120,10 @@ export const getSettings = async (req: Request, res: Response): Promise<void> =>
           { id: 'pro', label: 'باقة Pro الشاملة', price: 100, emoji: '✨', desc: 'جميع النسخ (الملون + التلوين + الصوتي + الرقمي)' },
         ],
         themes: [
-          { id: 'adventure', emoji: '🗺️', label: 'مغامرة', desc: 'استكشاف ومغامرات مثيرة' },
-          { id: 'space', emoji: '🚀', label: 'الفضاء', desc: 'رحلات بين النجوم والكواكب' },
-          { id: 'ocean', emoji: '🌊', label: 'المحيط', desc: 'عالم سحري تحت الماء' },
-          { id: 'school_hero', emoji: '🏫', label: 'بطل المدرسة', desc: 'مساعدة الآخرين ونشر اللطف والألوان في المدرسة' },
+          { id: 'adventure', emoji: '🗺️', label: 'مغامرة', desc: 'استكشاف ومغامرات مثيرة', ready: false },
+          { id: 'space', emoji: '🚀', label: 'الفضاء', desc: 'رحلات بين النجوم والكواكب', ready: false },
+          { id: 'ocean', emoji: '🌊', label: 'المحيط', desc: 'عالم سحري تحت الماء', ready: false },
+          { id: 'school_hero', emoji: '🏫', label: 'بطل المدرسة', desc: 'مساعدة الآخرين ونشر اللطف والألوان في المدرسة', ready: true },
         ]
       });
     } else {
@@ -117,6 +135,7 @@ export const getSettings = async (req: Request, res: Response): Promise<void> =>
           emoji: '🏫',
           label: 'بطل المدرسة',
           desc: 'مساعدة الآخرين ونشر اللطف والألوان في المدرسة',
+          ready: true,
           pages: [
             { text: "استيقظ {{name}} بنشاط كبير، وارتدى حقيبته المفضلة وانطلق نحو مدرسته الجميلة وهو يبتسم للكائنات من حوله.", imageSrc: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=800&auto=format&fit=crop" },
             { text: "عندما وصل {{name}}، تفاجأ بأن الألوان قد اختفت تماماً من لوحات وجدران المدرسة! كانت تبدو حزينة باللونين الأبيض والأسود.", imageSrc: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=800&auto=format&fit=crop" },
@@ -138,6 +157,26 @@ export const getSettings = async (req: Request, res: Response): Promise<void> =>
       }
     }
     res.json({ success: true, settings });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'حدث خطأ في الخادم' });
+  }
+};
+
+// @route GET /api/public/settings
+// @desc  Customer-facing settings: hides unready themes so half-finished stories
+//        never appear in the wizard.
+export const getPublicSettings = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const settings = await SiteSettings.findOne();
+    if (!settings) {
+      res.json({ success: true, settings: { bookPackages: [], themes: [] } });
+      return;
+    }
+    const filtered = {
+      bookPackages: settings.bookPackages,
+      themes: settings.themes.filter((t: any) => t.ready === true),
+    };
+    res.json({ success: true, settings: filtered });
   } catch (error) {
     res.status(500).json({ success: false, message: 'حدث خطأ في الخادم' });
   }
@@ -179,5 +218,150 @@ export const getAllOrders = async (req: Request, res: Response): Promise<void> =
     res.json({ success: true, orders });
   } catch (error) {
     res.status(500).json({ success: false, message: 'فشل في جلب الطلبات' });
+  }
+};
+
+// @route POST /api/admin/orders/:id/build
+// @desc  Manually mark an order paid (if needed) and kick the BookBuilder.
+//        This is the pre-Stripe escape hatch — use only after confirming the
+//        customer paid by another channel.
+export const buildOrderBook = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      res.status(404).json({ success: false, message: 'order not found' });
+      return;
+    }
+    if (order.paymentStatus !== 'paid') {
+      if (req.body?.markPaid === true) {
+        order.paymentStatus = 'paid';
+        await order.save();
+      } else {
+        res.status(409).json({
+          success: false,
+          message: `order ${order._id} is ${order.paymentStatus}. POST {markPaid:true} to override.`,
+        });
+        return;
+      }
+    }
+    // Run synchronously so the admin sees success/failure in the response.
+    const updated = await buildBookForOrder(String(order._id));
+    res.json({ success: true, order: updated });
+  } catch (err: any) {
+    console.error('buildOrderBook failed:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @route POST /api/admin/themes/:themeId/generate-illustrations
+// @desc  ADMIN PREVIEW ONLY. Generates 13 body illustrations + 1 back-cover
+//        portrait for a theme via Nano Banana, using the bucket reference photo.
+//        Caches the GCS object paths on the theme so reopening the book is free.
+//        Real customer orders generate per-order via BookBuilder (different path).
+export const generatePreviewIllustrations = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { themeId } = req.params;
+    const force = req.body?.force === true;
+
+    const settings = await SiteSettings.findOne();
+    if (!settings) {
+      res.status(404).json({ success: false, message: 'settings not found' });
+      return;
+    }
+    const theme: any = settings.themes.find((t: any) => t.id === themeId);
+    if (!theme) {
+      res.status(404).json({ success: false, message: `theme ${themeId} not found` });
+      return;
+    }
+
+    // Already generated? Return the cache unless force-refresh requested.
+    if (!force && theme.generatedImages && theme.generatedImages.length > 0) {
+      res.json({
+        success: true,
+        cached: true,
+        generatedImages: theme.generatedImages,
+        generatedPortrait: theme.generatedPortrait,
+        generatedCover: theme.generatedCover,
+      });
+      return;
+    }
+
+    const childName = req.body?.childName || theme.label || 'الطفل';
+
+    // Pull the text from the theme's pages (text entries only).
+    const textPages: string[] = (theme.pages || [])
+      .filter((p: any) => p && (p.text || typeof p === 'string'))
+      .map((p: any) => substituteName(p.text || p, childName));
+
+    const generatedImages: string[] = [];
+    for (let i = 0; i < PREVIEW_IMAGE_PAGES; i++) {
+      const pageText = textPages[i] || textPages[textPages.length - 1] || `${childName} ${theme.label}`;
+      const prompt = buildIllustrationPrompt({
+        pageText,
+        childName,
+        childAge: '5',
+        childGender: 'male',
+        theme: themeId,
+        language: 'ar',
+        pageNumber: i + 1,
+      });
+      const stored = await generateIllustration(prompt, PREVIEW_REFERENCE_PHOTO, {
+        storyId: `theme_${themeId}`,
+        pageNumber: i + 1,
+      });
+      generatedImages.push(stored.objectPath);
+    }
+
+    // Persist the body images immediately so a later portrait/cover hiccup
+    // can't waste the 13 we already paid for.
+    theme.generatedImages = generatedImages;
+    settings.markModified('themes');
+    await settings.save();
+
+    // Back-cover hero portrait — a clean, smiling close-up of the kid.
+    const portraitPrompt =
+      `Children's book back-cover portrait of ${childName}, a happy 5-year-old, warm smile, ` +
+      `looking at the camera, soft studio lighting, gentle bokeh background in the ${theme.label} theme, ` +
+      `vibrant saturated storybook illustration style. Centered. No text, no watermark.`;
+    try {
+      const portrait = await generateIllustration(portraitPrompt, PREVIEW_REFERENCE_PHOTO, {
+        storyId: `theme_${themeId}`,
+        pageNumber: 99,
+      });
+      theme.generatedPortrait = portrait.objectPath;
+    } catch (e: any) {
+      console.warn('[generatePreview] portrait failed:', e.message);
+    }
+
+    // Full-scene front cover — the hero kid inside the themed world (Taletoons style).
+    const coverPrompt =
+      `Children's book FRONT COVER illustration. ${childName}, a joyful 5-year-old, shown waist-up and ` +
+      `centered as the hero, looking at the viewer with a big happy smile, surrounded by charming ` +
+      `${theme.label} characters and elements, set in a richly detailed ${theme.label} environment that ` +
+      `fills the entire frame. Vibrant saturated magical colors, cinematic lighting, dreamy glow, ` +
+      `professional polished children's book cover art, square 1:1. No text, no title, no watermark.`;
+    try {
+      const cover = await generateIllustration(coverPrompt, PREVIEW_REFERENCE_PHOTO, {
+        storyId: `theme_${themeId}`,
+        pageNumber: 0,
+      });
+      theme.generatedCover = cover.objectPath;
+    } catch (e: any) {
+      console.warn('[generatePreview] cover failed:', e.message);
+    }
+
+    settings.markModified('themes');
+    await settings.save();
+
+    res.json({
+      success: true,
+      cached: false,
+      generatedImages,
+      generatedPortrait: theme.generatedPortrait,
+      generatedCover: theme.generatedCover,
+    });
+  } catch (err: any) {
+    console.error('generatePreviewIllustrations failed:', err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };

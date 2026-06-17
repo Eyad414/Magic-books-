@@ -7,8 +7,9 @@ import { generateStoryWithAI } from '../services/AI_Generator';
 export const createStory = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).user._id;
-    const { childName, childAge, childGender, childPhotoUrl, theme, storyLength, language, customThemeNote } = req.body;
+    const { childName, childAge, childGender, childPhotoUrl, theme, storyLength, language, customThemeNote, mode, templatePages } = req.body;
 
+    const resolvedMode: 'template' | 'ai' = mode === 'ai' ? 'ai' : 'template';
     const story = await Story.create({
       userId,
       childName,
@@ -19,12 +20,16 @@ export const createStory = async (req: Request, res: Response): Promise<void> =>
       storyLength: storyLength || 'medium',
       language: language || 'ar',
       customThemeNote,
+      mode: resolvedMode,
+      // Only persist templatePages when relevant; saves DB space for AI stories.
+      templatePages: resolvedMode === 'template' && Array.isArray(templatePages) ? templatePages : undefined,
       status: 'draft',
     });
 
     res.status(201).json({ success: true, story });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'فشل في إنشاء القصة' });
+  } catch (error: any) {
+    console.error('[createStory] failed:', error);
+    res.status(500).json({ success: false, message: error?.message || 'فشل في إنشاء القصة' });
   }
 };
 

@@ -26,6 +26,36 @@ export default function AdminDashboard() {
   const [editingStory, setEditingStory] = useState<number | null>(null);
   const [draftPages, setDraftPages] = useState<{ text: string; imageSrc: string }[]>([]);
 
+  // Which theme id is currently generating AI preview photos (for the spinner).
+  const [generatingThemeId, setGeneratingThemeId] = useState<string | null>(null);
+
+  const handleGenerateTheme = async (themeId: string, force = false) => {
+    setGeneratingThemeId(themeId);
+    const toastId = toast.loading('🎨 جاري توليد الصور بالذكاء الاصطناعي... (قد يستغرق دقيقتين)');
+    try {
+      const res = await adminApi.generateThemeIllustrations(themeId, { force });
+      if (res.success) {
+        toast.success(res.cached ? 'تم تحميل الصور المحفوظة' : 'تم توليد الصور بنجاح ✨', { id: toastId });
+        // Reflect the new images in local settings so the ✓ badge shows.
+        setSettings((prev: any) => {
+          if (!prev) return prev;
+          const themes = prev.themes.map((th: any) =>
+            th.id === themeId
+              ? { ...th, generatedImages: res.generatedImages, generatedPortrait: res.generatedPortrait }
+              : th
+          );
+          return { ...prev, themes };
+        });
+      } else {
+        toast.error(res.message || 'فشل التوليد', { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || 'فشل التوليد', { id: toastId });
+    } finally {
+      setGeneratingThemeId(null);
+    }
+  };
+
   // Helper to load default pages from the static story registry
   const loadDefaultPages = (themeId: string) => {
     const registryStory = findStory(themeId);
@@ -397,8 +427,32 @@ export default function AdminDashboard() {
                         }} />
                       </div>
                       <div className="sm:col-span-4 flex flex-wrap items-center gap-3 mt-2">
-                        <Link 
-                          to={`/book/${theme.id}?name=${i18n.language === 'en' ? 'Ahmad' : (i18n.language === 'he' ? 'עדי' : 'إياد')}`} 
+                        {/* Ready toggle — only `ready` themes appear in the customer wizard */}
+                        <label
+                          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-arabic text-sm cursor-pointer transition-colors border ${
+                            theme.ready
+                              ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                              : 'bg-white/5 hover:bg-white/10 text-white/60 border-white/10'
+                          }`}
+                          title={t('admin.ready_help', 'فعّل هذا الخيار لإظهار القصة للعملاء في خطوات الإنشاء')}
+                        >
+                          <input
+                            type="checkbox"
+                            className="accent-emerald-500"
+                            checked={!!theme.ready}
+                            onChange={(e) => {
+                              const newThemes = [...settings.themes];
+                              newThemes[index].ready = e.target.checked;
+                              setSettings({ ...settings, themes: newThemes });
+                            }}
+                          />
+                          {theme.ready
+                            ? t('admin.ready_yes', 'جاهزة للعرض')
+                            : t('admin.ready_no', 'مسودة (غير ظاهرة للعملاء)')}
+                        </label>
+
+                        <Link
+                          to={`/book/${theme.id}?name=${i18n.language === 'en' ? 'Ahmad' : (i18n.language === 'he' ? 'עדי' : 'إياد')}`}
                           target="_blank"
                           className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white font-arabic text-sm transition-colors border border-white/10"
                         >
@@ -434,11 +488,25 @@ export default function AdminDashboard() {
                           </Link>
                         )}
 
-                        <button 
+                        <button
                           onClick={() => openEditor(index)}
                           className="flex items-center gap-2 px-4 py-2 bg-gold-500/20 hover:bg-gold-500/30 text-gold-500 rounded-xl font-arabic text-sm transition-colors border border-gold-500/30"
                         >
                           <BookOpen className="w-4 h-4" /> {t('admin.edit_content_story', 'تعديل محتوى القصة')}
+                        </button>
+
+                        {/* Generate AI photos */}
+                        <button
+                          onClick={() => handleGenerateTheme(theme.id, (theme.generatedImages?.length ?? 0) > 0)}
+                          disabled={generatingThemeId === theme.id}
+                          className="flex items-center gap-2 px-4 py-2 bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 rounded-xl font-arabic text-sm transition-colors border border-purple-500/30 disabled:opacity-50"
+                          title={t('admin.generate_ai_help', 'توليد صور الذكاء الاصطناعي لهذه القصة')}
+                        >
+                          {generatingThemeId === theme.id
+                            ? `⏳ ${t('admin.generating', 'جاري التوليد...')}`
+                            : (theme.generatedImages?.length ?? 0) > 0
+                              ? `✅ ${t('admin.regenerate_ai', 'إعادة توليد الصور')}`
+                              : `🎨 ${t('admin.generate_ai', 'توليد صور AI')}`}
                         </button>
 
                         <button 
@@ -454,7 +522,7 @@ export default function AdminDashboard() {
                   <button onClick={() => {
                      setSettings({
                        ...settings,
-                       themes: [...settings.themes, { id: 'new_'+Date.now(), label: 'موضوع جديد', emoji: '✨', desc: 'وصف جديد' }]
+                       themes: [...settings.themes, { id: 'new_'+Date.now(), label: 'موضوع جديد', emoji: '✨', desc: 'وصف جديد', ready: false }]
                      })
                   }} className="text-gold-500 font-arabic text-sm hover:underline block mb-4">{t('admin.add_new_theme')}</button>
                   <MagicButton onClick={() => saveSettings(settings)}>{t('admin.save_themes')}</MagicButton>

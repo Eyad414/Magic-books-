@@ -8,7 +8,10 @@
 
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
+import { adminApi } from '../../api/adminApi';
+import { toDisplayUrl } from '../../api/mediaUrl';
 import FrontCover        from './FrontCover';
 import TitlePage         from './TitlePage';
 import FanoosPage        from './FanoosPage';
@@ -34,9 +37,13 @@ interface StoryBookProps {
   storyId?:      string;   // Story ID from STORIES registry
   childName?:    string;   // Child's display name
   childPhoto?:   string;   // URL / path to child's photo
+  coverScene?:   string;   // Generated full-scene front-cover image (preferred on the cover)
+  backCoverPhoto?: string; // Generated portrait for the back cover (falls back to childPhoto)
   audioUrl?:     string;   // URL encoded into final-page QR
   showNameInput?: boolean; // Show the demo name input bar
   customPages?:  any[];    // Dynamically overridden story pages from database
+  generatedImages?: string[];                                              // Browser-ready AI image URLs, one per body image page
+  onGenerated?: (images: string[], portrait: string, cover?: string) => void; // Called after a successful generation
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -44,14 +51,42 @@ export default function StoryBook({
   storyId        = 'zoo_adventure',
   childName: initialName = 'إياد',
   childPhoto     = '',
+  coverScene     = '',
+  backCoverPhoto = '',
   audioUrl,
   showNameInput  = true,
   customPages    = undefined,
+  generatedImages = [],
+  onGenerated,
 }: StoryBookProps) {
 
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.email === 'eyadat720@gmail.com';
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // Generate (or refresh) the Nano-Banana preview illustrations for this theme.
+  const handleGenerate = async (force = false) => {
+    setIsGenerating(true);
+    const toastId = toast.loading('🎨 جاري توليد الصور بالذكاء الاصطناعي... (قد يستغرق دقيقتين)');
+    try {
+      const res = await adminApi.generateThemeIllustrations(storyId, { force, childName });
+      if (res.success) {
+        toast.success(res.cached ? 'تم تحميل الصور المحفوظة' : 'تم توليد الصور بنجاح ✨', { id: toastId });
+        onGenerated?.(
+          (res.generatedImages || []).map(toDisplayUrl),
+          res.generatedPortrait || '',
+          res.generatedCover || ''
+        );
+      } else {
+        toast.error(res.message || 'فشل التوليد', { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || 'فشل التوليد', { id: toastId });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   // ── Editable name (demo — remove in production) ────────────────────────────
   const [childName, setChildName] = useState(initialName);
@@ -121,6 +156,24 @@ export default function StoryBook({
             </div>
           )}
 
+          {/* Generate AI photos button */}
+          <div className="sb-gen-row">
+            <button
+              onClick={() => handleGenerate(false)}
+              className="sb-gen-btn"
+              disabled={isGenerating}
+            >
+              {isGenerating
+                ? `⏳ ${t('storybook.generating', 'جاري التوليد...')}`
+                : `🎨 ${t('storybook.generate_ai', 'توليد صور الذكاء الاصطناعي')}`}
+            </button>
+            {generatedImages.length > 0 && !isGenerating && (
+              <button onClick={() => handleGenerate(true)} className="sb-regen-btn" title="إعادة التوليد">
+                ♻️ {t('storybook.regenerate', 'إعادة التوليد')}
+              </button>
+            )}
+          </div>
+
           {/* Print button */}
           <button
             onClick={handlePrint}
@@ -144,8 +197,8 @@ export default function StoryBook({
 
       {/* ══════════════════════ ALL 34 PAGES ═══════════════════════════════════ */}
 
-      {/* 1 — Front Cover */}
-      <FrontCover childName={childName} storyTitle={storyTitle} coverImage={story.coverImage} />
+      {/* 1 — Front Cover (prefer the full-scene generated cover) */}
+      <FrontCover childName={childName} storyTitle={storyTitle} coverImage={story.coverImage} childPhoto={coverScene || backCoverPhoto || resolvedPhoto} />
 
       {/* 2 — Inside Title Page */}
       <TitlePage storyTitle={storyTitle} childName={childName} />
@@ -168,7 +221,8 @@ export default function StoryBook({
               />
               <StoryImagePage
                 pageNumber={idx * 2 + 2}
-                imageSrc={page.imageSrc || ''}
+                /* Prefer the AI-generated illustration for this page; fall back to the template image. */
+                imageSrc={generatedImages[idx] || page.imageSrc || ''}
                 imageAlt={replaceName(page.text || '', childName)}
               />
             </div>
@@ -222,7 +276,7 @@ export default function StoryBook({
       <CopyrightPage />
 
       {/* 34 — Back Cover */}
-      <BackCover childName={childName} childPhoto={resolvedPhoto} recommendedStories={recommended} />
+      <BackCover childName={childName} childPhoto={backCoverPhoto || resolvedPhoto} recommendedStories={recommended} />
 
       {/* ══════════════════════════════════════════════════════════════════════
           STYLES — Screen + Print
@@ -308,6 +362,38 @@ export default function StoryBook({
           padding: 3px 10px;
           white-space: nowrap;
         }
+
+        /* Generate AI buttons */
+        .sb-gen-row { display: flex; gap: 0.5rem; }
+        .sb-gen-btn {
+          flex: 1;
+          background: linear-gradient(135deg, #7c3aed, #a855f7);
+          color: #fff;
+          font-family: inherit;
+          font-size: 0.9rem;
+          font-weight: 800;
+          padding: 0.6rem 1.2rem;
+          border: none;
+          border-radius: 12px;
+          cursor: pointer;
+          transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+          box-shadow: 0 4px 16px rgba(124,58,237,0.4);
+        }
+        .sb-gen-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(124,58,237,0.55); }
+        .sb-gen-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .sb-regen-btn {
+          background: rgba(255,255,255,0.06);
+          color: rgba(212,169,55,0.9);
+          border: 1px solid rgba(212,169,55,0.3);
+          border-radius: 12px;
+          padding: 0.6rem 1rem;
+          font-family: inherit;
+          font-size: 0.82rem;
+          font-weight: 700;
+          cursor: pointer;
+          white-space: nowrap;
+        }
+        .sb-regen-btn:hover { background: rgba(255,255,255,0.1); }
 
         /* Print button */
         .sb-print-btn {

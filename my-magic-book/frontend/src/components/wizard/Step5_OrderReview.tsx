@@ -165,95 +165,102 @@ export default function Step5_OrderReview({ onPrev }: Props) {
       </div>
 
       <div className="space-y-4">
-        {/* Story Info */}
-        <div className="p-4 rounded-xl bg-dark-700 border border-white/10 space-y-2">
-          <h3 className="font-arabic font-bold text-white text-sm mb-3 flex items-center gap-2">
-            <span>📖</span> {t('step5.story_details_title')}
-          </h3>
-          <Row label={t('step5.story_hero')} value={childDetails.childName || '-'} />
-          <Row label={t('step5.gender')} value={childDetails.childGender === 'female' ? t('step5.girl') : t('step5.boy')} />
-          <Row label={t('step5.hero_age')} value={childDetails.childAge ? `${childDetails.childAge} ${t('step5.years')}` : '-'} />
-          <Row label={t('step5.theme')} value={storyConfig?.theme ? t(`step2.theme_${storyConfig.theme}`) || storyConfig.theme : t('step2.theme_adventure')} />
-          <Row label={t('step5.language')} value={storyConfig?.language === 'en' ? t('step5.lang_en') : storyConfig?.language === 'he' ? t('step5.lang_he') : t('step5.lang_ar')} />
-          <Row label={t('step5.package_type')} value={`${selectedPkg.emoji} ${t(`step3.pkg_${selectedPkg.id}`) || selectedPkg.label}`} />
-        </div>
-
-        {/* Shipping */}
-        <div className="p-4 rounded-xl bg-dark-700 border border-white/10 space-y-2">
-          <h3 className="font-arabic font-bold text-white text-sm mb-3 flex items-center gap-2">
-            <Package className="w-4 h-4" /> {t('step5.shipping_title')}
-          </h3>
-          <Row label={t('step5.recipient')} value={shippingAddress?.fullName || '-'} />
-          <Row label={t('step5.phone')} value={shippingAddress?.phone || '-'} />
-          {isPickup ? (
-            <Row label={t('step4.self_pickup', 'استلام شخصي')} value={shippingAddress?.pickupLocation || '-'} />
-          ) : (
-            <Row label={t('step5.address')} value={`${shippingAddress?.street || ''}، ${shippingAddress?.city || ''}`} />
-          )}
-        </div>
-
-        {/* ✨ Quantity & Extra Books Section */}
-        <div className="p-4 rounded-xl bg-dark-700 border border-white/10 space-y-4">
-          <h3 className="font-arabic font-bold text-white text-sm mb-1 flex items-center gap-2">
-            <span>📦</span> {t('step3.qty_label', 'عدد النسخ')}
-          </h3>
-          
-          {/* Quantity Controls */}
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={() => updateQuantity(Math.max(1, quantity - 1))}
-              className="w-10 h-10 rounded-xl border border-white/20 flex items-center justify-center text-white/60 hover:border-gold-500 hover:text-gold-500 transition-all"
-            >
-              <Minus className="w-4 h-4" />
-            </button>
-            <span className="font-arabic font-black text-gold-500 text-2xl min-w-[40px] text-center">{quantity}</span>
-            <button
-              type="button"
-              onClick={() => updateQuantity(Math.min(10, quantity + 1))}
-              className="w-10 h-10 rounded-xl border border-white/20 flex items-center justify-center text-white/60 hover:border-gold-500 hover:text-gold-500 transition-all"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
+        {/* Top summary row: story details, shipping, copies — side-by-side on lg+ */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Story Info */}
+          <div className="p-4 rounded-xl bg-dark-700 border border-white/10 space-y-2">
+            <h3 className="font-arabic font-bold text-white text-sm mb-3 flex items-center gap-2">
+              <span>📖</span> {t('step5.story_details_title')}
+            </h3>
+            <Row label={t('step5.story_hero')} value={childDetails.childName || '-'} />
+            <Row label={t('step5.gender')} value={childDetails.childGender === 'female' ? t('step5.girl') : t('step5.boy')} />
+            <Row label={t('step5.hero_age')} value={childDetails.childAge ? `${childDetails.childAge} ${t('step5.years')}` : '-'} />
+            <Row label={t('step5.theme')} value={storyConfig?.theme ? t(`step2.theme_${storyConfig.theme}`) || storyConfig.theme : t('step2.theme_adventure')} />
+            <Row label={t('step5.language')} value={storyConfig?.language === 'en' ? t('step5.lang_en') : storyConfig?.language === 'he' ? t('step5.lang_he') : t('step5.lang_ar')} />
+            <Row label={t('step5.package_type')} value={`${selectedPkg.emoji} ${t(`step3.pkg_${selectedPkg.id}`) || selectedPkg.label}`} />
           </div>
 
-          {/* Offer Banners */}
-          <div className="space-y-2">
-            {freeDelivery && !isPickup && !isDigital && (
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-green-500/10 border border-green-500/30 animate-fade-in">
-                <Truck className="w-5 h-5 text-green-400 flex-shrink-0" />
-                <p className="font-arabic text-green-400 text-sm font-bold">{t('step3.free_delivery')}</p>
-              </div>
-            )}
-            {isPickup && (
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-green-500/10 border border-green-500/30 animate-fade-in">
-                <Truck className="w-5 h-5 text-green-400 flex-shrink-0" />
-                <p className="font-arabic text-green-400 text-sm font-bold">✅ {t('step4.self_pickup', 'الاستلام شخصي')} — {t('step3.free_delivery', 'توصيل مجاني')}</p>
-              </div>
-            )}
-            {!freeDelivery && !isPickup && (
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-gold-500/5 border border-gold-500/20">
-                <Truck className="w-5 h-5 text-gold-500/50 flex-shrink-0" />
-                <p className="font-arabic text-white/50 text-xs">{t('step3.free_delivery_hint')} <strong className="text-gold-500">{t('step3.free_delivery_strong')}</strong></p>
-              </div>
-            )}
-            {freeBooks > 0 && (
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-green-500/10 border border-green-500/30 animate-fade-in">
-                <span className="text-xl">🎁</span>
-                <p className="font-arabic text-green-400 text-sm font-bold">
-                  {t('step3.free_books_msg', 'مبروك! {count} {text} مع طلبك!').replace('{count}', String(freeBooks)).replace('{text}', freeBooks === 1 ? t('step3.free_book_single', 'كتاب مجاني') : t('step3.free_book_plural', 'كتب مجانية'))}
-                </p>
-              </div>
-            )}
-            {quantity >= 2 && freeBooks === 0 && (
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-magic-500/5 border border-magic-500/20">
-                <span className="text-lg">🎁</span>
-                <p className="font-arabic text-white/50 text-xs">{t('step3.buy_4_get_1', 'اشتري 4 كتب واحصل على')} <strong className="text-magic-400">{t('step3.5th_free', 'الخامس مجانًا')}</strong></p>
-              </div>
+          {/* Shipping */}
+          <div className="p-4 rounded-xl bg-dark-700 border border-white/10 space-y-2">
+            <h3 className="font-arabic font-bold text-white text-sm mb-3 flex items-center gap-2">
+              <Package className="w-4 h-4" /> {t('step5.shipping_title')}
+            </h3>
+            <Row label={t('step5.recipient')} value={shippingAddress?.fullName || '-'} />
+            <Row label={t('step5.phone')} value={shippingAddress?.phone || '-'} />
+            {isPickup ? (
+              <Row label={t('step4.self_pickup', 'استلام شخصي')} value={shippingAddress?.pickupLocation || '-'} />
+            ) : (
+              <Row label={t('step5.address')} value={`${shippingAddress?.street || ''}، ${shippingAddress?.city || ''}`} />
             )}
           </div>
 
-          {/* Extra Books Details */}
+          {/* Copies counter + offer banners (extra-book editors live below the row) */}
+          <div className="p-4 rounded-xl bg-dark-700 border border-white/10 space-y-4">
+            <h3 className="font-arabic font-bold text-white text-sm mb-1 flex items-center gap-2">
+              <span>📦</span> {t('step3.qty_label', 'عدد النسخ')}
+            </h3>
+
+            {/* Quantity Controls */}
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => updateQuantity(Math.max(1, quantity - 1))}
+                className="w-10 h-10 rounded-xl border border-white/20 flex items-center justify-center text-white/60 hover:border-gold-500 hover:text-gold-500 transition-all"
+              >
+                <Minus className="w-4 h-4" />
+              </button>
+              <span className="font-arabic font-black text-gold-500 text-2xl min-w-[40px] text-center">{quantity}</span>
+              <button
+                type="button"
+                onClick={() => updateQuantity(Math.min(10, quantity + 1))}
+                className="w-10 h-10 rounded-xl border border-white/20 flex items-center justify-center text-white/60 hover:border-gold-500 hover:text-gold-500 transition-all"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Offer Banners */}
+            <div className="space-y-2">
+              {freeDelivery && !isPickup && !isDigital && (
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-green-500/10 border border-green-500/30 animate-fade-in">
+                  <Truck className="w-5 h-5 text-green-400 flex-shrink-0" />
+                  <p className="font-arabic text-green-400 text-sm font-bold">{t('step3.free_delivery')}</p>
+                </div>
+              )}
+              {isPickup && (
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-green-500/10 border border-green-500/30 animate-fade-in">
+                  <Truck className="w-5 h-5 text-green-400 flex-shrink-0" />
+                  <p className="font-arabic text-green-400 text-sm font-bold">✅ {t('step4.self_pickup', 'الاستلام شخصي')} — {t('step3.free_delivery', 'توصيل مجاني')}</p>
+                </div>
+              )}
+              {!freeDelivery && !isPickup && (
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-gold-500/5 border border-gold-500/20">
+                  <Truck className="w-5 h-5 text-gold-500/50 flex-shrink-0" />
+                  <p className="font-arabic text-white/50 text-xs">{t('step3.free_delivery_hint')} <strong className="text-gold-500">{t('step3.free_delivery_strong')}</strong></p>
+                </div>
+              )}
+              {freeBooks > 0 && (
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-green-500/10 border border-green-500/30 animate-fade-in">
+                  <span className="text-xl">🎁</span>
+                  <p className="font-arabic text-green-400 text-sm font-bold">
+                    {t('step3.free_books_msg', 'مبروك! {count} {text} مع طلبك!').replace('{count}', String(freeBooks)).replace('{text}', freeBooks === 1 ? t('step3.free_book_single', 'كتاب مجاني') : t('step3.free_book_plural', 'كتب مجانية'))}
+                  </p>
+                </div>
+              )}
+              {quantity >= 2 && freeBooks === 0 && (
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-magic-500/5 border border-magic-500/20">
+                  <span className="text-lg">🎁</span>
+                  <p className="font-arabic text-white/50 text-xs">{t('step3.buy_4_get_1', 'اشتري 4 كتب واحصل على')} <strong className="text-magic-400">{t('step3.5th_free', 'الخامس مجانًا')}</strong></p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Extra Books Details — only when quantity > 1. Full-width grid so the
+            row above stays compact. */}
+        {extraBooks.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {extraBooks.map((book, idx) => (
             <div key={idx} className="p-4 rounded-xl border border-magic-500/20 bg-magic-500/5 space-y-3 animate-fade-in">
               <p className="font-arabic text-magic-400 font-bold text-sm">📚 {t('step3.extra_book_num', 'الكتاب رقم {num}').replace('{num}', String(idx + 2))}</p>
@@ -297,108 +304,131 @@ export default function Step5_OrderReview({ onPrev }: Props) {
             </div>
           ))}
         </div>
+        )}
 
-        {/* Coupon Code */}
-        <div className="p-4 rounded-xl bg-dark-700 border border-white/10">
-          <h3 className="font-arabic font-bold text-white text-sm mb-3 flex items-center gap-2">
-            <Tag className="w-4 h-4 text-gold-500" /> {t('step3.coupon_placeholder', 'كود الخصم')}
-          </h3>
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <Tag className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-              <input
-                type="text"
-                className="magic-input pr-9"
-                placeholder={t('step3.coupon_placeholder', 'أدخل كود الخصم...')}
-                value={couponCode}
-                onChange={(e) => { setCouponCode(e.target.value); setCouponError(''); setCouponApplied(false); setDiscount(0); }}
-                disabled={couponApplied}
-              />
-            </div>
-            <button
-              type="button"
-              onClick={applyCoupon}
-              disabled={!couponCode.trim() || couponApplied}
-              className="px-4 py-3 rounded-xl bg-gold-500/20 border border-gold-500/30 text-gold-500 font-arabic text-sm font-bold hover:bg-gold-500/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {couponApplied ? t('step3.coupon_applied_btn', 'مطبّق ✓') : t('step3.coupon_apply_btn', 'تطبيق')}
-            </button>
-          </div>
-          {couponError && <p className="text-red-400 text-xs font-arabic mt-2">{couponError}</p>}
-          {couponApplied && <p className="text-green-400 text-xs font-arabic mt-2">{t('step3.coupon_success', 'تم تطبيق خصم {discount}%').replace('{discount}', String(discount))} ✨</p>}
-        </div>
+        {/* ── Payment area ─────────────────────────────────────────────── */}
 
-        {/* Price Summary */}
-        <div className="p-4 rounded-xl bg-gradient-to-l from-gold-500/20 to-gold-500/5 border border-gold-500/30 space-y-2">
-          <h3 className="font-arabic font-bold text-white text-sm mb-3">💰 {t('step5.price_summary_title')}</h3>
-          <div className="flex items-start justify-between gap-4">
-            <span className="font-arabic text-white/50 text-sm flex-shrink-0">{t(`step3.pkg_${selectedPkg.id}`) || selectedPkg.label} × {quantity}:</span>
+        {/* Coupon + Price summary side-by-side on md+ screens */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Coupon Code */}
+          <div className="p-4 rounded-xl bg-dark-700 border border-white/10">
+            <h3 className="font-arabic font-bold text-white text-sm mb-3 flex items-center gap-2">
+              <Tag className="w-4 h-4 text-gold-500" /> {t('step3.coupon_placeholder', 'كود الخصم')}
+            </h3>
             <div className="flex items-center gap-2">
-              {(selectedPkg as any).originalPrice && quantity === 1 && (
-                <span className="font-arabic text-white/30 text-xs line-through">{(selectedPkg as any).originalPrice * quantity} ₪</span>
-              )}
-              <span className="font-arabic text-white text-sm">{basePrice} ₪</span>
+              <div className="relative flex-1">
+                <Tag className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                <input
+                  type="text"
+                  className="magic-input pr-9"
+                  placeholder={t('step3.coupon_placeholder', 'أدخل كود الخصم...')}
+                  value={couponCode}
+                  onChange={(e) => { setCouponCode(e.target.value); setCouponError(''); setCouponApplied(false); setDiscount(0); }}
+                  disabled={couponApplied}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={applyCoupon}
+                disabled={!couponCode.trim() || couponApplied}
+                className="px-4 py-3 rounded-xl bg-gold-500/20 border border-gold-500/30 text-gold-500 font-arabic text-sm font-bold hover:bg-gold-500/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {couponApplied ? t('step3.coupon_applied_btn', 'مطبّق ✓') : t('step3.coupon_apply_btn', 'تطبيق')}
+              </button>
             </div>
+            {couponError && <p className="text-red-400 text-xs font-arabic mt-2">{couponError}</p>}
+            {couponApplied && <p className="text-green-400 text-xs font-arabic mt-2">{t('step3.coupon_success', 'تم تطبيق خصم {discount}%').replace('{discount}', String(discount))} ✨</p>}
           </div>
-          {couponApplied && <Row label={`خصم ${discount}%`} value={`- ${basePrice - discountedBase} ₪`} />}
-          <Row label={t('step5.delivery_fee')} value={deliveryFee === 0 ? `${t('step3.free_delivery', 'مجاني')} 🎉` : `${deliveryFee} ₪`} />
-          <div className="border-t border-gold-500/30 pt-2 flex items-center justify-between">
-            <span className="font-arabic font-black text-white text-lg">{t('step5.total')}</span>
-            <span className="font-arabic font-black text-gold-500 text-2xl">{totalPrice} ₪</span>
+
+          {/* Price Summary */}
+          <div className="p-4 rounded-xl bg-gradient-to-l from-gold-500/20 to-gold-500/5 border border-gold-500/30 space-y-2">
+            <h3 className="font-arabic font-bold text-white text-sm mb-3">💰 {t('step5.price_summary_title')}</h3>
+            <div className="flex items-start justify-between gap-4">
+              <span className="font-arabic text-white/50 text-sm flex-shrink-0">{t(`step3.pkg_${selectedPkg.id}`) || selectedPkg.label} × {quantity}:</span>
+              <div className="flex items-center gap-2">
+                {(selectedPkg as any).originalPrice && quantity === 1 && (
+                  <span className="font-arabic text-white/30 text-xs line-through">{(selectedPkg as any).originalPrice * quantity} ₪</span>
+                )}
+                <span className="font-arabic text-white text-sm">{basePrice} ₪</span>
+              </div>
+            </div>
+            {couponApplied && <Row label={`خصم ${discount}%`} value={`- ${basePrice - discountedBase} ₪`} />}
+            <Row label={t('step5.delivery_fee')} value={deliveryFee === 0 ? `${t('step3.free_delivery', 'مجاني')} 🎉` : `${deliveryFee} ₪`} />
+            <div className="border-t border-gold-500/30 pt-2 flex items-center justify-between">
+              <span className="font-arabic font-black text-white text-lg">{t('step5.total')}</span>
+              <span className="font-arabic font-black text-gold-500 text-2xl">{totalPrice} ₪</span>
+            </div>
           </div>
         </div>
 
         {/* Payment Method */}
-        <div className="p-4 rounded-xl bg-dark-700 border border-white/10 space-y-3">
-          <h3 className="font-arabic font-bold text-white text-sm mb-3 flex items-center gap-2">
-            <CreditCard className="w-4 h-4 text-gold-500" /> {t('step5.payment_method_title')}
-          </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: 'card', label: t('step5.credit_card'), icon: '💳' },
-              { id: 'paypal', label: 'PayPal', icon: '🅿️' },
-              { id: 'applepay', label: 'Apple Pay', icon: '🍎' },
-              { id: 'cash', label: t('step5.cash', 'نقدًا عند الاستلام'), icon: '💵' },
-            ].map((method) => (
-              <button
-                key={method.id}
-                onClick={() => setPaymentMethod(method.id as any)}
-                className={`p-3 rounded-lg flex flex-col items-center justify-center gap-2 transition-all border ${
-                  paymentMethod === method.id
-                    ? 'bg-gold-500/20 border-gold-500 text-gold-500'
-                    : 'bg-dark-800 border-white/10 text-white/60 hover:bg-white/5'
-                }`}
-              >
-                <div className="text-2xl">{method.icon}</div>
-                <div className="font-arabic font-bold text-xs">{method.label}</div>
-              </button>
-            ))}
+        <div className="p-3 rounded-xl bg-dark-700 border border-white/10">
+          {/* Header row + segmented pill picker on the same line */}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <h3 className="font-arabic font-bold text-white text-sm flex items-center gap-2 shrink-0">
+              <CreditCard className="w-4 h-4 text-gold-500" /> {t('step5.payment_method_title')}
+            </h3>
+            <div className="flex items-center gap-1 p-1 rounded-full bg-dark-800 border border-white/5 overflow-x-auto">
+              {[
+                { id: 'card', label: t('step5.credit_card'), icon: '💳' },
+                { id: 'paypal', label: 'PayPal', icon: '🅿️' },
+                { id: 'applepay', label: 'Apple Pay', icon: '🍎' },
+                { id: 'cash', label: t('step5.cash', 'نقدًا عند الاستلام'), icon: '💵' },
+              ].map((method) => {
+                const active = paymentMethod === method.id;
+                return (
+                  <button
+                    key={method.id}
+                    type="button"
+                    onClick={() => setPaymentMethod(method.id as any)}
+                    title={method.label}
+                    className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-arabic font-bold whitespace-nowrap transition-all ${
+                      active
+                        ? 'bg-gold-500 text-dark-900 shadow-[0_0_12px_rgba(212,169,55,0.4)]'
+                        : 'text-white/60 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <span className="text-base leading-none">{method.icon}</span>
+                    <span className={active ? '' : 'hidden sm:inline'}>{method.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          
+
+          {/* Selected-method details — only renders when needed, in a tight row */}
           {paymentMethod === 'card' && (
-            <div className="mt-4 p-4 bg-dark-800 rounded-lg border border-white/5 space-y-3 animate-fade-in">
-              <div>
-                <label className="block font-arabic text-white/50 text-xs mb-1">{t('step5.card_number')}</label>
-                <input type="text" placeholder="**** **** **** ****" className="magic-input w-full font-mono text-left" dir="ltr" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
+            <div className="mt-3 p-3 bg-dark-800 rounded-lg border border-white/5 animate-fade-in">
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_100px_80px] gap-2">
                 <div>
-                  <label className="block font-arabic text-white/50 text-xs mb-1">{t('step5.expiry_date')}</label>
-                  <input type="text" placeholder="MM/YY" className="magic-input w-full text-left" dir="ltr" />
+                  <label className="block font-arabic text-white/40 text-[10px] mb-1">{t('step5.card_number')}</label>
+                  <input type="text" placeholder="•••• •••• •••• ••••" className="magic-input w-full font-mono text-left !py-2 text-sm tracking-wider" dir="ltr" />
                 </div>
                 <div>
-                  <label className="block font-arabic text-white/50 text-xs mb-1">CVC</label>
-                  <input type="text" placeholder="123" className="magic-input w-full text-left" dir="ltr" />
+                  <label className="block font-arabic text-white/40 text-[10px] mb-1">{t('step5.expiry_date')}</label>
+                  <input type="text" placeholder="MM/YY" className="magic-input w-full text-left !py-2 text-sm" dir="ltr" />
+                </div>
+                <div>
+                  <label className="block font-arabic text-white/40 text-[10px] mb-1">CVC</label>
+                  <input type="text" placeholder="•••" className="magic-input w-full text-left !py-2 text-sm" dir="ltr" />
                 </div>
               </div>
             </div>
           )}
           {paymentMethod === 'cash' && (
-            <div className="mt-4 p-4 bg-green-500/10 rounded-lg border border-green-500/20 animate-fade-in">
-              <p className="font-arabic text-green-400 text-sm">
-                💵 {t('step5.cash_note', 'سيتم تحصيل المبلغ نقدًا عند استلام الطلب من نقطة الاستلام.')}
-              </p>
-            </div>
+            <p className="mt-3 px-3 py-2 rounded-lg bg-green-500/10 border border-green-500/20 font-arabic text-green-400 text-xs animate-fade-in">
+              💵 {t('step5.cash_note', 'سيتم تحصيل المبلغ نقدًا عند استلام الطلب من نقطة الاستلام.')}
+            </p>
+          )}
+          {paymentMethod === 'paypal' && (
+            <p className="mt-3 px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 font-arabic text-blue-300 text-xs animate-fade-in">
+              🅿️ {t('step5.paypal_note', 'سيتم تحويلك إلى PayPal لإتمام الدفع بأمان.')}
+            </p>
+          )}
+          {paymentMethod === 'applepay' && (
+            <p className="mt-3 px-3 py-2 rounded-lg bg-white/5 border border-white/10 font-arabic text-white/70 text-xs animate-fade-in">
+              🍎 {t('step5.applepay_note', 'استخدم Touch ID أو Face ID لإتمام الدفع.')}
+            </p>
           )}
         </div>
       </div>

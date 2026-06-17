@@ -1,6 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
+export type IllustrationsStatus = 'pending' | 'generating' | 'ready' | 'failed';
 
 export interface IShippingAddress {
   fullName: string;
@@ -22,6 +23,9 @@ export interface IOrder extends Document {
   paymentStatus: PaymentStatus;
   stripeSessionId?: string;
   stripePaymentIntentId?: string;
+  illustrationsStatus: IllustrationsStatus;
+  illustrationsError?: string;
+  bookPdfUrl?: string;
   trackingNumber?: string;
   notes?: string;
   createdAt: Date;
@@ -53,6 +57,13 @@ const OrderSchema = new Schema<IOrder>(
     },
     stripeSessionId: { type: String },
     stripePaymentIntentId: { type: String },
+    illustrationsStatus: {
+      type: String,
+      enum: ['pending', 'generating', 'ready', 'failed'],
+      default: 'pending',
+    },
+    illustrationsError: { type: String },
+    bookPdfUrl: { type: String },
     trackingNumber: { type: String },
     notes: { type: String },
   },

@@ -2,7 +2,6 @@
 // Two sub-components: StoryTextPage & StoryImagePage.
 // Used for pages 5-30 (26 pages, alternating text → image).
 
-import starSvg from '../../assets/star-image-stroy 1.svg';
 
 // ── Text page ─────────────────────────────────────────────────────────────────
 interface StoryTextPageProps {
@@ -25,16 +24,10 @@ export function StoryTextPage({ pageNumber, text, childName }: StoryTextPageProp
       <span className="stp-sparkle stp-sparkle--2" aria-hidden="true">✦</span>
       <span className="stp-sparkle stp-sparkle--3" aria-hidden="true">✧</span>
 
-      {/* Star container */}
-      <div className="stp-star-wrapper">
-        <img
-          src={starSvg}
-          alt=""
-          aria-hidden="true"
-          className="stp-star-bg-img"
-        />
-
-        {/* Story text sits above the star, constrained to the inner ellipse */}
+      {/* Storybook text panel (replaces the star) */}
+      <div className="stp-panel">
+        <span className="stp-corner stp-corner--tl" aria-hidden="true">❦</span>
+        <span className="stp-corner stp-corner--br" aria-hidden="true">❦</span>
         <div className="stp-content">
           <div className="stp-name-tag">{childName}</div>
           <p className="stp-text">{text}</p>
@@ -75,42 +68,44 @@ export function StoryTextPage({ pageNumber, text, childName }: StoryTextPageProp
           z-index: 5;
         }
 
-        /* Star container */
-        .stp-star-wrapper {
+        /* Storybook text panel */
+        .stp-panel {
           position: relative;
           width: 100%;
-          max-width: 460px;
-          aspect-ratio: 1 / 1;
+          max-width: 440px;
+          background:
+            radial-gradient(120% 120% at 50% 0%, #fffdf6 0%, #fff4dc 55%, #ffe8bd 100%);
+          border: 2px solid rgba(212,169,55,0.55);
+          border-radius: 26px;
+          padding: 2.4rem 2rem;
           display: flex;
           align-items: center;
           justify-content: center;
           z-index: 2;
+          box-shadow:
+            0 18px 50px rgba(0,0,0,0.45),
+            inset 0 0 0 6px rgba(255,255,255,0.5);
+          animation: stp-float 6s ease-in-out infinite;
         }
-
-        /* Star SVG background floats */
-        .stp-star-bg-img {
+        /* Decorative corner flourishes */
+        .stp-corner {
           position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-          z-index: 0;
-          animation: stp-float 5s ease-in-out infinite;
-          filter: drop-shadow(0 8px 24px rgba(245,166,35,0.35));
-          user-select: none;
-          pointer-events: none;
+          color: rgba(212,169,55,0.7);
+          font-size: 1.3rem;
+          line-height: 1;
         }
+        .stp-corner--tl { top: 10px; right: 14px; }   /* RTL: visually top-right */
+        .stp-corner--br { bottom: 10px; left: 14px; }
 
-        /* Content sits in the inner golden area */
+        /* Content */
         .stp-content {
           position: relative;
           z-index: 1;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 0.6rem;
-          max-width: 62%;
-          margin-top: -6%;
+          gap: 0.7rem;
+          width: 100%;
           animation: stp-text-in 0.5s ease-out both;
         }
 
@@ -126,11 +121,12 @@ export function StoryTextPage({ pageNumber, text, childName }: StoryTextPageProp
         }
 
         .stp-text {
-          font-size: clamp(0.72rem, 2vw, 0.95rem);
-          line-height: 1.65;
+          font-size: clamp(0.95rem, 2.6vw, 1.25rem);
+          line-height: 1.85;
           color: #3B2800;
           font-weight: 700;
           direction: rtl;
+          margin: 0;
         }
 
         /* Sparkles */

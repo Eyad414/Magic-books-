@@ -8,12 +8,16 @@ export interface ChildDetails {
   childPhotoUrl?: string;
 }
 
+export type StoryMode = 'template' | 'ai';
+
 export interface StoryConfig {
   theme: string;
   language: 'ar' | 'en' | 'he';
   customThemeNote?: string;
   generatedText?: string;
   storyId?: string;
+  /** How the customer chose to make the story. Defaults to 'template' (handwritten). */
+  mode?: StoryMode;
 }
 
 export interface BookCustomization {

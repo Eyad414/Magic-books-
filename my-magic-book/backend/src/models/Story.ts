@@ -2,6 +2,14 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export type StoryStatus = 'draft' | 'generating' | 'ready' | 'ordered';
 export type StoryTheme = 'adventure' | 'space' | 'ocean' | 'forest' | 'princess' | 'superhero' | 'animals' | 'custom';
+export type StoryMode = 'template' | 'ai';
+
+/** One page of a handwritten template. Either text content or an illustration prompt. */
+export interface StoryTemplatePage {
+  type: 'text' | 'image';
+  content?: string;  // template text with {{name}} / {name} / [NAME] placeholders
+  prompt?: string;   // illustration prompt (also supports placeholders)
+}
 
 export interface IStory extends Document {
   userId: mongoose.Types.ObjectId;
@@ -10,12 +18,20 @@ export interface IStory extends Document {
   childAge: string;
   childGender: 'male' | 'female';
   childPhotoUrl?: string;
-  // Step 2: Story Config
-  theme: StoryTheme;
+  // Step 2: Story Config — `theme` is the id of an admin-defined theme from
+  // SiteSettings.themes[]. The enum is intentionally relaxed to a string so
+  // admins can add new themes without code changes.
+  theme: string;
   storyLength: 'short' | 'medium' | 'long';
   language: 'ar' | 'en';
   customThemeNote?: string;
-  // Generated Content
+  // Authoring mode: which path was used to build the story
+  mode: StoryMode;
+  // Mode === 'template': the handwritten pages with {{name}} placeholders, copied
+  // from frontend's STORY_TEMPLATES at create time. BookBuilder substitutes names
+  // at PDF build time so changing the kid name doesn't require regeneration.
+  templatePages?: StoryTemplatePage[];
+  // Generated Content (mode === 'ai')
   generatedText?: string;
   coverImageUrl?: string;
   status: StoryStatus;
@@ -38,14 +54,13 @@ const StorySchema = new Schema<IStory>(
     childAge: { type: String, required: true },
     childGender: { type: String, enum: ['male', 'female'], required: true },
     childPhotoUrl: { type: String },
-    theme: {
-      type: String,
-      enum: ['adventure', 'space', 'ocean', 'forest', 'princess', 'superhero', 'animals', 'custom'],
-      default: 'adventure',
-    },
+    // Theme id from SiteSettings.themes[]. Validated at admin save time, not here.
+    theme: { type: String, default: 'adventure' },
     storyLength: { type: String, enum: ['short', 'medium', 'long'], default: 'medium' },
     language: { type: String, enum: ['ar', 'en'], default: 'ar' },
     customThemeNote: { type: String },
+    mode: { type: String, enum: ['template', 'ai'], default: 'template' },
+    templatePages: { type: Schema.Types.Mixed, default: undefined },
     generatedText: { type: String },
     coverImageUrl: { type: String },
     status: {

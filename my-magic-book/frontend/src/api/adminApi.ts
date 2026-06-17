@@ -33,6 +33,16 @@ export const adminApi = {
     const response = await axiosInstance.get('/admin/orders');
     return response.data;
   },
+  // Generate (or fetch cached) Nano-Banana preview illustrations for a theme.
+  // Long-running: ~2.5 min for a fresh 13-page + portrait generation.
+  generateThemeIllustrations: async (themeId: string, opts?: { force?: boolean; childName?: string }) => {
+    const response = await axiosInstance.post(
+      `/admin/themes/${themeId}/generate-illustrations`,
+      { force: opts?.force ?? false, childName: opts?.childName },
+      { timeout: 5 * 60 * 1000 }
+    );
+    return response.data;
+  },
 };
 
 export const storyApi = {

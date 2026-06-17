@@ -14,6 +14,14 @@ export interface ITheme {
   label: string;
   desc: string;
   pages?: any[];
+  /** Admin-controlled gate: only `ready` themes are shown in the customer wizard. */
+  ready: boolean;
+  /** Cached Nano-Banana preview images (GCS object paths), one per body image page. */
+  generatedImages?: string[];
+  /** Cached Nano-Banana back-cover portrait (GCS object path). */
+  generatedPortrait?: string;
+  /** Cached Nano-Banana full-scene front-cover image (GCS object path). */
+  generatedCover?: string;
 }
 
 export interface ISiteSettings extends Document {
@@ -39,6 +47,10 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
         label: { type: String, required: true },
         desc: { type: String, required: true },
         pages: { type: Schema.Types.Mixed, default: [] },
+        ready: { type: Boolean, default: false },
+        generatedImages: { type: [String], default: undefined },
+        generatedPortrait: { type: String, default: undefined },
+        generatedCover: { type: String, default: undefined },
       },
     ],
   },

@@ -17,19 +17,22 @@ export default function BackCover({ childName, childPhoto, recommendedStories }:
       {/* Background gradient */}
       <div className="bc-bg" aria-hidden="true" />
 
-      {/* Child photo + greeting */}
+      {/* Hero: large centered kid portrait */}
       <div className="bc-hero">
         <div className="bc-photo-frame">
+          <div className="bc-photo-ring" aria-hidden="true" />
           <img
             src={childPhoto}
             alt={t('storybook.photo_alt', 'صورة {{name}}', { name: childName })}
             className="bc-photo"
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).src =
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(childName)}&background=D4A937&color=0a1628&size=200&bold=true`;
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(childName)}&background=D4A937&color=0a1628&size=400&bold=true`;
             }}
           />
-          <div className="bc-photo-glow" aria-hidden="true" />
+          <span className="bc-sparkle bc-sparkle--1" aria-hidden="true">✦</span>
+          <span className="bc-sparkle bc-sparkle--2" aria-hidden="true">✧</span>
+          <span className="bc-sparkle bc-sparkle--3" aria-hidden="true">✦</span>
         </div>
         <h2 className="bc-greeting">{t('storybook.congrats', 'أحسنت يا {{name}}! 🌟', { name: childName })}</h2>
         <p className="bc-sub">{t('storybook.completed_desc', 'أتممت قراءة قصتك السحرية — استمر في المغامرة!')}</p>
@@ -112,35 +115,63 @@ export default function BackCover({ childName, childPhoto, recommendedStories }:
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 0.7rem;
+          gap: 1rem;
+          margin-top: 0.5rem;
         }
-        .bc-photo-frame { position: relative; }
+        .bc-photo-frame {
+          position: relative;
+          width: 210px;
+          height: 210px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .bc-photo-ring {
+          position: absolute;
+          inset: -10px;
+          border-radius: 50%;
+          background: conic-gradient(from 0deg, #D4A937, #fff3c4, #D4A937, #b88c20, #D4A937);
+          filter: blur(2px);
+          animation: bc-spin 8s linear infinite;
+        }
         .bc-photo {
-          width: 100px;
-          height: 100px;
+          position: relative;
+          z-index: 1;
+          width: 200px;
+          height: 200px;
           border-radius: 50%;
           object-fit: cover;
-          border: 3px solid #D4A937;
-          box-shadow: 0 0 0 6px rgba(212,169,55,0.18);
+          object-position: center 30%;
+          border: 5px solid #0a1628;
+          box-shadow: 0 14px 40px rgba(0,0,0,0.6);
         }
-        .bc-photo-glow {
+        .bc-sparkle {
           position: absolute;
-          inset: -12px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(212,169,55,0.18) 0%, transparent 70%);
-          pointer-events: none;
-          animation: bc-pulse 3s ease-in-out infinite;
+          z-index: 2;
+          color: #fff3c4;
+          font-size: 1.1rem;
+          filter: drop-shadow(0 0 6px rgba(212,169,55,0.8));
+          animation: bc-twinkle 2.6s ease-in-out infinite;
         }
+        .bc-sparkle--1 { top: 2%; right: 8%; animation-delay: 0s; }
+        .bc-sparkle--2 { bottom: 6%; left: 4%; animation-delay: 0.8s; }
+        .bc-sparkle--3 { top: 40%; left: -6%; animation-delay: 1.6s; }
         .bc-greeting {
-          font-size: clamp(1.3rem, 4vw, 1.9rem);
+          font-size: clamp(1.4rem, 4.5vw, 2.1rem);
           font-weight: 900;
           color: #D4A937;
           margin: 0;
         }
         .bc-sub {
-          font-size: 0.88rem;
-          color: rgba(255,255,255,0.55);
+          font-size: 0.9rem;
+          color: rgba(255,255,255,0.6);
           margin: 0;
+          max-width: 320px;
+        }
+        @keyframes bc-spin { to { transform: rotate(360deg); } }
+        @keyframes bc-twinkle {
+          0%, 100% { opacity: 0.3; transform: scale(0.8); }
+          50%       { opacity: 1;   transform: scale(1.25); }
         }
 
         /* Divider */
