@@ -30,3 +30,6 @@ Thumbs.db
 # Misc
 .cache/
 coverage/
+
+# Local face-swap prototype (venv + large models, not for repo)
+faceswap-proto/
