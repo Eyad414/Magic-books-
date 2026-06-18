@@ -29,24 +29,17 @@ export default function CopyrightPage() {
 
       <div className="cp-divider cp-divider--sm" aria-hidden="true" />
 
-      {/* Policy links */}
+      {/* Concise policy — printed so readers see it without going online */}
       <div className="cp-policy">
-        <h3 className="cp-policy-head">{t('storybook.platform_policies', 'سياسات المنصة')}</h3>
-        <div className="cp-policy-links">
-          {[
-            { label: t('storybook.policy_privacy', 'سياسة الخصوصية'), anchor: '#privacy' },
-            { label: t('storybook.policy_terms', 'شروط الاستخدام'), anchor: '#terms' },
-            { label: t('storybook.policy_payment', 'سياسة الدفع'), anchor: '#payment' },
-            { label: t('storybook.policy_deletion', 'حذف البيانات'), anchor: '#data-deletion' },
-          ].map(({ label, anchor }) => (
-            <a
-              key={anchor}
-              href={`${websiteUrl}/policy${anchor}`}
-              className="cp-policy-link"
-            >
-              {label}
-            </a>
-          ))}
+        <div className="cp-policy-text">
+          <p>
+            <strong>{t('storybook.policy_content', 'سياسة المحتوى')}:</strong>{' '}
+            {t('storybook.policy_content_text', 'القصة والصور مخصّصة لطفلك للاستخدام العائلي فقط، ولا يجوز إعادة بيعها أو توزيعها تجاريًا.')}
+          </p>
+          <p>
+            <strong>{t('storybook.policy_printing', 'سياسة الطباعة')}:</strong>{' '}
+            {t('storybook.policy_printing_text', 'المنتج مطبوع خصيصًا لطفلك، لذا لا يمكن استرجاعه بعد بدء الطباعة. نضمن جودة الطباعة — تواصل معنا لأي مشكلة.')}
+          </p>
         </div>
       </div>
 
@@ -153,25 +146,21 @@ export default function CopyrightPage() {
           margin: 0 0 0.65rem;
           letter-spacing: 0.08em;
         }
-        .cp-policy-links {
+        .cp-policy-text {
           display: flex;
-          flex-wrap: wrap;
-          justify-content: center;
+          flex-direction: column;
           gap: 0.5rem;
+          max-width: 440px;
+          text-align: right;
         }
-        .cp-policy-link {
-          font-size: 0.75rem;
-          color: rgba(255,255,255,0.5);
-          border: 1px solid rgba(212,169,55,0.2);
-          border-radius: 999px;
-          padding: 3px 12px;
-          text-decoration: none;
-          transition: all 0.2s;
+        .copyright-page[dir="ltr"] .cp-policy-text { text-align: left; }
+        .cp-policy-text p {
+          font-size: 0.7rem;
+          color: rgba(255,255,255,0.55);
+          line-height: 1.6;
+          margin: 0;
         }
-        .cp-policy-link:hover {
-          color: #D4A937;
-          border-color: rgba(212,169,55,0.5);
-        }
+        .cp-policy-text strong { color: rgba(212,169,55,0.9); font-weight: 800; }
 
         /* QR row */
         .cp-qr-row {

@@ -102,12 +102,20 @@ export default function StoryBookPage() {
     toDisplayUrl(generatedPortrait) ||
     '';
 
+  // The actual uploaded photo for the back-cover circle (no avatar). In admin
+  // preview (no real customer) we show a sample real photo from the bucket.
+  const realPhoto =
+    toDisplayUrl(storyData?.childPhotoUrl) ||
+    toDisplayUrl('magic-fanoose/child-photos/0a0dfa24-99cd-434e-95e7-33b758439ff4.jpeg');
+
   return (
     <div className="min-h-screen bg-[#03060e] pt-20 pb-20 px-2 sm:px-4">
       <StoryBook
         storyId={themeId}
         childName={storyData?.childName || searchParams.get('name') || 'إياد'}
+        childGender={storyData?.childGender}
         childPhoto={childPhoto}
+        realPhoto={realPhoto}
         coverScene={toDisplayUrl(generatedCover)}
         backCoverPhoto={toDisplayUrl(generatedPortrait) || childPhoto}
         audioUrl={storyData?.audioUrl || ''}

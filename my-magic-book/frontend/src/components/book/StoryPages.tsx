@@ -13,9 +13,9 @@ interface StoryTextPageProps {
 // Solid page colors cycled per page, Taletoons-style.
 const PAGE_COLORS = ['#F2607A', '#3FB8AF', '#F5B945', '#8E7CC3', '#6AAED6', '#7BC67E'];
 
-// White fluffy cloud (stretches to fill the text bubble).
+// White fluffy cloud with a tall solid core so text stays fully inside.
 const CLOUD_BG =
-  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 200' preserveAspectRatio='none'%3E%3Cg fill='%23ffffff'%3E%3Cellipse cx='80' cy='112' rx='62' ry='56'/%3E%3Cellipse cx='150' cy='80' rx='78' ry='72'/%3E%3Cellipse cx='220' cy='112' rx='62' ry='56'/%3E%3Cellipse cx='120' cy='152' rx='60' ry='50'/%3E%3Cellipse cx='185' cy='152' rx='60' ry='50'/%3E%3Crect x='52' y='106' width='200' height='78' rx='39'/%3E%3C/g%3E%3C/svg%3E\")";
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 240' preserveAspectRatio='none'%3E%3Cg fill='%23ffffff'%3E%3Cellipse cx='78' cy='95' rx='66' ry='62'/%3E%3Cellipse cx='150' cy='62' rx='84' ry='60'/%3E%3Cellipse cx='222' cy='95' rx='66' ry='62'/%3E%3Cellipse cx='70' cy='150' rx='58' ry='60'/%3E%3Cellipse cx='230' cy='150' rx='58' ry='60'/%3E%3Cellipse cx='110' cy='192' rx='66' ry='56'/%3E%3Cellipse cx='190' cy='192' rx='66' ry='56'/%3E%3Crect x='40' y='80' width='220' height='130' rx='55'/%3E%3C/g%3E%3C/svg%3E\")";
 
 export function StoryTextPage({ pageNumber, text, childName }: StoryTextPageProps) {
   const pageColor = PAGE_COLORS[Math.floor(pageNumber / 2) % PAGE_COLORS.length];
@@ -30,9 +30,8 @@ export function StoryTextPage({ pageNumber, text, childName }: StoryTextPageProp
       <span className="stp-badge">{pageNumber}</span>
 
       {/* Cloud text bubble */}
-      <div className="stp-cloud">
+      <div className="stp-cloud" aria-label={childName}>
         <div className="stp-content">
-          <div className="stp-name-tag">{childName}</div>
           <p className="stp-text">{text}</p>
         </div>
       </div>
@@ -57,7 +56,7 @@ export function StoryTextPage({ pageNumber, text, childName }: StoryTextPageProp
         .stp-cloud {
           position: relative;
           width: 100%;
-          max-width: 430px;
+          max-width: 440px;
           background-image: ${CLOUD_BG};
           background-size: 100% 100%;
           background-repeat: no-repeat;
@@ -65,7 +64,7 @@ export function StoryTextPage({ pageNumber, text, childName }: StoryTextPageProp
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 4rem 3rem;
+          padding: 5.5rem 3.2rem;
           animation: stp-float 6s ease-in-out infinite;
         }
 
@@ -93,18 +92,8 @@ export function StoryTextPage({ pageNumber, text, childName }: StoryTextPageProp
           align-items: center;
           gap: 0.7rem;
           width: 100%;
-          max-width: 78%;
+          max-width: 68%;
           animation: stp-text-in 0.5s ease-out both;
-        }
-
-        .stp-name-tag {
-          background: var(--page-color, #F2607A);
-          color: #fff;
-          font-size: 0.72rem;
-          font-weight: 800;
-          padding: 3px 14px;
-          border-radius: 999px;
-          letter-spacing: 0.04em;
         }
 
         .stp-text {

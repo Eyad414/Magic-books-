@@ -22,21 +22,26 @@ import CopyrightPage     from './CopyrightPage';
 import BackCover         from './BackCover';
 import { STORIES, findStory } from '../../data/stories';
 import type { StoryDefinition } from '../../data/stories/types';
+import { detectGender, applyGenderTokens, DEMO_NAMES, type Gender } from '../../utils/gender';
 
 // ── Helper ─────────────────────────────────────────────────────────────────────
-function replaceName(text: string, name: string): string {
+// Substitutes the name AND resolves Arabic gender tokens {masc|fem}.
+function personalize(text: string, name: string, gender: Gender): string {
   if (!text) return '';
-  return text
+  const named = text
     .replace(/\[NAME\]/gi, name)
     .replace(/\{\{\s*name\s*\}\}/gi, name)
     .replace(/\{\s*name\s*\}/gi, name);
+  return applyGenderTokens(named, gender);
 }
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 interface StoryBookProps {
   storyId?:      string;   // Story ID from STORIES registry
   childName?:    string;   // Child's display name
+  childGender?:  Gender;   // From the wizard; if omitted we detect from the name
   childPhoto?:   string;   // URL / path to child's photo
+  realPhoto?:    string;   // The actual uploaded kid photo (used in the back-cover circle)
   coverScene?:   string;   // Generated full-scene front-cover image (preferred on the cover)
   backCoverPhoto?: string; // Generated portrait for the back cover (falls back to childPhoto)
   audioUrl?:     string;   // URL encoded into final-page QR
@@ -50,7 +55,9 @@ interface StoryBookProps {
 export default function StoryBook({
   storyId        = 'zoo_adventure',
   childName: initialName = 'إياد',
+  childGender,
   childPhoto     = '',
+  realPhoto      = '',
   coverScene     = '',
   backCoverPhoto = '',
   audioUrl,
@@ -93,6 +100,9 @@ export default function StoryBook({
 
   // ── Editable name (demo — remove in production) ────────────────────────────
   const [childName, setChildName] = useState(initialName);
+  const [demoGender, setDemoGender] = useState<Gender | undefined>(childGender);
+  // Gender: explicit (wizard) wins, then a demo override, then detect from name.
+  const gender: Gender = childGender || demoGender || detectGender(childName);
 
   // ── Look up the story ──────────────────────────────────────────────────────
   const story: StoryDefinition = useMemo(
@@ -106,25 +116,26 @@ export default function StoryBook({
   const translatedMoral = useMemo(() => t(`stories.${story.id}.moral`, story.moralAr), [story.id, story.moralAr, t]);
   const translatedConclusion = useMemo(() => t(`stories.${story.id}.conclusion`, story.conclusionAr), [story.id, story.conclusionAr, t]);
 
-  const storyTitle  = useMemo(() => replaceName(translatedTitle,     childName), [translatedTitle, childName]);
-  const dedication  = useMemo(() => replaceName(translatedDedication, childName), [translatedDedication, childName]);
-  const moral       = useMemo(() => replaceName(translatedMoral,      childName), [translatedMoral, childName]);
-  const conclusion  = useMemo(() => replaceName(translatedConclusion, childName), [translatedConclusion, childName]);
+  const storyTitle  = useMemo(() => personalize(translatedTitle,     childName, gender), [translatedTitle, childName, gender]);
+  const dedication  = useMemo(() => personalize(translatedDedication, childName, gender), [translatedDedication, childName, gender]);
+  const moral       = useMemo(() => personalize(translatedMoral,      childName, gender), [translatedMoral, childName, gender]);
+  const conclusion  = useMemo(() => personalize(translatedConclusion, childName, gender), [translatedConclusion, childName, gender]);
 
   const questions   = useMemo(() => {
     return story.questionsAr.map((q, idx) => {
       const qKey = `stories.${story.id}.questions.${idx}`;
       const translatedQ = t(qKey);
       const activeQ = translatedQ && translatedQ !== qKey ? translatedQ : q;
-      return replaceName(activeQ, childName);
+      return personalize(activeQ, childName, gender);
     });
-  }, [story, childName, t]);
+  }, [story, childName, gender, t]);
 
-  // ── Pick 3 recommended stories ────────────────────────────────────────────
-  const recommended = useMemo(
-    () => STORIES.filter((s) => s.id !== story.id).slice(0, 3),
-    [story],
-  );
+  // ── Pick 3 recommended stories (include current if needed to reach 3) ──────
+  const recommended = useMemo(() => {
+    const others = STORIES.filter((s) => s.id !== story.id);
+    const list = others.length >= 3 ? others : [...others, ...STORIES.filter((s) => s.id === story.id)];
+    return list.slice(0, 3);
+  }, [story]);
 
   // ── Resolve photo & audio ─────────────────────────────────────────────────
   const resolvedPhoto = childPhoto ||
@@ -156,6 +167,22 @@ export default function StoryBook({
                 maxLength={30}
               />
               <span className="sb-story-badge">{storyTitle.replace('[NAME]', '…')}</span>
+            </div>
+          )}
+
+          {/* Demo name quick-picks (boys / girls) to preview gender agreement */}
+          {showNameInput && (
+            <div className="sb-demo-names">
+              {DEMO_NAMES.map((d) => (
+                <button
+                  key={d.name}
+                  type="button"
+                  onClick={() => { setChildName(d.name); setDemoGender(d.gender); }}
+                  className={`sb-demo-chip ${d.gender === 'female' ? 'sb-demo-chip--f' : 'sb-demo-chip--m'} ${childName === d.name ? 'sb-demo-chip--active' : ''}`}
+                >
+                  {d.gender === 'female' ? '👧' : '👦'} {d.name}
+                </button>
+              ))}
             </div>
           )}
 
@@ -201,7 +228,7 @@ export default function StoryBook({
       {/* ══════════════════════ ALL 34 PAGES ═══════════════════════════════════ */}
 
       {/* 1 — Front Cover (prefer the full-scene generated cover) */}
-      <FrontCover childName={childName} storyTitle={storyTitle} coverImage={story.coverImage} childPhoto={coverScene || backCoverPhoto || resolvedPhoto} />
+      <FrontCover childName={childName} storyTitle={storyTitle} coverImage={story.coverImage} childPhoto={realPhoto || coverScene || backCoverPhoto || resolvedPhoto} />
 
       {/* 2 — Inside Title Page */}
       <TitlePage storyTitle={storyTitle} childName={childName} />
@@ -219,14 +246,14 @@ export default function StoryBook({
             <div key={`custom-page-${idx}`} style={{ display: 'contents' }}>
               <StoryTextPage
                 pageNumber={idx * 2 + 1}
-                text={replaceName(page.text || '', childName)}
+                text={personalize(page.text || '', childName, gender)}
                 childName={childName}
               />
               <StoryImagePage
                 pageNumber={idx * 2 + 2}
                 /* Prefer the AI-generated illustration for this page; fall back to the template image. */
                 imageSrc={generatedImages[idx] || page.imageSrc || ''}
-                imageAlt={replaceName(page.text || '', childName)}
+                imageAlt={personalize(page.text || '', childName, gender)}
               />
             </div>
           ))
@@ -242,7 +269,7 @@ export default function StoryBook({
                 <StoryTextPage
                   key={page.pageNumber}
                   pageNumber={page.pageNumber}
-                  text={replaceName(activeText, childName)}
+                  text={personalize(activeText, childName, gender)}
                   childName={childName}
                 />
               );
@@ -253,7 +280,7 @@ export default function StoryBook({
                   key={page.pageNumber}
                   pageNumber={page.pageNumber}
                   imageSrc={page.imageSrc ?? ''}
-                  imageAlt={replaceName(page.imageAlt ?? '', childName)}
+                  imageAlt={personalize(page.imageAlt ?? '', childName, gender)}
                 />
               );
             }
@@ -278,8 +305,8 @@ export default function StoryBook({
       {/* 33 — Copyright Page */}
       <CopyrightPage />
 
-      {/* 34 — Back Cover */}
-      <BackCover childName={childName} childPhoto={backCoverPhoto || resolvedPhoto} recommendedStories={recommended} />
+      {/* 34 — Back Cover (real uploaded photo in the circle, not avatar/portrait) */}
+      <BackCover childName={childName} childPhoto={realPhoto || backCoverPhoto || resolvedPhoto} recommendedStories={recommended} />
 
       {/* ══════════════════════════════════════════════════════════════════════
           STYLES — Screen + Print
@@ -365,6 +392,23 @@ export default function StoryBook({
           padding: 3px 10px;
           white-space: nowrap;
         }
+
+        /* Demo name chips */
+        .sb-demo-names { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+        .sb-demo-chip {
+          font-family: inherit;
+          font-size: 0.78rem;
+          font-weight: 700;
+          padding: 4px 12px;
+          border-radius: 999px;
+          cursor: pointer;
+          border: 1px solid transparent;
+          transition: all 0.15s;
+        }
+        .sb-demo-chip--m { background: rgba(106,174,214,0.12); color: #8fc3e6; border-color: rgba(106,174,214,0.3); }
+        .sb-demo-chip--f { background: rgba(242,96,122,0.12); color: #f5a3b4; border-color: rgba(242,96,122,0.3); }
+        .sb-demo-chip--active { outline: 2px solid #D4A937; }
+        .sb-demo-chip:hover { filter: brightness(1.2); }
 
         /* Generate AI buttons */
         .sb-gen-row { display: flex; gap: 0.5rem; }

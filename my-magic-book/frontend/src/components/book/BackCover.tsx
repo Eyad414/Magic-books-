@@ -97,7 +97,7 @@ export default function BackCover({ childName, childPhoto, recommendedStories }:
           direction: ltr;
         }
         .back-cover[dir="ltr"] .bc-footer-text {
-          align-items: flex-start;
+          align-items: center;
         }
 
         /* Background shimmer */
@@ -248,8 +248,10 @@ export default function BackCover({ childName, childPhoto, recommendedStories }:
           z-index: 1;
           display: flex;
           align-items: center;
+          justify-content: center;
           gap: 0.75rem;
           margin-top: auto;
+          width: 100%;
         }
         .bc-footer-logo {
           width: 42px;
@@ -261,7 +263,7 @@ export default function BackCover({ childName, childPhoto, recommendedStories }:
         .bc-footer-text {
           display: flex;
           flex-direction: column;
-          align-items: flex-start;
+          align-items: center;
           gap: 0.1rem;
         }
         .bc-footer-brand {
