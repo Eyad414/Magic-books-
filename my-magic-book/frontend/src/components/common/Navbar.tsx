@@ -52,7 +52,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center transition-transform group-hover:scale-110 drop-shadow-[0_0_10px_rgba(212,169,55,0.6)]">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden flex items-center justify-center transition-transform group-hover:scale-110 drop-shadow-[0_0_12px_rgba(212,169,55,0.65)]">
               <img src="/logo.png" alt="Magic Fanoose" className="w-full h-full object-contain" />
             </div>
             <div className="flex flex-col">
