@@ -37,7 +37,7 @@ export const proxyImage = async (req: Request, res: Response): Promise<void> => 
       res.status(400).json({ success: false, message: 'invalid path' });
       return;
     }
-    await streamObject(objectPath, res);
+    await streamObject(objectPath, res, req);
   } catch (err: any) {
     console.error('proxyImage failed:', err);
     if (!res.headersSent) res.status(500).json({ success: false, message: err.message });

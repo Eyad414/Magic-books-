@@ -53,6 +53,16 @@ export const adminApi = {
     );
     return response.data;
   },
+  // Coloring book: colored cover + 16 line-art pages + colored back cover, from
+  // the admin-typed scenes + an uploaded reference photo. Long-running (~3 min).
+  generateThemeColoring: async (themeId: string, opts: { coloringScenes: string[]; coloringCoverScene?: string; coloringBackCoverScene?: string; referencePhoto?: string; childName?: string; childGender?: 'male' | 'female' }) => {
+    const response = await axiosInstance.post(
+      `/admin/themes/${themeId}/generate-coloring`,
+      opts,
+      { timeout: 8 * 60 * 1000 }
+    );
+    return response.data;
+  },
 };
 
 export const storyApi = {

@@ -4,6 +4,14 @@
  * Everything in here is sync + side-effect-free so it's trivial to test and reuse.
  */
 
+/**
+ * Premium warm cinematic color grading — the "buyable" look (soft golden light,
+ * rich-but-natural harmonious palette, gentle film tones, soft bokeh). Shared by
+ * the body-page and cover prompt builders so every illustration feels polished.
+ */
+export const COLOR_GRADE =
+  'Cinematic warm color grading with a soft, harmonious, premium color palette — gentle golden key lighting, lush vivid yet natural colors (never neon or harsh), tasteful film-like tones, soft dreamy background bokeh, cozy inviting storybook mood that feels emotionally warm and high-end.';
+
 export interface PromptInput {
   pageText: string;
   childName: string;
@@ -140,11 +148,86 @@ export function buildIllustrationPrompt(input: PromptInput): string {
       ', rendered with a photorealistic, recognizable face that closely matches the reference photo (same facial features, skin tone and hair), set as a charming 3D animated character.',
     sceneHint ? `Scene from the story: "${sceneHint}".` : null,
     styleHints,
-    'Square 1:1 aspect ratio, 220x220mm print size. Rich vibrant saturated colors, cinematic depth-of-field lighting, soft realistic textures, volumetric glow, highly detailed background, professional CGI render quality.',
+    'Square 1:1 aspect ratio, 220x220mm print size. Soft realistic textures, volumetric glow, highly detailed background, professional CGI render quality.',
+    COLOR_GRADE,
     'Expressive joyful face, child-safe, polished and magical. No text, no captions, no watermarks, no signatures.',
   ].filter(Boolean);
 
   return parts.join(' ');
+}
+
+/**
+ * Concrete cover-background elements per theme. Unlike themeStyle (which only
+ * gives color/mood art-direction), this lists the actual OBJECTS that should
+ * surround the hero on the FRONT COVER so the cover instantly communicates the
+ * story's world — e.g. zoo => real animals, school => classroom + blackboard.
+ */
+export function coverBackground(theme: string): string {
+  const map: Record<string, string> = {
+    school_hero:
+      'a bright colorful classroom and sunny schoolyard — a chalkboard with drawings, stacks of books, pencils and crayons, a playground slide, hanging paper art, and cheerful smiling classmates gathered around',
+    school:
+      'a bright colorful classroom and sunny schoolyard — a chalkboard, books, pencils, a playground slide, and smiling classmates gathered around',
+    zoo_adventure:
+      'a lively zoo full of friendly happy animals — a lion, an elephant, a giraffe, playful monkeys and a little bear cub — leafy green trees, balloons and colorful animal enclosures filling the background',
+    animals:
+      'a cheerful world of adorable friendly animals — a lion, an elephant, a giraffe, monkeys and a bear cub — surrounded by leafy trees and bright flowers',
+    space:
+      'outer space with friendly smiling planets, a cute rocket ship, twinkling stars, a glowing rainbow nebula and a little astronaut helmet',
+    forest:
+      'an enchanted forest with tall trees, friendly woodland animals (a rabbit, a fox, an owl and a deer), glowing mushrooms, flowers and dappled magical sunlight',
+    ocean:
+      'a colorful underwater world with playful fish, a smiling dolphin, a sea turtle, glowing coral reefs and shimmering sun rays',
+    adventure:
+      'a sweeping adventurous landscape — green mountains, a winding trail, a waving flag, a treasure-map feeling and warm golden-hour light',
+    princess:
+      'a sparkling fairytale castle with tall towers, blooming roses, friendly birds and shimmering magical light',
+    superhero:
+      'a bright city skyline at sunset with a heroic flowing cape, comic-style energy bursts and friendly little sidekicks',
+    dinosaurs:
+      'a lush prehistoric jungle with friendly colorful dinosaurs, giant ferns, a sparkling waterfall and a distant volcano',
+    pirates:
+      'a treasure island with a wooden pirate ship, palm trees, an open treasure chest of gold, a parrot and a turquoise sea',
+    robots:
+      'a fun retro-futuristic lab with friendly colorful robots, glowing gadgets, buttons and floating holograms',
+    sports:
+      'a sunny stadium with a ball, a goal net, a cheering crowd, bright team banners and confetti',
+    cooking:
+      'a cozy colorful kitchen with fresh ingredients, mixing bowls, a chef hat, cupcakes and yummy treats',
+    music:
+      'a whimsical concert stage with instruments, floating glowing musical notes, sparkles and colorful spotlights',
+    magic:
+      'a magical wonder-filled world with swirling golden sparkles, floating lanterns and glowing dreamlike light',
+    custom:
+      'a magical wonder-filled storybook world with swirling sparkles, warm glowing light and charming friendly details',
+  };
+  return map[theme] || map.custom;
+}
+
+/**
+ * Builds the FRONT COVER prompt — the hero kid centered inside the themed
+ * world, Taletoons-style. Pulls concrete scene objects from coverBackground so
+ * each story's cover clearly shows what it's about.
+ */
+export function buildCoverPrompt(opts: {
+  childName: string;
+  childAge?: string | number;
+  childGender: 'male' | 'female';
+  theme: string;
+}): string {
+  const ageStr = String(opts.childAge ?? '5').split('-')[0];
+  const child = opts.childGender === 'female' ? 'girl' : 'boy';
+  const bg = coverBackground(opts.theme);
+  return [
+    `High-quality 3D rendered Pixar / DreamWorks style children's book FRONT COVER, square 1:1 aspect ratio.`,
+    `${opts.childName}, a joyful ${ageStr}-year-old ${child} with a photorealistic recognizable face that closely matches the reference photo,`,
+    `shown waist-up and centered as the smiling hero looking straight at the viewer with a big happy smile.`,
+    `Surrounding background and props: ${bg}.`,
+    `These themed elements clearly fill the whole frame around the child so the cover instantly tells what the story is about.`,
+    `Soft realistic textures, dreamy glow, highly detailed, professional CGI render quality.`,
+    COLOR_GRADE,
+    `No text, no title, no watermark.`,
+  ].join(' ');
 }
 
 function trimForPrompt(text: string, maxChars: number): string {
@@ -169,6 +252,7 @@ function themeStyle(theme: string): string {
     princess: 'Sparkling fairytale castle, rich rose-gold and lavender palette, glittering magical details and shimmering light.',
     superhero: 'Dynamic friendly child-superhero scene, bold punchy colors, energetic glowing motion lines.',
     animals: 'Adorable expressive cartoon animals, candy-bright saturated colors, lively cheerful background.',
+    zoo_adventure: 'A lush sunny zoo full of friendly adorable animals — a giraffe, an elephant, a colorful parrot, monkeys and a lion — leafy green trees, warm golden sunlight filtering through the leaves.',
     school_hero: 'Joyful school scene exploding with bright rainbow colors as kindness restores the school, warm and lively.',
     magic: 'Radiant magical glow, gold, lavender and teal hues, swirling sparkles, dreamlike luminous atmosphere.',
     dinosaurs: 'Friendly colorful dinosaurs in a vivid prehistoric jungle, lush saturated greens and warm sunset oranges.',

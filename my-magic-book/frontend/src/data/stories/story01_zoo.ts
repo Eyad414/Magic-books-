@@ -10,11 +10,11 @@ export const zooAdventure: StoryDefinition = {
   questionsAr: [
     'ما هو الحيوان الذي أعجبك أكثر في القصة؟',
     'ماذا تعلمنا عن الاهتمام بالحيوانات؟',
-    'لو كنت [NAME]، ماذا كنت ستفعل في حديقة الحيوانات؟',
+    'لو زرت حديقة الحيوانات، أي حيوان تود أن تراه أولاً ولماذا؟',
   ],
   conclusionAr: 'أحسنت يا [NAME]! أنت الآن صديق الحيوانات وحارسها الأمين. 🦁',
   dedicationAr:
-    'إلى [NAME]، الذي/التي يملأ/تملأ حياتنا بالبهجة والدهشة كل يوم — هذه القصة لك وحدك.',
+    'إلى [NAME]، {الذي|التي} {يملأ|تملأ} حياتنا بالبهجة والدهشة كل يوم — هذه القصة لك وحدك.',
   coverImage: '/illustrations/zoo_adventure/cover.png',
   thumbnail: '/illustrations/zoo_adventure/thumb.png',
   pages: [

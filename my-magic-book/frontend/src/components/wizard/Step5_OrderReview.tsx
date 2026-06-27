@@ -50,7 +50,7 @@ export default function Step5_OrderReview({ onPrev }: Props) {
   const packages = useMemo(() => {
     const DEFAULT_PACKAGES = [
       { id: 'color', label: t('step3.pkg_color', 'قصة ملونة'), price: 60, emoji: '🌈', desc: t('step3.pkg_color_desc') },
-      { id: 'coloring', label: t('step3.pkg_coloring', 'دفتر تلوين'), price: 40, emoji: '🖍️', desc: t('step3.pkg_coloring_desc') },
+      { id: 'coloring', label: t('step3.pkg_coloring', 'دفتر تلوين'), price: 50, emoji: '🖍️', desc: t('step3.pkg_coloring_desc') },
       { id: 'audio', label: t('step3.pkg_audio', 'ملف صوتي (Audio)'), price: 20, emoji: '🎧', desc: t('step3.pkg_audio_desc') },
       { id: 'ebook', label: t('step3.pkg_ebook', 'نسخة رقمية (E-Book)'), price: 20, emoji: '📱', desc: t('step3.pkg_ebook_desc') },
       { id: 'pro', label: t('step3.pkg_pro', 'باقة Pro الشاملة'), price: 120, originalPrice: 140, emoji: '✨', desc: t('step3.pkg_pro_desc') },
@@ -128,11 +128,20 @@ export default function Step5_OrderReview({ onPrev }: Props) {
     }
     setIsProcessing(true);
     try {
-      await orderApi.createCheckout({
+      const res = await orderApi.createCheckout({
         storyId: storyConfig?.storyId,
         shippingAddress,
         totalPrice,
+        paymentMethod,
+        bookPackage: bookCustomization?.bookPackage,
       });
+      // Card/online payment → redirect to Stripe Checkout. The webhook marks the
+      // order paid and triggers book generation after a successful payment.
+      if (res?.checkoutUrl) {
+        window.location.href = res.checkoutUrl;
+        return;
+      }
+      // Cash / self-pickup → order placed offline, no online payment.
       setIsSuccess(true);
       toast.success(t('step5.success_toast'));
       setTimeout(() => { resetProgress(); navigate('/dashboard'); }, 3000);

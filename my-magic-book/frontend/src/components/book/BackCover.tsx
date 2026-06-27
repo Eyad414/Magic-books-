@@ -1,15 +1,32 @@
 import { useTranslation } from 'react-i18next';
-import type { StoryDefinition } from '../../data/stories/types';
 
 interface BackCoverProps {
   childName: string;
   childPhoto: string;
-  /** The 3 stories to show as "More Adventures" recommendations */
-  recommendedStories: StoryDefinition[];
+  /** AI cartoon avatar (generated cover/portrait) — used in the teaser cards when
+   *  available (already generated, so it's free). Falls back to the real photo. */
+  avatarPhoto?: string;
+  /** Current story id — used to exclude this theme from the "more adventures" teasers. */
+  currentStoryId?: string;
 }
 
-export default function BackCover({ childName, childPhoto, recommendedStories }: BackCoverProps) {
+// "More adventures" teasers — the SAME kid imagined in a DIFFERENT world. Each
+// card reuses the child's real photo (no new image generation = no cost).
+const ALL_TEASERS = [
+  { id: 'space',     emoji: '🚀', fallback: 'في الفضاء' },
+  { id: 'school',    emoji: '🏫', fallback: 'في المدرسة' },
+  { id: 'zoo',       emoji: '🦁', fallback: 'في حديقة الحيوانات' },
+  { id: 'ocean',     emoji: '🌊', fallback: 'في أعماق المحيط' },
+  { id: 'dinosaurs', emoji: '🦖', fallback: 'في عالم الديناصورات' },
+  { id: 'world',     emoji: '🌍', fallback: 'حول العالم' },
+  { id: 'superhero', emoji: '⚡', fallback: 'بطلاً خارقاً' },
+];
+// Map the current story to the teaser id to drop, so we never recommend the same theme.
+const EXCLUDE: Record<string, string> = { zoo_adventure: 'zoo', space: 'space', school_hero: 'school' };
+
+export default function BackCover({ childName, childPhoto, avatarPhoto, currentStoryId }: BackCoverProps) {
   const { t, i18n } = useTranslation();
+  const teasers = ALL_TEASERS.filter((tz) => tz.id !== (EXCLUDE[currentStoryId || ''] || '')).slice(0, 3);
 
   return (
     <section className="book-page back-cover" aria-label={t('storybook.back_cover_aria', 'الغلاف الخلفي')} dir={i18n.dir()}>
@@ -44,23 +61,23 @@ export default function BackCover({ childName, childPhoto, recommendedStories }:
       <div className="bc-stories-section">
         <h3 className="bc-stories-head">{t('storybook.more_adventures', '✨ مغامرات أخرى تنتظرك')}</h3>
         <div className="bc-stories-grid">
-          {recommendedStories.slice(0, 3).map((story) => (
-            <div key={story.id} className="bc-story-card">
+          {teasers.map((tz) => (
+            <div key={tz.id} className="bc-story-card">
               <div className="bc-story-thumb-wrap">
-                <img
-                  src={story.thumbnail}
-                  alt={t(`stories.${story.id}.title`, story.titleAr).replace(/\[NAME\]/gi, childName)}
-                  className="bc-story-thumb"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src =
-                      `https://placehold.co/120x120/111840/D4A937?text=🏮&font=sans`;
-                  }}
-                />
+                <div className="bc-story-thumb-clip">
+                  <img
+                    src={avatarPhoto || childPhoto}
+                    alt={childName}
+                    className="bc-story-thumb"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src =
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(childName)}&background=D4A937&color=0a1628&size=120&bold=true`;
+                    }}
+                  />
+                </div>
+                <span className="bc-story-emoji" aria-hidden="true">{tz.emoji}</span>
               </div>
-              <p className="bc-story-title">
-                {t(`stories.${story.id}.title`, story.titleAr).replace(/\[NAME\]/gi, childName)}
-              </p>
-              <p className="bc-story-tag">{t(`stories.${story.id}.tagline`, story.taglineAr)}</p>
+              <p className="bc-story-title">{childName} {t(`storybook.teaser_${tz.id}`, tz.fallback)}</p>
             </div>
           ))}
         </div>
@@ -216,17 +233,38 @@ export default function BackCover({ childName, childPhoto, recommendedStories }:
           transform: translateY(-2px);
         }
         .bc-story-thumb-wrap {
+          position: relative;
           width: 64px;
           height: 64px;
-          border-radius: 10px;
-          overflow: hidden;
-          border: 1.5px solid rgba(212,169,55,0.25);
           flex-shrink: 0;
+        }
+        .bc-story-thumb-clip {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          overflow: hidden;
+          border: 1.5px solid rgba(212,169,55,0.3);
         }
         .bc-story-thumb {
           width: 100%;
           height: 100%;
           object-fit: cover;
+          object-position: center 25%;
+        }
+        .bc-story-emoji {
+          position: absolute;
+          bottom: -3px;
+          right: -3px;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.8rem;
+          background: #0a1628;
+          border: 1.5px solid rgba(212,169,55,0.5);
+          border-radius: 50%;
+          z-index: 2;
         }
         .bc-story-title {
           font-size: 0.7rem;

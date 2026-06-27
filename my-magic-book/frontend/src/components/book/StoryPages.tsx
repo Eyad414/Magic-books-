@@ -13,9 +13,15 @@ interface StoryTextPageProps {
 // Solid page colors cycled per page, Taletoons-style.
 const PAGE_COLORS = ['#F2607A', '#3FB8AF', '#F5B945', '#8E7CC3', '#6AAED6', '#7BC67E'];
 
-// White fluffy cloud with a tall solid core so text stays fully inside.
-const CLOUD_BG =
-  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 240' preserveAspectRatio='none'%3E%3Cg fill='%23ffffff'%3E%3Cellipse cx='78' cy='95' rx='66' ry='62'/%3E%3Cellipse cx='150' cy='62' rx='84' ry='60'/%3E%3Cellipse cx='222' cy='95' rx='66' ry='62'/%3E%3Cellipse cx='70' cy='150' rx='58' ry='60'/%3E%3Cellipse cx='230' cy='150' rx='58' ry='60'/%3E%3Cellipse cx='110' cy='192' rx='66' ry='56'/%3E%3Cellipse cx='190' cy='192' rx='66' ry='56'/%3E%3Crect x='40' y='80' width='220' height='130' rx='55'/%3E%3C/g%3E%3C/svg%3E\")";
+// Decorative floating sparkles scattered on the colored page around the card.
+const SPARKLES = [
+  { top: '10%', left: '12%', size: '1.1rem', delay: '0s' },
+  { top: '16%', left: '82%', size: '0.8rem', delay: '0.8s' },
+  { top: '34%', left: '6%', size: '0.7rem', delay: '1.6s' },
+  { top: '70%', left: '88%', size: '1rem', delay: '0.4s' },
+  { top: '82%', left: '14%', size: '0.85rem', delay: '1.2s' },
+  { top: '88%', left: '70%', size: '0.7rem', delay: '2s' },
+];
 
 export function StoryTextPage({ pageNumber, text, childName }: StoryTextPageProps) {
   const pageColor = PAGE_COLORS[Math.floor(pageNumber / 2) % PAGE_COLORS.length];
@@ -26,11 +32,35 @@ export function StoryTextPage({ pageNumber, text, childName }: StoryTextPageProp
       aria-label={`صفحة النص ${pageNumber}`}
       style={{ ['--page-color' as any]: pageColor }}
     >
+      {/* Twinkling sparkles on the colored page */}
+      {SPARKLES.map((s, i) => (
+        <span
+          key={i}
+          className="stp-sparkle"
+          aria-hidden="true"
+          style={{ top: s.top, left: s.left, fontSize: s.size, animationDelay: s.delay }}
+        >
+          ✦
+        </span>
+      ))}
+
       {/* Page number badge */}
       <span className="stp-badge">{pageNumber}</span>
 
-      {/* Cloud text bubble */}
-      <div className="stp-cloud" aria-label={childName}>
+      {/* ── Magic-lantern story card ── */}
+      <div className="stp-card" aria-label={childName}>
+        {/* Glowing lantern emblem hugging the top edge */}
+        <div className="stp-lantern" aria-hidden="true">🏮</div>
+
+        {/* Decorative corner flourishes */}
+        <span className="stp-corner stp-corner--tl" aria-hidden="true">✦</span>
+        <span className="stp-corner stp-corner--tr" aria-hidden="true">✦</span>
+        <span className="stp-corner stp-corner--bl" aria-hidden="true">✦</span>
+        <span className="stp-corner stp-corner--br" aria-hidden="true">✦</span>
+
+        {/* Small gold divider under the lantern */}
+        <div className="stp-divider" aria-hidden="true" />
+
         <div className="stp-content">
           <p className="stp-text">{text}</p>
         </div>
@@ -39,33 +69,104 @@ export function StoryTextPage({ pageNumber, text, childName }: StoryTextPageProp
       <style>{`
         .story-text-page {
           background:
-            radial-gradient(120% 90% at 50% 0%, rgba(255,255,255,0.18) 0%, transparent 55%),
+            radial-gradient(130% 100% at 50% -10%, rgba(255,255,255,0.28) 0%, transparent 55%),
+            radial-gradient(80% 60% at 50% 115%, rgba(0,0,0,0.18) 0%, transparent 60%),
             var(--page-color, #F2607A);
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 2.5rem 2rem;
+          padding: 2.8rem 2rem;
           min-height: 480px;
           position: relative;
           overflow: hidden;
           text-align: center;
         }
 
-        /* Cloud bubble */
-        .stp-cloud {
+        /* Sparkles */
+        .stp-sparkle {
+          position: absolute;
+          color: rgba(255,255,255,0.85);
+          text-shadow: 0 0 8px rgba(255,255,255,0.7);
+          z-index: 1;
+          animation: stp-twinkle 3s ease-in-out infinite;
+          pointer-events: none;
+        }
+
+        /* ── Story card ── */
+        .stp-card {
           position: relative;
           width: 100%;
-          max-width: 440px;
-          background-image: ${CLOUD_BG};
-          background-size: 100% 100%;
-          background-repeat: no-repeat;
-          filter: drop-shadow(0 14px 28px rgba(0,0,0,0.25));
+          max-width: 430px;
+          background:
+            radial-gradient(120% 90% at 50% 0%, #fffdf8 0%, #fdf4dd 70%, #f8ead0 100%);
+          border-radius: 30px;
+          padding: 3.4rem 2.4rem 2.6rem;
+          box-shadow:
+            0 22px 48px rgba(0,0,0,0.28),
+            0 0 0 2px rgba(255,255,255,0.6) inset;
+          z-index: 2;
+          animation: stp-float 6s ease-in-out infinite, stp-card-in 0.6s ease-out both;
+        }
+        /* Dashed gold inner frame */
+        .stp-card::before {
+          content: '';
+          position: absolute;
+          inset: 12px;
+          border: 2px dashed rgba(201,150,40,0.55);
+          border-radius: 20px;
+          pointer-events: none;
+        }
+        /* Soft gold outer halo */
+        .stp-card::after {
+          content: '';
+          position: absolute;
+          inset: -6px;
+          border-radius: 36px;
+          background: linear-gradient(135deg, rgba(212,169,55,0.5), rgba(255,225,150,0.15), rgba(212,169,55,0.5));
+          z-index: -1;
+          filter: blur(8px);
+        }
+
+        /* Lantern emblem */
+        .stp-lantern {
+          position: absolute;
+          top: -26px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 54px;
+          height: 54px;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 5.5rem 3.2rem;
-          animation: stp-float 6s ease-in-out infinite;
+          font-size: 1.7rem;
+          border-radius: 50%;
+          background: radial-gradient(circle at 50% 35%, #fff6da, #f3d98f 70%, #d4a937);
+          box-shadow: 0 0 18px rgba(212,169,55,0.85), 0 6px 14px rgba(0,0,0,0.25);
+          border: 2px solid #fff;
+          z-index: 3;
+          animation: stp-glow 3.5s ease-in-out infinite;
+        }
+
+        /* Corner flourishes */
+        .stp-corner {
+          position: absolute;
+          color: rgba(201,150,40,0.8);
+          font-size: 0.85rem;
+          z-index: 3;
+        }
+        .stp-corner--tl { top: 18px; left: 22px; }
+        .stp-corner--tr { top: 18px; right: 22px; }
+        .stp-corner--bl { bottom: 18px; left: 22px; }
+        .stp-corner--br { bottom: 18px; right: 22px; }
+
+        /* Divider */
+        .stp-divider {
+          width: 70px;
+          height: 3px;
+          margin: 0 auto 1rem;
+          border-radius: 999px;
+          background: linear-gradient(90deg, transparent, #d4a937, transparent);
         }
 
         /* Page badge */
@@ -73,49 +174,50 @@ export function StoryTextPage({ pageNumber, text, childName }: StoryTextPageProp
           position: absolute;
           bottom: 14px;
           left: 18px;
-          background: rgba(255,255,255,0.85);
-          color: #333;
-          font-size: 0.68rem;
+          background: linear-gradient(135deg, #fff6da, #f3d98f);
+          color: #6b4a00;
+          font-size: 0.7rem;
           font-weight: 800;
-          padding: 3px 10px;
+          padding: 3px 11px;
           border-radius: 999px;
-          border: 1px solid rgba(212,169,55,0.3);
+          border: 1px solid rgba(255,255,255,0.7);
+          box-shadow: 0 2px 6px rgba(0,0,0,0.18);
           z-index: 5;
         }
 
-        /* Content inside the cloud */
+        /* Content */
         .stp-content {
           position: relative;
           z-index: 1;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 0.7rem;
           width: 100%;
-          max-width: 68%;
-          animation: stp-text-in 0.5s ease-out both;
         }
 
         .stp-text {
-          font-size: clamp(0.9rem, 2.5vw, 1.2rem);
-          line-height: 1.9;
-          color: #2b2b2b;
+          font-size: clamp(0.95rem, 2.6vw, 1.22rem);
+          line-height: 2;
+          color: #4a3206;
           font-weight: 700;
           direction: rtl;
           margin: 0;
+          text-shadow: 0 1px 0 rgba(255,255,255,0.6);
         }
 
         /* Animations */
         @keyframes stp-float {
-          0%, 100% { transform: translateY(0) rotate(-0.8deg); }
-          50%       { transform: translateY(-6px) rotate(0.8deg); }
+          0%, 100% { transform: translateY(0) rotate(-0.6deg); }
+          50%       { transform: translateY(-7px) rotate(0.6deg); }
         }
-
-        @keyframes stp-text-in {
-          from { opacity: 0; transform: translateY(8px); }
-          to   { opacity: 1; transform: translateY(0);   }
+        @keyframes stp-card-in {
+          from { opacity: 0; transform: translateY(14px) scale(0.97); }
+          to   { opacity: 1; transform: translateY(0) scale(1);       }
         }
-
+        @keyframes stp-glow {
+          0%, 100% { box-shadow: 0 0 14px rgba(212,169,55,0.7), 0 6px 14px rgba(0,0,0,0.25); }
+          50%       { box-shadow: 0 0 26px rgba(212,169,55,1), 0 6px 14px rgba(0,0,0,0.25); }
+        }
         @keyframes stp-twinkle {
           0%, 100% { opacity: 0.3; transform: scale(0.8); }
           50%       { opacity: 1;   transform: scale(1.2); }

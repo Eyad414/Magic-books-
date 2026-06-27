@@ -1,6 +1,7 @@
 import type { TemplatePage } from '../builder';
 
 import { spaceStory } from './space';
+import { zooStory } from './zoo';
 
 // 1. You can write each story as a separate array
 const adventureStory: TemplatePage[] = [
@@ -48,6 +49,7 @@ const schoolStory: TemplatePage[] = [
 // This way, you can easily fetch the correct story by its theme ID!
 export const STORY_TEMPLATES: Record<string, TemplatePage[]> = {
   "adventure": adventureStory,
+  "zoo_adventure": zooStory,
   "space": spaceStory,
   "ocean": oceanStory,
   "school_hero": schoolStory,

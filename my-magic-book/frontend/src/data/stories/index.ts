@@ -55,9 +55,15 @@ export const STORIES: StoryDefinition[] = [
   // friendshipStory,
 ].sort((a, b) => a.order - b.order);
 
-/** Helper: look up a story by its id */
+/** Helper: look up a story by its id.
+ *  Style variants (e.g. "space_real", "space_cartoon") reuse their base
+ *  story's text/title; only the generated illustrations differ (held in the
+ *  matching admin theme). So "space_real" falls back to the "space" story. */
 export function findStory(id: string): StoryDefinition | undefined {
-  return STORIES.find((s) => s.id === id);
+  const direct = STORIES.find((s) => s.id === id);
+  if (direct) return direct;
+  const base = id.replace(/_(real|photoreal|cartoon|pr|hd)$/, '');
+  return STORIES.find((s) => s.id === base);
 }
 
 export type { StoryDefinition };

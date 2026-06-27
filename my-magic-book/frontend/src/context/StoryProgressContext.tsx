@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 
 export interface ChildDetails {
   childName: string;
+  /** The child's name in the other script (auto-transliterated, parent-correctable). */
+  childNameAlt?: string;
   childAge: string;
   childGender: 'male' | 'female';
   childPhotoUrl?: string;

@@ -7,6 +7,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import StoryBook from '../components/book/StoryBook';
+import ColoringBookView from '../components/book/ColoringBookView';
+import { localizeName } from '../utils/translit';
 import { adminApi } from '../api/adminApi';
 import { storyApi } from '../api/storyApi';
 import { useAuth } from '../context/AuthContext';
@@ -34,7 +36,7 @@ export default function StoryBookPage() {
   }, [lngParam, i18n]);
 
   useEffect(() => {
-    if (storyId && storyId !== 'zoo_adventure') {
+    if (storyId) {
       fetchStory();
     } else {
       setIsLoading(false);
@@ -50,7 +52,13 @@ export default function StoryBookPage() {
         ]);
         if (storiesRes.success) {
           const found = storiesRes.stories.find((s: any) => s._id === storyId);
-          if (found) setStoryData(found);
+          if (found) {
+            setStoryData(found);
+            // A real customer story may carry its own personalized illustrations.
+            if (found.generatedImages?.length) setGeneratedImages(found.generatedImages);
+            if (found.generatedPortrait) setGeneratedPortrait(found.generatedPortrait);
+            if (found.generatedCover) setGeneratedCover(found.generatedCover);
+          }
         }
         if (settingsRes.success) {
           const matchedTheme = settingsRes.settings.themes.find((t: any) => t.id === storyId);
@@ -71,8 +79,15 @@ export default function StoryBookPage() {
         const res = await storyApi.getMyStories();
         if (res.success) {
           const found = res.stories.find((s: any) => s._id === storyId);
-          if (found) setStoryData(found);
-          else toast.error('لم يتم العثور على القصة في قاعدة البيانات');
+          if (found) {
+            setStoryData(found);
+            // Customer's personalized illustrations (generated after payment).
+            if (found.generatedImages?.length) setGeneratedImages(found.generatedImages);
+            if (found.generatedPortrait) setGeneratedPortrait(found.generatedPortrait);
+            if (found.generatedCover) setGeneratedCover(found.generatedCover);
+          } else {
+            toast.error('لم يتم العثور على القصة في قاعدة البيانات');
+          }
         }
       }
     } catch (err) {
@@ -93,6 +108,21 @@ export default function StoryBookPage() {
 
   if (isLoading) return <div className="min-h-screen bg-[#03060e] flex items-center justify-center text-gold-500 font-arabic">جاري تحميل القصة...</div>;
 
+  // Coloring books render as a coloring layout (cover + line-art pages + back),
+  // not as the 34-page story book.
+  if (storyData?.bookPackage === 'coloring') {
+    const placeMap: Record<string, string> = { zoo_coloring: 'حديقة الحيوانات', space_coloring: 'الفضاء', school_coloring: 'المدرسة' };
+    return (
+      <ColoringBookView
+        childName={localizeName(storyData.childName || 'طفلك', i18n.language)}
+        place={placeMap[storyData.theme] || ''}
+        cover={toDisplayUrl(generatedCover)}
+        backCover={toDisplayUrl(generatedPortrait)}
+        pages={generatedImages.map(toDisplayUrl)}
+      />
+    );
+  }
+
   // The theme id used for both the static story lookup and the generate endpoint.
   const themeId = storyData?.theme || storyId || 'zoo_adventure';
 
@@ -106,7 +136,7 @@ export default function StoryBookPage() {
   // preview (no real customer) we show a sample real photo from the bucket.
   const realPhoto =
     toDisplayUrl(storyData?.childPhotoUrl) ||
-    toDisplayUrl('magic-fanoose/child-photos/0a0dfa24-99cd-434e-95e7-33b758439ff4.jpeg');
+    toDisplayUrl('magic-fanoose/child-photos/d814d243-9300-489d-b275-29144c91ad19.jpeg');
 
   return (
     <div className="min-h-screen bg-[#03060e] pt-20 pb-20 px-2 sm:px-4">

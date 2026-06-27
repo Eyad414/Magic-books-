@@ -34,12 +34,20 @@ export interface IStory extends Document {
   // Generated Content (mode === 'ai')
   generatedText?: string;
   coverImageUrl?: string;
+  // Personalized illustrations — produced AFTER payment by BookBuilder using the
+  // theme's scene template + this child's photo. GCS object paths.
+  generatedImages?: string[];
+  generatedCover?: string;
+  generatedPortrait?: string;
   status: StoryStatus;
   // Step 3: Customization
   coverColor?: string;
   fontStyle?: string;
   dedicationMessage?: string;
   addons?: string[];
+  // Chosen book package id (e.g. 'color' = full-color book, 'coloring' = line-art
+  // coloring book the child fills in). Decides the generation style after payment.
+  bookPackage?: string;
   // Pricing
   basePrice: number;
   totalPrice: number;
@@ -63,6 +71,9 @@ const StorySchema = new Schema<IStory>(
     templatePages: { type: Schema.Types.Mixed, default: undefined },
     generatedText: { type: String },
     coverImageUrl: { type: String },
+    generatedImages: { type: [String], default: undefined },
+    generatedCover: { type: String, default: undefined },
+    generatedPortrait: { type: String, default: undefined },
     status: {
       type: String,
       enum: ['draft', 'generating', 'ready', 'ordered'],
@@ -72,6 +83,7 @@ const StorySchema = new Schema<IStory>(
     fontStyle: { type: String, default: 'noto-kufi' },
     dedicationMessage: { type: String },
     addons: [{ type: String }],
+    bookPackage: { type: String, default: 'color' },
     basePrice: { type: Number, default: 99 },
     totalPrice: { type: Number, default: 99 },
   },

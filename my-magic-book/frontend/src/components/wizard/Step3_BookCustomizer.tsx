@@ -28,7 +28,7 @@ export default function Step3_BookCustomizer({ onNext, onPrev }: Props) { // To 
   const packages = useMemo(() => {
     const DEFAULT_PACKAGES = [
       { id: 'color', label: t('step3.pkg_color'), price: 60, emoji: '🌈', desc: t('step3.pkg_color_desc') },
-      { id: 'coloring', label: t('step3.pkg_coloring'), price: 40, emoji: '🖍️', desc: t('step3.pkg_coloring_desc') },
+      { id: 'coloring', label: t('step3.pkg_coloring'), price: 50, emoji: '🖍️', desc: t('step3.pkg_coloring_desc') },
       { id: 'audio', label: t('step3.pkg_audio'), price: 20, emoji: '🎧', desc: t('step3.pkg_audio_desc') },
       { id: 'ebook', label: t('step3.pkg_ebook'), price: 20, emoji: '📱', desc: t('step3.pkg_ebook_desc') },
       { id: 'pro', label: t('step3.pkg_pro'), price: 120, originalPrice: 140, emoji: '✨', desc: t('step3.pkg_pro_desc') },

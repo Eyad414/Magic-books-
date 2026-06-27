@@ -13,8 +13,11 @@ import Register from './pages/Register';
 
 import AdminDashboard from './pages/AdminDashboard';
 import StoryBookPage from './pages/StoryBookPage';
+import ColoringBookPage from './pages/ColoringBookPage';
+import OrderSuccess from './pages/OrderSuccess';
 import AccessibilityWidget from './components/common/AccessibilityWidget';
 import AdminBookGuard from './components/common/AdminBookGuard';
+import RequireAuth from './components/common/RequireAuth';
 
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -62,9 +65,13 @@ export default function App() {
           <Route path="contact" element={<ContactUs />} />
           <Route path="policy" element={<Policy />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="order/success" element={<OrderSuccess />} />
           <Route path="admin" element={<AdminDashboard />} />
           <Route path="book" element={<AdminBookGuard><StoryBookPage /></AdminBookGuard>} />
-          <Route path="book/:storyId" element={<AdminBookGuard><StoryBookPage /></AdminBookGuard>} />
+          {/* Customers can view their OWN finished book (story or coloring).
+              Privacy is enforced server-side: the page loads via getMyStories. */}
+          <Route path="book/:storyId" element={<RequireAuth><StoryBookPage /></RequireAuth>} />
+          <Route path="coloring/:themeId" element={<AdminBookGuard><ColoringBookPage /></AdminBookGuard>} />
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

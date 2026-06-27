@@ -1,6 +1,8 @@
+// Load .env FIRST — before any import whose module-level code reads process.env
+// (e.g. the Stripe client in orderController is created at import time).
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { connectDB } from './config/db';
 
 // Routes
@@ -12,8 +14,6 @@ import adminRoutes from './routes/adminRoutes';
 import userRoutes from './routes/userRoutes';
 import publicRoutes from './routes/publicRoutes';
 import uploadRoutes from './routes/uploadRoutes';
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5001;

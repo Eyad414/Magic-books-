@@ -320,9 +320,25 @@ export default function Dashboard() {
                           {new Date(order.createdAt).toLocaleDateString()} · {order.totalPrice} ₪
                         </p>
                       </div>
+                      {/* Book build status (after payment) */}
+                      {order.paymentStatus === 'paid' && order.illustrationsStatus && order.illustrationsStatus !== 'ready' && (
+                        <div className="self-start sm:self-center px-3 py-1 rounded-lg text-xs font-arabic font-bold bg-magic-500/20 text-magic-300 inline-flex items-center gap-1.5">
+                          {order.illustrationsStatus !== 'failed' && <span className="w-2.5 h-2.5 rounded-full border-2 border-magic-300 border-t-transparent animate-spin" />}
+                          {order.illustrationsStatus === 'failed' ? t('dashboard.order_failed', 'مشكلة في الإنشاء') : t('dashboard.order_preparing', 'قيد التحضير...')}
+                        </div>
+                      )}
                       <div className={`self-start sm:self-center px-3 py-1 rounded-lg text-xs font-arabic font-bold ${order.paymentStatus === 'paid' ? 'bg-green-500/20 text-green-400' : 'bg-gold-500/20 text-gold-500'}`}>
                         {order.paymentStatus === 'paid' ? t('dashboard.paid') : t('dashboard.pending')}
                       </div>
+                      {/* View the finished book */}
+                      {order.illustrationsStatus === 'ready' && (typeof order.storyId === 'object' ? order.storyId?._id : order.storyId) && (
+                        <Link
+                          to={`/book/${typeof order.storyId === 'object' ? order.storyId?._id : order.storyId}`}
+                          className="self-start sm:self-center px-4 py-2 rounded-xl bg-gold-500 text-[#0a1628] font-arabic font-bold text-sm hover:bg-gold-400 transition whitespace-nowrap"
+                        >
+                          📖 {t('dashboard.view_book', 'تصفّح الكتاب')}
+                        </Link>
+                      )}
                     </div>
                   ))}
                 </div>

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import Stripe from 'stripe';
 import Order from '../models/Order';
 import Story from '../models/Story';
+import SiteSettings from '../models/SiteSettings';
 import { buildBookForOrder } from '../services/BookBuilder';
 
 const stripe = process.env.STRIPE_SECRET_KEY
@@ -11,8 +12,8 @@ const stripe = process.env.STRIPE_SECRET_KEY
 // @route POST /api/orders/checkout
 export const createCheckout = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = (req as any).user._id;
-    const { storyId, shippingAddress } = req.body;
+    const user = (req as any).user;
+    const { storyId, shippingAddress, paymentMethod, bookPackage } = req.body;
 
     const story = await Story.findById(storyId);
     if (!story) {
@@ -20,27 +21,74 @@ export const createCheckout = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    // Create order (Stripe integration will be added in Phase 2)
+    // Resolve the price SERVER-SIDE from the chosen package so the client can't
+    // tamper with it. Persist the package on the story — it decides the
+    // generation style (color book vs line-art coloring book) after payment.
+    let totalPrice = story.totalPrice || 99;
+    if (bookPackage) {
+      const settings = await SiteSettings.findOne();
+      const pkg = (settings?.bookPackages || []).find((p: any) => p.id === bookPackage);
+      if (pkg) totalPrice = pkg.price;
+      story.bookPackage = bookPackage;
+      story.totalPrice = totalPrice;
+      await story.save();
+    }
+
     const order = await Order.create({
-      userId,
+      userId: user._id,
       storyId,
       shippingAddress,
-      totalPrice: story.totalPrice || 99,
+      totalPrice,
       currency: 'SAR',
       paymentStatus: 'pending',
     });
 
-    // TODO Phase 2: Create Stripe checkout session
-    // const session = await createStripeSession(order, story);
-    // res.json({ success: true, checkoutUrl: session.url, order });
+    // Cash on delivery / self-pickup — no online payment. The order is placed
+    // as pending and handled offline; generation triggers once an admin (or the
+    // delivery confirmation) marks it paid via /admin/orders/:id/build.
+    if (paymentMethod === 'cash') {
+      res.json({ success: true, order, checkoutUrl: null, paymentMethod: 'cash' });
+      return;
+    }
 
-    res.json({
-      success: true,
-      order,
-      message: 'تم إنشاء الطلب — سيتم ربط الدفع في المرحلة القادمة',
-      checkoutUrl: null,
+    if (!stripe) {
+      res.status(503).json({ success: false, message: 'الدفع غير مهيأ حالياً' });
+      return;
+    }
+
+    const frontend = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      payment_method_types: ['card'],
+      customer_email: user.email,
+      line_items: [
+        {
+          price_data: {
+            currency: 'sar',
+            // SAR is a 2-decimal currency → amount is in halalas.
+            unit_amount: Math.round(totalPrice * 100),
+            product_data: {
+              name: `كتاب ${story.childName} — ${story.theme}`,
+              description: 'كتاب أطفال مخصّص من الفانوس السحري',
+            },
+          },
+          quantity: 1,
+        },
+      ],
+      // orderId on BOTH the session and the payment intent so either webhook
+      // event (checkout.session.completed / payment_intent.succeeded) resolves it.
+      metadata: { orderId: String(order._id) },
+      payment_intent_data: { metadata: { orderId: String(order._id) } },
+      success_url: `${frontend}/order/success?orderId=${order._id}`,
+      cancel_url: `${frontend}/create?canceled=1`,
     });
-  } catch (error) {
+
+    order.stripeSessionId = session.id;
+    await order.save();
+
+    res.json({ success: true, order, checkoutUrl: session.url });
+  } catch (error: any) {
+    console.error('[checkout] failed:', error?.message || error);
     res.status(500).json({ success: false, message: 'فشل في إنشاء الطلب' });
   }
 };

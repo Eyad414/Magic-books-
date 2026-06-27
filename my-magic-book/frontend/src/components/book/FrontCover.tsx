@@ -8,6 +8,8 @@
 // `coverImage` should be the generated full-scene cover when available; we fall
 // back to the kid portrait, then the theme background, then an avatar.
 
+import { useTranslation } from 'react-i18next';
+
 interface FrontCoverProps {
   childName: string;
   storyTitle: string;   // e.g. "مغامرة سارة في حديقة الحيوانات"
@@ -16,6 +18,7 @@ interface FrontCoverProps {
 }
 
 export default function FrontCover({ childName, storyTitle, coverImage, childPhoto }: FrontCoverProps) {
+  const { t } = useTranslation();
   const fallbackPhoto = `https://ui-avatars.com/api/?name=${encodeURIComponent(childName)}&background=D4A937&color=0a1628&size=600&bold=true&font-size=0.4`;
   // Prefer the generated kid image; otherwise the theme art; otherwise avatar.
   const heroImage = childPhoto || coverImage || fallbackPhoto;
@@ -42,7 +45,7 @@ export default function FrontCover({ childName, storyTitle, coverImage, childPho
           <img src="/logo.png" alt="" className="cover-brand-logo" />
           <div className="cover-brand-text">
             <span className="cover-brand-name">Magic Fanoose</span>
-            <span className="cover-brand-tag">قصة بتصميم شخصي من Magic Fanoose</span>
+            <span className="cover-brand-tag">{t('storybook.cover_brand_tag', 'قصة بتصميم شخصي من Magic Fanoose')}</span>
           </div>
         </div>
       </div>

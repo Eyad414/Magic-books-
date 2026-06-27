@@ -66,6 +66,11 @@ export function pdfFolderPath(...parts: string[]): string {
   return [PDF_FOLDER, ...parts].join('/');
 }
 
+/** Server-side copy of one bucket object to another path (no download). */
+export async function copyObject(srcPath: string, destPath: string): Promise<void> {
+  await bucket.file(srcPath).copy(bucket.file(destPath));
+}
+
 /**
  * Streams a private-bucket object back to an Express response. Lets the
  * browser display images from a bucket that blocks public access — the
@@ -76,7 +81,8 @@ export function pdfFolderPath(...parts: string[]): string {
  */
 export async function streamObject(
   objectPath: string,
-  res: import('express').Response
+  res: import('express').Response,
+  req?: import('express').Request
 ): Promise<void> {
   const file = bucket.file(objectPath);
   const [exists] = await file.exists();
@@ -86,7 +92,20 @@ export async function streamObject(
   }
   const [meta] = await file.getMetadata();
   if (meta.contentType) res.setHeader('Content-Type', meta.contentType);
-  res.setHeader('Cache-Control', 'public, max-age=3600');
+
+  // The object's GCS generation changes every time it's overwritten (e.g. when
+  // a cover/portrait is regenerated). Use it as an ETag and ask browsers to
+  // revalidate, so regenerated images appear immediately instead of being
+  // served stale from a long max-age cache, while unchanged images return 304.
+  const etag = meta.etag || (meta.generation ? `"${meta.generation}"` : undefined);
+  if (etag) res.setHeader('ETag', etag);
+  res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+
+  if (etag && req && req.headers['if-none-match'] === etag) {
+    res.status(304).end();
+    return;
+  }
+
   await new Promise<void>((resolve, reject) => {
     file.createReadStream()
       .on('error', reject)

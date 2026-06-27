@@ -26,6 +26,12 @@ export interface IOrder extends Document {
   illustrationsStatus: IllustrationsStatus;
   illustrationsError?: string;
   bookPdfUrl?: string;
+  // Print-ready files for BookPod (wraparound cover + interior) and job tracking.
+  printCoverUrl?: string;
+  printInteriorUrl?: string;
+  printInteriorPages?: number;
+  bookpodJobId?: string;
+  bookpodStatus?: string;
   trackingNumber?: string;
   notes?: string;
   createdAt: Date;
@@ -64,6 +70,11 @@ const OrderSchema = new Schema<IOrder>(
     },
     illustrationsError: { type: String },
     bookPdfUrl: { type: String },
+    printCoverUrl: { type: String },
+    printInteriorUrl: { type: String },
+    printInteriorPages: { type: Number },
+    bookpodJobId: { type: String },
+    bookpodStatus: { type: String },
     trackingNumber: { type: String },
     notes: { type: String },
   },

@@ -28,6 +28,12 @@ export interface ITheme {
   photorealPortrait?: string;
   /** Which style is currently shown: 'cartoon' (3D gen) or 'photoreal' (face-swap). */
   previewStyle?: 'cartoon' | 'photoreal';
+  /** True for coloring-book themes (line-art) — kept separate from story themes in admin. */
+  isColoring?: boolean;
+  /** Admin-typed coloring-book scenes: the 16 page scenes + the colored cover/back scenes. */
+  coloringScenes?: string[];
+  coloringCoverScene?: string;
+  coloringBackCoverScene?: string;
 }
 
 export interface ISiteSettings extends Document {
@@ -61,6 +67,10 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
         photorealCover: { type: String, default: undefined },
         photorealPortrait: { type: String, default: undefined },
         previewStyle: { type: String, default: undefined },
+        isColoring: { type: Boolean, default: false },
+        coloringScenes: { type: [String], default: undefined },
+        coloringCoverScene: { type: String, default: undefined },
+        coloringBackCoverScene: { type: String, default: undefined },
       },
     ],
   },

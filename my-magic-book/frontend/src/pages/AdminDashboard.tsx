@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { adminApi } from '../api/adminApi';
+import { uploadApi } from '../api/uploadApi';
 import { useNavigate, Link } from 'react-router-dom';
 import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2 } from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
@@ -78,6 +79,37 @@ export default function AdminDashboard() {
       } else {
         toast.error(res.message || 'فشل التوليد', { id: toastId });
       }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || 'فشل التوليد', { id: toastId });
+    } finally {
+      setGeneratingThemeId(null);
+    }
+  };
+
+  // Coloring-book generation: per-theme reference photo + the typed scenes.
+  const [coloringFiles, setColoringFiles] = useState<Record<string, File | null>>({});
+
+  const handleGenerateColoring = async (theme: any) => {
+    const scenes = (theme.coloringScenes || []).map((s: string) => (s || '').trim()).filter(Boolean);
+    if (scenes.length < 1) { toast.error(t('admin.coloring_need_scenes', 'اكتب مشاهد الصفحات أولاً')); return; }
+    if (!window.confirm(t('admin.coloring_cost_confirm', 'سيتم توليد ١٨ صورة (~$0.70). هل تريد المتابعة؟'))) return;
+    setGeneratingThemeId(theme.id);
+    const toastId = toast.loading('🎨 ' + t('admin.generating', 'جاري التوليد...'));
+    try {
+      let referencePhoto: string | undefined;
+      const file = coloringFiles[theme.id];
+      if (file) { const up = await uploadApi.childPhoto(file); referencePhoto = up.gcsUri; }
+      const res = await adminApi.generateThemeColoring(theme.id, {
+        coloringScenes: theme.coloringScenes || [],
+        coloringCoverScene: theme.coloringCoverScene,
+        coloringBackCoverScene: theme.coloringBackCoverScene,
+        referencePhoto,
+        childName: theme.label,
+      });
+      if (res.success) {
+        toast.success(`✨ ${res.imageCount ?? ''} (~$${res.estimatedCostUsd ?? '0'})`, { id: toastId });
+        setSettings((prev: any) => ({ ...prev, themes: prev.themes.map((th: any) => th.id === theme.id ? { ...th, generatedCover: res.generatedCover, generatedImages: res.generatedImages, generatedPortrait: res.generatedPortrait } : th) }));
+      } else { toast.error(res.message || 'فشل التوليد', { id: toastId }); }
     } catch (err: any) {
       toast.error(err?.response?.data?.message || err.message || 'فشل التوليد', { id: toastId });
     } finally {
@@ -428,8 +460,15 @@ export default function AdminDashboard() {
             ) : tab === 'stories' ? (
               <div>
                 <h2 className="font-arabic font-bold text-xl text-white mb-6">{t('admin.stories_title')}</h2>
+
+                {/* ── Story books group (kept separate from coloring books) ── */}
+                <h3 className="font-arabic font-bold text-lg text-white mb-1">
+                  📚 {t('admin.story_books_title', 'القصص')}
+                  <span className="text-white/40 text-sm font-normal mr-2">({settings.themes.filter((th: any) => !th.isColoring).length})</span>
+                </h3>
+                <p className="font-arabic text-white/50 text-sm mb-6">{t('admin.story_books_desc', 'قصص كاملة بالنص والصور (٣٤ صفحة)')}</p>
                 <div className="space-y-4">
-                  {settings.themes.map((theme: any, index: number) => (
+                  {settings.themes.map((theme: any, index: number) => theme.isColoring ? null : (
                     <div key={theme.id} className="p-4 bg-white/5 rounded-xl border border-white/10 grid grid-cols-1 sm:grid-cols-4 gap-4 items-center">
                       <div className="sm:col-span-1">
                         <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.name')}</label>
@@ -568,6 +607,87 @@ export default function AdminDashboard() {
                   }} className="text-gold-500 font-arabic text-sm hover:underline block mb-4">{t('admin.add_new_theme')}</button>
                   <MagicButton onClick={() => saveSettings(settings)}>{t('admin.save_themes')}</MagicButton>
                 </div>
+
+                {/* ── Coloring Books — kept SEPARATE from story themes ── */}
+                {settings.themes.some((th: any) => th.isColoring) && (
+                  <div className="mt-12 pt-8 border-t border-white/10">
+                    <h2 className="font-arabic font-bold text-xl text-white mb-1">🖍️ {t('admin.coloring_books_title', 'كتب التلوين')}
+                      <span className="text-white/40 text-sm font-normal mr-2">({settings.themes.filter((th: any) => th.isColoring).length})</span>
+                    </h2>
+                    <p className="font-arabic text-white/50 text-sm mb-6">{t('admin.coloring_books_desc', 'غلاف أمامي + ١٦ صفحة شخصيات + غلاف خلفي')}</p>
+                    <div className="space-y-4">
+                      {settings.themes.map((theme: any, index: number) => !theme.isColoring ? null : (
+                        <div key={theme.id} className="p-4 bg-amber-500/5 rounded-xl border border-amber-500/20 grid grid-cols-1 sm:grid-cols-4 gap-4 items-center">
+                          <div className="sm:col-span-1">
+                            <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.name')}</label>
+                            <input type="text" className="magic-input w-full" value={theme.label} onChange={(e) => { const nt = [...settings.themes]; nt[index].label = e.target.value; setSettings({ ...settings, themes: nt }); }} />
+                          </div>
+                          <div className="sm:col-span-1">
+                            <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.emoji_icon')}</label>
+                            <input type="text" className="magic-input w-full text-center" value={theme.emoji} onChange={(e) => { const nt = [...settings.themes]; nt[index].emoji = e.target.value; setSettings({ ...settings, themes: nt }); }} />
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.description')}</label>
+                            <input type="text" className="magic-input w-full" value={theme.desc} onChange={(e) => { const nt = [...settings.themes]; nt[index].desc = e.target.value; setSettings({ ...settings, themes: nt }); }} />
+                          </div>
+                          {/* Scenes + reference photo for generating this coloring book */}
+                          <div className="sm:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
+                            <div>
+                              <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.coloring_scenes_label', 'مشاهد الصفحات (سطر لكل صفحة — ١٦ سطر)')}</label>
+                              <textarea
+                                rows={5}
+                                dir="auto"
+                                className="magic-input w-full text-sm leading-6"
+                                placeholder={t('admin.coloring_scenes_ph', 'يركب الدراجة\nيبني المكعبات\n...')}
+                                value={(theme.coloringScenes || []).join('\n')}
+                                onChange={(e) => { const nt = [...settings.themes]; nt[index].coloringScenes = e.target.value.split('\n'); setSettings({ ...settings, themes: nt }); }}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <input type="text" className="magic-input w-full text-sm" placeholder={t('admin.coloring_cover_ph', 'مشهد الغلاف الأمامي (مثال: يستكشف الحديقة)')} value={theme.coloringCoverScene || ''} onChange={(e) => { const nt = [...settings.themes]; nt[index].coloringCoverScene = e.target.value; setSettings({ ...settings, themes: nt }); }} />
+                              <input type="text" className="magic-input w-full text-sm" placeholder={t('admin.coloring_back_ph', 'مشهد الغلاف الخلفي (مثال: يلوّح وداعاً)')} value={theme.coloringBackCoverScene || ''} onChange={(e) => { const nt = [...settings.themes]; nt[index].coloringBackCoverScene = e.target.value; setSettings({ ...settings, themes: nt }); }} />
+                              <div>
+                                <label className="block font-arabic text-white/60 text-xs mb-1">{t('admin.coloring_photo_label', 'صورة الطفل (مرجع)')}</label>
+                                <input type="file" accept="image/*" className="text-xs text-white/60 file:mr-3 file:rounded-lg file:border-0 file:bg-amber-500/20 file:text-amber-300 file:px-3 file:py-1" onChange={(e) => setColoringFiles((prev) => ({ ...prev, [theme.id]: e.target.files?.[0] || null }))} />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="sm:col-span-4 flex flex-wrap items-center gap-3 mt-2">
+                            <span className="font-arabic text-xs text-amber-300/80">{t('admin.coloring_pages_count', '{{count}} صفحة · غلاف أمامي وخلفي', { count: theme.generatedImages?.length ?? 0 })}</span>
+                            <button
+                              onClick={() => handleGenerateColoring(theme)}
+                              disabled={generatingThemeId === theme.id}
+                              className="flex items-center gap-2 px-4 py-2 bg-purple-600/80 hover:bg-purple-600 text-white rounded-xl font-arabic text-sm transition-colors disabled:opacity-50"
+                            >
+                              🎨 {generatingThemeId === theme.id ? t('admin.generating', 'جاري التوليد...') : t('admin.generate_coloring', 'توليد كتاب التلوين')}
+                            </button>
+                            <Link
+                              to={`/coloring/${theme.id}?name=${i18n.language === 'en' ? 'Ahmad' : 'إياد'}`}
+                              target="_blank"
+                              className="flex items-center gap-2 px-4 py-2 bg-amber-500/15 hover:bg-amber-500/25 rounded-xl text-amber-300 font-arabic text-sm transition-colors border border-amber-500/30"
+                            >
+                              <Eye className="w-4 h-4" /> {t('admin.view_coloring', 'عرض كتاب التلوين')}
+                            </Link>
+                            <button
+                              onClick={() => deleteTheme(index)}
+                              className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl font-arabic text-sm transition-colors border border-red-500/30"
+                            >
+                              <Trash2 className="w-4 h-4" /> {t('admin.delete_theme', 'حذف')}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <button onClick={() => {
+                      setSettings({
+                        ...settings,
+                        themes: [...settings.themes, { id: 'coloring_' + Date.now(), label: 'كتاب تلوين جديد', emoji: '🖍️', desc: 'كتاب تلوين جديد', ready: false, isColoring: true }]
+                      })
+                    }} className="text-amber-400 font-arabic text-sm hover:underline block mb-4 mt-4">{t('admin.add_new_theme')}</button>
+                    <MagicButton onClick={() => saveSettings(settings)} className="mt-4">{t('admin.save_themes')}</MagicButton>
+                  </div>
+                )}
               </div>
             ) : null}
           </div>

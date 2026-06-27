@@ -5,8 +5,9 @@ import Order from '../models/Order';
 import SiteSettings from '../models/SiteSettings';
 import { buildBookForOrder } from '../services/BookBuilder';
 import { generateIllustration, COST_PER_IMAGE_USD } from '../services/ImageGenerator';
-import { buildIllustrationPrompt, buildPhotorealPrompt } from '../services/promptBuilder';
+import { buildIllustrationPrompt, buildPhotorealPrompt, buildCoverPrompt } from '../services/promptBuilder';
 import { swapFace } from '../services/FaceSwapService';
+import { buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, COLORING_PAGES } from '../services/sceneTemplates';
 
 // The kid photo (already in the bucket) used as the reference face for ADMIN
 // PREVIEW generation only. Real customer orders use the customer's own photo.
@@ -335,14 +336,14 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
       console.warn('[generatePreview] portrait failed:', e.message);
     }
 
-    // Full-scene front cover — the hero kid inside the themed world (Taletoons style).
-    const coverPrompt =
-      `High-quality 3D rendered Pixar / DreamWorks style children's book FRONT COVER. ${childName}, a joyful 5-year-old ` +
-      `with a photorealistic recognizable face that closely matches the reference photo, shown waist-up and centered as the hero, ` +
-      `looking at the viewer with a big happy smile, surrounded by charming friendly ${theme.label} characters and elements, ` +
-      `set in a richly detailed cinematic ${theme.label} environment that fills the entire frame. Rich vibrant saturated colors, ` +
-      `volumetric cinematic lighting, dreamy glow, soft realistic textures, professional CGI render quality, square 1:1. ` +
-      `No text, no title, no watermark.`;
+    // Full-scene front cover — the hero kid inside the themed world (Taletoons
+    // style). Uses concrete per-theme background objects (zoo => animals,
+    // school => classroom/blackboard, space => planets/rocket, etc.).
+    const coverPrompt = buildCoverPrompt({
+      childName,
+      childGender: 'male',
+      theme: themeId,
+    });
     try {
       const cover = await generateIllustration(coverPrompt, PREVIEW_REFERENCE_PHOTO, {
         storyId: `theme_${themeId}`,
@@ -383,6 +384,81 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
 //        for the theme [one-time], (2) face-swap the reference photo onto each +
 //        cover + portrait, (3) store the swapped results as the displayed images.
 //        Templates are cached so re-runs only re-swap (cheap/free).
+/**
+ * Generate a COLORING-BOOK preview for a theme: a colored front cover + 16
+ * line-art pages + a colored back cover, using the admin-typed scenes and an
+ * uploaded reference photo. Only runs when the admin clicks "Generate" (paid).
+ */
+export const generateColoringPreview = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { themeId } = req.params;
+    const settings = await SiteSettings.findOne();
+    if (!settings) { res.status(404).json({ success: false, message: 'settings not found' }); return; }
+    const theme: any = settings.themes.find((t: any) => t.id === themeId);
+    if (!theme) { res.status(404).json({ success: false, message: `theme ${themeId} not found` }); return; }
+
+    // Scenes: prefer the ones sent in the request (just typed), else saved ones.
+    const scenes: string[] = ((req.body?.coloringScenes && req.body.coloringScenes.length)
+      ? req.body.coloringScenes : theme.coloringScenes) || [];
+    const cleanScenes = scenes.map((s: string) => (s || '').trim()).filter(Boolean);
+    if (cleanScenes.length < 1) {
+      res.status(400).json({ success: false, message: 'Add the page scenes before generating.' });
+      return;
+    }
+    const coverScene: string = req.body?.coloringCoverScene || theme.coloringCoverScene || `exploring ${theme.label}`;
+    const backScene: string = req.body?.coloringBackCoverScene || theme.coloringBackCoverScene || 'waving goodbye happily';
+    const referencePhoto: string = req.body?.referencePhoto || PREVIEW_REFERENCE_PHOTO;
+    const childName: string = req.body?.childName || theme.label || 'الطفل';
+    const childGender: 'male' | 'female' = req.body?.childGender === 'female' ? 'female' : 'male';
+
+    // Persist the scenes + mark as coloring so they survive.
+    theme.coloringScenes = scenes;
+    theme.coloringCoverScene = coverScene;
+    theme.coloringBackCoverScene = backScene;
+    theme.isColoring = true;
+
+    // 1) colored front cover
+    const cover = await generateIllustration(
+      buildColoringCoverPrompt(coverScene, childName, childGender),
+      referencePhoto, { storyId: `theme_${themeId}`, pageNumber: 0 });
+
+    // 2) 16 line-art pages
+    const generatedImages: string[] = [];
+    for (let i = 0; i < COLORING_PAGES; i++) {
+      const scene = cleanScenes[i] || cleanScenes[cleanScenes.length - 1];
+      const img = await generateIllustration(
+        buildScenePrompt('page', scene, childName, childGender, { coloring: true }),
+        referencePhoto, { storyId: `theme_${themeId}`, pageNumber: i + 1 });
+      generatedImages.push(img.objectPath);
+    }
+
+    // 3) colored back cover
+    const back = await generateIllustration(
+      buildColoringBackCoverPrompt(backScene, childName, childGender),
+      referencePhoto, { storyId: `theme_${themeId}`, pageNumber: 98 });
+
+    theme.generatedCover = cover.objectPath;
+    theme.generatedImages = generatedImages;
+    theme.generatedPortrait = back.objectPath;
+    settings.markModified('themes');
+    await settings.save();
+
+    const imageCount = generatedImages.length + 2;
+    res.json({
+      success: true,
+      cached: false,
+      imageCount,
+      estimatedCostUsd: Number((imageCount * COST_PER_IMAGE_USD).toFixed(2)),
+      generatedCover: theme.generatedCover,
+      generatedImages: theme.generatedImages,
+      generatedPortrait: theme.generatedPortrait,
+    });
+  } catch (err: any) {
+    console.error('[generateColoringPreview]', err);
+    res.status(500).json({ success: false, message: err.message || 'generation failed' });
+  }
+};
+
 export const generatePhotorealPreview = async (req: Request, res: Response): Promise<void> => {
   try {
     const { themeId } = req.params;

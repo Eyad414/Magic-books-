@@ -5,6 +5,14 @@ import { buildBookHtml, BookData } from './HtmlTemplateBuilder';
 import { generateBookPdf } from './PdfGenerator';
 import { uploadBuffer, pdfFolderPath } from './StorageService';
 import { splitStoryIntoPages, buildIllustrationPrompt } from './promptBuilder';
+import { getSceneTemplate, buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, resolveTokens, COLORING_PAGES } from './sceneTemplates';
+import { printAndSubmitForOrder } from './PrintOrchestrator';
+
+/** Turn a private GCS object path into a backend proxy URL the PDF/web can load. */
+function proxyUrl(objectPath: string): string {
+  const base = process.env.PUBLIC_API_URL || 'http://localhost:5001/api';
+  return `${base}/uploads/image?path=${encodeURIComponent(objectPath)}`;
+}
 
 const ILLUSTRATION_PAGES = 13; // matches the 13 image slots in the printed book
 
@@ -37,37 +45,118 @@ export async function buildBookForOrder(orderId: string): Promise<IOrder> {
   await order.save();
 
   try {
-    // Build the 13 (text, image-prompt) pairs depending on mode.
-    //   - 'template': honor the handwritten pages from the wizard; image prompts
-    //                 come from the author's hand-crafted `prompt` field.
-    //   - 'ai'     : the AI text is split into 13 chunks; each chunk gets a
-    //                 derived prompt from promptBuilder.
-    const pairs = story.mode === 'template' && Array.isArray(story.templatePages) && story.templatePages.length > 0
-      ? extractPairsFromTemplate(story.templatePages, story.childName)
-      : extractPairsFromAi(story);
+    const childPhoto = story.childPhotoUrl || '';
+    const sid = String(story._id);
 
-    // Generate the 13 illustrations, one per pair.
-    const imageUrls: string[] = [];
-    for (let i = 0; i < ILLUSTRATION_PAGES; i++) {
-      const stored = await generateIllustration(pairs[i].imagePrompt, story.childPhotoUrl || '', {
-        storyId: String(story._id),
-        pageNumber: i + 1,
-      });
-      imageUrls.push(stored.signedUrl || stored.gcsUri);
+    // Preferred path: the theme has a reusable SCENE TEMPLATE (the "Baha story"
+    // structure). We re-run its exact scenes/text with THIS customer's photo as
+    // the face reference — same story, swapped kid — in the photoreal style.
+    const template = getSceneTemplate(story.theme);
+    const wantsColoring = story.bookPackage === 'coloring' && !!template?.coloringScenes && !!template?.coloringCoverScene;
+
+    let imageUrls: string[];
+    let pageTexts: string[];
+    let coverImageUrl: string;
+    let storyTitle: string;
+    let isColoringBook = false;
+
+    if (wantsColoring) {
+      // COLORING BOOK: one full-color creative cover + 16 line-art pages (no text).
+      isColoringBook = true;
+      const scenes = template!.coloringScenes!;
+      const cover = await generateIllustration(
+        buildColoringCoverPrompt(template!.coloringCoverScene!, story.childName, story.childGender),
+        childPhoto, { storyId: sid, pageNumber: 0 }
+      );
+      const objectPaths: string[] = [];
+      for (let i = 0; i < COLORING_PAGES; i++) {
+        const img = await generateIllustration(
+          buildScenePrompt('page', scenes[i], story.childName, story.childGender, { coloring: true }),
+          childPhoto, { storyId: sid, pageNumber: i + 1 }
+        );
+        objectPaths.push(img.objectPath);
+      }
+      // Creative full-color BACK cover (placed after page 16). Stored on
+      // generatedPortrait, which the coloring viewer renders as the back cover.
+      let backCover: string | undefined;
+      if (template!.coloringBackCoverScene) {
+        const back = await generateIllustration(
+          buildColoringBackCoverPrompt(template!.coloringBackCoverScene, story.childName, story.childGender),
+          childPhoto, { storyId: sid, pageNumber: 98 }
+        );
+        backCover = back.objectPath;
+      }
+      story.generatedCover = cover.objectPath;
+      story.generatedImages = objectPaths;
+      story.generatedPortrait = backCover;
+      await story.save();
+
+      imageUrls = objectPaths.map(proxyUrl);
+      pageTexts = objectPaths.map(() => '');
+      coverImageUrl = proxyUrl(cover.objectPath);
+      storyTitle = `${story.childName} — كتاب تلوين`;
+    } else if (template?.pageScenes && template?.pageTexts && template?.coverScene && template?.portraitScene) {
+      // PHOTOREAL story book — same story, this customer's face.
+      const cover = await generateIllustration(
+        buildScenePrompt('cover', template.coverScene, story.childName, story.childGender),
+        childPhoto, { storyId: sid, pageNumber: 0 }
+      );
+      const objectPaths: string[] = [];
+      pageTexts = [];
+      for (let i = 0; i < ILLUSTRATION_PAGES; i++) {
+        const medal = (template.medalPages || []).includes(i + 1);
+        const img = await generateIllustration(
+          buildScenePrompt('page', template.pageScenes[i], story.childName, story.childGender, { medal }),
+          childPhoto, { storyId: sid, pageNumber: i + 1 }
+        );
+        objectPaths.push(img.objectPath);
+        pageTexts.push(resolveTokens(template.pageTexts[i], story.childName, story.childGender));
+      }
+      const portrait = await generateIllustration(
+        buildScenePrompt('portrait', template.portraitScene, story.childName, story.childGender),
+        childPhoto, { storyId: sid, pageNumber: 99 }
+      );
+      story.generatedCover = cover.objectPath;
+      story.generatedImages = objectPaths;
+      story.generatedPortrait = portrait.objectPath;
+      await story.save();
+
+      imageUrls = objectPaths.map(proxyUrl);
+      coverImageUrl = proxyUrl(cover.objectPath);
+      storyTitle = resolveTokens(template.titleAr || `${story.childName}`, story.childName, story.childGender);
+    } else {
+      // Fallback for themes without a scene template (handwritten / AI mode).
+      const pairs = story.mode === 'template' && Array.isArray(story.templatePages) && story.templatePages.length > 0
+        ? extractPairsFromTemplate(story.templatePages, story.childName)
+        : extractPairsFromAi(story);
+
+      const paths: string[] = [];
+      pageTexts = [];
+      for (let i = 0; i < ILLUSTRATION_PAGES; i++) {
+        const stored = await generateIllustration(pairs[i].imagePrompt, childPhoto, { storyId: sid, pageNumber: i + 1 });
+        paths.push(stored.objectPath);
+        pageTexts.push(pairs[i].text);
+      }
+      story.generatedImages = paths;
+      await story.save();
+      imageUrls = paths.map(proxyUrl);
+      coverImageUrl = story.coverImageUrl || imageUrls[0] || '';
+      storyTitle = `${story.childName} ${story.theme}`;
     }
 
-    // Assemble pages alternating text/image like the existing PDF layout.
+    // Assemble pages. A coloring book is image-only (no story text); a story book
+    // alternates text/image.
     const pages: BookData['pages'] = [];
-    for (let i = 0; i < ILLUSTRATION_PAGES; i++) {
-      pages.push({ type: 'text', content: pairs[i].text });
+    for (let i = 0; i < imageUrls.length; i++) {
+      if (!isColoringBook) pages.push({ type: 'text', content: pageTexts[i] });
       pages.push({ type: 'image', imageUrl: imageUrls[i] });
     }
 
     const bookData: BookData = {
       childName: story.childName,
       childPhotoUrl: story.childPhotoUrl || '',
-      storyTitle: `${story.childName} ${story.theme}`,
-      coverImageUrl: story.coverImageUrl || imageUrls[0] || '',
+      storyTitle,
+      coverImageUrl,
       pages,
     };
 
@@ -84,6 +173,26 @@ export async function buildBookForOrder(orderId: string): Promise<IOrder> {
     // Sync the Story too so the user's library shows the finished book.
     story.status = 'ordered';
     await story.save();
+
+    // Build print-ready files (wraparound cover + multiple-of-4 interior) and,
+    // if BookPod is configured, submit the print job. Never fails the build.
+    try {
+      const printResult = await printAndSubmitForOrder(order, story, {
+        isColoring: isColoringBook,
+        title: storyTitle,
+        pageTexts,
+      });
+      order.printCoverUrl = printResult.urls.coverUrl;
+      order.printInteriorUrl = printResult.urls.interiorUrl;
+      order.printInteriorPages = printResult.urls.interiorPages;
+      if (printResult.jobId) {
+        order.bookpodJobId = printResult.jobId;
+        order.bookpodStatus = 'submitted';
+      }
+      await order.save();
+    } catch (printErr: any) {
+      console.warn(`[BookBuilder] print/BookPod step skipped: ${printErr.message}`);
+    }
 
     return order;
   } catch (err: any) {
