@@ -50,15 +50,13 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden flex items-center justify-center transition-transform group-hover:scale-110 drop-shadow-[0_0_12px_rgba(212,169,55,0.65)]">
-              <img src="/logo.png" alt="Magic Fanoose" className="w-full h-full object-contain" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-arabic font-bold text-gold-500 text-lg leading-tight">{t('nav.home_brand')}</span>
-              <span className="text-white/40 text-xs leading-tight">Magic Fanoose</span>
-            </div>
+          {/* Logo — horizontal banner (emblem + Magic Fanoose / الفانوس السحري) */}
+          <Link to="/" className="flex items-center group">
+            <img
+              src="/logo-banner.png"
+              alt="Magic Fanoose — الفانوس السحري"
+              className="h-11 md:h-14 w-auto object-contain transition-transform group-hover:scale-105 drop-shadow-[0_0_10px_rgba(212,169,55,0.4)]"
+            />
           </Link>
 
           {/* Desktop Nav */}
