@@ -7,7 +7,7 @@ const pub = path.join(__dirname, '..', '..', 'frontend', 'public');
 
 (async () => {
   const W = 1320, H = 380;
-  const emblem = fs.readFileSync(path.join(pub, 'ai-logos', 'option-3-clean.png'));
+  const emblem = fs.readFileSync(path.join(pub, 'ai-logos', 'square-clean.png'));
   const emblemB64 = (await sharp(emblem).resize(360, 360).png().toBuffer()).toString('base64');
 
   const svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
