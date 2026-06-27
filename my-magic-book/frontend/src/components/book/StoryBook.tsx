@@ -23,6 +23,7 @@ import BackCover         from './BackCover';
 import { STORIES, findStory } from '../../data/stories';
 import type { StoryDefinition } from '../../data/stories/types';
 import { detectGender, applyGenderTokens, DEMO_NAMES, type Gender } from '../../utils/gender';
+import { localizeName } from '../../utils/translit';
 
 // ── Helper ─────────────────────────────────────────────────────────────────────
 // Substitutes the name AND resolves Arabic gender tokens {masc|fem}.
@@ -99,10 +100,13 @@ export default function StoryBook({
   };
 
   // ── Editable name (demo — remove in production) ────────────────────────────
-  const [childName, setChildName] = useState(initialName);
+  const [typedName, setTypedName] = useState(initialName);
   const [demoGender, setDemoGender] = useState<Gender | undefined>(childGender);
   // Gender: explicit (wizard) wins, then a demo override, then detect from name.
-  const gender: Gender = childGender || demoGender || detectGender(childName);
+  const gender: Gender = childGender || demoGender || detectGender(typedName);
+  // The displayed name follows the site language (Arabic→بهاء, English→Baha,
+  // Hebrew→בהאא). The input keeps whatever the parent typed (typedName).
+  const childName = useMemo(() => localizeName(typedName, i18n.language), [typedName, i18n.language]);
 
   // ── Look up the story ──────────────────────────────────────────────────────
   const story: StoryDefinition = useMemo(
@@ -130,13 +134,6 @@ export default function StoryBook({
     });
   }, [story, childName, gender, t]);
 
-  // ── Pick 3 recommended stories (include current if needed to reach 3) ──────
-  const recommended = useMemo(() => {
-    const others = STORIES.filter((s) => s.id !== story.id);
-    const list = others.length >= 3 ? others : [...others, ...STORIES.filter((s) => s.id === story.id)];
-    return list.slice(0, 3);
-  }, [story]);
-
   // ── Resolve photo & audio ─────────────────────────────────────────────────
   const resolvedPhoto = childPhoto ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(childName)}&background=D4A937&color=0a1628&size=300&bold=true`;
@@ -160,8 +157,8 @@ export default function StoryBook({
               <input
                 id="sb-name-input"
                 type="text"
-                value={childName}
-                onChange={(e) => setChildName(e.target.value || 'الطفل')}
+                value={typedName}
+                onChange={(e) => setTypedName(e.target.value || 'الطفل')}
                 placeholder={t('storybook.placeholder_name', 'اكتب الاسم هنا')}
                 className="sb-name-input"
                 maxLength={30}
@@ -177,8 +174,8 @@ export default function StoryBook({
                 <button
                   key={d.name}
                   type="button"
-                  onClick={() => { setChildName(d.name); setDemoGender(d.gender); }}
-                  className={`sb-demo-chip ${d.gender === 'female' ? 'sb-demo-chip--f' : 'sb-demo-chip--m'} ${childName === d.name ? 'sb-demo-chip--active' : ''}`}
+                  onClick={() => { setTypedName(d.name); setDemoGender(d.gender); }}
+                  className={`sb-demo-chip ${d.gender === 'female' ? 'sb-demo-chip--f' : 'sb-demo-chip--m'} ${typedName === d.name ? 'sb-demo-chip--active' : ''}`}
                 >
                   {d.gender === 'female' ? '👧' : '👦'} {d.name}
                 </button>
@@ -228,16 +225,17 @@ export default function StoryBook({
       {/* ══════════════════════ ALL 34 PAGES ═══════════════════════════════════ */}
 
       {/* 1 — Front Cover (prefer the full-scene generated cover) */}
-      <FrontCover childName={childName} storyTitle={storyTitle} coverImage={story.coverImage} childPhoto={realPhoto || coverScene || backCoverPhoto || resolvedPhoto} />
+      {/* Front cover shows the AI avatar/portrait (not the raw real photo) */}
+      <FrontCover childName={childName} storyTitle={storyTitle} coverImage={story.coverImage} childPhoto={coverScene || backCoverPhoto || resolvedPhoto} />
 
       {/* 2 — Inside Title Page */}
       <TitlePage storyTitle={storyTitle} childName={childName} />
 
       {/* 3 — Fanoose Separator */}
-      <FanoosPage label="فانوس البداية" />
+      <FanoosPage label={t('storybook.fanoos_start', 'فانوس البداية')} image="/lantern-start.png" />
 
-      {/* 4 — Dedication */}
-      <DedicationPage childName={childName} childPhoto={resolvedPhoto} dedicationText={dedication} />
+      {/* 4 — Dedication — uses the real uploaded photo (like the back cover), not the AI avatar */}
+      <DedicationPage childName={childName} childPhoto={realPhoto || resolvedPhoto} dedicationText={dedication} />
 
       {/* 5–30 — 26 Story Body Pages */}
       <div className="sb-body-pages">
@@ -258,39 +256,46 @@ export default function StoryBook({
             </div>
           ))
         ) : (
-          story.pages.map((page) => {
-            if (page.type === 'text' && page.text) {
-              // Check if a localized translation exists for this page number
-              const pageKey = `stories.${story.id}.pages.${page.pageNumber}`;
-              const translatedPage = t(pageKey);
-              const activeText = translatedPage && translatedPage !== pageKey ? translatedPage : page.text;
-              
-              return (
-                <StoryTextPage
-                  key={page.pageNumber}
-                  pageNumber={page.pageNumber}
-                  text={personalize(activeText, childName, gender)}
-                  childName={childName}
-                />
-              );
-            }
-            if (page.type === 'image') {
-              return (
-                <StoryImagePage
-                  key={page.pageNumber}
-                  pageNumber={page.pageNumber}
-                  imageSrc={page.imageSrc ?? ''}
-                  imageAlt={personalize(page.imageAlt ?? '', childName, gender)}
-                />
-              );
-            }
-            return null;
-          })
+          (() => {
+            // Track image pages so AI-generated illustrations override the
+            // static template placeholders (1st image page -> generatedImages[0]).
+            let imageIdx = -1;
+            return story.pages.map((page) => {
+              if (page.type === 'text' && page.text) {
+                // Check if a localized translation exists for this page number
+                const pageKey = `stories.${story.id}.pages.${page.pageNumber}`;
+                const translatedPage = t(pageKey);
+                const activeText = translatedPage && translatedPage !== pageKey ? translatedPage : page.text;
+
+                return (
+                  <StoryTextPage
+                    key={page.pageNumber}
+                    pageNumber={page.pageNumber}
+                    text={personalize(activeText, childName, gender)}
+                    childName={childName}
+                  />
+                );
+              }
+              if (page.type === 'image') {
+                imageIdx += 1;
+                return (
+                  <StoryImagePage
+                    key={page.pageNumber}
+                    pageNumber={page.pageNumber}
+                    /* Prefer the AI-generated illustration; fall back to the template image. */
+                    imageSrc={generatedImages[imageIdx] || page.imageSrc || ''}
+                    imageAlt={personalize(page.imageAlt ?? '', childName, gender)}
+                  />
+                );
+              }
+              return null;
+            });
+          })()
         )}
       </div>
 
       {/* 31 — Fanoose Separator */}
-      <FanoosPage label="فانوس النهاية" />
+      <FanoosPage label={t('storybook.fanoos_end', 'فانوس النهاية')} image="/lantern-end.png" />
 
       {/* 32 — Final Story Page */}
       <FinalStoryPage
@@ -306,7 +311,7 @@ export default function StoryBook({
       <CopyrightPage />
 
       {/* 34 — Back Cover (real uploaded photo in the circle, not avatar/portrait) */}
-      <BackCover childName={childName} childPhoto={realPhoto || backCoverPhoto || resolvedPhoto} recommendedStories={recommended} />
+      <BackCover childName={childName} childPhoto={realPhoto || backCoverPhoto || resolvedPhoto} avatarPhoto={coverScene || backCoverPhoto} currentStoryId={story.id} />
 
       {/* ══════════════════════════════════════════════════════════════════════
           STYLES — Screen + Print
