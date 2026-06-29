@@ -52,6 +52,7 @@ export default {
       fontFamily: {
         arabic: ['"Noto Kufi Arabic"', 'sans-serif'],
         sans: ['"Inter"', '"Noto Kufi Arabic"', 'sans-serif'],
+        brand: ['"Cinzel Decorative"', 'Georgia', 'serif'],
       },
       backgroundImage: {
         'magic-gradient': 'linear-gradient(135deg, #0D0F1A 0%, #1B1F5E 50%, #6C3FC5 100%)',
