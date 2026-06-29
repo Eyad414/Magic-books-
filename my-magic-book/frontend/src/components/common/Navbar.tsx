@@ -50,12 +50,12 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo — horizontal banner (emblem + Magic Fanoose / الفانوس السحري) */}
+          {/* Logo */}
           <Link to="/" className="flex items-center group">
             <img
-              src="/logo-banner.png"
-              alt="Magic Fanoose — الفانوس السحري"
-              className="h-11 md:h-14 w-auto object-contain transition-transform group-hover:scale-105 drop-shadow-[0_0_10px_rgba(212,169,55,0.4)]"
+              src="/logo-main.jpg"
+              alt="Magic Fanoose — ماجيك فانوس"
+              className="h-12 md:h-16 w-auto object-contain rounded-xl transition-transform group-hover:scale-105 drop-shadow-[0_0_10px_rgba(212,169,55,0.4)]"
             />
           </Link>
 
