@@ -43,7 +43,7 @@ export default function Home() {
           
           <div className="text-5xl mb-6 relative z-10">✨📖</div>
           <p className="font-arabic font-black text-white text-2xl leading-relaxed relative z-10">
-            "نحن لا نصنع قصصاً فقط، نحن نبني <span className="text-gold-500">ثقة الطفل</span> بنفسه وننمي لديه <span className="text-gold-500">حب القراءة</span>."
+            نحن لا نصنع قصصاً فقط، نحن نبني <span className="text-gold-500">ثقة الطفل</span> بنفسه وننمي لديه <span className="text-gold-500">حب القراءة</span>
           </p>
         </div>
       </div>
