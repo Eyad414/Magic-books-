@@ -50,13 +50,17 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo */}
-          <Link to="/" className="flex items-center group">
+          {/* Logo + name */}
+          <Link to="/" className="flex items-center gap-2.5 group">
             <img
-              src="/logo-main.jpg"
-              alt="Magic Fanoose — ماجيك فانوس"
-              className="h-12 md:h-16 w-auto object-contain rounded-xl transition-transform group-hover:scale-105 drop-shadow-[0_0_10px_rgba(212,169,55,0.4)]"
+              src="/logo.png"
+              alt="Magic Fanoose"
+              className="h-12 md:h-14 w-auto object-contain transition-transform group-hover:scale-105 drop-shadow-[0_0_10px_rgba(212,169,55,0.45)]"
             />
+            <div className="flex flex-col leading-tight">
+              <span className="font-bold text-gold-500 text-lg md:text-xl">Magic Fanoose</span>
+              <span className="font-arabic text-white/45 text-[11px] md:text-xs">ماجيك فانوس</span>
+            </div>
           </Link>
 
           {/* Desktop Nav */}
