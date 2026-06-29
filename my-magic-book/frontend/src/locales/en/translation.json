@@ -807,5 +807,31 @@
         "2": "How can you also be a hero in your school?"
       }
     }
+  },
+  "order_success": {
+    "problem_title": "Something went wrong",
+    "paid_title": "Payment successful!",
+    "failed_desc": "We hit a problem creating the book. Don't worry — our team will reach out, and you won't be charged anything extra.",
+    "ready_desc": "Your child's magical book is ready! 🪄",
+    "preparing_desc": "Thank you ❤️ We're now creating your child's personalized AI book — it takes a few minutes.",
+    "pill_ready": "Book ready ✨",
+    "pill_generating": "Illustrating...",
+    "pill_preparing": "Preparing...",
+    "view_book": "📖 Open your child's book",
+    "go_dashboard": "Go to my stories & orders",
+    "order_no": "Order no: {{id}}"
+  },
+  "a11y": {
+    "title": "Accessibility",
+    "on": "On",
+    "off": "Off",
+    "font_size": "Text size",
+    "normal": "Normal",
+    "large": "Large",
+    "xlarge": "Extra large",
+    "contrast": "High contrast",
+    "grayscale": "Grayscale",
+    "highlight_links": "Highlight links",
+    "reset": "Reset all"
   }
 }

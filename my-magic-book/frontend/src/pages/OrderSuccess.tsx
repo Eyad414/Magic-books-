@@ -13,7 +13,7 @@ type OrderState = {
 export default function OrderSuccess() {
   const [params] = useSearchParams();
   const orderId = params.get('orderId');
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [order, setOrder] = useState<OrderState | null>(null);
 
   // Poll the order so the customer sees payment → "preparing" → "ready" live.
@@ -43,15 +43,15 @@ export default function OrderSuccess() {
         <div className="text-6xl">{failed ? '⚠️' : ready ? '🎉' : '✅'}</div>
 
         <h1 className="font-arabic font-black text-2xl text-white">
-          {failed ? 'حدثت مشكلة' : 'تم الدفع بنجاح!'}
+          {failed ? t('order_success.problem_title', 'حدثت مشكلة') : t('order_success.paid_title', 'تم الدفع بنجاح!')}
         </h1>
 
         <p className="font-arabic text-white/70 leading-relaxed">
           {failed
-            ? 'واجهنا مشكلة أثناء إنشاء الكتاب. لا تقلق — فريقنا سيتواصل معك، ولن تُحتسب أي رسوم إضافية.'
+            ? t('order_success.failed_desc', 'واجهنا مشكلة أثناء إنشاء الكتاب. لا تقلق — فريقنا سيتواصل معك، ولن تُحتسب أي رسوم إضافية.')
             : ready
-              ? 'كتاب طفلك السحري جاهز! 🪄'
-              : 'شكراً لك ❤️ نقوم الآن بإنشاء كتاب طفلك المخصّص بالذكاء الاصطناعي. تستغرق العملية بضع دقائق.'}
+              ? t('order_success.ready_desc', 'كتاب طفلك السحري جاهز! 🪄')
+              : t('order_success.preparing_desc', 'شكراً لك ❤️ نقوم الآن بإنشاء كتاب طفلك المخصّص بالذكاء الاصطناعي. تستغرق العملية بضع دقائق.')}
         </p>
 
         {/* Live status pill */}
@@ -61,7 +61,7 @@ export default function OrderSuccess() {
               <span className="w-3 h-3 rounded-full border-2 border-gold-500 border-t-transparent animate-spin" />
             )}
             <span className="font-arabic text-sm text-gold-400">
-              {ready ? 'الكتاب جاهز ✨' : status === 'generating' ? 'جاري الرسم...' : 'قيد التحضير...'}
+              {ready ? t('order_success.pill_ready', 'الكتاب جاهز ✨') : status === 'generating' ? t('order_success.pill_generating', 'جاري الرسم...') : t('order_success.pill_preparing', 'قيد التحضير...')}
             </span>
           </div>
         )}
@@ -72,19 +72,19 @@ export default function OrderSuccess() {
               to={`/book/${storyId}`}
               className="w-full py-3 rounded-xl bg-gold-500 text-[#0a1628] font-arabic font-bold hover:bg-gold-400 transition"
             >
-              📖 تصفّح كتاب طفلك
+              {t('order_success.view_book', '📖 تصفّح كتاب طفلك')}
             </Link>
           )}
           <Link
             to="/dashboard"
             className="w-full py-3 rounded-xl border border-gold-500/40 text-gold-400 font-arabic font-bold hover:bg-gold-500/10 transition"
           >
-            الذهاب إلى قصصي وطلباتي
+            {t('order_success.go_dashboard', 'الذهاب إلى قصصي وطلباتي')}
           </Link>
         </div>
 
         {orderId && (
-          <p className="font-arabic text-white/30 text-xs">رقم الطلب: {orderId.slice(-8)}</p>
+          <p className="font-arabic text-white/30 text-xs">{t('order_success.order_no', 'رقم الطلب: {{id}}', { id: orderId.slice(-8) })}</p>
         )}
       </div>
     </div>

@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // Accessibility Widget: Floating button with accessibility options (נגישות)
 export default function AccessibilityWidget() {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [fontSize, setFontSize] = useState(0); // 0 = normal, 1 = large, 2 = x-large
   const [highContrast, setHighContrast] = useState(false);
@@ -39,11 +41,13 @@ export default function AccessibilityWidget() {
     document.documentElement.classList.remove('high-contrast', 'highlight-links');
   };
 
+  const ON = t('a11y.on', 'مفعّل');
+  const OFF = t('a11y.off', 'معطّل');
   const options = [
-    { label: 'تكبير الخط', icon: 'Aa', active: fontSize > 0, onClick: toggleFontSize, desc: fontSize === 0 ? 'عادي' : fontSize === 1 ? 'كبير' : 'كبير جداً' },
-    { label: 'تباين عالي', icon: '◐', active: highContrast, onClick: toggleHighContrast, desc: highContrast ? 'مفعّل' : 'معطّل' },
-    { label: 'تدرج رمادي', icon: '◑', active: grayscale, onClick: toggleGrayscale, desc: grayscale ? 'مفعّل' : 'معطّل' },
-    { label: 'إبراز الروابط', icon: '🔗', active: linkHighlight, onClick: toggleLinkHighlight, desc: linkHighlight ? 'مفعّل' : 'معطّل' },
+    { label: t('a11y.font_size', 'تكبير الخط'), icon: 'Aa', active: fontSize > 0, onClick: toggleFontSize, desc: fontSize === 0 ? t('a11y.normal', 'عادي') : fontSize === 1 ? t('a11y.large', 'كبير') : t('a11y.xlarge', 'كبير جداً') },
+    { label: t('a11y.contrast', 'تباين عالي'), icon: '◐', active: highContrast, onClick: toggleHighContrast, desc: highContrast ? ON : OFF },
+    { label: t('a11y.grayscale', 'تدرج رمادي'), icon: '◑', active: grayscale, onClick: toggleGrayscale, desc: grayscale ? ON : OFF },
+    { label: t('a11y.highlight_links', 'إبراز الروابط'), icon: '🔗', active: linkHighlight, onClick: toggleLinkHighlight, desc: linkHighlight ? ON : OFF },
   ];
 
   return (
@@ -52,8 +56,8 @@ export default function AccessibilityWidget() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed bottom-6 left-6 z-[9999] w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-2xl flex items-center justify-center transition-all hover:scale-110 border-2 border-white/20"
-        aria-label="נגישות — إتاحة الوصول"
-        title="נגישות — إتاحة الوصول"
+        aria-label={t('a11y.title', 'إتاحة الوصول')}
+        title={t('a11y.title', 'إتاحة الوصول')}
       >
         <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="4.5" r="2.5" fill="currentColor" stroke="none" />
@@ -75,7 +79,7 @@ export default function AccessibilityWidget() {
                 <path d="M7 10.5L12 9L17 10.5" />
                 <path d="M9 20L12 14L15 20" />
               </svg>
-              <span className="font-arabic font-bold text-white text-sm">נגישות — إتاحة الوصول</span>
+              <span className="font-arabic font-bold text-white text-sm">{t('a11y.title', 'إتاحة الوصول')}</span>
             </div>
             <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white text-lg">✕</button>
           </div>
@@ -105,7 +109,7 @@ export default function AccessibilityWidget() {
               onClick={resetAll}
               className="w-full p-2 rounded-xl border border-red-500/20 text-red-400 font-arabic text-xs font-bold hover:bg-red-500/10 transition-all mt-1"
             >
-              ↺ إعادة ضبط الكل
+              ↺ {t('a11y.reset', 'إعادة ضبط الكل')}
             </button>
           </div>
         </div>
