@@ -272,7 +272,7 @@ export default function Dashboard() {
                               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold-500 text-dark-900 hover:bg-gold-400 transition-colors font-arabic font-bold text-xs shadow-lg shadow-gold-500/20"
                             >
                               <BookOpen className="w-3.5 h-3.5" />
-                              تصفح الكتاب كاملاً
+                              {t('dashboard.admin_special_btn')}
                             </Link>
                           </div>
                         </div>

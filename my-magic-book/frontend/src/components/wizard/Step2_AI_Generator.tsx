@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { STORY_TEMPLATES } from '../../data/stories/templates';
 import { buildBook } from '../../data/stories/builder';
 import type { StoryMode } from '../../context/StoryProgressContext';
+import { buildThemePreview, type PreviewPage } from './FlipbookPreview';
 
 // Props Interface: Defines navigation callbacks passed from the parent wizard container
 interface Props { onNext: () => void; onPrev: () => void; }
@@ -20,7 +21,7 @@ interface ApiTheme { id: string; emoji: string; label: string; desc: string; rea
 
 export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To move to the next page in the steps
   const { progress, setStoryConfig } = useStoryProgress(); // To save User Choices in the steps
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Themes come from the admin panel via /api/public/settings. The backend
   // already filters to ready===true so half-finished stories never appear.
@@ -168,17 +169,18 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
     onNext();
   };
 
-  // Preview text used inside the flipbook component.
-  const previewTextContent = (() => {
-    if (mode === 'template' && templatePagesForCurrentTheme) {
-      return templatePagesForCurrentTheme
-        .filter((p) => p.type === 'text')
-        .map((p) => (p as { content: string }).content)
-        .join('\n\n');
-    }
-    if (generatedText) return generatedText;
-    return `قصة سحرية عن ${progress.childDetails.childName || 'الطفل'} يستكشف عوالم وألوان جديدة...`;
-  })();
+  // Language-aware teaser of the SELECTED theme's real story (cover + first
+  // pages + a locked page). Built in the language the customer chose here.
+  const previewPages: PreviewPage[] = useMemo(
+    () => buildThemePreview({
+      theme: form.theme,
+      language: form.language,
+      childName: progress.childDetails.childName,
+      childGender: (progress.childDetails as any).childGender,
+      i18n,
+    }),
+    [form.theme, form.language, progress.childDetails.childName, (progress.childDetails as any).childGender, i18n],
+  );
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -321,7 +323,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
           ) : null;
         })()}
         <div className="w-full max-w-[500px] px-4">
-          <FlipbookPreview text={previewTextContent} language={form.language as any}/>
+          <FlipbookPreview pages={previewPages} language={form.language as any}/>
         </div>
 
       </div>

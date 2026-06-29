@@ -351,7 +351,9 @@
     "theme_music": "Music",
     "theme_music_desc": "Melodies and magical instruments",
     "theme_custom": "Custom Theme",
-    "theme_custom_desc": "Choose your own theme"
+    "theme_custom_desc": "Choose your own theme",
+    "preview_locked": "🔒 The rest of the story unlocks after checkout",
+    "preview_generic_title": "A Magical Story"
   },
   "step3": {
     "title": "Customize Your Book",

@@ -351,7 +351,9 @@
     "theme_music": "الموسيقى",
     "theme_music_desc": "ألحان وآلات موسيقية سحرية",
     "theme_custom": "موضوع خاص",
-    "theme_custom_desc": "اختر موضوعك الخاص"
+    "theme_custom_desc": "اختر موضوعك الخاص",
+    "preview_locked": "🔒 يظهر باقي القصة بعد إتمام الطلب",
+    "preview_generic_title": "قصة سحرية"
   },
   "step3": {
     "title": "خصّص كتابك",

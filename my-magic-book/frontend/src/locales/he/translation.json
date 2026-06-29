@@ -351,7 +351,9 @@
     "theme_music": "מוזיקה",
     "theme_music_desc": "מנגינות וכלים קסומים",
     "theme_custom": "נושא אישי",
-    "theme_custom_desc": "בחר נושא משלך"
+    "theme_custom_desc": "בחר נושא משלך",
+    "preview_locked": "🔒 שאר הסיפור ייחשף לאחר התשלום",
+    "preview_generic_title": "סיפור קסום"
   },
   "step3": {
     "title": "התאם אישית את הספר שלך",
