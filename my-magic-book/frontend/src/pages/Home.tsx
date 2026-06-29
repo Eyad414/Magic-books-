@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useStoryProgress } from '../context/StoryProgressContext';
 import HeroSection from '../components/home/HeroSection';
@@ -43,7 +43,7 @@ export default function Home() {
           
           <div className="text-5xl mb-6 relative z-10">✨📖</div>
           <p className="font-arabic font-black text-white text-2xl leading-relaxed relative z-10">
-            نحن لا نصنع قصصاً فقط، نحن نبني <span className="text-gold-500">ثقة الطفل</span> بنفسه وننمي لديه <span className="text-gold-500">حب القراءة</span>
+            <Trans i18nKey="home.value_tagline" components={{ gold: <span className="text-gold-500" /> }} />
           </p>
         </div>
       </div>
