@@ -3,13 +3,28 @@ import { useTranslation } from 'react-i18next';
 interface BackCoverProps {
   childName: string;
   childPhoto: string;
-  /** Kept for compatibility with StoryBook (no longer used on the back cover). */
+  /** Kept for compatibility (the teasers now show the logo, not the avatar). */
   avatarPhoto?: string;
+  /** Current story id — used to exclude this theme from the "more adventures" teasers. */
   currentStoryId?: string;
 }
 
-export default function BackCover({ childName, childPhoto }: BackCoverProps) {
+// "More adventures" teasers — three other stories the child can get next.
+const ALL_TEASERS = [
+  { id: 'space',     emoji: '🚀', fallback: 'في الفضاء' },
+  { id: 'school',    emoji: '🏫', fallback: 'في المدرسة' },
+  { id: 'zoo',       emoji: '🦁', fallback: 'في حديقة الحيوانات' },
+  { id: 'ocean',     emoji: '🌊', fallback: 'في أعماق المحيط' },
+  { id: 'dinosaurs', emoji: '🦖', fallback: 'في عالم الديناصورات' },
+  { id: 'world',     emoji: '🌍', fallback: 'حول العالم' },
+  { id: 'superhero', emoji: '⚡', fallback: 'بطلاً خارقاً' },
+];
+// Map the current story to the teaser id to drop, so we never recommend the same theme.
+const EXCLUDE: Record<string, string> = { zoo_adventure: 'zoo', space: 'space', school_hero: 'school' };
+
+export default function BackCover({ childName, childPhoto, currentStoryId }: BackCoverProps) {
   const { t, i18n } = useTranslation();
+  const teasers = ALL_TEASERS.filter((tz) => tz.id !== (EXCLUDE[currentStoryId || ''] || '')).slice(0, 3);
 
   return (
     <section className="book-page back-cover" aria-label={t('storybook.back_cover_aria', 'الغلاف الخلفي')} dir={i18n.dir()}>
@@ -25,11 +40,9 @@ export default function BackCover({ childName, childPhoto }: BackCoverProps) {
             src={childPhoto}
             alt={t('storybook.photo_alt', 'صورة {{name}}', { name: childName })}
             className="bc-photo"
-            loading="eager"
-            decoding="async"
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).src =
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(childName)}&background=D4A937&color=0a1628&size=512&bold=true`;
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(childName)}&background=D4A937&color=0a1628&size=400&bold=true`;
             }}
           />
           <span className="bc-sparkle bc-sparkle--1" aria-hidden="true">✦</span>
@@ -42,12 +55,21 @@ export default function BackCover({ childName, childPhoto }: BackCoverProps) {
 
       <div className="bc-divider" aria-hidden="true" />
 
-      {/* Brand logo (replaces the old recommended-story teasers) */}
-      <div className="bc-brand">
-        <h3 className="bc-brand-head">{t('storybook.more_adventures', '✨ مغامرات أخرى تنتظرك')}</h3>
-        <div className="bc-brand-logo-wrap">
-          <div className="bc-brand-glow" aria-hidden="true" />
-          <img src="/logo.png" alt="Magic Fanoose" className="bc-brand-logo" decoding="async" />
+      {/* Recommended stories — each card shows the brand logo + the story name */}
+      <div className="bc-stories-section">
+        <h3 className="bc-stories-head">{t('storybook.more_adventures', '✨ مغامرات أخرى تنتظرك')}</h3>
+        <div className="bc-stories-grid">
+          {teasers.map((tz) => (
+            <div key={tz.id} className="bc-story-card">
+              <div className="bc-story-thumb-wrap">
+                <div className="bc-story-thumb-clip">
+                  <img src="/logo.png" alt="Magic Fanoose" className="bc-story-logo" decoding="async" />
+                </div>
+                <span className="bc-story-emoji" aria-hidden="true">{tz.emoji}</span>
+              </div>
+              <p className="bc-story-title">{childName} {t(`storybook.teaser_${tz.id}`, tz.fallback)}</p>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -55,7 +77,11 @@ export default function BackCover({ childName, childPhoto }: BackCoverProps) {
 
       {/* Footer */}
       <div className="bc-footer">
-        <span className="bc-footer-url">🌐 MagicFanoose.com</span>
+        <img src="/logo.png" alt="Magic Fanoose" className="bc-footer-logo" />
+        <div className="bc-footer-text">
+          <span className="bc-footer-brand">Magic Fanoose</span>
+          <span className="bc-footer-url">🌐 MagicFanoose.com</span>
+        </div>
       </div>
 
       <style>{`
@@ -66,7 +92,7 @@ export default function BackCover({ childName, childPhoto }: BackCoverProps) {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 1.4rem;
+          gap: 1.5rem;
           padding: 2.2rem 1.8rem;
           min-height: 580px;
           overflow: hidden;
@@ -74,12 +100,13 @@ export default function BackCover({ childName, childPhoto }: BackCoverProps) {
           direction: rtl;
         }
         .back-cover[dir="ltr"] { direction: ltr; }
+        .back-cover[dir="ltr"] .bc-footer-text { align-items: center; }
 
         /* Background shimmer */
         .bc-bg {
           position: absolute;
           inset: 0;
-          background: radial-gradient(ellipse at 50% 18%, rgba(212,169,55,0.10) 0%, transparent 62%);
+          background: radial-gradient(ellipse at 50% 20%, rgba(212,169,55,0.08) 0%, transparent 65%);
           pointer-events: none;
         }
 
@@ -116,10 +143,9 @@ export default function BackCover({ childName, childPhoto }: BackCoverProps) {
           height: 200px;
           border-radius: 50%;
           object-fit: cover;
-          object-position: center 28%;
+          object-position: center 30%;
           border: 5px solid #0a1628;
           box-shadow: 0 14px 40px rgba(0,0,0,0.6);
-          image-rendering: -webkit-optimize-contrast;
         }
         .bc-sparkle {
           position: absolute;
@@ -154,62 +180,117 @@ export default function BackCover({ childName, childPhoto }: BackCoverProps) {
         .bc-divider {
           position: relative;
           z-index: 1;
-          width: 88%;
+          width: 90%;
           height: 1px;
           background: linear-gradient(90deg, transparent, rgba(212,169,55,0.3), transparent);
         }
 
-        /* Brand logo block */
-        .bc-brand {
-          position: relative;
-          z-index: 1;
+        /* Stories section */
+        .bc-stories-section { position: relative; z-index: 1; width: 100%; }
+        .bc-stories-head {
+          font-size: 0.88rem;
+          font-weight: 800;
+          color: rgba(212,169,55,0.85);
+          margin: 0 0 1rem;
+        }
+        .bc-stories-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 0.8rem;
+        }
+        .bc-story-card {
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(212,169,55,0.15);
+          border-radius: 12px;
+          padding: 0.7rem 0.5rem;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 0.7rem;
-          width: 100%;
+          gap: 0.45rem;
+          transition: border-color 0.2s, transform 0.2s;
         }
-        .bc-brand-head {
-          font-size: 0.9rem;
-          font-weight: 800;
-          color: rgba(212,169,55,0.85);
-          margin: 0;
+        .bc-story-card:hover {
+          border-color: rgba(212,169,55,0.4);
+          transform: translateY(-2px);
         }
-        .bc-brand-logo-wrap {
+        .bc-story-thumb-wrap {
           position: relative;
+          width: 64px;
+          height: 64px;
+          flex-shrink: 0;
+        }
+        .bc-story-thumb-clip {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          overflow: hidden;
+          border: 1.5px solid rgba(212,169,55,0.3);
+          background: radial-gradient(circle at 50% 45%, #11233f 0%, #0a1628 100%);
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 100%;
         }
-        .bc-brand-glow {
+        .bc-story-logo {
+          width: 92%;
+          height: 92%;
+          object-fit: contain;
+          filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+        }
+        .bc-story-emoji {
           position: absolute;
-          width: 300px;
-          height: 220px;
-          background: radial-gradient(ellipse at center, rgba(212,169,55,0.18) 0%, transparent 70%);
-          filter: blur(18px);
-          pointer-events: none;
+          bottom: -3px;
+          right: -3px;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.8rem;
+          background: #0a1628;
+          border: 1.5px solid rgba(212,169,55,0.5);
+          border-radius: 50%;
+          z-index: 2;
         }
-        .bc-brand-logo {
-          position: relative;
-          z-index: 1;
-          width: min(74%, 300px);
-          height: auto;
-          filter: drop-shadow(0 10px 30px rgba(0,0,0,0.55));
+        .bc-story-title {
+          font-size: 0.7rem;
+          font-weight: 700;
+          color: rgba(255,255,255,0.82);
+          line-height: 1.4;
+          margin: 0;
         }
 
         /* Footer */
         .bc-footer {
           position: relative;
           z-index: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.75rem;
           margin-top: auto;
           width: 100%;
         }
+        .bc-footer-logo {
+          width: 42px;
+          height: 42px;
+          object-fit: contain;
+          filter: drop-shadow(0 0 8px rgba(212,169,55,0.5));
+        }
+        .bc-footer-text {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.1rem;
+        }
+        .bc-footer-brand {
+          font-size: 0.9rem;
+          font-weight: 800;
+          color: #D4A937;
+        }
         .bc-footer-url {
-          font-size: 0.82rem;
-          color: rgba(212,169,55,0.65);
-          font-weight: 700;
-          letter-spacing: 0.04em;
+          font-size: 0.72rem;
+          color: rgba(212,169,55,0.6);
+          font-weight: 600;
         }
       `}</style>
     </section>
