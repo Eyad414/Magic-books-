@@ -59,7 +59,7 @@ export default function Navbar() {
             />
             <div className="flex flex-col leading-tight">
               <span className="font-brand font-bold text-gold-500 text-base md:text-xl tracking-wide">Magic Fanoose</span>
-              <span className="font-arabic text-white/55 text-xs md:text-sm">الفانوس السحري</span>
+              <span className="font-['Lalezar'] text-gold-500/70 text-sm md:text-base tracking-wide">الفانوس السحري</span>
             </div>
           </Link>
 

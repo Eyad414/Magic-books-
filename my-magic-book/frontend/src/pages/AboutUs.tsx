@@ -22,6 +22,7 @@ function FAQ() {
     { q: t('about.faqs.3_q'), a: t('about.faqs.3_a') },
     { q: t('about.faqs.4_q'), a: t('about.faqs.4_a') },
     { q: t('about.faqs.5_q'), a: t('about.faqs.5_a') },
+    { q: t('about.faqs.6_q'), a: t('about.faqs.6_a') },
   ];
 
   return (

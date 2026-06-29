@@ -41,9 +41,9 @@ export default function ContactUs() {
           <div className="space-y-5">
             <h2 className="font-arabic font-bold text-white text-xl">{t('contact.info_title')}</h2>
             {[
-              { icon: Mail, label: t('contact.info_email'), value: 'hello@mymagicbook.sa', href: 'mailto:hello@mymagicbook.sa' },
-              { icon: Phone, label: t('contact.info_phone'), value: '+966 50 000 0000', href: 'tel:+966500000000' },
-              { icon: MessageCircle, label: t('contact.info_whatsapp'), value: t('contact.whatsapp_value'), href: 'https://wa.me/966500000000' },
+              { icon: Mail, label: t('contact.info_email'), value: 'info@magicfanoose.com', href: 'mailto:info@magicfanoose.com' },
+              { icon: Phone, label: t('contact.info_phone'), value: '+972 58 550 2072', href: 'tel:+972585502072' },
+              { icon: MessageCircle, label: t('contact.info_whatsapp'), value: t('contact.whatsapp_value'), href: 'https://wa.me/972585502072' },
             ].map((item) => (
               <div key={item.label} className="glass-card p-4 flex items-start gap-4">
                 <div className="w-10 h-10 rounded-xl bg-gold-500/20 flex items-center justify-center flex-shrink-0">
