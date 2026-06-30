@@ -58,8 +58,8 @@ export default function Navbar() {
               className="h-12 md:h-14 w-auto object-contain transition-transform group-hover:scale-105 drop-shadow-[0_0_10px_rgba(212,169,55,0.45)]"
             />
             <div className="flex flex-col leading-tight">
-              <span className="font-brand font-bold text-gold-500 text-base md:text-xl tracking-wide">Magic Fanoose</span>
-              <span className="font-['Lalezar'] text-gold-500/70 text-sm md:text-base tracking-wide">الفانوس السحري</span>
+              <span className="font-brand font-bold text-gold-500 text-base md:text-xl tracking-wider">Magic Fanoose</span>
+              <span className="font-['Marhey'] font-bold text-gold-500/75 text-sm md:text-base">الفانوس السحري</span>
             </div>
           </Link>
 
