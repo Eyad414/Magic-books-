@@ -6,6 +6,8 @@ export interface PreviewPage {
   type: 'cover' | 'text' | 'lock';
   title?: string;
   content?: string;
+  /** Blurred (locked) page — readable only after payment. */
+  blur?: boolean;
 }
 
 /**
@@ -39,10 +41,14 @@ export function buildThemePreview(opts: {
       { type: 'lock', content: lockMsg },
     ];
   }
-  const textPages: PreviewPage[] = Object.keys(pagesObj)
-    .sort((a, b) => Number(a) - Number(b))
-    .slice(0, 2)
-    .map((k) => ({ type: 'text', content: personalize(pagesObj[k]) }));
+  // Show the first ~30% of the story readable; blur the rest until the end.
+  const allKeys = Object.keys(pagesObj).sort((a, b) => Number(a) - Number(b));
+  const readable = Math.max(1, Math.ceil(allKeys.length * 0.3));
+  const textPages: PreviewPage[] = allKeys.map((k, idx) => ({
+    type: 'text',
+    content: personalize(pagesObj[k]),
+    blur: idx >= readable,
+  }));
   return [{ type: 'cover', title: personalize(titleRaw) }, ...textPages, { type: 'lock', content: lockMsg }];
 }
 
@@ -118,7 +124,17 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                   style={{ background: '#fdfaf0' }}
                   dir={dir}
                 >
-                  <p className="font-arabic text-dark-900 text-xs sm:text-sm font-bold leading-relaxed text-center">{page.content}</p>
+                  <p
+                    className="font-arabic text-dark-900 text-xs sm:text-sm font-bold leading-relaxed text-center"
+                    style={page.blur ? { filter: 'blur(4.5px)', userSelect: 'none' } : undefined}
+                  >
+                    {page.content}
+                  </p>
+                  {page.blur && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/25 backdrop-blur-[1px]">
+                      <span className="text-2xl drop-shadow">🔒</span>
+                    </div>
+                  )}
                   <span className="absolute bottom-3 left-1/2 -translate-x-1/2 text-dark-900/20 font-bold text-[10px]">{i}</span>
                 </div>
               )}

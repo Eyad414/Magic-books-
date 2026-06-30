@@ -31,7 +31,11 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
   useEffect(() => {
     publicApi.getSettings()
       .then((res) => {
-        const fromApi: ApiTheme[] = (res?.settings?.themes ?? []).map((dbTheme: any) => {
+        const fromApi: ApiTheme[] = (res?.settings?.themes ?? [])
+          // Coloring books are NOT separate themes here — the format (full-color
+          // story vs coloring book) is chosen as a "package" in the next step.
+          .filter((dbTheme: any) => !dbTheme.isColoring)
+          .map((dbTheme: any) => {
           const labelKey = `step2.theme_${dbTheme.id}`;
           const descKey = `step2.theme_${dbTheme.id}_desc`;
           const localizedLabel = t(labelKey);

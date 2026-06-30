@@ -7,11 +7,37 @@ import { uploadBuffer, pdfFolderPath } from './StorageService';
 import { splitStoryIntoPages, buildIllustrationPrompt } from './promptBuilder';
 import { getSceneTemplate, buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, resolveTokens, COLORING_PAGES } from './sceneTemplates';
 import { printAndSubmitForOrder } from './PrintOrchestrator';
+import fs from 'fs';
+import path from 'path';
 
 /** Turn a private GCS object path into a backend proxy URL the PDF/web can load. */
 function proxyUrl(objectPath: string): string {
   const base = process.env.PUBLIC_API_URL || 'http://localhost:5001/api';
   return `${base}/uploads/image?path=${encodeURIComponent(objectPath)}`;
+}
+
+// The printed book must match the language the customer chose. The page texts
+// live in the same translation files the web book uses, so we read them here
+// (graceful fallback to the Arabic scene template if unavailable).
+const _localeCache: Record<string, any> = {};
+function loadLocale(language: string): any {
+  const lang = ['ar', 'en', 'he'].includes(language) ? language : 'ar';
+  if (_localeCache[lang]) return _localeCache[lang];
+  try {
+    const file = path.join(__dirname, '..', '..', '..', 'frontend', 'src', 'locales', lang, 'translation.json');
+    _localeCache[lang] = JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch {
+    _localeCache[lang] = {};
+  }
+  return _localeCache[lang];
+}
+
+/** Localized { title, pages[] } for a theme in the chosen language, or null. */
+function localizedStory(theme: string, language: string): { title?: string; pages: string[] } | null {
+  const s = loadLocale(language)?.stories?.[theme];
+  if (!s || !s.pages) return null;
+  const pages = Object.keys(s.pages).sort((a, b) => Number(a) - Number(b)).map((k) => s.pages[k] as string);
+  return { title: s.title, pages };
 }
 
 const ILLUSTRATION_PAGES = 13; // matches the 13 image slots in the printed book
@@ -103,6 +129,7 @@ export async function buildBookForOrder(orderId: string): Promise<IOrder> {
       );
       const objectPaths: string[] = [];
       pageTexts = [];
+      const loc = localizedStory(story.theme, (story as any).language || 'ar');
       for (let i = 0; i < ILLUSTRATION_PAGES; i++) {
         const medal = (template.medalPages || []).includes(i + 1);
         const img = await generateIllustration(
@@ -110,7 +137,7 @@ export async function buildBookForOrder(orderId: string): Promise<IOrder> {
           childPhoto, { storyId: sid, pageNumber: i + 1 }
         );
         objectPaths.push(img.objectPath);
-        pageTexts.push(resolveTokens(template.pageTexts[i], story.childName, story.childGender));
+        pageTexts.push(resolveTokens(loc?.pages?.[i] ?? template.pageTexts[i], story.childName, story.childGender));
       }
       const portrait = await generateIllustration(
         buildScenePrompt('portrait', template.portraitScene, story.childName, story.childGender),
@@ -123,7 +150,7 @@ export async function buildBookForOrder(orderId: string): Promise<IOrder> {
 
       imageUrls = objectPaths.map(proxyUrl);
       coverImageUrl = proxyUrl(cover.objectPath);
-      storyTitle = resolveTokens(template.titleAr || `${story.childName}`, story.childName, story.childGender);
+      storyTitle = resolveTokens(loc?.title || template.titleAr || `${story.childName}`, story.childName, story.childGender);
     } else {
       // Fallback for themes without a scene template (handwritten / AI mode).
       const pairs = story.mode === 'template' && Array.isArray(story.templatePages) && story.templatePages.length > 0
