@@ -3,9 +3,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+// Load .env FIRST — before any import whose module-level code reads process.env
+// (e.g. the Stripe client in orderController is created at import time).
+require("dotenv/config");
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
-const dotenv_1 = __importDefault(require("dotenv"));
 const db_1 = require("./config/db");
 // Routes
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
@@ -15,14 +17,21 @@ const contactRoutes_1 = __importDefault(require("./routes/contactRoutes"));
 const adminRoutes_1 = __importDefault(require("./routes/adminRoutes"));
 const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
 const publicRoutes_1 = __importDefault(require("./routes/publicRoutes"));
-dotenv_1.default.config();
+const uploadRoutes_1 = __importDefault(require("./routes/uploadRoutes"));
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 5001;
 // Connect Database
 (0, db_1.connectDB)();
 // Middleware
+// In production, set CORS_ORIGINS to a comma-separated allowlist
+// (e.g. "https://magicfanoose.com,https://www.magicfanoose.com").
+// When unset (local dev) we reflect any origin for convenience.
+const corsAllowlist = (process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
 app.use((0, cors_1.default)({
-    origin: true, // Allow any origin dynamically (reflects the request origin)
+    origin: corsAllowlist.length ? corsAllowlist : true,
     credentials: true,
 }));
 // Stripe webhook needs raw body — must be before json middleware
@@ -41,6 +50,7 @@ app.use('/api/contact', contactRoutes_1.default);
 app.use('/api/admin', adminRoutes_1.default);
 app.use('/api/user', userRoutes_1.default);
 app.use('/api/public', publicRoutes_1.default);
+app.use('/api/uploads', uploadRoutes_1.default);
 // 404 handler
 app.use((_req, res) => {
     res.status(404).json({ success: false, message: 'Route not found' });

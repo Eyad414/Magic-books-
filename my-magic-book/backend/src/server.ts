@@ -22,8 +22,15 @@ const PORT = process.env.PORT || 5001;
 connectDB();
 
 // Middleware
+// In production, set CORS_ORIGINS to a comma-separated allowlist
+// (e.g. "https://magicfanoose.com,https://www.magicfanoose.com").
+// When unset (local dev) we reflect any origin for convenience.
+const corsAllowlist = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
 app.use(cors({
-  origin: true, // Allow any origin dynamically (reflects the request origin)
+  origin: corsAllowlist.length ? corsAllowlist : true,
   credentials: true,
 }));
 

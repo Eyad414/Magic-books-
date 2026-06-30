@@ -77,9 +77,27 @@ const getMe = async (req, res) => {
     }
 };
 exports.getMe = getMe;
-// @route PUT /api/auth/make-admin (Temporary endpoint for setup)
+// @route PUT /api/auth/make-admin — one-time admin bootstrap.
+// Previously ANY logged-in user could self-promote to admin (privilege
+// escalation). Now it only creates the FIRST admin and requires the
+// ADMIN_SETUP_SECRET env var to be set and matched in the request body. Once an
+// admin exists, further admins are added via the protected /admin/team endpoint.
 const makeMeAdmin = async (req, res) => {
     try {
+        const setupSecret = process.env.ADMIN_SETUP_SECRET;
+        if (!setupSecret) {
+            res.status(403).json({ success: false, message: 'تم تعطيل هذه العملية' });
+            return;
+        }
+        if (req.body?.secret !== setupSecret) {
+            res.status(403).json({ success: false, message: 'رمز الإعداد غير صحيح' });
+            return;
+        }
+        const adminCount = await User_1.default.countDocuments({ role: 'admin' });
+        if (adminCount > 0) {
+            res.status(403).json({ success: false, message: 'يوجد مشرف بالفعل' });
+            return;
+        }
         const userId = req.user._id;
         const user = await User_1.default.findByIdAndUpdate(userId, { role: 'admin' }, { new: true });
         if (!user) {
