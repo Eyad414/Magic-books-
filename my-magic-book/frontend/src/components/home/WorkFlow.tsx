@@ -14,6 +14,7 @@ export default function WorkFlow() {
     navigate('/create');
   };
 
+  // Mirrors the 3-step wizard: Your child → Your story → Checkout (printed & shipped).
   const steps = [
     {
       number: '01',
@@ -33,25 +34,9 @@ export default function WorkFlow() {
     },
     {
       number: '03',
-      emoji: '🎨',
+      emoji: '🚀',
       title: t('workflow.step3_title'),
       description: t('workflow.step3_desc'),
-      color: 'from-pink-500 to-pink-600',
-      glow: 'rgba(236,72,153,0.3)',
-    },
-    {
-      number: '04',
-      emoji: '📦',
-      title: t('workflow.step4_title'),
-      description: t('workflow.step4_desc'),
-      color: 'from-orange-500 to-orange-600',
-      glow: 'rgba(249,115,22,0.3)',
-    },
-    {
-      number: '05',
-      emoji: '🚀',
-      title: t('workflow.step5_title'),
-      description: t('workflow.step5_desc'),
       color: 'from-gold-500 to-gold-600',
       glow: 'rgba(245,166,35,0.3)',
     },
@@ -80,7 +65,7 @@ export default function WorkFlow() {
           {/* Connector line (desktop) */}
           <div className="hidden lg:block absolute top-16 right-[10%] left-[10%] h-0.5 bg-gradient-to-l from-gold-500/20 via-magic-500/40 to-gold-500/20" />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 relative">
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-6 relative">
             {steps.map((step, index) => (
               <div
                 key={step.number}
