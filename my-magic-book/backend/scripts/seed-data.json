@@ -1,0 +1,339 @@
+{
+  "bookPackages": [
+    {
+      "id": "color",
+      "label": "قصة ملونة",
+      "price": 70,
+      "emoji": "🌈",
+      "desc": "كتاب ملون بالكامل بجودة عالية",
+      "_id": "6a0860bebfc9f7e69476cb9d"
+    },
+    {
+      "id": "coloring",
+      "label": "دفتر تلوين",
+      "price": 50,
+      "emoji": "🖍️",
+      "desc": "رسومات غير ملونة جاهزة للتلوين",
+      "_id": "6a0860bebfc9f7e69476cb9e"
+    },
+    {
+      "id": "audio",
+      "label": "(Audio)",
+      "price": 30,
+      "emoji": "🎧",
+      "desc": "تسجيل صوتي احترافي لقصتك",
+      "_id": "6a0860bebfc9f7e69476cb9f"
+    },
+    {
+      "id": "ebook",
+      "label": "(E-Book)",
+      "price": 40,
+      "emoji": "📱",
+      "desc": "كتاب إلكتروني للقراءة على الأجهزة",
+      "_id": "6a0860bebfc9f7e69476cba0"
+    },
+    {
+      "id": "pro",
+      "label": "باقة Pro الشاملة",
+      "price": 110,
+      "emoji": "✨",
+      "desc": "جميع النسخ (الملون + التلوين + الصوتي + الرقمي)",
+      "_id": "6a0860bebfc9f7e69476cba1"
+    }
+  ],
+  "themes": [
+    {
+      "id": "adventure",
+      "emoji": "🗺️",
+      "label": "مغامرة",
+      "desc": "استكشاف ومغامرات مثيرة",
+      "pages": [],
+      "ready": false,
+      "isColoring": false,
+      "_id": "6a0860bebfc9f7e69476cba2"
+    },
+    {
+      "id": "space",
+      "emoji": "🚀",
+      "label": "الفضاء",
+      "desc": "رحلات بين النجوم والكواكب",
+      "pages": [],
+      "ready": true,
+      "generatedImages": [
+        "magic-fanoose/generated/theme_space/page-01.png",
+        "magic-fanoose/generated/theme_space/page-02.png",
+        "magic-fanoose/generated/theme_space/page-03.png",
+        "magic-fanoose/generated/theme_space/page-04.png",
+        "magic-fanoose/generated/theme_space/page-05.png",
+        "magic-fanoose/generated/theme_space/page-06.png",
+        "magic-fanoose/generated/theme_space/page-07.png",
+        "magic-fanoose/generated/theme_space/page-08.png",
+        "magic-fanoose/generated/theme_space/page-09.png",
+        "magic-fanoose/generated/theme_space/page-10.png",
+        "magic-fanoose/generated/theme_space/page-11.png",
+        "magic-fanoose/generated/theme_space/page-12.png",
+        "magic-fanoose/generated/theme_space/page-13.png"
+      ],
+      "generatedPortrait": "magic-fanoose/generated/theme_space/page-99.png",
+      "generatedCover": "magic-fanoose/generated/theme_space/page-00.png",
+      "isColoring": false,
+      "_id": "6a0860bebfc9f7e69476cba3"
+    },
+    {
+      "id": "school_hero",
+      "emoji": "🏫",
+      "label": "بطل المدرسة",
+      "desc": "مساعدة الآخرين ونشر اللطف والألوان في المدرسة",
+      "pages": [
+        {
+          "text": "استيقظ{|ت} {{name}} بنشاط كبير، وارتد{ى|ت} حقيبت{ه|ها} المفضلة وانطلق{|ت} نحو مدرست{ه|ها} الجميلة وه{و|ي} {ي|ت}بتسم للكائنات من حول{ه|ها}.",
+          "imageSrc": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=800&auto=format&fit=crop"
+        },
+        {
+          "text": "عندما وصل{|ت} {{name}}، تفاجأ{|ت} بأن الألوان قد اختفت تماماً من لوحات وجدران المدرسة! كانت تبدو حزينة باللونين الأبيض والأسود.",
+          "imageSrc": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=800&auto=format&fit=crop"
+        },
+        {
+          "text": "لم {ي|ت}ستسلم {{name}}، بل قرر{|ت} أن {ي|ت}كتشف السر و{ي|ت}ستخدم \"أقلام{ه|ها} السحرية\" ولطف{ه|ها} ل{ي|ت}عيد الحياة والبهجة لمدرست{ه|ها}.",
+          "imageSrc": "https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=800&auto=format&fit=crop"
+        },
+        {
+          "text": "في فصل العلوم، وجد{|ت} صديق{ه|ها} سامي حزيناً لأن تجربة البركان لم تنجح، فساعد{ه|ته} {{name}} بلمسة ذكية من خيال{ه|ها} لتنفجر الألوان مجدداً.",
+          "imageSrc": "https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=800&auto=format&fit=crop"
+        },
+        {
+          "text": "دخل{|ت} {{name}} المكتبة، فسمع{|ت} الكتب تهمس بحزن، وتطلب من أحد أن يرتبها لتعود الحكايات والقصص إلى مكانها الصحيح.",
+          "imageSrc": "https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=800&auto=format&fit=crop"
+        },
+        {
+          "text": "ناد{ى|ت} {{name}} زملاء{ه|ها}، وبدأوا جميعاً في ترتيب الكتب بانتظام وهم يغنون أجمل الألحان، ليعود الدفء إلى زوايا المكتبة.",
+          "imageSrc": "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?q=80&w=800&auto=format&fit=crop"
+        },
+        {
+          "text": "في ساحة اللعب، سمع{|ت} {{name}} مواءً رقيقاً؛ لقد كانت هناك قطة صغيرة خائفة وعالقة فوق غصن شجرة المدرسة العالية.",
+          "imageSrc": "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=800&auto=format&fit=crop"
+        },
+        {
+          "text": "بلا تردد، جمع{|ت} {{name}} المكعبات الملونة الكبيرة وبن{ى|ت} منها سلماً آمناً، وتلق{ى|ت} القطة بلطف ل{ي|ت}عيدها إلى الأرض بسلام.",
+          "imageSrc": "https://images.unsplash.com/photo-1548767797-d8c844163c4c?q=80&w=800&auto=format&fit=crop"
+        },
+        {
+          "text": "في وقت الاستراحة، رأ{ى|ت} {{name}} طفلاً جديداً يجلس بمفرده، فذهب{|ت} إليه وتشارك{|ت} معه طعامه، ل{ي|ت}عرف أن اللطف هو القوة الخارقة الحقيقية.",
+          "imageSrc": "https://images.unsplash.com/photo-1511556532299-8f662fc26c06?q=80&w=800&auto=format&fit=crop"
+        },
+        {
+          "text": "في حصة الفن، وبإذن من المعلمة، بدأ{|ت} {{name}} {ي|ت}رسم أحلام التلاميذ على الجدران، وفجأة.. بدأت الألوان الزاهية تعود للمدرسة كلها!",
+          "imageSrc": "https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=800&auto=format&fit=crop"
+        },
+        {
+          "text": "في نهاية اليوم الدراسي، صفق الجميع بحرارة لـ {{name}}، وقدم ل{ه|ها} مدير المدرسة وسام \"البطل{|ة} الصغير{|ة}\" تقديراً لشجاعت{ه|ها} وجمال روح{ه|ها}.",
+          "imageSrc": "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?q=80&w=800&auto=format&fit=crop"
+        },
+        {
+          "text": "عاد{|ت} {{name}} إلى البيت مسرع{اً|ةً}، وحك{ى|ت} لوالدت{ه|ها} بفخر كيف أن المدرسة ليست مجرد دروس، بل هي مكان للمغامرة ومساعدة الآخرين.",
+          "imageSrc": "https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=800&auto=format&fit=crop"
+        },
+        {
+          "text": "وضع{|ت} {{name}} وسام{ه|ها} اللامع بجانب سرير{ه|ها}، وأغلق{|ت} عيني{ه|ها} وه{و|ي} {ي|ت}تشوق ليوم دراسي جديد مليء بالمفاجآت السعيدة.",
+          "imageSrc": "https://images.unsplash.com/photo-1505678261036-a3fcc5e884ee?q=80&w=800&auto=format&fit=crop"
+        }
+      ],
+      "ready": false,
+      "generatedImages": [
+        "magic-fanoose/generated/theme_school_hero/page-01.png",
+        "magic-fanoose/generated/theme_school_hero/page-02.png",
+        "magic-fanoose/generated/theme_school_hero/page-03.png",
+        "magic-fanoose/generated/theme_school_hero/page-04.png",
+        "magic-fanoose/generated/theme_school_hero/page-05.png",
+        "magic-fanoose/generated/theme_school_hero/page-06.png",
+        "magic-fanoose/generated/theme_school_hero/page-07.png",
+        "magic-fanoose/generated/theme_school_hero/page-08.png",
+        "magic-fanoose/generated/theme_school_hero/page-09.png",
+        "magic-fanoose/generated/theme_school_hero/page-10.png",
+        "magic-fanoose/generated/theme_school_hero/page-11.png",
+        "magic-fanoose/generated/theme_school_hero/page-12.png",
+        "magic-fanoose/generated/theme_school_hero/page-13.png"
+      ],
+      "generatedPortrait": "magic-fanoose/generated/theme_school_hero/page-99.png",
+      "generatedCover": "magic-fanoose/generated/theme_school_hero/page-00.png",
+      "isColoring": false,
+      "_id": "6a0a16042a71cec4fed55847"
+    },
+    {
+      "id": "space_real",
+      "emoji": "🚀",
+      "label": "الفضاء (واقعي)",
+      "desc": "نسخة واقعية عالية الدقة من قصة الفضاء",
+      "pages": [],
+      "ready": true,
+      "generatedImages": [
+        "magic-fanoose/generated/theme_space_real/page-01.png",
+        "magic-fanoose/generated/theme_space_real/page-02.png",
+        "magic-fanoose/generated/theme_space_real/page-03.png",
+        "magic-fanoose/generated/theme_space_real/page-04.png",
+        "magic-fanoose/generated/theme_space_real/page-05.png",
+        "magic-fanoose/generated/theme_space_real/page-06.png",
+        "magic-fanoose/generated/theme_space_real/page-07.png",
+        "magic-fanoose/generated/theme_space_real/page-08.png",
+        "magic-fanoose/generated/theme_space_real/page-09.png",
+        "magic-fanoose/generated/theme_space_real/page-10.png",
+        "magic-fanoose/generated/theme_space_real/page-11.png",
+        "magic-fanoose/generated/theme_space_real/page-12.png",
+        "magic-fanoose/generated/theme_space_real/page-13.png"
+      ],
+      "generatedPortrait": "magic-fanoose/generated/theme_space_real/page-99.png",
+      "generatedCover": "magic-fanoose/generated/theme_space_real/page-00.png",
+      "isColoring": false,
+      "_id": "6a3e35e1087c83367710911a"
+    },
+    {
+      "id": "zoo_adventure",
+      "emoji": "🦁",
+      "label": "حديقة الحيوانات",
+      "desc": "مغامرة واقعية بين الحيوانات",
+      "pages": [],
+      "ready": true,
+      "generatedImages": [
+        "magic-fanoose/generated/theme_zoo/page-01.png",
+        "magic-fanoose/generated/theme_zoo/page-02.png",
+        "magic-fanoose/generated/theme_zoo/page-03.png",
+        "magic-fanoose/generated/theme_zoo/page-04.png",
+        "magic-fanoose/generated/theme_zoo/page-05.png",
+        "magic-fanoose/generated/theme_zoo/page-06.png",
+        "magic-fanoose/generated/theme_zoo/page-07.png",
+        "magic-fanoose/generated/theme_zoo/page-08.png",
+        "magic-fanoose/generated/theme_zoo/page-09.png",
+        "magic-fanoose/generated/theme_zoo/page-10.png",
+        "magic-fanoose/generated/theme_zoo/page-11.png",
+        "magic-fanoose/generated/theme_zoo/page-12.png",
+        "magic-fanoose/generated/theme_zoo/page-13.png"
+      ],
+      "generatedPortrait": "magic-fanoose/generated/theme_zoo/page-99.png",
+      "generatedCover": "magic-fanoose/generated/theme_zoo/page-00.png",
+      "isColoring": false,
+      "_id": "6a3e35e1087c83367710911b"
+    },
+    {
+      "id": "zoo_coloring",
+      "emoji": "🖍️",
+      "label": "كتاب تلوين: حديقة الحيوانات",
+      "desc": "16 صفحة للتلوين بشخصية طفلك",
+      "pages": [],
+      "ready": true,
+      "generatedImages": [
+        "magic-fanoose/generated/theme_zoo_coloring/page-01.png",
+        "magic-fanoose/generated/theme_zoo_coloring/page-02.png",
+        "magic-fanoose/generated/theme_zoo_coloring/page-03.png",
+        "magic-fanoose/generated/theme_zoo_coloring/page-04.png",
+        "magic-fanoose/generated/theme_zoo_coloring/page-05.png",
+        "magic-fanoose/generated/theme_zoo_coloring/page-06.png",
+        "magic-fanoose/generated/theme_zoo_coloring/page-07.png",
+        "magic-fanoose/generated/theme_zoo_coloring/page-08.png",
+        "magic-fanoose/generated/theme_zoo_coloring/page-09.png",
+        "magic-fanoose/generated/theme_zoo_coloring/page-10.png",
+        "magic-fanoose/generated/theme_zoo_coloring/page-11.png",
+        "magic-fanoose/generated/theme_zoo_coloring/page-12.png",
+        "magic-fanoose/generated/theme_zoo_coloring/page-13.png",
+        "magic-fanoose/generated/theme_zoo_coloring/page-14.png",
+        "magic-fanoose/generated/theme_zoo_coloring/page-15.png",
+        "magic-fanoose/generated/theme_zoo_coloring/page-16.png"
+      ],
+      "generatedPortrait": "magic-fanoose/generated/theme_zoo_coloring/page-98.png",
+      "generatedCover": "magic-fanoose/generated/theme_zoo_coloring/page-00.png",
+      "isColoring": true,
+      "_id": "6a3e35e1087c83367710911c"
+    },
+    {
+      "id": "space_coloring",
+      "emoji": "🖍️",
+      "label": "كتاب تلوين: الفضاء",
+      "desc": "16 صفحة للتلوين بشخصية طفلك",
+      "pages": [],
+      "ready": true,
+      "generatedImages": [
+        "magic-fanoose/generated/theme_space_coloring/page-01.png",
+        "magic-fanoose/generated/theme_space_coloring/page-02.png",
+        "magic-fanoose/generated/theme_space_coloring/page-03.png",
+        "magic-fanoose/generated/theme_space_coloring/page-04.png",
+        "magic-fanoose/generated/theme_space_coloring/page-05.png",
+        "magic-fanoose/generated/theme_space_coloring/page-06.png",
+        "magic-fanoose/generated/theme_space_coloring/page-07.png",
+        "magic-fanoose/generated/theme_space_coloring/page-08.png",
+        "magic-fanoose/generated/theme_space_coloring/page-09.png",
+        "magic-fanoose/generated/theme_space_coloring/page-10.png",
+        "magic-fanoose/generated/theme_space_coloring/page-11.png",
+        "magic-fanoose/generated/theme_space_coloring/page-12.png",
+        "magic-fanoose/generated/theme_space_coloring/page-13.png",
+        "magic-fanoose/generated/theme_space_coloring/page-14.png",
+        "magic-fanoose/generated/theme_space_coloring/page-15.png",
+        "magic-fanoose/generated/theme_space_coloring/page-16.png"
+      ],
+      "generatedPortrait": "magic-fanoose/generated/theme_space_coloring/page-98.png",
+      "generatedCover": "magic-fanoose/generated/theme_space_coloring/page-00.png",
+      "isColoring": true,
+      "_id": "6a3e35e1087c83367710911d"
+    },
+    {
+      "id": "school_coloring",
+      "emoji": "🖍️",
+      "label": "كتاب تلوين: المدرسة",
+      "desc": "16 صفحة للتلوين بشخصية طفلك",
+      "pages": [],
+      "ready": true,
+      "generatedImages": [
+        "magic-fanoose/generated/theme_school_coloring/page-01.png",
+        "magic-fanoose/generated/theme_school_coloring/page-02.png",
+        "magic-fanoose/generated/theme_school_coloring/page-03.png",
+        "magic-fanoose/generated/theme_school_coloring/page-04.png",
+        "magic-fanoose/generated/theme_school_coloring/page-05.png",
+        "magic-fanoose/generated/theme_school_coloring/page-06.png",
+        "magic-fanoose/generated/theme_school_coloring/page-07.png",
+        "magic-fanoose/generated/theme_school_coloring/page-08.png",
+        "magic-fanoose/generated/theme_school_coloring/page-09.png",
+        "magic-fanoose/generated/theme_school_coloring/page-10.png",
+        "magic-fanoose/generated/theme_school_coloring/page-11.png",
+        "magic-fanoose/generated/theme_school_coloring/page-12.png",
+        "magic-fanoose/generated/theme_school_coloring/page-13.png",
+        "magic-fanoose/generated/theme_school_coloring/page-14.png",
+        "magic-fanoose/generated/theme_school_coloring/page-15.png",
+        "magic-fanoose/generated/theme_school_coloring/page-16.png"
+      ],
+      "generatedPortrait": "magic-fanoose/generated/theme_school_coloring/page-98.png",
+      "generatedCover": "magic-fanoose/generated/theme_school_coloring/page-00.png",
+      "isColoring": true,
+      "_id": "6a3e35e1087c83367710911e"
+    },
+    {
+      "id": "coloring_1782465738249",
+      "emoji": "🐮",
+      "label": "كتاب تلوين: المزرعة",
+      "desc": "16 صفحة للتلوين بشخصية طفلك",
+      "pages": [],
+      "ready": false,
+      "isColoring": true,
+      "coloringScenes": [
+        "عند بوابة المزرعة",
+        "يطعم الدجاج",
+        "يحلب البقرة",
+        "يركب الحصان الصغير",
+        "يجمع البيض",
+        "يقطف التفاح",
+        "يلاعب الخروف",
+        "يقود الجرار",
+        "يسقي النباتات",
+        "يطارد البطة",
+        "ينام في كومة القش",
+        "يحمل الأرنب",
+        "يركب عربة التبن",
+        "يرسم قوس قزح",
+        "يحتضن القطة",
+        "وداعاً للمزرعة"
+      ],
+      "coloringCoverScene": "يقف بسعادة وسط حيوانات المزرعة",
+      "coloringBackCoverScene": "يلوّح وداعاً مع غروب الشمس",
+      "_id": "6a3e4a2027862c4fe0ceddd3"
+    }
+  ],
+  "createdAt": "2026-05-16T12:19:10.070Z",
+  "updatedAt": "2026-06-26T09:51:43.335Z"
+}
