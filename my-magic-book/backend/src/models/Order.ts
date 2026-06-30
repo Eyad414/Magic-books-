@@ -6,12 +6,19 @@ export type IllustrationsStatus = 'pending' | 'generating' | 'ready' | 'failed';
 export interface IShippingAddress {
   fullName: string;
   phone: string;
-  city: string;
-  district: string;
-  street: string;
+  // Address fields are required only for home delivery; self-pickup orders
+  // carry just a pickupLocation, so these stay optional at the schema level
+  // (the checkout form validates the right ones per delivery method).
+  city?: string;
+  district?: string;
+  street?: string;
   buildingNo?: string;
   postalCode?: string;
+  floor?: string;
+  notes?: string;
   country: string;
+  deliveryMethod?: 'delivery' | 'pickup';
+  pickupLocation?: string;
 }
 
 export interface IOrder extends Document {
@@ -41,12 +48,17 @@ export interface IOrder extends Document {
 const ShippingAddressSchema = new Schema<IShippingAddress>({
   fullName: { type: String, required: true },
   phone: { type: String, required: true },
-  city: { type: String, required: true },
-  district: { type: String, required: true },
-  street: { type: String, required: true },
+  // Optional so self-pickup orders (which only set pickupLocation) validate.
+  city: { type: String },
+  district: { type: String },
+  street: { type: String },
   buildingNo: { type: String },
   postalCode: { type: String },
+  floor: { type: String },
+  notes: { type: String },
   country: { type: String, required: true, default: 'SA' },
+  deliveryMethod: { type: String, enum: ['delivery', 'pickup'], default: 'delivery' },
+  pickupLocation: { type: String },
 });
 
 const OrderSchema = new Schema<IOrder>(

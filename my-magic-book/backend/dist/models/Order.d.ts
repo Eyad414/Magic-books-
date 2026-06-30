@@ -1,14 +1,19 @@
 import mongoose, { Document } from 'mongoose';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
+export type IllustrationsStatus = 'pending' | 'generating' | 'ready' | 'failed';
 export interface IShippingAddress {
     fullName: string;
     phone: string;
-    city: string;
-    district: string;
-    street: string;
+    city?: string;
+    district?: string;
+    street?: string;
     buildingNo?: string;
     postalCode?: string;
+    floor?: string;
+    notes?: string;
     country: string;
+    deliveryMethod?: 'delivery' | 'pickup';
+    pickupLocation?: string;
 }
 export interface IOrder extends Document {
     userId: mongoose.Types.ObjectId;
@@ -19,6 +24,14 @@ export interface IOrder extends Document {
     paymentStatus: PaymentStatus;
     stripeSessionId?: string;
     stripePaymentIntentId?: string;
+    illustrationsStatus: IllustrationsStatus;
+    illustrationsError?: string;
+    bookPdfUrl?: string;
+    printCoverUrl?: string;
+    printInteriorUrl?: string;
+    printInteriorPages?: number;
+    bookpodJobId?: string;
+    bookpodStatus?: string;
     trackingNumber?: string;
     notes?: string;
     createdAt: Date;

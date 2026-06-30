@@ -37,12 +37,17 @@ const mongoose_1 = __importStar(require("mongoose"));
 const ShippingAddressSchema = new mongoose_1.Schema({
     fullName: { type: String, required: true },
     phone: { type: String, required: true },
-    city: { type: String, required: true },
-    district: { type: String, required: true },
-    street: { type: String, required: true },
+    // Optional so self-pickup orders (which only set pickupLocation) validate.
+    city: { type: String },
+    district: { type: String },
+    street: { type: String },
     buildingNo: { type: String },
     postalCode: { type: String },
+    floor: { type: String },
+    notes: { type: String },
     country: { type: String, required: true, default: 'SA' },
+    deliveryMethod: { type: String, enum: ['delivery', 'pickup'], default: 'delivery' },
+    pickupLocation: { type: String },
 });
 const OrderSchema = new mongoose_1.Schema({
     userId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -57,6 +62,18 @@ const OrderSchema = new mongoose_1.Schema({
     },
     stripeSessionId: { type: String },
     stripePaymentIntentId: { type: String },
+    illustrationsStatus: {
+        type: String,
+        enum: ['pending', 'generating', 'ready', 'failed'],
+        default: 'pending',
+    },
+    illustrationsError: { type: String },
+    bookPdfUrl: { type: String },
+    printCoverUrl: { type: String },
+    printInteriorUrl: { type: String },
+    printInteriorPages: { type: Number },
+    bookpodJobId: { type: String },
+    bookpodStatus: { type: String },
     trackingNumber: { type: String },
     notes: { type: String },
 }, { timestamps: true });

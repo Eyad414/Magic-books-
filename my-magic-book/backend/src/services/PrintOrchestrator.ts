@@ -85,9 +85,11 @@ export async function printAndSubmitForOrder(
     shipping: order.shippingAddress
       ? {
           name: order.shippingAddress.fullName,
-          line1: `${order.shippingAddress.street} ${order.shippingAddress.buildingNo || ''}`.trim(),
+          // Fall back to the pickup location when there's no street/city
+          // (self-pickup orders carry only a pickupLocation).
+          line1: `${order.shippingAddress.street || order.shippingAddress.pickupLocation || ''} ${order.shippingAddress.buildingNo || ''}`.trim(),
           line2: order.shippingAddress.district,
-          city: order.shippingAddress.city,
+          city: order.shippingAddress.city || order.shippingAddress.pickupLocation || '',
           postcode: order.shippingAddress.postalCode,
           country: order.shippingAddress.country,
           phone: order.shippingAddress.phone,
