@@ -244,14 +244,14 @@
     "error_password_change": "שינוי הסיסמה נכשל"
   },
   "wizard": {
-    "step1_label": "פרטי הילד",
-    "step2_label": "יצירת סיפור",
-    "step3_label": "התאמה אישית",
+    "step1_label": "הילד שלך",
+    "step2_label": "הסיפור שלך",
+    "step3_label": "תשלום",
     "step4_label": "כתובת למשלוח",
     "step5_label": "סיכום הזמנה",
     "build": "בנה",
     "your_magic_story": "את סיפור הקסם שלך",
-    "header_desc": "השלם את 5 השלבים ליצירת ספר מותאם אישית לילדך",
+    "header_desc": "השלם 3 שלבים פשוטים ליצירת ספר מותאם אישית לילדך",
     "step_x_of_y": "שלב {current} מתוך {total} — ",
     "prev_btn": "הקודם"
   },
@@ -837,5 +837,10 @@
     "grayscale": "גווני אפור",
     "highlight_links": "הדגשת קישורים",
     "reset": "אפס הכול"
+  },
+  "checkout": {
+    "title": "משלוח ותשלום",
+    "desc": "הזן את פרטי המשלוח והשלם את ההזמנה",
+    "err_shipping": "אנא השלם תחילה את פרטי המשלוח"
   }
 }

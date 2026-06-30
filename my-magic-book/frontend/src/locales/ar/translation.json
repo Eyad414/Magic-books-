@@ -244,14 +244,14 @@
     "error_password_change": "فشل في تغيير كلمة المرور"
   },
   "wizard": {
-    "step1_label": "تفاصيل الطفل",
-    "step2_label": "توليد القصة",
-    "step3_label": "تخصيص الكتاب",
+    "step1_label": "طفلك",
+    "step2_label": "قصتك",
+    "step3_label": "الدفع",
     "step4_label": "عنوان الشحن",
     "step5_label": "مراجعة الطلب",
     "build": "ابنِ",
     "your_magic_story": "قصتك السحرية",
-    "header_desc": "أكمل الخطوات الخمس لإنشاء كتاب مخصص لطفلك",
+    "header_desc": "أكمل 3 خطوات بسيطة لإنشاء كتاب مخصص لطفلك",
     "step_x_of_y": "الخطوة {current} من {total} — ",
     "prev_btn": "السابق"
   },
@@ -822,5 +822,10 @@
     "grayscale": "تدرج رمادي",
     "highlight_links": "إبراز الروابط",
     "reset": "إعادة ضبط الكل"
+  },
+  "checkout": {
+    "title": "الشحن والدفع",
+    "desc": "أدخل بيانات التوصيل وأكمل طلبك",
+    "err_shipping": "يرجى إكمال بيانات الشحن أولاً"
   }
 }

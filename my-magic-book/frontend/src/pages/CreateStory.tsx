@@ -1,27 +1,27 @@
 import { useStoryProgress } from '../context/StoryProgressContext';
 import Step1_ChildDetails from '../components/wizard/Step1_ChildDetails';
 import Step2_AI_Generator from '../components/wizard/Step2_AI_Generator';
-import Step3_BookCustomizer from '../components/wizard/Step3_BookCustomizer';
-import Step4_ShippingAddress from '../components/wizard/Step4_ShippingAddress';
-import Step5_OrderReview from '../components/wizard/Step5_OrderReview';
+import Step3_Checkout from '../components/wizard/Step3_Checkout';
 import { CheckCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+const TOTAL_STEPS = 3;
+
 export default function CreateStory() {
   const { progress, setStep } = useStoryProgress();
-  const currentStep = progress.currentStep;
+  // Clamp: returning users may have a stale step (4/5) saved from the old
+  // 5-step wizard in localStorage — never render an out-of-range slot.
+  const currentStep = Math.min(Math.max(progress.currentStep || 1, 1), TOTAL_STEPS);
   const { t } = useTranslation();
 
   const STEPS = [
     { number: 1, label: t('wizard.step1_label'), emoji: '👶' },
     { number: 2, label: t('wizard.step2_label'), emoji: '✨' },
-    { number: 3, label: t('wizard.step3_label'), emoji: '🎨' },
-    { number: 4, label: t('wizard.step4_label'), emoji: '📦' },
-    { number: 5, label: t('wizard.step5_label'), emoji: '🚀' },
+    { number: 3, label: t('wizard.step3_label'), emoji: '🚀' },
   ];
 
   const goNext = () => {
-    if (currentStep < 5) setStep(currentStep + 1);
+    if (currentStep < TOTAL_STEPS) setStep(currentStep + 1);
   };
 
   const goPrev = () => {
@@ -95,9 +95,7 @@ export default function CreateStory() {
         <div className="glass-card p-6 sm:p-8">
           {currentStep === 1 && <Step1_ChildDetails onNext={goNext} />}
           {currentStep === 2 && <Step2_AI_Generator onNext={goNext} onPrev={goPrev} />}
-          {currentStep === 3 && <Step3_BookCustomizer onNext={goNext} onPrev={goPrev} />}
-          {currentStep === 4 && <Step4_ShippingAddress onNext={goNext} onPrev={goPrev} />}
-          {currentStep === 5 && <Step5_OrderReview onPrev={goPrev} />}
+          {currentStep === 3 && <Step3_Checkout onPrev={goPrev} />}
         </div>
       </div>
     </div>

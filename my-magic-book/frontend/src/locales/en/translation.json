@@ -244,14 +244,14 @@
     "error_password_change": "Failed to change password"
   },
   "wizard": {
-    "step1_label": "Child Details",
-    "step2_label": "Generate Story",
-    "step3_label": "Book Customization",
+    "step1_label": "Your child",
+    "step2_label": "Your story",
+    "step3_label": "Checkout",
     "step4_label": "Shipping Address",
     "step5_label": "Order Review",
     "build": "Build",
     "your_magic_story": "Your Magic Story",
-    "header_desc": "Complete the 5 steps to create a personalized book for your child",
+    "header_desc": "Complete 3 simple steps to create a personalized book for your child",
     "step_x_of_y": "Step {current} of {total} — ",
     "prev_btn": "Previous"
   },
@@ -837,5 +837,10 @@
     "grayscale": "Grayscale",
     "highlight_links": "Highlight links",
     "reset": "Reset all"
+  },
+  "checkout": {
+    "title": "Shipping & payment",
+    "desc": "Enter your delivery details and complete your order.",
+    "err_shipping": "Please complete your shipping details first"
   }
 }

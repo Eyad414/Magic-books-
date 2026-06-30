@@ -20,17 +20,20 @@ const INITIAL_THEME_COUNT = 8;
 interface ApiTheme { id: string; emoji: string; label: string; desc: string; ready?: boolean; }
 
 export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To move to the next page in the steps
-  const { progress, setStoryConfig } = useStoryProgress(); // To save User Choices in the steps
+  const { progress, setStoryConfig, setBookCustomization } = useStoryProgress(); // To save User Choices in the steps
   const { t, i18n } = useTranslation();
 
   // Themes come from the admin panel via /api/public/settings. The backend
   // already filters to ready===true so half-finished stories never appear.
   const [THEMES, setThemes] = useState<ApiTheme[]>([]);
   const [themesLoading, setThemesLoading] = useState(true);
+  // Live settings power the book-package prices below (same call as the themes).
+  const [liveSettings, setLiveSettings] = useState<any>(null);
 
   useEffect(() => {
     publicApi.getSettings()
       .then((res) => {
+        setLiveSettings(res?.settings || null);
         const fromApi: ApiTheme[] = (res?.settings?.themes ?? [])
           // Coloring books are NOT separate themes here — the format (full-color
           // story vs coloring book) is chosen as a "package" in the next step.
@@ -75,6 +78,28 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
     language: progress.storyConfig.language || 'ar' as 'ar' | 'en' | 'he',
     customThemeNote: progress.storyConfig.customThemeNote || '',
   });
+
+  // Local State: The book format/package (full-color story, coloring book, …).
+  // Merged in from the old "Customize" step so story + format live on one screen.
+  const [bookPackage, setBookPackage] = useState(progress.bookCustomization?.bookPackage || 'color');
+
+  // Package list with live admin prices (falls back to sensible defaults).
+  const packages = useMemo(() => {
+    const DEFAULT_PACKAGES = [
+      { id: 'color', label: t('step3.pkg_color'), price: 60, emoji: '🌈', desc: t('step3.pkg_color_desc') },
+      { id: 'coloring', label: t('step3.pkg_coloring'), price: 50, emoji: '🖍️', desc: t('step3.pkg_coloring_desc') },
+      { id: 'audio', label: t('step3.pkg_audio'), price: 20, emoji: '🎧', desc: t('step3.pkg_audio_desc') },
+      { id: 'ebook', label: t('step3.pkg_ebook'), price: 20, emoji: '📱', desc: t('step3.pkg_ebook_desc') },
+      { id: 'pro', label: t('step3.pkg_pro'), price: 120, originalPrice: 140, emoji: '✨', desc: t('step3.pkg_pro_desc') },
+    ];
+    if (liveSettings?.bookPackages) {
+      return DEFAULT_PACKAGES.map((defaultPkg) => {
+        const livePkg = liveSettings.bookPackages.find((p: any) => p.id === defaultPkg.id);
+        return livePkg ? { ...defaultPkg, price: livePkg.price } : defaultPkg;
+      });
+    }
+    return DEFAULT_PACKAGES;
+  }, [liveSettings, t]);
   
   // Local State: Tracks if the AI is currently generating the text to show a loading indicator
   const [isGenerating, setIsGenerating] = useState(false);
@@ -170,6 +195,8 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
       generatedText: mode === 'ai' ? generatedText : undefined,
       storyId: nextStoryId,
     });
+    // Persist the chosen format so the checkout step can price the order.
+    setBookCustomization({ bookPackage, coverColor: progress.bookCustomization?.coverColor || '#1B1F5E' });
     onNext();
   };
 
@@ -309,6 +336,45 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
                 {lang.label}
               </div>
               <div className="font-arabic text-white/40 text-xs mt-0.5">{lang.desc}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Book Format / Package: full-color story, coloring book, audio, e-book … */}
+      <div>
+        <label className="block font-arabic text-white/80 text-sm mb-3">{t('step3.packages_label')}</label>
+        <div className="flex gap-2 w-full">
+          {packages.map((pkg) => (
+            <button
+              key={pkg.id}
+              type="button"
+              id={`pkg-${pkg.id}`}
+              onClick={() => setBookPackage(pkg.id)}
+              className={`relative flex-1 flex flex-col items-center justify-center p-2 h-28 rounded-2xl border-2 transition-all text-center group ${bookPackage === pkg.id
+                  ? 'border-gold-500 bg-gold-500/10 shadow-gold-glow'
+                  : 'border-white/10 hover:border-white/30 bg-dark-700/50'
+                }`}
+            >
+              <span className={`text-2xl mb-1 transition-transform duration-300 ${bookPackage === pkg.id ? 'scale-110' : 'group-hover:scale-110'}`}>
+                {pkg.emoji}
+              </span>
+              <span className={`font-arabic text-xs font-bold leading-tight mb-1 ${bookPackage === pkg.id ? 'text-gold-500' : 'text-white'}`}>
+                {pkg.label}
+              </span>
+              {'originalPrice' in pkg && pkg.originalPrice ? (
+                <div className="flex items-center gap-1 justify-center">
+                  <span className="font-arabic text-white/30 text-xs line-through">{(pkg as any).originalPrice} ₪</span>
+                  <span className="font-arabic text-gold-500 font-bold text-xs">{pkg.price} ₪</span>
+                </div>
+              ) : (
+                <span className="font-arabic text-gold-500 font-bold text-xs">{pkg.price} ₪</span>
+              )}
+              {bookPackage === pkg.id && (
+                <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gold-500 text-dark-900 flex items-center justify-center shadow-lg animate-scale-in">
+                  <span className="text-xs font-bold">✓</span>
+                </div>
+              )}
             </button>
           ))}
         </div>
