@@ -33,6 +33,15 @@ export const adminApi = {
     const response = await axiosInstance.get('/admin/orders');
     return response.data;
   },
+  // Build the book + print files for an order and (when BookPod is configured)
+  // submit the print job. markPaid lets an admin fulfil a cash/COD order.
+  // Long-running: generates ~15 images, ~3 min.
+  buildOrder: async (id: string, opts?: { markPaid?: boolean }) => {
+    const response = await axiosInstance.post(`/admin/orders/${id}/build`, {
+      markPaid: opts?.markPaid ?? false,
+    });
+    return response.data;
+  },
   // Generate (or fetch cached) Nano-Banana preview illustrations for a theme.
   // Long-running: ~2.5 min for a fresh 13-page + portrait generation.
   generateThemeIllustrations: async (themeId: string, opts?: { force?: boolean; childName?: string }) => {

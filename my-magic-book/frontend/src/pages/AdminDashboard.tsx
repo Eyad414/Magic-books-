@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { adminApi } from '../api/adminApi';
 import { uploadApi } from '../api/uploadApi';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2 } from 'lucide-react';
+import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download } from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -29,6 +29,58 @@ export default function AdminDashboard() {
 
   // Which theme id is currently generating AI preview photos (for the spinner).
   const [generatingThemeId, setGeneratingThemeId] = useState<string | null>(null);
+  // Which order id is currently being built/sent to print (for the spinner).
+  const [buildingOrderId, setBuildingOrderId] = useState<string | null>(null);
+
+  // Admin: build the book + print files and send to BookPod. Generates ~15
+  // images (costs money), so confirm first. markPaid fulfils cash/COD orders.
+  const handleSendToBookPod = async (order: any) => {
+    if (buildingOrderId) return;
+    const already = order.illustrationsStatus === 'ready';
+    const msg = already
+      ? t('admin.confirm_resend', 'إعادة إرسال هذا الطلب إلى BookPod للطباعة؟')
+      : t('admin.confirm_build', 'بناء الكتاب وإرساله إلى BookPod؟ سيتم توليد صور الكتاب (تكلفة على واجهة الذكاء الاصطناعي).');
+    if (!window.confirm(msg)) return;
+    setBuildingOrderId(order._id);
+    const toastId = toast.loading(t('admin.sending_to_print', 'جاري بناء الكتاب وإرساله للطباعة... (قد يستغرق عدة دقائق)'));
+    try {
+      const res = await adminApi.buildOrder(order._id, { markPaid: true });
+      if (res.success) {
+        toast.success(t('admin.sent_to_print', 'تم بناء الكتاب وتجهيزه للطباعة ✅'), { id: toastId });
+        setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...res.order } : o)));
+      } else {
+        toast.error(res.message || t('admin.send_failed', 'فشل الإرسال للطباعة'), { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || t('admin.send_failed', 'فشل الإرسال للطباعة'), { id: toastId });
+    } finally {
+      setBuildingOrderId(null);
+    }
+  };
+
+  // Admin-only: download the print-ready files (cover + interior PDFs) so they
+  // can be archived or sent to a print shop manually.
+  const handleSaveFolder = (order: any) => {
+    const files = [
+      { url: order.printCoverUrl, name: `order-${order._id.slice(-8)}-cover.pdf` },
+      { url: order.printInteriorUrl, name: `order-${order._id.slice(-8)}-interior.pdf` },
+    ].filter((f) => f.url);
+    if (files.length === 0) {
+      toast.error(t('admin.no_files_yet', 'لا توجد ملفات بعد — أرسل الطلب للطباعة أولاً'));
+      return;
+    }
+    files.forEach((f) => {
+      const a = document.createElement('a');
+      a.href = f.url;
+      a.download = f.name;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    });
+    toast.success(t('admin.files_downloading', 'جاري تنزيل ملفات الطباعة 📁'));
+  };
 
   const handleGeneratePhotoreal = async (themeId: string) => {
     setGeneratingThemeId(themeId);
@@ -367,16 +419,33 @@ export default function AdminDashboard() {
                           </div>
 
                           {/* Actions */}
-                          <div className="flex lg:flex-col justify-center gap-3">
-                            <Link 
+                          <div className="flex flex-wrap lg:flex-col justify-center gap-3">
+                            <Link
                               to={`/book/${order.storyId?._id}`}
                               className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gold-500 text-dark-900 font-arabic font-bold text-sm hover:bg-gold-400 transition-all whitespace-nowrap shadow-lg shadow-gold-500/10"
                             >
                               <Eye className="w-4 h-4" />
                               {t('admin.view_story_review')}
                             </Link>
-                            <button className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white/5 text-white/60 font-arabic font-bold text-sm hover:bg-white/10 transition-all border border-white/10">
-                              {t('admin.send_to_print')}
+                            <button
+                              onClick={() => handleSendToBookPod(order)}
+                              disabled={buildingOrderId === order._id}
+                              className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-magic-500/20 text-magic-300 font-arabic font-bold text-sm hover:bg-magic-500/30 transition-all border border-magic-500/30 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {buildingOrderId === order._id ? (
+                                <><Clock className="w-4 h-4 animate-spin" /> {t('admin.sending', 'جارٍ الإرسال...')}</>
+                              ) : (
+                                <><Package className="w-4 h-4" /> {t('admin.send_to_bookpod', 'إرسال إلى BookPod')}</>
+                              )}
+                            </button>
+                            {/* Admin-only: download the print-ready files */}
+                            <button
+                              onClick={() => handleSaveFolder(order)}
+                              disabled={!order.printInteriorUrl && !order.printCoverUrl}
+                              className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white/5 text-white/60 font-arabic font-bold text-sm hover:bg-white/10 transition-all border border-white/10 whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              <Download className="w-4 h-4" />
+                              {t('admin.save_folder', 'حفظ الملفات')}
                             </button>
                           </div>
                         </div>

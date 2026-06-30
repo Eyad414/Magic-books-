@@ -659,7 +659,17 @@
     "delete_confirm": "Are you sure you want to delete this theme?",
     "preview_arabic": "🇸🇦 View in Arabic",
     "preview_english": "🇬🇧 View in English",
-    "preview_hebrew": "🇮🇱 View in Hebrew"
+    "preview_hebrew": "🇮🇱 View in Hebrew",
+    "send_to_bookpod": "Send to BookPod",
+    "save_folder": "Save files",
+    "sending": "Sending...",
+    "confirm_build": "Build the book and send it to BookPod? This generates the book images (incurs an AI cost).",
+    "confirm_resend": "Re-send this order to BookPod for printing?",
+    "sending_to_print": "Building the book and sending to print... (may take a few minutes)",
+    "sent_to_print": "Book built and prepared for printing ✅",
+    "send_failed": "Failed to send to print",
+    "no_files_yet": "No files yet — send the order to print first",
+    "files_downloading": "Downloading print files 📁"
   },
   "title_page": {
     "presents": "Presented to",
