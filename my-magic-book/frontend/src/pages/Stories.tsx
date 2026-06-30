@@ -30,7 +30,7 @@ const SAMPLE_STORIES = [
 export default function Stories() {
   const [selectedStory, setSelectedStory] = useState<any>(null);
   const [favorites, setFavorites] = useState<number[]>([]);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { resetProgress } = useStoryProgress();
   const navigate = useNavigate();
 
@@ -220,7 +220,7 @@ export default function Stories() {
             </div>
             
             <div className="my-8 flex justify-center">
-              <FlipbookPreview text={getStoryText(selectedStory.id)} />
+              <FlipbookPreview text={getStoryText(selectedStory.id)} language={i18n.language as any} />
             </div>
 
             <div className="flex justify-center mt-6">

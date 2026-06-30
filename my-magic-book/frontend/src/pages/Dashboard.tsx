@@ -351,7 +351,7 @@ export default function Dashboard() {
                   {favoriteStories.map((story) => (
                     <Link to="/stories" key={story.id} className="bg-dark-700/50 rounded-2xl border border-white/5 p-5 hover:-translate-y-1 transition-transform group">
                       <div className="text-4xl mb-3 group-hover:animate-bounce-slow transition-all">{story.emoji}</div>
-                      <h3 className="font-arabic font-bold text-white text-lg mb-1">{t('stories_page.story_title', { name: story.childName })}</h3>
+                      <h3 className="font-arabic font-bold text-white text-lg mb-1">{t('stories_page.story_title', { name: t(`stories_page.samples.${story.id}_name`, { defaultValue: story.childName }) })}</h3>
                       <p className="font-arabic text-gold-500 text-xs">{t(`step2.theme_${story.theme}`)}</p>
                     </Link>
                   ))}
