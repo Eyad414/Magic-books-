@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useStoryProgress } from '../../context/StoryProgressContext';
 import { useAuth } from '../../context/AuthContext';
 import MagicButton from '../common/MagicButton';
-import { ChevronRight, CreditCard, Shield, Package, CheckCircle, Tag, Minus, Plus, Truck, MapPin } from 'lucide-react';
+import { ChevronRight, CreditCard, Shield, Package, CheckCircle, Tag, Plus, MapPin } from 'lucide-react';
 import { orderApi } from '../../api/orderApi';
 import { publicApi } from '../../api/publicApi';
 import toast from 'react-hot-toast';
@@ -44,19 +44,6 @@ const CITY_STREETS: Record<string, string[]> = {
   'نتانيا': ['المركز', 'الحي الشرقي', 'الحي الغربي'],
   'الخضيرة': ['المركز', 'الحي الشمالي'],
 };
-
-const EXTRA_THEMES = [
-  { id: 'adventure', emoji: '🗺️', label: 'مغامرة' },
-  { id: 'space', emoji: '🚀', label: 'الفضاء' },
-  { id: 'ocean', emoji: '🌊', label: 'المحيط' },
-  { id: 'forest', emoji: '🌿', label: 'الغابة' },
-  { id: 'princess', emoji: '👸', label: 'الأميرة' },
-  { id: 'superhero', emoji: '⚡', label: 'البطل الخارق' },
-  { id: 'animals', emoji: '🦁', label: 'الحيوانات' },
-  { id: 'dinosaurs', emoji: '🦕', label: 'الديناصورات' },
-  { id: 'pirates', emoji: '🏴‍☠️', label: 'القراصنة' },
-  { id: 'magic', emoji: '🧙', label: 'السحر' },
-];
 
 // Reusable labelled input with inline error.
 const Field = ({ id, label, placeholder, value, onChange, type = 'text', error }: any) => (
@@ -126,22 +113,12 @@ export default function Step3_Checkout({ onPrev }: Props) {
     return DEFAULT_PACKAGES;
   }, [liveSettings, t]);
 
-  // Quantity & extra books
-  const [quantity, setQuantity] = useState(1);
-  const [extraBooks, setExtraBooks] = useState<{ childName: string; theme: string; age: string; gender: 'male' | 'female' }[]>([]);
-
-  const updateQuantity = (newQty: number) => {
-    setQuantity(newQty);
-    const extraCount = Math.max(0, newQty - 1);
-    setExtraBooks(prev => {
-      if (prev.length < extraCount) {
-        return [...prev, ...Array(extraCount - prev.length).fill({ childName: '', theme: 'adventure', age: '3-5', gender: 'male' })];
-      }
-      return prev.slice(0, extraCount);
-    });
-  };
-  const updateExtraBook = (index: number, field: string, value: string) => {
-    setExtraBooks(prev => prev.map((book, i) => i === index ? { ...book, [field]: value } : book));
+  // One book per order. To order another book (a different theme/child), the
+  // customer creates a brand-new story — its own order and payment.
+  const handleCreateAnotherStory = () => {
+    if (!window.confirm(t('step3.create_another_confirm', 'بدء قصة جديدة؟ لن يتم طلب الكتاب الحالي إلا بعد الدفع.'))) return;
+    resetProgress();
+    navigate('/create');
   };
 
   // Coupon
@@ -157,15 +134,13 @@ export default function Step3_Checkout({ onPrev }: Props) {
     else { setCouponApplied(false); setDiscount(0); setCouponError(t('step3.coupon_invalid')); }
   };
 
-  // Price calculation
+  // Price calculation (single book per order)
   const selectedPkg = packages.find(p => p.id === bookCustomization?.bookPackage) || packages[0];
   const isDigital = selectedPkg.id === 'audio' || selectedPkg.id === 'ebook';
   const isPickup = shippingForm.deliveryMethod === 'pickup';
-  const freeBooks = Math.floor(quantity / 5);
-  const paidBooks = quantity - freeBooks;
-  const basePrice = selectedPkg.price * paidBooks;
+  const basePrice = selectedPkg.price;
   const discountedBase = couponApplied ? Math.round(basePrice * (1 - discount / 100)) : basePrice;
-  const freeDelivery = isDigital || isPickup || quantity >= 2;
+  const freeDelivery = isDigital || isPickup;
   const deliveryFee = freeDelivery ? 0 : 30;
   const totalPrice = discountedBase + deliveryFee;
 
@@ -437,112 +412,21 @@ export default function Step3_Checkout({ onPrev }: Props) {
             <Row label={t('step5.package_type')} value={`${selectedPkg.emoji} ${t(`step3.pkg_${selectedPkg.id}`) || selectedPkg.label}`} />
           </div>
 
-          {/* Copies counter + offer banners */}
-          <div className="p-4 rounded-xl bg-dark-700 border border-white/10 space-y-4">
-            <h3 className="font-arabic font-bold text-white text-sm mb-1 flex items-center gap-2">
-              <span>📦</span> {t('step3.qty_label', 'عدد النسخ')}
-            </h3>
-            <div className="flex items-center gap-4">
-              <button
-                type="button"
-                onClick={() => updateQuantity(Math.max(1, quantity - 1))}
-                className="w-10 h-10 rounded-xl border border-white/20 flex items-center justify-center text-white/60 hover:border-gold-500 hover:text-gold-500 transition-all"
-              >
-                <Minus className="w-4 h-4" />
-              </button>
-              <span className="font-arabic font-black text-gold-500 text-2xl min-w-[40px] text-center">{quantity}</span>
-              <button
-                type="button"
-                onClick={() => updateQuantity(Math.min(10, quantity + 1))}
-                className="w-10 h-10 rounded-xl border border-white/20 flex items-center justify-center text-white/60 hover:border-gold-500 hover:text-gold-500 transition-all"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="space-y-2">
-              {freeDelivery && !isPickup && !isDigital && (
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-green-500/10 border border-green-500/30 animate-fade-in">
-                  <Truck className="w-5 h-5 text-green-400 flex-shrink-0" />
-                  <p className="font-arabic text-green-400 text-sm font-bold">{t('step3.free_delivery')}</p>
-                </div>
-              )}
-              {isPickup && (
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-green-500/10 border border-green-500/30 animate-fade-in">
-                  <Truck className="w-5 h-5 text-green-400 flex-shrink-0" />
-                  <p className="font-arabic text-green-400 text-sm font-bold">✅ {t('step4.self_pickup', 'الاستلام شخصي')} — {t('step3.free_delivery', 'توصيل مجاني')}</p>
-                </div>
-              )}
-              {!freeDelivery && !isPickup && (
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-gold-500/5 border border-gold-500/20">
-                  <Truck className="w-5 h-5 text-gold-500/50 flex-shrink-0" />
-                  <p className="font-arabic text-white/50 text-xs">{t('step3.free_delivery_hint')} <strong className="text-gold-500">{t('step3.free_delivery_strong')}</strong></p>
-                </div>
-              )}
-              {freeBooks > 0 && (
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-green-500/10 border border-green-500/30 animate-fade-in">
-                  <span className="text-xl">🎁</span>
-                  <p className="font-arabic text-green-400 text-sm font-bold">
-                    {t('step3.free_books_msg', 'مبروك! {count} {text} مع طلبك!').replace('{count}', String(freeBooks)).replace('{text}', freeBooks === 1 ? t('step3.free_book_single', 'كتاب مجاني') : t('step3.free_book_plural', 'كتب مجانية'))}
-                  </p>
-                </div>
-              )}
-              {quantity >= 2 && freeBooks === 0 && (
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-magic-500/5 border border-magic-500/20">
-                  <span className="text-lg">🎁</span>
-                  <p className="font-arabic text-white/50 text-xs">{t('step3.buy_4_get_1', 'اشتري 4 كتب واحصل على')} <strong className="text-magic-400">{t('step3.5th_free', 'الخامس مجانًا')}</strong></p>
-                </div>
-              )}
-            </div>
+          {/* Want another book? Create a separate story (its own order). */}
+          <div className="p-4 rounded-xl bg-dark-700 border border-white/10 flex flex-col items-center justify-center text-center gap-3">
+            <span className="text-3xl">📚</span>
+            <p className="font-arabic text-white/60 text-xs leading-relaxed max-w-[85%]">
+              {t('step3.another_story_hint', 'تريد كتاباً آخر بموضوع مختلف؟ أنشئ قصة جديدة بطلب منفصل.')}
+            </p>
+            <button
+              type="button"
+              onClick={handleCreateAnotherStory}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-magic-500/20 text-magic-300 border border-magic-500/30 font-arabic font-bold text-sm hover:bg-magic-500/30 transition-all"
+            >
+              <Plus className="w-4 h-4" /> {t('step3.create_another_story', 'أنشئ قصة جديدة')}
+            </button>
           </div>
         </div>
-
-        {/* Extra books details */}
-        {extraBooks.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {extraBooks.map((book, idx) => (
-              <div key={idx} className="p-4 rounded-xl border border-magic-500/20 bg-magic-500/5 space-y-3 animate-fade-in">
-                <p className="font-arabic text-magic-400 font-bold text-sm">📚 {t('step3.extra_book_num', 'الكتاب رقم {num}').replace('{num}', String(idx + 2))}</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block font-arabic text-white/60 text-xs mb-1">{t('step3.extra_child_name', 'اسم الطفل')}</label>
-                    <input type="text" className="magic-input text-sm !py-2" placeholder="اسم الطفل" value={book.childName} onChange={(e) => updateExtraBook(idx, 'childName', e.target.value)} maxLength={30} />
-                  </div>
-                  <div>
-                    <label className="block font-arabic text-white/60 text-xs mb-1">{t('step3.extra_gender', 'الجنس')}</label>
-                    <div className="flex gap-2">
-                      <button type="button" onClick={() => updateExtraBook(idx, 'gender', 'male')} className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg border text-xs transition-all ${book.gender === 'male' ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-white/10 text-white/50'}`}>
-                        <span>👦</span><span className="font-arabic font-bold">{t('step1.gender_male', 'ولد')}</span>
-                      </button>
-                      <button type="button" onClick={() => updateExtraBook(idx, 'gender', 'female')} className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg border text-xs transition-all ${book.gender === 'female' ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-white/10 text-white/50'}`}>
-                        <span>👧</span><span className="font-arabic font-bold">{t('step1.gender_female', 'بنت')}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <label className="block font-arabic text-white/60 text-xs mb-1">{t('step3.extra_age', 'العمر')}</label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {[{ id: '1-3', emoji: '👶' }, { id: '3-5', emoji: '🧸' }, { id: '5-8', emoji: '🎠' }, { id: '8-10', emoji: '🏆' }].map((age) => (
-                      <button key={age.id} type="button" onClick={() => updateExtraBook(idx, 'age', age.id)} className={`flex items-center justify-center gap-1 py-1.5 rounded-lg border text-xs transition-all ${book.age === age.id ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-white/10 text-white/50'}`}>
-                        <span>{age.emoji}</span><span className="font-arabic font-bold">{age.id}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="block font-arabic text-white/60 text-xs mb-1">{t('step3.extra_theme', 'الموضوع')}</label>
-                  <div className="flex flex-wrap gap-2">
-                    {EXTRA_THEMES.map((theme) => (
-                      <button key={theme.id} type="button" onClick={() => updateExtraBook(idx, 'theme', theme.id)} className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border text-xs transition-all ${book.theme === theme.id ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-white/10 text-white/50 hover:border-white/30'}`}>
-                        <span>{theme.emoji}</span><span className="font-arabic font-bold">{theme.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
 
         {/* Coupon + price summary */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -578,10 +462,10 @@ export default function Step3_Checkout({ onPrev }: Props) {
           <div className="p-4 rounded-xl bg-gradient-to-l from-gold-500/20 to-gold-500/5 border border-gold-500/30 space-y-2">
             <h3 className="font-arabic font-bold text-white text-sm mb-3">💰 {t('step5.price_summary_title')}</h3>
             <div className="flex items-start justify-between gap-4">
-              <span className="font-arabic text-white/50 text-sm flex-shrink-0">{t(`step3.pkg_${selectedPkg.id}`) || selectedPkg.label} × {quantity}:</span>
+              <span className="font-arabic text-white/50 text-sm flex-shrink-0">{t(`step3.pkg_${selectedPkg.id}`) || selectedPkg.label}:</span>
               <div className="flex items-center gap-2">
-                {(selectedPkg as any).originalPrice && quantity === 1 && (
-                  <span className="font-arabic text-white/30 text-xs line-through">{(selectedPkg as any).originalPrice * quantity} ₪</span>
+                {(selectedPkg as any).originalPrice && (
+                  <span className="font-arabic text-white/30 text-xs line-through">{(selectedPkg as any).originalPrice} ₪</span>
                 )}
                 <span className="font-arabic text-white text-sm">{basePrice} ₪</span>
               </div>

@@ -400,7 +400,10 @@
     "pkg_ebook": "E-Book",
     "pkg_ebook_desc": "Electronic book to read on devices",
     "pkg_pro": "Pro Package",
-    "pkg_pro_desc": "All versions (Color + Coloring + Audio + E-Book)"
+    "pkg_pro_desc": "All versions (Color + Coloring + Audio + E-Book)",
+    "another_story_hint": "Want another book with a different theme? Create a new story as a separate order.",
+    "create_another_story": "Create a new story",
+    "create_another_confirm": "Start a new story? Your current book won't be ordered until you pay."
   },
   "step4": {
     "err_pickup_location": "Please choose a pickup point",
@@ -413,7 +416,7 @@
     "standard_delivery": "Home delivery",
     "title": "Shipping Address",
     "desc": "Enter your address accurately so your book arrives on time",
-    "delivery_banner": "🚚 Free shipping for orders containing 2 or more stories — Delivery within 5-8 business days 🚚",
+    "delivery_banner": "🚚 Home delivery within 5–8 business days · self-pickup is free",
     "fullname_label": "Full Name *",
     "fullname_placeholder": "Name as on ID",
     "err_fullname": "Please enter your full name",
