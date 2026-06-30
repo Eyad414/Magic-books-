@@ -41,8 +41,8 @@ export default function ContactUs() {
           <div className="space-y-5">
             <h2 className="font-arabic font-bold text-white text-xl">{t('contact.info_title')}</h2>
             {[
-              { icon: Mail, label: t('contact.info_email'), value: 'info@magicfanoose.com', href: 'mailto:info@magicfanoose.com' },
-              { icon: Phone, label: t('contact.info_phone'), value: '+972 58 550 2072', href: 'tel:+972585502072' },
+              { icon: Mail, label: t('contact.info_email'), value: 'info@magicfanoose.com', href: 'mailto:info@magicfanoose.com', ltr: true },
+              { icon: Phone, label: t('contact.info_phone'), value: '+972 58 550 2072', href: 'tel:+972585502072', ltr: true },
               { icon: MessageCircle, label: t('contact.info_whatsapp'), value: t('contact.whatsapp_value'), href: 'https://wa.me/972585502072' },
             ].map((item) => (
               <div key={item.label} className="glass-card p-4 flex items-start gap-4">
@@ -52,11 +52,11 @@ export default function ContactUs() {
                 <div>
                   <p className="font-arabic text-white/50 text-xs mb-1">{item.label}</p>
                   {item.href ? (
-                    <a href={item.href} className="font-arabic text-white font-medium text-sm hover:text-gold-500 transition-colors">
+                    <a href={item.href} dir={(item as any).ltr ? 'ltr' : undefined} className="inline-block font-arabic text-white font-medium text-sm hover:text-gold-500 transition-colors">
                       {item.value}
                     </a>
                   ) : (
-                    <p className="font-arabic text-white font-medium text-sm">{item.value}</p>
+                    <p dir={(item as any).ltr ? 'ltr' : undefined} className="inline-block font-arabic text-white font-medium text-sm">{item.value}</p>
                   )}
                 </div>
               </div>

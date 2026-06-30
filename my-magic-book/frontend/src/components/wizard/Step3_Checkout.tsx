@@ -165,7 +165,7 @@ export default function Step3_Checkout({ onPrev }: Props) {
   const paidBooks = quantity - freeBooks;
   const basePrice = selectedPkg.price * paidBooks;
   const discountedBase = couponApplied ? Math.round(basePrice * (1 - discount / 100)) : basePrice;
-  const freeDelivery = isDigital || isPickup || quantity >= 3;
+  const freeDelivery = isDigital || isPickup || quantity >= 2;
   const deliveryFee = freeDelivery ? 0 : 30;
   const totalPrice = discountedBase + deliveryFee;
 

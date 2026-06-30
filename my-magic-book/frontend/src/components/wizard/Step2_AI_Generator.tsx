@@ -5,6 +5,7 @@ import { Sparkles, ChevronLeft, ChevronRight, Globe, ChevronDown, ChevronUp, Loa
 import FlipbookPreview from './FlipbookPreview';
 import { storyApi } from '../../api/storyApi';
 import { publicApi } from '../../api/publicApi';
+import { toDisplayUrl } from '../../api/mediaUrl';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { STORY_TEMPLATES } from '../../data/stories/templates';
@@ -17,7 +18,17 @@ interface Props { onNext: () => void; onPrev: () => void; }
 
 const INITIAL_THEME_COUNT = 8;
 
-interface ApiTheme { id: string; emoji: string; label: string; desc: string; ready?: boolean; }
+interface ApiTheme {
+  id: string;
+  emoji: string;
+  label: string;
+  desc: string;
+  ready?: boolean;
+  // Sample illustrations (generated with the demo child "Baha") so the preview
+  // can show what a finished book looks like.
+  generatedCover?: string;
+  generatedImages?: string[];
+}
 
 export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To move to the next page in the steps
   const { progress, setStoryConfig, setBookCustomization } = useStoryProgress(); // To save User Choices in the steps
@@ -49,6 +60,8 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
             // Prefer the i18n string if one exists, otherwise fall back to the admin-edited label.
             label: localizedLabel !== labelKey ? localizedLabel : dbTheme.label,
             desc: localizedDesc !== descKey ? localizedDesc : dbTheme.desc,
+            generatedCover: dbTheme.generatedCover,
+            generatedImages: dbTheme.generatedImages,
           };
         });
         setThemes(fromApi);
@@ -201,16 +214,22 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
   };
 
   // Language-aware teaser of the SELECTED theme's real story (cover + first
-  // pages + a locked page). Built in the language the customer chose here.
+  // pages + a locked page), illustrated with the theme's sample (Baha) images.
+  // Built in the language the customer chose here.
+  const selectedTheme = THEMES.find((th) => th.id === form.theme);
+  const coverImage = toDisplayUrl(selectedTheme?.generatedCover);
+  const pageImages = (selectedTheme?.generatedImages || []).map((p) => toDisplayUrl(p));
   const previewPages: PreviewPage[] = useMemo(
     () => buildThemePreview({
       theme: form.theme,
       language: form.language,
       childName: progress.childDetails.childName,
       childGender: (progress.childDetails as any).childGender,
+      coverImage,
+      pageImages,
       i18n,
     }),
-    [form.theme, form.language, progress.childDetails.childName, (progress.childDetails as any).childGender, i18n],
+    [form.theme, form.language, progress.childDetails.childName, (progress.childDetails as any).childGender, coverImage, pageImages.join('|'), i18n],
   );
   return (
     <div className="space-y-6">

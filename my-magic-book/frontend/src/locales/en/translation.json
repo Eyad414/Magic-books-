@@ -362,7 +362,7 @@
     "packages_label": "⭐ Book Packages",
     "qty_label": "📦 Number of Copies",
     "free_delivery": "🎉 Free delivery for your order!",
-    "free_delivery_hint": "Order 3 or more copies and get ",
+    "free_delivery_hint": "Order 2 or more copies and get ",
     "free_delivery_strong": "Free Delivery",
     "free_books_msg": "🎉 Congratulations! {count} {text} with your order!",
     "free_book_single": "free book",
