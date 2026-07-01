@@ -61,15 +61,17 @@ export function buildThemePreview(opts: {
     ];
   }
   // Show the first ~30% of the story readable; blur the rest until the end.
+  // Like the real book: each story page is a TEXT page + its own IMAGE page
+  // (separate sheets), not text overlaid on the photo.
   const allKeys = Object.keys(pagesObj).sort((a, b) => Number(a) - Number(b));
   const readable = Math.max(1, Math.ceil(allKeys.length * 0.3));
-  const textPages: PreviewPage[] = allKeys.map((k, idx) => ({
-    type: 'text',
-    content: personalize(pagesObj[k]),
-    image: pageImages[idx],
-    blur: idx >= readable,
-  }));
-  return [{ type: 'cover', title: personalize(titleRaw), image: coverImage }, ...textPages, { type: 'lock', content: lockMsg }];
+  const bodyPages: PreviewPage[] = [];
+  allKeys.forEach((k, idx) => {
+    const locked = idx >= readable;
+    bodyPages.push({ type: 'text', content: personalize(pagesObj[k]), blur: locked });
+    if (pageImages[idx]) bodyPages.push({ type: 'text', image: pageImages[idx], blur: locked });
+  });
+  return [{ type: 'cover', title: personalize(titleRaw), image: coverImage }, ...bodyPages, { type: 'lock', content: lockMsg }];
 }
 
 interface Props {
@@ -166,7 +168,8 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                   <p className="font-arabic text-gold-400 text-xs sm:text-sm font-bold leading-relaxed max-w-[85%]">{page.content}</p>
                 </div>
               ) : page.image ? (
-                /* Illustrated story page: Baha artwork + the story text band */
+                /* Full-bleed illustration page (its own sheet, no text overlay —
+                   the story text lives on its own page). */
                 <div className="h-full w-full relative" style={{ background: '#0a1426' }} dir={dir}>
                   <img
                     src={page.image}
@@ -175,6 +178,7 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                     style={page.blur ? { filter: 'blur(5px)' } : undefined}
                     onError={hideOnError}
                   />
+                  {page.content && (
                   <div className="absolute bottom-0 left-0 right-0 px-3 pt-6 pb-2" style={{ background: 'linear-gradient(to top, rgba(5,10,21,0.94) 0%, rgba(5,10,21,0) 100%)' }}>
                     <p
                       className="font-arabic text-white text-[11px] sm:text-xs font-bold leading-snug text-center drop-shadow"
@@ -183,6 +187,7 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                       {page.content}
                     </p>
                   </div>
+                  )}
                   {page.blur && (
                     <div className="absolute inset-0 flex items-center justify-center bg-dark-900/25">
                       <span className="text-3xl drop-shadow">🔒</span>
