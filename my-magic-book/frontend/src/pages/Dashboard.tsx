@@ -275,7 +275,7 @@ export default function Dashboard() {
                             onClick={() => handleDeleteStory(story._id, story.childName)}
                             aria-label={t('dashboard.delete_story', 'حذف القصة')}
                             title={t('dashboard.delete_story', 'حذف القصة')}
-                            className="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                            className="absolute top-3 right-3 z-10 w-7 h-7 rounded-full flex items-center justify-center text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                           >
                             <X className="w-4 h-4" />
                           </button>
