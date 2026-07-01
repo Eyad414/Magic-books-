@@ -56,7 +56,7 @@ export default function Footer() {
                   <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path>
                 </svg>
               </a>
-              <a href="mailto:info@magicfanoose.com" aria-label="Email" className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-gold-500 hover:border-gold-500/40 transition-all">
+              <a href="mailto:magicfanoose@gmail.com" aria-label="Email" className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-gold-500 hover:border-gold-500/40 transition-all">
                 <Mail className="w-4 h-4" />
               </a>
             </div>
@@ -114,7 +114,7 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-center gap-3 text-white/50 text-sm font-arabic">
                 <Mail className="w-4 h-4 text-gold-500 flex-shrink-0" />
-                <span>info@magicfanoose.com</span>
+                <span>magicfanoose@gmail.com</span>
               </li>
               <li className="flex items-center gap-3 text-white/50 text-sm font-arabic">
                 <Phone className="w-4 h-4 text-gold-500 flex-shrink-0" />

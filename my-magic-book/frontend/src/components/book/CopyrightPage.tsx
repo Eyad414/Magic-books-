@@ -23,7 +23,7 @@ export default function CopyrightPage() {
         </div>
         <div className="cp-info-row">
           <span className="cp-info-icon">📧</span>
-          <a href="mailto:support@magicfanoose.com" className="cp-link">support@magicfanoose.com</a>
+          <a href="mailto:magicfanoose@gmail.com" className="cp-link">magicfanoose@gmail.com</a>
         </div>
       </div>
 

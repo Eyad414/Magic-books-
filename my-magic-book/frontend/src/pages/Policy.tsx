@@ -51,7 +51,7 @@ export default function Policy() {
           <p><strong className="text-white">{t('policy.refund_content_3').split(':')[0]}:</strong> {t('policy.refund_content_3').split(':')[1]}</p>
           <p><strong className="text-white">{t('policy.refund_content_4').split(':')[0]}:</strong> {t('policy.refund_content_4').split(':')[1]}</p>
           <p><strong className="text-white">{t('policy.refund_content_5').split(':')[0]}:</strong> {t('policy.refund_content_5').split(':')[1]}</p>
-          <p>{t('policy.refund_contact')} <a href="mailto:support@mymagicbook.sa" className="text-gold-500 hover:underline">support@mymagicbook.sa</a></p>
+          <p>{t('policy.refund_contact')} <a href="mailto:magicfanoose@gmail.com" className="text-gold-500 hover:underline">magicfanoose@gmail.com</a></p>
         </Section>
 
         <Section id="shipping" icon={Shield} title={t('policy.shipping_title')}>

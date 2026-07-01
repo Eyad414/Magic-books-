@@ -41,7 +41,7 @@ export default function ContactUs() {
           <div className="space-y-5">
             <h2 className="font-arabic font-bold text-white text-xl">{t('contact.info_title')}</h2>
             {[
-              { icon: Mail, label: t('contact.info_email'), value: 'info@magicfanoose.com', href: 'mailto:info@magicfanoose.com', ltr: true },
+              { icon: Mail, label: t('contact.info_email'), value: 'magicfanoose@gmail.com', href: 'mailto:magicfanoose@gmail.com', ltr: true },
               { icon: Phone, label: t('contact.info_phone'), value: '+972 58 550 2072', href: 'tel:+972585502072', ltr: true },
               { icon: MessageCircle, label: t('contact.info_whatsapp'), value: t('contact.whatsapp_value'), href: 'https://wa.me/972585502072' },
             ].map((item) => (
