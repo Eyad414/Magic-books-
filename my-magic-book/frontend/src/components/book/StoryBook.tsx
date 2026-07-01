@@ -526,7 +526,10 @@ export default function StoryBook({
             margin: 0;
           }
 
-          /* Each page = exactly one printed sheet */
+          /* Each page = exactly one printed sheet. NOTE: no page-break-inside:
+             avoid here — an element that is exactly one page tall can be bumped
+             to the next sheet by sub-pixel rounding, leaving blank sheets.
+             overflow:hidden already clips any content to its own 220mm sheet. */
           .book-page {
             width: 220mm;
             height: 220mm;
@@ -534,8 +537,11 @@ export default function StoryBook({
             max-height: 220mm;
             page-break-after: always;
             break-after: page;
-            page-break-inside: avoid;
-            break-inside: avoid;
+          }
+          /* No trailing blank sheet after the very last page */
+          .book-page:last-child {
+            page-break-after: auto;
+            break-after: auto;
             border-radius: 0;          /* No rounded corners on print */
             overflow: hidden;
             box-shadow: none;
