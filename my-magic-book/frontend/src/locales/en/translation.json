@@ -241,7 +241,11 @@
     "messages_desc": "No new messages.",
     "error_update": "Failed to update profile",
     "error_password_match": "New passwords do not match",
-    "error_password_change": "Failed to change password"
+    "error_password_change": "Failed to change password",
+    "delete_story": "Delete story",
+    "confirm_delete_story": "Delete {{name}}'s story? This can't be undone.",
+    "story_deleted": "Story deleted",
+    "story_delete_failed": "Failed to delete story"
   },
   "wizard": {
     "step1_label": "Your child",

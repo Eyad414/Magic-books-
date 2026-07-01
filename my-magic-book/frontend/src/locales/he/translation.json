@@ -241,7 +241,11 @@
     "messages_desc": "אין הודעות חדשות.",
     "error_update": "עדכון הפרופיל נכשל",
     "error_password_match": "הסיסמאות החדשות אינן תואמות",
-    "error_password_change": "שינוי הסיסמה נכשל"
+    "error_password_change": "שינוי הסיסמה נכשל",
+    "delete_story": "מחק סיפור",
+    "confirm_delete_story": "למחוק את הסיפור של {{name}}? לא ניתן לבטל.",
+    "story_deleted": "הסיפור נמחק",
+    "story_delete_failed": "מחיקת הסיפור נכשלה"
   },
   "wizard": {
     "step1_label": "הילד שלך",

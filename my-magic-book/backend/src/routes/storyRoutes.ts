@@ -6,6 +6,7 @@ import {
   getStoryPreview,
   getFullStory,
   getMyStories,
+  deleteMyStory,
 } from '../controllers/storyController';
 import { protect } from '../utils/authMiddleware';
 
@@ -17,5 +18,6 @@ router.post('/:id/generate', protect, generateStory);
 router.put('/:id/customize', protect, customizeStory);
 router.get('/:id/preview', getStoryPreview);
 router.get('/:id/full', protect, getFullStory);
+router.delete('/:id', protect, deleteMyStory);
 
 export default router;

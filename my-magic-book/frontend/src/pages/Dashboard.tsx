@@ -90,6 +90,17 @@ export default function Dashboard() {
     navigate('/create');
   };
 
+  const handleDeleteStory = async (id: string, name: string) => {
+    if (!window.confirm(t('dashboard.confirm_delete_story', { name, defaultValue: `حذف قصة ${name}؟ لا يمكن التراجع.` }))) return;
+    try {
+      await storyApi.remove(id);
+      setStories((prev) => prev.filter((s) => s._id !== id));
+      toast.success(t('dashboard.story_deleted', 'تم حذف القصة'));
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || t('dashboard.story_delete_failed', 'فشل في حذف القصة'));
+    }
+  };
+
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSavingProfile(true);
@@ -258,7 +269,16 @@ export default function Dashboard() {
                     {stories.map((story) => {
                       const status = statusMap[story.status] || statusMap.draft;
                       return (
-                        <div key={story._id} className="bg-dark-700/50 rounded-2xl border border-white/5 p-5 hover:-translate-y-1 transition-transform group flex flex-col">
+                        <div key={story._id} className="relative bg-dark-700/50 rounded-2xl border border-white/5 p-5 hover:-translate-y-1 transition-transform group flex flex-col">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteStory(story._id, story.childName)}
+                            aria-label={t('dashboard.delete_story', 'حذف القصة')}
+                            title={t('dashboard.delete_story', 'حذف القصة')}
+                            className="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
                           <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">📚</div>
                           <h3 className="font-arabic font-bold text-white text-lg mb-1">{story.childName}</h3>
                           <p className="font-arabic text-white/40 text-xs mb-3">{story.theme} • {new Date(story.createdAt).toLocaleDateString()}</p>

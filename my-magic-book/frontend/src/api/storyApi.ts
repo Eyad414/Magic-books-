@@ -21,4 +21,8 @@ export const storyApi = {
     const res = await api.get('/stories/my');
     return res.data;
   },
+  remove: async (id: string) => {
+    const res = await api.delete(`/stories/${id}`);
+    return res.data;
+  },
 };

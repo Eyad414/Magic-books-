@@ -130,6 +130,26 @@ export const getMyStories = async (req: Request, res: Response): Promise<void> =
   }
 };
 
+// @route DELETE /api/stories/:id — a user cancels/removes their own story.
+export const deleteMyStory = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user._id;
+    const story = await Story.findById(req.params.id);
+    if (!story) {
+      res.status(404).json({ success: false, message: 'القصة غير موجودة' });
+      return;
+    }
+    if (String(story.userId) !== String(userId)) {
+      res.status(403).json({ success: false, message: 'غير مصرح' });
+      return;
+    }
+    await story.deleteOne();
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'فشل في حذف القصة' });
+  }
+};
+
 // @route GET /api/public/test-pdf
 import { buildBookHtml, BookData } from '../services/HtmlTemplateBuilder';
 import { generateBookPdf } from '../services/PdfGenerator';

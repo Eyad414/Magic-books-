@@ -241,7 +241,11 @@
     "messages_desc": "لا توجد رسائل جديدة.",
     "error_update": "فشل في تحديث البيانات",
     "error_password_match": "كلمتا المرور الجديدة غير متطابقتين",
-    "error_password_change": "فشل في تغيير كلمة المرور"
+    "error_password_change": "فشل في تغيير كلمة المرور",
+    "delete_story": "حذف القصة",
+    "confirm_delete_story": "حذف قصة {{name}}؟ لا يمكن التراجع.",
+    "story_deleted": "تم حذف القصة",
+    "story_delete_failed": "فشل في حذف القصة"
   },
   "wizard": {
     "step1_label": "طفلك",
