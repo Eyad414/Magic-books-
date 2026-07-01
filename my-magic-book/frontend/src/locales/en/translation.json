@@ -436,7 +436,13 @@
     "optional": "Optional",
     "notes_label": "Notes",
     "recipient_fallback": "Recipient",
-    "next_btn": "Next — Order Review 📦"
+    "next_btn": "Next — Order Review 📦",
+    "house_label": "House number",
+    "house_placeholder": "e.g. 12",
+    "postalcode_label": "Postal code",
+    "postalcode_placeholder": "e.g. 9990000",
+    "err_house": "Please enter the house number",
+    "err_postalcode": "Please enter the postal code"
   },
   "step5": {
     "applepay_note": "Use Touch ID or Face ID to complete the payment.",

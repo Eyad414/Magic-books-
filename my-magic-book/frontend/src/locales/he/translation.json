@@ -436,7 +436,13 @@
     "optional": "אופציונלי",
     "notes_label": "הערות",
     "recipient_fallback": "נמען",
-    "next_btn": "הבא — סיכום הזמנה 📦"
+    "next_btn": "הבא — סיכום הזמנה 📦",
+    "house_label": "מספר בית",
+    "house_placeholder": "לדוגמה: 12",
+    "postalcode_label": "מיקוד",
+    "postalcode_placeholder": "לדוגמה: 9990000",
+    "err_house": "אנא הזן מספר בית",
+    "err_postalcode": "אנא הזן מיקוד"
   },
   "step5": {
     "applepay_note": "השתמש ב-Touch ID או Face ID להשלמת התשלום.",

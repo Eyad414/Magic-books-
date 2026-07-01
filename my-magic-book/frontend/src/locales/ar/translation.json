@@ -436,7 +436,13 @@
     "optional": "اختياري",
     "notes_label": "ملاحظات",
     "recipient_fallback": "المستلم",
-    "next_btn": "التالي — مراجعة الطلب 📦"
+    "next_btn": "التالي — مراجعة الطلب 📦",
+    "house_label": "رقم المنزل",
+    "house_placeholder": "مثال: 12",
+    "postalcode_label": "الرمز البريدي",
+    "postalcode_placeholder": "مثال: 9990000",
+    "err_house": "الرجاء إدخال رقم المنزل",
+    "err_postalcode": "الرجاء إدخال الرمز البريدي"
   },
   "step5": {
     "applepay_note": "استخدم Touch ID أو Face ID لإتمام الدفع.",

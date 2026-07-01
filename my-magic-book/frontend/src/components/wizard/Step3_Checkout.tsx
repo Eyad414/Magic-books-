@@ -77,6 +77,7 @@ export default function Step3_Checkout({ onPrev }: Props) {
     floor: progress.shippingAddress?.floor || '',
     notes: progress.shippingAddress?.notes || '',
     buildingNo: progress.shippingAddress?.buildingNo || '',
+    postalCode: progress.shippingAddress?.postalCode || '',
     street: progress.shippingAddress?.street || '',
     country: progress.shippingAddress?.country || 'SA',
     deliveryMethod: progress.shippingAddress?.deliveryMethod || 'delivery',
@@ -151,6 +152,9 @@ export default function Step3_Checkout({ onPrev }: Props) {
     if (shippingForm.deliveryMethod === 'delivery') {
       if (!shippingForm.city.trim()) errs.city = t('step4.err_city');
       if (!shippingForm.street.trim()) errs.street = t('step4.err_street');
+      // BookPod home delivery needs a numeric house number + postal code.
+      if (!shippingForm.buildingNo.trim()) errs.buildingNo = t('step4.err_house', 'الرجاء إدخال رقم المنزل');
+      if (!shippingForm.postalCode.trim()) errs.postalCode = t('step4.err_postalcode', 'الرجاء إدخال الرمز البريدي');
     } else {
       if (!shippingForm.pickupLocation) errs.pickupLocation = t('step4.err_pickup_location', 'الرجاء اختيار نقطة الاستلام');
     }
@@ -323,11 +327,22 @@ export default function Step3_Checkout({ onPrev }: Props) {
                 onChange={(v: string) => setShippingForm({ ...shippingForm, floor: v })}
               />
               <Field
-                id="shipping-building"
-                label={t('step4.building_label')}
-                placeholder={t('step4.optional')}
+                id="shipping-house"
+                label={t('step4.house_label', 'رقم المنزل')}
+                placeholder={t('step4.house_placeholder', 'مثال: 12')}
+                type="tel"
                 value={shippingForm.buildingNo}
-                onChange={(v: string) => setShippingForm({ ...shippingForm, buildingNo: v })}
+                onChange={(v: string) => setShippingForm({ ...shippingForm, buildingNo: v.replace(/\D/g, '') })}
+                error={errors.buildingNo}
+              />
+              <Field
+                id="shipping-postalcode"
+                label={t('step4.postalcode_label', 'الرمز البريدي')}
+                placeholder={t('step4.postalcode_placeholder', 'مثال: 9990000')}
+                type="tel"
+                value={shippingForm.postalCode}
+                onChange={(v: string) => setShippingForm({ ...shippingForm, postalCode: v.replace(/\D/g, '') })}
+                error={errors.postalCode}
               />
               <Field
                 id="shipping-notes"
