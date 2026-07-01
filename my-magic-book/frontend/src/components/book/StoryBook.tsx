@@ -317,6 +317,10 @@ export default function StoryBook({
           STYLES — Screen + Print
       ══════════════════════════════════════════════════════════════════════ */}
       <style>{`
+        /* Top-level @page (most reliable placement for "Save as PDF"):
+           every printed sheet is a 220mm x 220mm square with no margin. */
+        @page { size: 220mm 220mm; margin: 0; }
+
         /* ───────────────────────────────────────────────────────────────────
            SCREEN STYLES
         ─────────────────────────────────────────────────────────────────── */
@@ -509,9 +513,13 @@ export default function StoryBook({
           .sb-root,
           .sb-root * { visibility: visible; }
 
-          /* Reset screen layout */
+          /* Reset screen layout. IMPORTANT: switch off flex — page breaks
+             (page-break-after) are ignored on flex items, which made pages
+             flow together instead of one-per-sheet. */
+          html, body { margin: 0 !important; padding: 0 !important; }
           .sb-root {
-            max-width: 100%;
+            display: block !important;
+            max-width: none;
             width: 220mm;
             padding: 0;
             gap: 0;
@@ -541,10 +549,10 @@ export default function StoryBook({
             min-height: 220mm;
           }
 
-          /* Body pages: reset the screen grid gap */
-          .sb-body-pages {
-            display: contents; /* let children be direct children of sb-root for page-break */
-          }
+          /* Body pages must be block-level (not flex/contents) so each
+             .book-page inside them breaks onto its own sheet. */
+          .sb-body-pages { display: block !important; }
+          .sb-body-pages > div { display: block !important; }
 
           /* Hide the admin toolbar on print */
           .no-print { display: none !important; }
