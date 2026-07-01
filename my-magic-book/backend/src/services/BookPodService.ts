@@ -1,119 +1,198 @@
-// ─── BookPod print submission ────────────────────────────────────────────────
-// Submits a finished book to BookPod for printing. BookPod fetches the two
-// PDFs (cover + interior) from public URLs we provide.
+// ─── BookPod print API ───────────────────────────────────────────────────────
+// Implements BookPod's real Create-Book + Create-Order flow (docs: Dec-2025 v5 /
+// May-2026 v1.1). Submitting a finished book is four steps:
+//   1. POST /api/v1/books/upload-url   → signed GCS upload URLs
+//   2. PUT the cover + interior PDFs to those URLs
+//   3. POST /api/v1/books              → registers the book, returns a bookid
+//   4. POST /api/v1/orders             → creates the print/ship order
 //
-// ⚠️ The exact endpoint path, auth scheme, and field names below are modeled on
-// a typical print-on-demand API and MUST be reconciled with BookPod's real docs
-// once provided. Every line that needs confirming is marked `// TODO(bookpod)`.
-// Nothing here runs unless BOOKPOD_API_URL + BOOKPOD_API_KEY are set, so it is
-// safe to ship as-is.
+// Auth: every request sends `x-user-id` and `x-custom-token` headers.
+// Nothing here runs unless BOOKPOD_USER_ID + BOOKPOD_TOKEN are set (see
+// isBookPodConfigured), so it is safe to ship before credentials land.
+
+import { downloadObject } from './PrintService';
+
+const BASE = 'https://cloud-function-bookpod-festjdz7ga-ey.a.run.app';
 
 export interface BookPodShipping {
+  method: 'delivery' | 'pickup';
   name: string;
-  line1: string;
-  line2?: string;
-  city: string;
-  state?: string;
-  postcode?: string;
-  country: string; // ISO-2, e.g. "PS" / "IL"
-  phone?: string;
+  phone: string;
+  email: string;
+  // Home delivery (method === 'delivery'):
+  city?: string;
+  street?: string;
+  house?: string;      // numeric only per BookPod
+  apartment?: string;
+  floor?: number;
+  zipCode?: string;
+  notes?: string;
 }
 
 export interface BookPodJobInput {
-  externalId: string;     // our order id, for idempotency / reconciliation
+  externalId: string;        // our order id → reference_num1 (must be unique)
   title: string;
+  author?: string;
+  isColoring: boolean;       // drives printcolor + sheettype
+  readingDirection: 'right' | 'left';
+  widthCm: number;           // 22 (220 mm)
+  heightCm: number;          // 22
+  bleed: boolean;
+  coverPath: string;         // our GCS object path for the cover PDF
+  interiorPath: string;      // our GCS object path for the interior PDF
   quantity: number;
-  coverUrl: string;       // fetchable cover PDF (front + back)
-  interiorUrl: string;    // fetchable interior PDF
-  interiorPages: number;  // even multiple of 4
-  trimMm: number;         // 220
-  bleedMm: number;        // 3
-  shipping?: BookPodShipping;
+  totalPrice?: number;
+  shipping: BookPodShipping;
 }
 
 export interface BookPodJobResult {
-  jobId: string;
+  jobId: string;   // BookPod order_no
+  bookId: string;
   status: string;
   raw: any;
 }
 
 export function isBookPodConfigured(): boolean {
-  return !!(process.env.BOOKPOD_API_URL && process.env.BOOKPOD_API_KEY);
+  return !!(process.env.BOOKPOD_USER_ID && process.env.BOOKPOD_TOKEN);
 }
 
-function cfg(): { baseUrl: string; apiKey: string } {
-  const baseUrl = process.env.BOOKPOD_API_URL;
-  const apiKey = process.env.BOOKPOD_API_KEY;
-  if (!baseUrl || !apiKey) {
-    throw new Error(
-      'BookPod not configured — set BOOKPOD_API_URL and BOOKPOD_API_KEY in backend/.env'
-    );
+function cfg() {
+  const userId = process.env.BOOKPOD_USER_ID;
+  const token = process.env.BOOKPOD_TOKEN;
+  if (!userId || !token) {
+    throw new Error('BookPod not configured — set BOOKPOD_USER_ID and BOOKPOD_TOKEN in backend/.env');
   }
-  return { baseUrl: baseUrl.replace(/\/$/, ''), apiKey };
+  const baseUrl = (process.env.BOOKPOD_BASE_URL || BASE).replace(/\/$/, '');
+  const bucket = process.env.BOOKPOD_GCS_BUCKET || 'bookpod-profile-images';
+  const headers = { 'x-user-id': userId, 'x-custom-token': token };
+  return { baseUrl, headers, bucket };
+}
+
+async function postJson(url: string, headers: Record<string, string>, body: any): Promise<any> {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify(body),
+  });
+  const raw: any = await res.json().catch(() => ({}));
+  if (!res.ok || raw?.success === false) {
+    throw new Error(`BookPod ${url.replace(/^.*\/api\/v1\//, '')} failed: ${res.status} ${JSON.stringify(raw).slice(0, 400)}`);
+  }
+  return raw;
+}
+
+async function putPdf(uploadUrl: string, bytes: Buffer): Promise<void> {
+  const res = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/pdf' },
+    body: bytes as any,
+  });
+  if (!res.ok) {
+    throw new Error(`BookPod PDF upload failed: ${res.status} ${(await res.text().catch(() => '')).slice(0, 200)}`);
+  }
+}
+
+// Build the gs:// URI for a just-uploaded object from its signed/resumable URL.
+function gsUri(uploadUrl: string, fileName: string, fallbackBucket: string): string {
+  try {
+    const u = new URL(uploadUrl);
+    const m = u.pathname.match(/\/b\/([^/]+)\/o/); // JSON-API resumable form
+    let bucket = m ? decodeURIComponent(m[1]) : '';
+    if (!bucket) bucket = u.pathname.split('/').filter(Boolean)[0] || '';
+    const nameParam = u.searchParams.get('name');
+    const object = nameParam ? decodeURIComponent(nameParam) : fileName;
+    if (bucket && object) return `gs://${bucket}/${object}`;
+  } catch { /* fall through */ }
+  return `gs://${fallbackBucket}/${fileName}`;
+}
+
+function slug(s: string): string {
+  return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'magicfanoose';
 }
 
 /**
- * Create a print job at BookPod. They fetch cover_url + interior_url themselves.
- * Returns BookPod's job id/status so the order can be tracked.
+ * Registers a finished book with BookPod and creates the print/ship order.
+ * Returns BookPod's order_no (jobId) + bookId for tracking.
  */
 export async function submitPrintJob(input: BookPodJobInput): Promise<BookPodJobResult> {
-  const { baseUrl, apiKey } = cfg();
+  const { baseUrl, headers, bucket } = cfg();
 
-  // TODO(bookpod): confirm the exact JSON shape from their docs.
-  const payload = {
-    external_id: input.externalId,
+  // File names per BookPod convention: <slug>_<YYYYMM>_v<major>.<minor>.pdf
+  const ym = new Date().toISOString().slice(0, 7).replace('-', '');
+  const stem = `${slug(input.title)}-${input.externalId}_${ym}_v1.0`;
+  const contentFileName = `${stem}.pdf`;
+  const coverFileName = `${stem}_cover.pdf`;
+
+  // 1. Signed upload URLs
+  const up = await postJson(`${baseUrl}/api/v1/books/upload-url`, headers, { contentFileName, coverFileName });
+
+  // 2. Upload the PDF bytes (download from our GCS, PUT to BookPod's URLs)
+  const [coverBytes, interiorBytes] = await Promise.all([
+    downloadObject(input.coverPath),
+    downloadObject(input.interiorPath),
+  ]);
+  await putPdf(up.coverUploadUrl, coverBytes);
+  await putPdf(up.contentUploadUrl, interiorBytes);
+  const coverUrl = gsUri(up.coverUploadUrl, up.coverFileName || coverFileName, bucket);
+  const contentUrl = gsUri(up.contentUploadUrl, up.contentFileName || contentFileName, bucket);
+
+  // 3. Create the book
+  const bookBody = {
     title: input.title,
-    quantity: input.quantity,
-    print_specs: {
-      trim: { width_mm: input.trimMm, height_mm: input.trimMm },
-      bleed_mm: input.bleedMm,
-      interior_page_count: input.interiorPages,
-      binding: 'paperback',   // TODO(bookpod)
-      interior_color: 'full_color',
-      cover_finish: 'gloss',  // TODO(bookpod)
-      paper: 'standard',      // TODO(bookpod)
-    },
-    files: {
-      // URL-fetch model (as you specified): BookPod downloads these.
-      cover_url: input.coverUrl,
-      interior_url: input.interiorUrl,
-    },
-    shipping: input.shipping,
+    author: input.author || 'Magic Fanoose',
+    category: ['childrens', 'picture-book'],
+    printcolor: input.isColoring ? 'bw' : 'color',
+    sheettype: input.isColoring ? 'white110' : 'chromo130',
+    laminationtype: 'matt',
+    finishtype: 'soft',
+    readingdirection: input.readingDirection,
+    width: input.widthCm,
+    height: input.heightCm,
+    bleed: input.bleed,
+    status: false, // not displayed in BookPod's public store
+    contentUrl,
+    coverUrl,
   };
-
-  const res = await fetch(`${baseUrl}/print-jobs`, { // TODO(bookpod): real endpoint path
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`, // TODO(bookpod): real auth scheme/header
-    },
-    body: JSON.stringify(payload),
-  });
-
-  const raw: any = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(
-      `BookPod print job failed: ${res.status} ${JSON.stringify(raw).slice(0, 300)}`
-    );
+  const bookRes = await postJson(`${baseUrl}/api/v1/books`, headers, bookBody);
+  const bookId = String(bookRes.id ?? bookRes.bookid ?? bookRes.bookId ?? bookRes.book?.id ?? '');
+  if (!bookId) {
+    throw new Error(`BookPod create-book returned no id: ${JSON.stringify(bookRes).slice(0, 300)}`);
   }
+
+  // 4. Create the order
+  const s = input.shipping;
+  const shippingDetails: any = {
+    name: s.name,
+    phoneNumber: (s.phone || '').replace(/\D/g, ''),
+    email: s.email,
+    reference_num1: input.externalId,
+    acceptTerms: true,
+  };
+  if (s.method === 'pickup') {
+    shippingDetails.shippingMethod = 3; // factory self-pickup
+    if (s.notes) shippingDetails.notes = s.notes;
+  } else {
+    shippingDetails.shippingMethod = 2; // home delivery
+    shippingDetails.shippingCompanyId = 7; // local shipments
+    shippingDetails.city = s.city;
+    shippingDetails.street = s.street;
+    shippingDetails.house = (s.house || '').replace(/\D/g, '') || '1';
+    if (s.apartment) shippingDetails.apartment = s.apartment;
+    if (s.floor != null) shippingDetails.floor = s.floor;
+    shippingDetails.zipCode = s.zipCode || '0000000';
+    if (s.notes) shippingDetails.notes = s.notes;
+  }
+  const orderBody: any = {
+    shippingDetails,
+    items: [{ bookid: Number(bookId), quantity: input.quantity }],
+  };
+  if (input.totalPrice != null) orderBody.totalprice = input.totalPrice;
+
+  const orderRes = await postJson(`${baseUrl}/api/v1/orders`, headers, orderBody);
   return {
-    jobId: raw.id || raw.job_id || raw.jobId || '',
-    status: raw.status || 'submitted',
-    raw,
+    jobId: String(orderRes.order_no ?? orderRes.orderNo ?? ''),
+    bookId,
+    status: 'submitted',
+    raw: { book: bookRes, order: orderRes },
   };
-}
-
-/**
- * Optional: poll a job's status. Endpoint/shape TODO(bookpod).
- */
-export async function getPrintJobStatus(jobId: string): Promise<BookPodJobResult> {
-  const { baseUrl, apiKey } = cfg();
-  const res = await fetch(`${baseUrl}/print-jobs/${encodeURIComponent(jobId)}`, {
-    headers: { Authorization: `Bearer ${apiKey}` },
-  });
-  const raw: any = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(`BookPod status check failed: ${res.status}`);
-  }
-  return { jobId, status: raw.status || 'unknown', raw };
 }

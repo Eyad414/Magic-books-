@@ -317,6 +317,9 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
 export interface PrintUrls {
   coverUrl: string;
   interiorUrl: string;
+  /** GCS object paths — used to re-upload the PDF bytes to BookPod. */
+  coverPath: string;
+  interiorPath: string;
   interiorPages: number;
   trimMm: number;
   bleedMm: number;
@@ -333,6 +336,8 @@ export async function uploadPrintFiles(idKey: string, files: PrintFiles): Promis
   return {
     coverUrl: publicProxyUrl(coverPath),
     interiorUrl: publicProxyUrl(interiorPath),
+    coverPath,
+    interiorPath,
     interiorPages: files.interiorPages,
     trimMm: PRINT_TRIM_MM,
     bleedMm: PRINT_BLEED_MM,

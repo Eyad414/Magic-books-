@@ -77,7 +77,11 @@ The new Atlas DB is empty. Populate it with your 9 themes + 5 packages:
   Chromium. Only the post-payment book build needs this.
 - **Stripe:** set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID`; point the Stripe
   webhook at `https://<render-url>/api/orders/webhook`.
-- **BookPod:** add the print-submission API key once available.
+- **BookPod:** integration is built (create-book + create-order flow). Set
+  `BOOKPOD_BASE_URL`, `BOOKPOD_GCS_BUCKET`, and BOTH auth values `BOOKPOD_USER_ID`
+  + `BOOKPOD_TOKEN` (the `x-user-id` / `x-custom-token` headers). It stays disabled
+  until both are set. Note: the token is documented as short-lived — confirm with
+  BookPod how it's refreshed if it expires.
 - **Email (contact form / notifications):** `EMAIL_HOST/PORT/USER/PASS`.
 
 ---

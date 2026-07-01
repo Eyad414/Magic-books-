@@ -1,5 +1,6 @@
 import { IOrder } from '../models/Order';
 import { IStory } from '../models/Story';
+import User from '../models/User';
 import {
   buildColoringPrintFiles,
   buildStoryPrintFiles,
@@ -73,28 +74,36 @@ export async function printAndSubmitForOrder(
     return { urls, submitted: false };
   }
 
+  const sa = order.shippingAddress;
+  const user = await User.findById(order.userId).select('email name').lean();
+  const lang = (story as any).language || 'ar';
+  const floorNum = sa?.floor ? Number(String(sa.floor).replace(/\D/g, '')) : undefined;
+
   const res = await submitPrintJob({
     externalId: String(order._id),
     title: opts.title,
+    author: 'Magic Fanoose',
+    isColoring: opts.isColoring,
+    readingDirection: lang === 'en' ? 'left' : 'right', // ar/he are RTL
+    widthCm: urls.trimMm / 10,
+    heightCm: urls.trimMm / 10,
+    bleed: urls.bleedMm > 0,
+    coverPath: urls.coverPath,
+    interiorPath: urls.interiorPath,
     quantity: 1,
-    coverUrl: urls.coverUrl,
-    interiorUrl: urls.interiorUrl,
-    interiorPages: urls.interiorPages,
-    trimMm: urls.trimMm,
-    bleedMm: urls.bleedMm,
-    shipping: order.shippingAddress
-      ? {
-          name: order.shippingAddress.fullName,
-          // Fall back to the pickup location when there's no street/city
-          // (self-pickup orders carry only a pickupLocation).
-          line1: `${order.shippingAddress.street || order.shippingAddress.pickupLocation || ''} ${order.shippingAddress.buildingNo || ''}`.trim(),
-          line2: order.shippingAddress.district,
-          city: order.shippingAddress.city || order.shippingAddress.pickupLocation || '',
-          postcode: order.shippingAddress.postalCode,
-          country: order.shippingAddress.country,
-          phone: order.shippingAddress.phone,
-        }
-      : undefined,
+    totalPrice: order.totalPrice,
+    shipping: {
+      method: sa?.deliveryMethod === 'pickup' ? 'pickup' : 'delivery',
+      name: sa?.fullName || '',
+      phone: sa?.phone || '',
+      email: (user as any)?.email || '',
+      city: sa?.city,
+      street: sa?.street,
+      house: sa?.buildingNo,
+      floor: Number.isFinite(floorNum) ? floorNum : undefined,
+      zipCode: sa?.postalCode,
+      notes: sa?.notes || sa?.pickupLocation,
+    },
   });
 
   return { urls, jobId: res.jobId, submitted: true };
