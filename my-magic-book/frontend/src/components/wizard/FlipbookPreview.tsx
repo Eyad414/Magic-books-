@@ -42,6 +42,19 @@ export function buildThemePreview(opts: {
   const pagesObj = ft(`stories.${theme}.pages`, { returnObjects: true }) as Record<string, string> | string;
 
   if (!titleRaw || typeof pagesObj !== 'object') {
+    // No scripted story text for this theme — still show an illustrated teaser
+    // from the sample images (first ~30% visible, the rest blurred).
+    if (pageImages.length) {
+      const readable = Math.max(1, Math.ceil(pageImages.length * 0.3));
+      const imgPages: PreviewPage[] = pageImages.map((img, idx): PreviewPage => ({
+        type: 'text', image: img, content: '', blur: idx >= readable,
+      }));
+      return [
+        { type: 'cover', title: ft('step2.preview_generic_title', 'قصة سحرية'), image: coverImage },
+        ...imgPages,
+        { type: 'lock', content: lockMsg },
+      ];
+    }
     return [
       { type: 'cover', title: ft('step2.preview_generic_title', 'قصة سحرية'), image: coverImage },
       { type: 'lock', content: lockMsg },
