@@ -3,6 +3,9 @@ import HTMLFlipBook from 'react-pageflip';
 import { detectGender, applyGenderTokens } from '../../utils/gender';
 import { localizeName } from '../../utils/translit';
 
+// Rotating page background colors for the decorative text pages.
+const PAGE_COLORS = ['#F2607A', '#7C5CE0', '#159B8A', '#2E7BD6', '#E17055', '#3FA34D'];
+
 export interface PreviewPage {
   type: 'cover' | 'text' | 'lock';
   title?: string;
@@ -115,6 +118,21 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
 
   return (
     <div className="w-full flex flex-col items-center justify-center py-6 overflow-hidden" dir="ltr">
+      <style>{`
+        .fbp-textpage { height:100%; width:100%; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; padding:14px;
+          background: radial-gradient(130% 100% at 50% -10%, rgba(255,255,255,0.28) 0%, transparent 55%), radial-gradient(80% 60% at 50% 115%, rgba(0,0,0,0.18) 0%, transparent 60%), var(--pc, #F2607A); }
+        .fbp-spark { position:absolute; color:rgba(255,255,255,0.85); text-shadow:0 0 6px rgba(255,255,255,0.7); font-size:9px; z-index:1; pointer-events:none; animation: fbp-tw 3s ease-in-out infinite; }
+        .fbp-card { position:relative; width:100%; max-width:205px; background: radial-gradient(120% 90% at 50% 0%, #fffdf8 0%, #fdf4dd 70%, #f8ead0 100%);
+          border-radius:16px; padding:22px 14px 16px; box-shadow: 0 10px 24px rgba(0,0,0,0.28), 0 0 0 1.5px rgba(255,255,255,0.6) inset; z-index:2; }
+        .fbp-card::before { content:''; position:absolute; inset:7px; border:1.5px dashed rgba(201,150,40,0.55); border-radius:11px; pointer-events:none; }
+        .fbp-lantern { position:absolute; top:-14px; left:50%; transform:translateX(-50%); width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-size:15px;
+          border-radius:50%; background: radial-gradient(circle at 50% 35%, #fff6da, #f3d98f 70%, #d4a937); box-shadow: 0 0 12px rgba(212,169,55,0.85), 0 3px 8px rgba(0,0,0,0.25); border:2px solid #fff; z-index:3; }
+        .fbp-corner { position:absolute; color:rgba(201,150,40,0.8); font-size:8px; z-index:3; }
+        .fbp-divider { width:44px; height:2px; margin:0 auto 8px; border-radius:999px; background: linear-gradient(90deg, transparent, #d4a937, transparent); }
+        .fbp-text { font-family:'Noto Kufi Arabic','Inter',sans-serif; color:#3a2c10; font-weight:700; font-size:11px; line-height:1.7; text-align:center; position:relative; z-index:1; }
+        .fbp-num { position:absolute; bottom:6px; left:8px; background: linear-gradient(135deg, #fff6da, #f3d98f); color:#6b4a00; font-size:8px; font-weight:800; padding:1px 6px; border-radius:999px; z-index:4; }
+        @keyframes fbp-tw { 0%,100%{opacity:0.35; transform:scale(0.8);} 50%{opacity:1; transform:scale(1.1);} }
+      `}</style>
       <div className="relative shadow-2xl" style={{ width: '100%', maxWidth: '700px' }}>
         {/* @ts-ignore — react-pageflip has loose types */}
         <HTMLFlipBook
@@ -196,24 +214,28 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                   <span className="absolute top-2 right-2 text-white/40 font-bold text-[10px]">{i}</span>
                 </div>
               ) : (
-                /* Text-only fallback (theme has no sample images yet) */
-                <div
-                  className="h-full w-full flex items-center justify-center px-5 py-4 relative"
-                  style={{ background: '#fdfaf0' }}
-                  dir={dir}
-                >
-                  <p
-                    className="font-arabic text-dark-900 text-xs sm:text-sm font-bold leading-relaxed text-center"
-                    style={page.blur ? { filter: 'blur(4.5px)', userSelect: 'none' } : undefined}
-                  >
-                    {page.content}
-                  </p>
+                /* Decorative story-text page — magic-lantern gold card on a
+                   colored page (mirrors the real book's StoryTextPage). */
+                <div className="fbp-textpage" style={{ ['--pc' as any]: PAGE_COLORS[Math.floor(i / 2) % PAGE_COLORS.length] }} dir={dir}>
+                  <span className="fbp-spark" style={{ top: '10%', left: '13%' }}>✦</span>
+                  <span className="fbp-spark" style={{ top: '78%', left: '84%', animationDelay: '1s' }}>✦</span>
+                  <span className="fbp-spark" style={{ top: '20%', right: '11%', animationDelay: '1.8s' }}>✦</span>
+                  <span className="fbp-spark" style={{ bottom: '13%', left: '18%', animationDelay: '0.6s' }}>✦</span>
+                  <div className="fbp-card">
+                    <div className="fbp-lantern">🏮</div>
+                    <span className="fbp-corner" style={{ top: '6px', left: '8px' }}>✦</span>
+                    <span className="fbp-corner" style={{ top: '6px', right: '8px' }}>✦</span>
+                    <span className="fbp-corner" style={{ bottom: '6px', left: '8px' }}>✦</span>
+                    <span className="fbp-corner" style={{ bottom: '6px', right: '8px' }}>✦</span>
+                    <div className="fbp-divider" />
+                    <p className="fbp-text" style={page.blur ? { filter: 'blur(4px)', userSelect: 'none' } : undefined}>{page.content}</p>
+                  </div>
                   {page.blur && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-white/25 backdrop-blur-[1px]">
+                    <div className="absolute inset-0 flex items-center justify-center">
                       <span className="text-2xl drop-shadow">🔒</span>
                     </div>
                   )}
-                  <span className="absolute bottom-3 left-1/2 -translate-x-1/2 text-dark-900/20 font-bold text-[10px]">{i}</span>
+                  <span className="fbp-num">{i}</span>
                 </div>
               )}
             </div>

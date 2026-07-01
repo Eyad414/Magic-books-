@@ -357,7 +357,15 @@
     "theme_custom": "Custom Theme",
     "theme_custom_desc": "Choose your own theme",
     "preview_locked": "🔒 The rest of the story unlocks after checkout",
-    "preview_generic_title": "A Magical Story"
+    "preview_generic_title": "A Magical Story",
+    "theme_space_real": "Space (Realistic)",
+    "theme_space_real_desc": "A high-detail, realistic version of the space story",
+    "theme_zoo_coloring": "Coloring Book: Zoo",
+    "theme_zoo_coloring_desc": "16 pages to color, starring your child",
+    "theme_space_coloring": "Coloring Book: Space",
+    "theme_space_coloring_desc": "16 pages to color, starring your child",
+    "theme_school_coloring": "Coloring Book: School",
+    "theme_school_coloring_desc": "16 pages to color, starring your child"
   },
   "step3": {
     "title": "Customize Your Book",
