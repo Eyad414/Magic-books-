@@ -151,7 +151,7 @@ export async function submitPrintJob(input: BookPodJobInput): Promise<BookPodJob
   // 3. Create the book
   const bookBody = {
     title: input.title,
-    author: input.author || 'Magic Fanoose',
+    author: input.author || 'Magic Fanoos',
     category: ['childrens', 'picture-book'],
     printcolor: input.isColoring ? 'bw' : 'color',
     sheettype: input.isColoring ? 'white110' : 'chromo130',

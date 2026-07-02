@@ -9,8 +9,8 @@ export default function CopyrightPage() {
 
       {/* Logo */}
       <div className="cp-logo-row">
-        <img src="/logo.png" alt="Magic Fanoose" className="cp-logo" />
-        <span className="cp-brand">Magic Fanoose</span>
+        <img src="/logo.png" alt="Magic Fanoos" className="cp-logo" />
+        <span className="cp-brand">Magic Fanoos</span>
       </div>
 
       <div className="cp-divider" aria-hidden="true" />
@@ -65,7 +65,7 @@ export default function CopyrightPage() {
 
       {/* Copyright notice */}
       <p className="cp-copy">
-        © {new Date().getFullYear()} Magic Fanoose. {t('storybook.all_rights_reserved', 'جميع الحقوق محفوظة.')}<br />
+        © {new Date().getFullYear()} Magic Fanoos. {t('storybook.all_rights_reserved', 'جميع الحقوق محفوظة.')}<br />
         {t('storybook.ai_generated_notice', 'هذه القصة مُولَّدة بواسطة الذكاء الاصطناعي وتم تخصيصها خصيصًا لطفلك.')}
       </p>
 

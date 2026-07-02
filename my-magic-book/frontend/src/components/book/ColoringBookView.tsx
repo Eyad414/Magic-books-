@@ -36,7 +36,7 @@ export default function ColoringBookView({ childName, place, cover, backCover, p
             <img src={cover} alt="front cover" className="w-full h-full object-cover" />
             <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-6 text-center">
               <h2 className="text-white font-arabic font-black text-4xl sm:text-5xl drop-shadow-[0_3px_10px_rgba(0,0,0,0.9)] leading-tight">{title}</h2>
-              <p className="text-gold-300 font-arabic text-base mt-2">🖍️ كتاب تلوين · Magic Fanoose</p>
+              <p className="text-gold-300 font-arabic text-base mt-2">🖍️ كتاب تلوين · Magic Fanoos</p>
             </div>
           </div>
         )}
@@ -57,7 +57,7 @@ export default function ColoringBookView({ childName, place, cover, backCover, p
             <img src={backCover} alt="back cover" className="w-full h-full object-cover" />
             <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-5 text-center">
               <p className="text-white font-arabic font-black text-xl drop-shadow-lg">🌟 أحسنت يا {childName}!</p>
-              <p className="text-gold-300 font-arabic text-sm mt-1">لقد أكملت كتاب التلوين · Magic Fanoose</p>
+              <p className="text-gold-300 font-arabic text-sm mt-1">لقد أكملت كتاب التلوين · Magic Fanoos</p>
             </div>
           </div>
         )}

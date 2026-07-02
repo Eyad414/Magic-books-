@@ -3,7 +3,7 @@
 //   • The kid photo/scene FILLS the entire cover (no circle frame)
 //   • A soft gradient at the bottom keeps the title readable
 //   • Story title overlaid near the bottom
-//   • Small "Magic Fanoose" brand line at the very bottom (logo + tagline)
+//   • Small "Magic Fanoos" brand line at the very bottom (logo + tagline)
 //
 // `coverImage` should be the generated full-scene cover when available; we fall
 // back to the kid portrait, then the theme background, then an avatar.
@@ -44,8 +44,8 @@ export default function FrontCover({ childName, storyTitle, coverImage, childPho
         <div className="cover-brand">
           <img src="/logo.png" alt="" className="cover-brand-logo" />
           <div className="cover-brand-text">
-            <span className="cover-brand-name">Magic Fanoose</span>
-            <span className="cover-brand-tag">{t('storybook.cover_brand_tag', 'قصة بتصميم شخصي من Magic Fanoose')}</span>
+            <span className="cover-brand-name">Magic Fanoos</span>
+            <span className="cover-brand-tag">{t('storybook.cover_brand_tag', 'قصة بتصميم شخصي من Magic Fanoos')}</span>
           </div>
         </div>
       </div>

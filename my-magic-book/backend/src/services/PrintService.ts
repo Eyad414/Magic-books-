@@ -135,7 +135,7 @@ function finalStoryPageHtml(moral: string, questions: string[], conclusion: stri
     `</div>`;
 }
 function copyrightPageHtml(): string {
-  return `<div class="page copyright-page"><div class="cp-brand">✨ Magic Fanoose</div><div class="cp-text">© ${new Date().getFullYear()} Magic Fanoose · MagicFanoose.com</div></div>`;
+  return `<div class="page copyright-page"><div class="cp-brand">✨ Magic Fanoos</div><div class="cp-text">© ${new Date().getFullYear()} Magic Fanoos · MagicFanoose.com</div></div>`;
 }
 const PRINT_PAGE_COLORS = ['#F2607A', '#7C5CE0', '#159B8A', '#2E7BD6', '#E17055', '#3FA34D'];
 function storyTextPageHtml(text: string, idx = 0): string {
@@ -147,13 +147,13 @@ function storyTextPageHtml(text: string, idx = 0): string {
     `<div class="stp-divider"></div><div class="stp-txt">${text}</div></div></div>`;
 }
 function titlePageHtml(title: string): string {
-  return `<div class="page title-page"><div class="title-brand">✨ Magic Fanoose</div><div class="title-rule"></div><div class="title-big">${title}</div></div>`;
+  return `<div class="page title-page"><div class="title-brand">✨ Magic Fanoos</div><div class="title-rule"></div><div class="title-big">${title}</div></div>`;
 }
 function fanoosPageHtml(): string {
   return `<div class="page fanoos-page"><div class="fanoos-emblem">🏮</div></div>`;
 }
 function endPageHtml(childName: string): string {
-  return `<div class="page end-page"><div class="end-mark">🌟 ✦ 🌟</div><div class="ded-text">${childName} 💛<br/>Magic Fanoose</div></div>`;
+  return `<div class="page end-page"><div class="end-mark">🌟 ✦ 🌟</div><div class="ded-text">${childName} 💛<br/>Magic Fanoos</div></div>`;
 }
 function blankPageHtml(): string {
   return `<div class="page"></div>`;
@@ -187,7 +187,7 @@ interface WraparoundDocArgs {
 }
 
 function wraparoundDoc(a: WraparoundDocArgs): string {
-  const sub = a.kind === 'coloring' ? '🖍️ كتاب تلوين · Magic Fanoose' : '✨ Magic Fanoose';
+  const sub = a.kind === 'coloring' ? '🖍️ كتاب تلوين · Magic Fanoos' : '✨ Magic Fanoos';
   const frontPanel = `<div class="panel">
     <img class="bleed" src="${a.frontSrc}" alt="front" />
     <div class="overlay overlay-bottom"><div class="cover-title">${a.title}</div><div class="cover-sub">${sub}</div></div>

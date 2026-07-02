@@ -93,7 +93,7 @@ export async function printAndSubmitForOrder(
   const res = await submitPrintJob({
     externalId: String(order._id),
     title: opts.title,
-    author: 'Magic Fanoose',
+    author: 'Magic Fanoos',
     isColoring: opts.isColoring,
     readingDirection: lang === 'en' ? 'left' : 'right', // ar/he are RTL
     widthCm: urls.trimMm / 10,

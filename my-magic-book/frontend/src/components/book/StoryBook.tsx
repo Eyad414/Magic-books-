@@ -231,7 +231,7 @@ export default function StoryBook({
       {/* 2 — Inside Title Page */}
       <TitlePage storyTitle={storyTitle} childName={childName} />
 
-      {/* 3 — Fanoose Separator */}
+      {/* 3 — Fanoos Separator */}
       <FanoosPage label={t('storybook.fanoos_start', 'فانوس البداية')} image="/logo.png" />
 
       {/* 4 — Dedication — uses the real uploaded photo (like the back cover), not the AI avatar */}
@@ -294,7 +294,7 @@ export default function StoryBook({
         )}
       </div>
 
-      {/* 31 — Fanoose Separator */}
+      {/* 31 — Fanoos Separator */}
       <FanoosPage label={t('storybook.fanoos_end', 'فانوس النهاية')} image="/logo.png" />
 
       {/* 32 — Final Story Page */}

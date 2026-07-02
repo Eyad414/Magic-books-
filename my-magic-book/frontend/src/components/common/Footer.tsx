@@ -31,7 +31,7 @@ export default function Footer() {
           <div className="md:col-span-1">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center drop-shadow-[0_0_10px_rgba(212,169,55,0.6)]">
-                <img src="/logo.png" alt="Magic Fanoose" className="w-full h-full object-contain" />
+                <img src="/logo.png" alt="Magic Fanoos" className="w-full h-full object-contain" />
               </div>
               <span className="font-arabic font-bold text-gold-500 text-lg">{t('nav.home_brand')}</span>
             </div>

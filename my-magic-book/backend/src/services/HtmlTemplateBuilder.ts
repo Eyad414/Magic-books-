@@ -127,7 +127,7 @@ export function buildBookHtml(data: BookData): string {
           margin-bottom: 20px;
         }
 
-        /* ── 3. Lantern (Fanoose) Page ── */
+        /* ── 3. Lantern (Fanoos) Page ── */
         .fanoose-page {
           background-color: #1a237e;
           color: #fff;
@@ -213,12 +213,12 @@ export function buildBookHtml(data: BookData): string {
       <div class="page title-page">
         <div class="logo">✨🏮✨</div>
         <h1>${storyTitle}</h1>
-        <p style="font-size: 20px; color: #fff;">Magic Fanoose</p>
+        <p style="font-size: 20px; color: #fff;">Magic Fanoos</p>
       </div>
 
-      <!-- 3. Lantern (Fanoose) Page -->
+      <!-- 3. Lantern (Fanoos) Page -->
       <div class="page fanoose-page">
-        <!-- Replace with actual Fanoose image URL -->
+        <!-- Replace with actual Fanoos image URL -->
         <div style="font-size: 120px;">🏮</div>
       </div>
 
@@ -241,7 +241,7 @@ export function buildBookHtml(data: BookData): string {
       <div class="page" style="background: #0a1628; color: #fff;">
         <h2 style="color: #F5A623; margin-bottom: 20px;">النهاية</h2>
         <p style="font-size: 18px;">تمت طباعة هذه القصة السحرية بواسطة</p>
-        <p style="font-size: 24px; font-weight: bold; margin-top: 10px;">Magic Fanoose</p>
+        <p style="font-size: 24px; font-weight: bold; margin-top: 10px;">Magic Fanoos</p>
       </div>
 
     </body>

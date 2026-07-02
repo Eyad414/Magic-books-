@@ -63,7 +63,7 @@ export default function BackCover({ childName, childPhoto, currentStoryId }: Bac
             <div key={tz.id} className="bc-story-card">
               <div className="bc-story-thumb-wrap">
                 <div className="bc-story-thumb-clip">
-                  <img src="/logo.png" alt="Magic Fanoose" className="bc-story-logo" decoding="async" />
+                  <img src="/logo.png" alt="Magic Fanoos" className="bc-story-logo" decoding="async" />
                 </div>
                 <span className="bc-story-emoji" aria-hidden="true">{tz.emoji}</span>
               </div>
@@ -77,9 +77,9 @@ export default function BackCover({ childName, childPhoto, currentStoryId }: Bac
 
       {/* Footer */}
       <div className="bc-footer">
-        <img src="/logo.png" alt="Magic Fanoose" className="bc-footer-logo" />
+        <img src="/logo.png" alt="Magic Fanoos" className="bc-footer-logo" />
         <div className="bc-footer-text">
-          <span className="bc-footer-brand">Magic Fanoose</span>
+          <span className="bc-footer-brand">Magic Fanoos</span>
           <span className="bc-footer-url">🌐 MagicFanoose.com</span>
         </div>
       </div>

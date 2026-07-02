@@ -28,8 +28,8 @@ export default function TitlePage({ storyTitle, childName }: TitlePageProps) {
 
       {/* Logo + brand */}
       <div className="tp-brand">
-        <img src="/logo.png" alt="Magic Fanoose" className="tp-logo" />
-        <span className="tp-brand-name">Magic Fanoose</span>
+        <img src="/logo.png" alt="Magic Fanoos" className="tp-logo" />
+        <span className="tp-brand-name">Magic Fanoos</span>
       </div>
 
       {/* Divider */}

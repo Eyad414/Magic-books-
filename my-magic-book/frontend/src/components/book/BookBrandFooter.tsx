@@ -1,6 +1,6 @@
 // ─── BookBrandFooter ──────────────────────────────────────────────────────────
 // Shared brand strip used at the bottom of every book page so the customer
-// always sees the Magic Fanoose identity, no matter which page they're on.
+// always sees the Magic Fanoos identity, no matter which page they're on.
 //
 // Two variants:
 //   variant="cover" — glossy gold-on-dark used on the front cover
@@ -19,7 +19,7 @@ export default function BookBrandFooter({ variant = 'page', pageNumber }: BookBr
     <div className={`bbf bbf--${variant}`} aria-hidden="true">
       <div className="bbf-inner">
         <img src="/logo.png" alt="" className="bbf-logo" />
-        <span className="bbf-name">Magic Fanoose</span>
+        <span className="bbf-name">Magic Fanoos</span>
         <span className="bbf-dot">•</span>
         <span className="bbf-url">MagicFanoose.com</span>
       </div>

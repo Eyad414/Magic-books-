@@ -13,7 +13,7 @@ export default function FanoosPage({ label, image = '/logo.png' }: FanoosPagePro
 
   return (
     <section className="book-page fanoose-page" aria-label={resolvedLabel}>
-      <img src={image} alt="Magic Fanoose" className="fp-logo-img" />
+      <img src={image} alt="Magic Fanoos" className="fp-logo-img" />
       <style>{`
         .fanoose-page {
           background: radial-gradient(ellipse at center, #1a2440 0%, #0a1020 100%);
