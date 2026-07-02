@@ -4,12 +4,15 @@ interface StoryGeneratorOptions {
     childGender: 'male' | 'female';
     theme: string;
     storyLength: 'short' | 'medium' | 'long';
-    language: 'ar' | 'en';
+    language: 'ar' | 'en' | 'he';
     customThemeNote?: string;
 }
 /**
- * Generates a personalized children's story using Anthropic Claude API.
- * Falls back to a mock story if the API key is not configured.
+ * Generates a personalized children's story.
+ * Prefers Gemini (already configured for images, and ~free for text), then
+ * Anthropic Claude, then a built-in mock story — so the wizard always works.
+ * Text only — no image cost here. The paid image generation happens later,
+ * after payment, in BookBuilder.
  */
 export declare const generateStoryWithAI: (options: StoryGeneratorOptions) => Promise<string>;
 export {};

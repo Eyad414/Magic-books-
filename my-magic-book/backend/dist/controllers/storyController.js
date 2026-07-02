@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.testGeneratePdf = exports.getMyStories = exports.getFullStory = exports.getStoryPreview = exports.customizeStory = exports.generateStory = exports.createStory = void 0;
+exports.testGeneratePdf = exports.deleteMyStory = exports.getMyStories = exports.getFullStory = exports.getStoryPreview = exports.customizeStory = exports.generateStory = exports.createStory = void 0;
 const Story_1 = __importDefault(require("../models/Story"));
 const storyUtils_1 = require("../utils/storyUtils");
 const AI_Generator_1 = require("../services/AI_Generator");
@@ -11,7 +11,8 @@ const AI_Generator_1 = require("../services/AI_Generator");
 const createStory = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { childName, childAge, childGender, childPhotoUrl, theme, storyLength, language, customThemeNote } = req.body;
+        const { childName, childAge, childGender, childPhotoUrl, theme, storyLength, language, customThemeNote, mode, templatePages } = req.body;
+        const resolvedMode = mode === 'ai' ? 'ai' : 'template';
         const story = await Story_1.default.create({
             userId,
             childName,
@@ -22,12 +23,16 @@ const createStory = async (req, res) => {
             storyLength: storyLength || 'medium',
             language: language || 'ar',
             customThemeNote,
+            mode: resolvedMode,
+            // Only persist templatePages when relevant; saves DB space for AI stories.
+            templatePages: resolvedMode === 'template' && Array.isArray(templatePages) ? templatePages : undefined,
             status: 'draft',
         });
         res.status(201).json({ success: true, story });
     }
     catch (error) {
-        res.status(500).json({ success: false, message: 'فشل في إنشاء القصة' });
+        console.error('[createStory] failed:', error);
+        res.status(500).json({ success: false, message: error?.message || 'فشل في إنشاء القصة' });
     }
 };
 exports.createStory = createStory;
@@ -124,6 +129,27 @@ const getMyStories = async (req, res) => {
     }
 };
 exports.getMyStories = getMyStories;
+// @route DELETE /api/stories/:id — a user cancels/removes their own story.
+const deleteMyStory = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const story = await Story_1.default.findById(req.params.id);
+        if (!story) {
+            res.status(404).json({ success: false, message: 'القصة غير موجودة' });
+            return;
+        }
+        if (String(story.userId) !== String(userId)) {
+            res.status(403).json({ success: false, message: 'غير مصرح' });
+            return;
+        }
+        await story.deleteOne();
+        res.json({ success: true });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, message: 'فشل في حذف القصة' });
+    }
+};
+exports.deleteMyStory = deleteMyStory;
 // @route GET /api/public/test-pdf
 const HtmlTemplateBuilder_1 = require("../services/HtmlTemplateBuilder");
 const PdfGenerator_1 = require("../services/PdfGenerator");

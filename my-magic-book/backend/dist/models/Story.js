@@ -40,16 +40,18 @@ const StorySchema = new mongoose_1.Schema({
     childAge: { type: String, required: true },
     childGender: { type: String, enum: ['male', 'female'], required: true },
     childPhotoUrl: { type: String },
-    theme: {
-        type: String,
-        enum: ['adventure', 'space', 'ocean', 'forest', 'princess', 'superhero', 'animals', 'custom'],
-        default: 'adventure',
-    },
+    // Theme id from SiteSettings.themes[]. Validated at admin save time, not here.
+    theme: { type: String, default: 'adventure' },
     storyLength: { type: String, enum: ['short', 'medium', 'long'], default: 'medium' },
     language: { type: String, enum: ['ar', 'en'], default: 'ar' },
     customThemeNote: { type: String },
+    mode: { type: String, enum: ['template', 'ai'], default: 'template' },
+    templatePages: { type: mongoose_1.Schema.Types.Mixed, default: undefined },
     generatedText: { type: String },
     coverImageUrl: { type: String },
+    generatedImages: { type: [String], default: undefined },
+    generatedCover: { type: String, default: undefined },
+    generatedPortrait: { type: String, default: undefined },
     status: {
         type: String,
         enum: ['draft', 'generating', 'ready', 'ordered'],
@@ -59,6 +61,7 @@ const StorySchema = new mongoose_1.Schema({
     fontStyle: { type: String, default: 'noto-kufi' },
     dedicationMessage: { type: String },
     addons: [{ type: String }],
+    bookPackage: { type: String, default: 'color' },
     basePrice: { type: Number, default: 99 },
     totalPrice: { type: Number, default: 99 },
 }, { timestamps: true });

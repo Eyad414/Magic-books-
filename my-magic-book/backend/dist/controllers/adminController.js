@@ -3,11 +3,27 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllOrders = exports.updateSettings = exports.getSettings = exports.getTeam = exports.addAdmin = exports.deleteStory = exports.updateStory = exports.getAllStories = void 0;
+exports.generatePhotorealPreview = exports.generateColoringPreview = exports.generatePreviewIllustrations = exports.buildOrderBook = exports.getAllOrders = exports.updateSettings = exports.getPublicSettings = exports.getSettings = exports.getTeam = exports.removeAdmin = exports.addAdmin = exports.deleteStory = exports.updateStory = exports.getAllStories = void 0;
 const User_1 = __importDefault(require("../models/User"));
 const Story_1 = __importDefault(require("../models/Story"));
 const Order_1 = __importDefault(require("../models/Order"));
 const SiteSettings_1 = __importDefault(require("../models/SiteSettings"));
+const BookBuilder_1 = require("../services/BookBuilder");
+const ImageGenerator_1 = require("../services/ImageGenerator");
+const promptBuilder_1 = require("../services/promptBuilder");
+const FaceSwapService_1 = require("../services/FaceSwapService");
+const sceneTemplates_1 = require("../services/sceneTemplates");
+// The kid photo (already in the bucket) used as the reference face for ADMIN
+// PREVIEW generation only. Real customer orders use the customer's own photo.
+const PREVIEW_REFERENCE_PHOTO = process.env.PREVIEW_REFERENCE_PHOTO ||
+    'gs://first-webapp-storage/magic-fanoose/child-photos/93a8030b-750b-4f91-943d-0d1423a09137.jpeg';
+const PREVIEW_IMAGE_PAGES = 13;
+function substituteName(s, name) {
+    return (s || '')
+        .replace(/\[NAME\]/gi, name)
+        .replace(/\{\{\s*name\s*\}\}/gi, name)
+        .replace(/\{\s*name\s*\}/gi, name);
+}
 // @route GET /api/admin/stories
 // @desc Get all stories from all users
 const getAllStories = async (req, res) => {
@@ -53,23 +69,30 @@ const deleteStory = async (req, res) => {
 };
 exports.deleteStory = deleteStory;
 // @route POST /api/admin/team
+// Promote an EXISTING registered user to admin by email. No password here —
+// the person keeps the password they signed up with (the owner never sees it).
 const addAdmin = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
-        if (!name || !email || !password) {
-            res.status(400).json({ success: false, message: 'يرجى تعبئة جميع الحقول المطلوبة' });
+        const { email } = req.body;
+        if (!email) {
+            res.status(400).json({ success: false, message: 'يرجى إدخال البريد الإلكتروني' });
             return;
         }
-        const existingUser = await User_1.default.findOne({ email });
-        if (existingUser) {
-            res.status(409).json({ success: false, message: 'البريد الإلكتروني مسجل مسبقاً' });
+        const user = await User_1.default.findOne({ email: String(email).trim().toLowerCase() });
+        if (!user) {
+            res.status(404).json({ success: false, message: 'هذا البريد غير مسجّل — اطلب من الشخص إنشاء حساب أولاً' });
             return;
         }
-        const admin = await User_1.default.create({ name, email, passwordHash: password, role: 'admin' });
-        res.status(201).json({
+        if (user.role === 'admin') {
+            res.status(409).json({ success: false, message: 'هذا المستخدم مسؤول بالفعل' });
+            return;
+        }
+        user.role = 'admin';
+        await user.save();
+        res.status(200).json({
             success: true,
-            message: 'تم إضافة مسؤول جديد للفريق!',
-            admin: { id: admin._id, name: admin.name, email: admin.email, role: admin.role }
+            message: 'تمت إضافة المسؤول للفريق!',
+            admin: { id: user._id, name: user.name, email: user.email, role: user.role },
         });
     }
     catch (error) {
@@ -77,6 +100,29 @@ const addAdmin = async (req, res) => {
     }
 };
 exports.addAdmin = addAdmin;
+// Remove someone from the admin team (demote to a normal user; keep the account).
+const removeAdmin = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const requesterId = String(req.user._id);
+        if (id === requesterId) {
+            res.status(400).json({ success: false, message: 'لا يمكنك إزالة نفسك' });
+            return;
+        }
+        const user = await User_1.default.findById(id);
+        if (!user) {
+            res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
+            return;
+        }
+        user.role = 'user';
+        await user.save();
+        res.json({ success: true });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, message: 'حدث خطأ في الخادم' });
+    }
+};
+exports.removeAdmin = removeAdmin;
 // @route GET /api/admin/team
 const getTeam = async (req, res) => {
     try {
@@ -103,10 +149,10 @@ const getSettings = async (req, res) => {
                     { id: 'pro', label: 'باقة Pro الشاملة', price: 100, emoji: '✨', desc: 'جميع النسخ (الملون + التلوين + الصوتي + الرقمي)' },
                 ],
                 themes: [
-                    { id: 'adventure', emoji: '🗺️', label: 'مغامرة', desc: 'استكشاف ومغامرات مثيرة' },
-                    { id: 'space', emoji: '🚀', label: 'الفضاء', desc: 'رحلات بين النجوم والكواكب' },
-                    { id: 'ocean', emoji: '🌊', label: 'المحيط', desc: 'عالم سحري تحت الماء' },
-                    { id: 'school_hero', emoji: '🏫', label: 'بطل المدرسة', desc: 'مساعدة الآخرين ونشر اللطف والألوان في المدرسة' },
+                    { id: 'adventure', emoji: '🗺️', label: 'مغامرة', desc: 'استكشاف ومغامرات مثيرة', ready: false },
+                    { id: 'space', emoji: '🚀', label: 'الفضاء', desc: 'رحلات بين النجوم والكواكب', ready: false },
+                    { id: 'ocean', emoji: '🌊', label: 'المحيط', desc: 'عالم سحري تحت الماء', ready: false },
+                    { id: 'school_hero', emoji: '🏫', label: 'بطل المدرسة', desc: 'مساعدة الآخرين ونشر اللطف والألوان في المدرسة', ready: true },
                 ]
             });
         }
@@ -119,6 +165,7 @@ const getSettings = async (req, res) => {
                     emoji: '🏫',
                     label: 'بطل المدرسة',
                     desc: 'مساعدة الآخرين ونشر اللطف والألوان في المدرسة',
+                    ready: true,
                     pages: [
                         { text: "استيقظ {{name}} بنشاط كبير، وارتدى حقيبته المفضلة وانطلق نحو مدرسته الجميلة وهو يبتسم للكائنات من حوله.", imageSrc: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=800&auto=format&fit=crop" },
                         { text: "عندما وصل {{name}}، تفاجأ بأن الألوان قد اختفت تماماً من لوحات وجدران المدرسة! كانت تبدو حزينة باللونين الأبيض والأسود.", imageSrc: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=800&auto=format&fit=crop" },
@@ -146,6 +193,27 @@ const getSettings = async (req, res) => {
     }
 };
 exports.getSettings = getSettings;
+// @route GET /api/public/settings
+// @desc  Customer-facing settings: hides unready themes so half-finished stories
+//        never appear in the wizard.
+const getPublicSettings = async (_req, res) => {
+    try {
+        const settings = await SiteSettings_1.default.findOne();
+        if (!settings) {
+            res.json({ success: true, settings: { bookPackages: [], themes: [] } });
+            return;
+        }
+        const filtered = {
+            bookPackages: settings.bookPackages,
+            themes: settings.themes.filter((t) => t.ready === true),
+        };
+        res.json({ success: true, settings: filtered });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, message: 'حدث خطأ في الخادم' });
+    }
+};
+exports.getPublicSettings = getPublicSettings;
 // @route PUT /api/admin/settings
 const updateSettings = async (req, res) => {
     try {
@@ -186,4 +254,311 @@ const getAllOrders = async (req, res) => {
     }
 };
 exports.getAllOrders = getAllOrders;
+// @route POST /api/admin/orders/:id/build
+// @desc  Manually mark an order paid (if needed) and kick the BookBuilder.
+//        This is the pre-Stripe escape hatch — use only after confirming the
+//        customer paid by another channel.
+const buildOrderBook = async (req, res) => {
+    try {
+        const order = await Order_1.default.findById(req.params.id);
+        if (!order) {
+            res.status(404).json({ success: false, message: 'order not found' });
+            return;
+        }
+        if (order.paymentStatus !== 'paid') {
+            if (req.body?.markPaid === true) {
+                order.paymentStatus = 'paid';
+                await order.save();
+            }
+            else {
+                res.status(409).json({
+                    success: false,
+                    message: `order ${order._id} is ${order.paymentStatus}. POST {markPaid:true} to override.`,
+                });
+                return;
+            }
+        }
+        // Run synchronously so the admin sees success/failure in the response.
+        const updated = await (0, BookBuilder_1.buildBookForOrder)(String(order._id));
+        res.json({ success: true, order: updated });
+    }
+    catch (err) {
+        console.error('buildOrderBook failed:', err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+exports.buildOrderBook = buildOrderBook;
+// @route POST /api/admin/themes/:themeId/generate-illustrations
+// @desc  ADMIN PREVIEW ONLY. Generates 13 body illustrations + 1 back-cover
+//        portrait for a theme via Nano Banana, using the bucket reference photo.
+//        Caches the GCS object paths on the theme so reopening the book is free.
+//        Real customer orders generate per-order via BookBuilder (different path).
+const generatePreviewIllustrations = async (req, res) => {
+    try {
+        const { themeId } = req.params;
+        const force = req.body?.force === true;
+        const settings = await SiteSettings_1.default.findOne();
+        if (!settings) {
+            res.status(404).json({ success: false, message: 'settings not found' });
+            return;
+        }
+        const theme = settings.themes.find((t) => t.id === themeId);
+        if (!theme) {
+            res.status(404).json({ success: false, message: `theme ${themeId} not found` });
+            return;
+        }
+        // Already generated? Return the cache unless force-refresh requested.
+        if (!force && theme.generatedImages && theme.generatedImages.length > 0) {
+            res.json({
+                success: true,
+                cached: true,
+                generatedImages: theme.generatedImages,
+                generatedPortrait: theme.generatedPortrait,
+                generatedCover: theme.generatedCover,
+            });
+            return;
+        }
+        const childName = req.body?.childName || theme.label || 'الطفل';
+        // Pull the text from the theme's pages (text entries only).
+        const textPages = (theme.pages || [])
+            .filter((p) => p && (p.text || typeof p === 'string'))
+            .map((p) => substituteName(p.text || p, childName));
+        const generatedImages = [];
+        for (let i = 0; i < PREVIEW_IMAGE_PAGES; i++) {
+            const pageText = textPages[i] || textPages[textPages.length - 1] || `${childName} ${theme.label}`;
+            const prompt = (0, promptBuilder_1.buildIllustrationPrompt)({
+                pageText,
+                childName,
+                childAge: '5',
+                childGender: 'male',
+                theme: themeId,
+                language: 'ar',
+                pageNumber: i + 1,
+            });
+            const stored = await (0, ImageGenerator_1.generateIllustration)(prompt, PREVIEW_REFERENCE_PHOTO, {
+                storyId: `theme_${themeId}`,
+                pageNumber: i + 1,
+            });
+            generatedImages.push(stored.objectPath);
+        }
+        // Persist the body images immediately so a later portrait/cover hiccup
+        // can't waste the 13 we already paid for.
+        theme.generatedImages = generatedImages;
+        settings.markModified('themes');
+        await settings.save();
+        // Back-cover hero portrait — a clean, smiling close-up of the kid.
+        const portraitPrompt = `High-quality 3D rendered Pixar / DreamWorks style children's book back-cover portrait of ${childName}, ` +
+            `a happy 5-year-old with a photorealistic recognizable face that closely matches the reference photo, ` +
+            `warm smile, looking at the camera, soft cinematic studio lighting, gentle bokeh background in the ${theme.label} theme, ` +
+            `rich vibrant saturated colors, professional CGI render quality. Centered. No text, no watermark.`;
+        try {
+            const portrait = await (0, ImageGenerator_1.generateIllustration)(portraitPrompt, PREVIEW_REFERENCE_PHOTO, {
+                storyId: `theme_${themeId}`,
+                pageNumber: 99,
+            });
+            theme.generatedPortrait = portrait.objectPath;
+        }
+        catch (e) {
+            console.warn('[generatePreview] portrait failed:', e.message);
+        }
+        // Full-scene front cover — the hero kid inside the themed world (Taletoons
+        // style). Uses concrete per-theme background objects (zoo => animals,
+        // school => classroom/blackboard, space => planets/rocket, etc.).
+        const coverPrompt = (0, promptBuilder_1.buildCoverPrompt)({
+            childName,
+            childGender: 'male',
+            theme: themeId,
+        });
+        try {
+            const cover = await (0, ImageGenerator_1.generateIllustration)(coverPrompt, PREVIEW_REFERENCE_PHOTO, {
+                storyId: `theme_${themeId}`,
+                pageNumber: 0,
+            });
+            theme.generatedCover = cover.objectPath;
+        }
+        catch (e) {
+            console.warn('[generatePreview] cover failed:', e.message);
+        }
+        settings.markModified('themes');
+        await settings.save();
+        // Count what we actually produced this run for the cost estimate.
+        const imageCount = generatedImages.length +
+            (theme.generatedPortrait ? 1 : 0) +
+            (theme.generatedCover ? 1 : 0);
+        const estimatedCostUsd = Number((imageCount * ImageGenerator_1.COST_PER_IMAGE_USD).toFixed(2));
+        res.json({
+            success: true,
+            cached: false,
+            generatedImages,
+            generatedPortrait: theme.generatedPortrait,
+            generatedCover: theme.generatedCover,
+            imageCount,
+            estimatedCostUsd,
+        });
+    }
+    catch (err) {
+        console.error('generatePreviewIllustrations failed:', err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+exports.generatePreviewIllustrations = generatePreviewIllustrations;
+// @route POST /api/admin/themes/:themeId/generate-photoreal
+// @desc  STYLE B (Taletoons): (1) generate/cache 13 PHOTOREALISTIC template scenes
+//        for the theme [one-time], (2) face-swap the reference photo onto each +
+//        cover + portrait, (3) store the swapped results as the displayed images.
+//        Templates are cached so re-runs only re-swap (cheap/free).
+/**
+ * Generate a COLORING-BOOK preview for a theme: a colored front cover + 16
+ * line-art pages + a colored back cover, using the admin-typed scenes and an
+ * uploaded reference photo. Only runs when the admin clicks "Generate" (paid).
+ */
+const generateColoringPreview = async (req, res) => {
+    try {
+        const { themeId } = req.params;
+        const settings = await SiteSettings_1.default.findOne();
+        if (!settings) {
+            res.status(404).json({ success: false, message: 'settings not found' });
+            return;
+        }
+        const theme = settings.themes.find((t) => t.id === themeId);
+        if (!theme) {
+            res.status(404).json({ success: false, message: `theme ${themeId} not found` });
+            return;
+        }
+        // Scenes: prefer the ones sent in the request (just typed), else saved ones.
+        const scenes = ((req.body?.coloringScenes && req.body.coloringScenes.length)
+            ? req.body.coloringScenes : theme.coloringScenes) || [];
+        const cleanScenes = scenes.map((s) => (s || '').trim()).filter(Boolean);
+        if (cleanScenes.length < 1) {
+            res.status(400).json({ success: false, message: 'Add the page scenes before generating.' });
+            return;
+        }
+        const coverScene = req.body?.coloringCoverScene || theme.coloringCoverScene || `exploring ${theme.label}`;
+        const backScene = req.body?.coloringBackCoverScene || theme.coloringBackCoverScene || 'waving goodbye happily';
+        const referencePhoto = req.body?.referencePhoto || PREVIEW_REFERENCE_PHOTO;
+        const childName = req.body?.childName || theme.label || 'الطفل';
+        const childGender = req.body?.childGender === 'female' ? 'female' : 'male';
+        // Persist the scenes + mark as coloring so they survive.
+        theme.coloringScenes = scenes;
+        theme.coloringCoverScene = coverScene;
+        theme.coloringBackCoverScene = backScene;
+        theme.isColoring = true;
+        // 1) colored front cover
+        const cover = await (0, ImageGenerator_1.generateIllustration)((0, sceneTemplates_1.buildColoringCoverPrompt)(coverScene, childName, childGender), referencePhoto, { storyId: `theme_${themeId}`, pageNumber: 0 });
+        // 2) 16 line-art pages
+        const generatedImages = [];
+        for (let i = 0; i < sceneTemplates_1.COLORING_PAGES; i++) {
+            const scene = cleanScenes[i] || cleanScenes[cleanScenes.length - 1];
+            const img = await (0, ImageGenerator_1.generateIllustration)((0, sceneTemplates_1.buildScenePrompt)('page', scene, childName, childGender, { coloring: true }), referencePhoto, { storyId: `theme_${themeId}`, pageNumber: i + 1 });
+            generatedImages.push(img.objectPath);
+        }
+        // 3) colored back cover
+        const back = await (0, ImageGenerator_1.generateIllustration)((0, sceneTemplates_1.buildColoringBackCoverPrompt)(backScene, childName, childGender), referencePhoto, { storyId: `theme_${themeId}`, pageNumber: 98 });
+        theme.generatedCover = cover.objectPath;
+        theme.generatedImages = generatedImages;
+        theme.generatedPortrait = back.objectPath;
+        settings.markModified('themes');
+        await settings.save();
+        const imageCount = generatedImages.length + 2;
+        res.json({
+            success: true,
+            cached: false,
+            imageCount,
+            estimatedCostUsd: Number((imageCount * ImageGenerator_1.COST_PER_IMAGE_USD).toFixed(2)),
+            generatedCover: theme.generatedCover,
+            generatedImages: theme.generatedImages,
+            generatedPortrait: theme.generatedPortrait,
+        });
+    }
+    catch (err) {
+        console.error('[generateColoringPreview]', err);
+        res.status(500).json({ success: false, message: err.message || 'generation failed' });
+    }
+};
+exports.generateColoringPreview = generateColoringPreview;
+const generatePhotorealPreview = async (req, res) => {
+    try {
+        const { themeId } = req.params;
+        const forceTemplates = req.body?.forceTemplates === true;
+        const settings = await SiteSettings_1.default.findOne();
+        if (!settings) {
+            res.status(404).json({ success: false, message: 'settings not found' });
+            return;
+        }
+        const theme = settings.themes.find((t) => t.id === themeId);
+        if (!theme) {
+            res.status(404).json({ success: false, message: `theme ${themeId} not found` });
+            return;
+        }
+        const childName = req.body?.childName || theme.label || 'الطفل';
+        const referencePhoto = req.body?.referencePhoto || PREVIEW_REFERENCE_PHOTO;
+        const textPages = (theme.pages || [])
+            .filter((p) => p && (p.text || typeof p === 'string'))
+            .map((p) => substituteName(p.text || p, childName));
+        // ── Step 1: photoreal templates (one-time, cached) ──────────────────────
+        let templatesGenerated = 0;
+        if (forceTemplates || !theme.photorealTemplates || theme.photorealTemplates.length === 0) {
+            const templates = [];
+            for (let i = 0; i < PREVIEW_IMAGE_PAGES; i++) {
+                const prompt = (0, promptBuilder_1.buildPhotorealPrompt)({
+                    pageText: textPages[i] || textPages[textPages.length - 1] || `${childName} ${theme.label}`,
+                    childName, childAge: '5', childGender: 'male',
+                    theme: theme.label, language: 'ar', pageNumber: i + 1,
+                });
+                const t = await (0, ImageGenerator_1.generateIllustration)(prompt, referencePhoto, { storyId: `tmpl_${themeId}`, pageNumber: i + 1 });
+                templates.push(t.objectPath);
+                templatesGenerated++;
+            }
+            // cover + portrait templates
+            const coverT = await (0, ImageGenerator_1.generateIllustration)((0, promptBuilder_1.buildPhotorealPrompt)({ pageText: `${childName} hero portrait`, childName, childAge: '5', childGender: 'male', theme: theme.label, language: 'ar', pageNumber: 0 }), referencePhoto, { storyId: `tmpl_${themeId}`, pageNumber: 0 });
+            const portraitT = await (0, ImageGenerator_1.generateIllustration)((0, promptBuilder_1.buildPhotorealPrompt)({ pageText: `${childName} close-up smiling portrait`, childName, childAge: '5', childGender: 'male', theme: theme.label, language: 'ar', pageNumber: 99 }), referencePhoto, { storyId: `tmpl_${themeId}`, pageNumber: 99 });
+            templatesGenerated += 2;
+            theme.photorealTemplates = templates;
+            theme.photorealCover = coverT.objectPath;
+            theme.photorealPortrait = portraitT.objectPath;
+            settings.markModified('themes');
+            await settings.save();
+        }
+        // ── Step 2: face-swap the real photo onto every template ────────────────
+        const swappedImages = [];
+        for (let i = 0; i < theme.photorealTemplates.length; i++) {
+            const sw = await (0, FaceSwapService_1.swapFace)(referencePhoto, `gs://${process.env.GCS_BUCKET_NAME}/${theme.photorealTemplates[i]}`, {
+                storyId: `sb_${themeId}`, pageNumber: i + 1,
+            });
+            swappedImages.push(sw.objectPath);
+        }
+        let swapCover;
+        let swapPortrait;
+        if (theme.photorealCover) {
+            const c = await (0, FaceSwapService_1.swapFace)(referencePhoto, `gs://${process.env.GCS_BUCKET_NAME}/${theme.photorealCover}`, { storyId: `sb_${themeId}`, pageNumber: 0 });
+            swapCover = c.objectPath;
+        }
+        if (theme.photorealPortrait) {
+            const p = await (0, FaceSwapService_1.swapFace)(referencePhoto, `gs://${process.env.GCS_BUCKET_NAME}/${theme.photorealPortrait}`, { storyId: `sb_${themeId}`, pageNumber: 98 });
+            swapPortrait = p.objectPath;
+        }
+        // ── Step 3: store swapped results in the display fields ──────────────────
+        theme.generatedImages = swappedImages;
+        theme.generatedCover = swapCover;
+        theme.generatedPortrait = swapPortrait;
+        theme.previewStyle = 'photoreal';
+        settings.markModified('themes');
+        await settings.save();
+        res.json({
+            success: true,
+            style: 'photoreal',
+            templatesGenerated, // Gemini images produced this run (cost)
+            swaps: swappedImages.length + (swapCover ? 1 : 0) + (swapPortrait ? 1 : 0),
+            estimatedCostUsd: Number((templatesGenerated * ImageGenerator_1.COST_PER_IMAGE_USD).toFixed(2)),
+            generatedImages: swappedImages,
+            generatedCover: swapCover,
+            generatedPortrait: swapPortrait,
+        });
+    }
+    catch (err) {
+        console.error('generatePhotorealPreview failed:', err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+exports.generatePhotorealPreview = generatePhotorealPreview;
 //# sourceMappingURL=adminController.js.map

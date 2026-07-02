@@ -10,5 +10,6 @@ router.post('/:id/generate', authMiddleware_1.protect, storyController_1.generat
 router.put('/:id/customize', authMiddleware_1.protect, storyController_1.customizeStory);
 router.get('/:id/preview', storyController_1.getStoryPreview);
 router.get('/:id/full', authMiddleware_1.protect, storyController_1.getFullStory);
+router.delete('/:id', authMiddleware_1.protect, storyController_1.deleteMyStory);
 exports.default = router;
 //# sourceMappingURL=storyRoutes.js.map

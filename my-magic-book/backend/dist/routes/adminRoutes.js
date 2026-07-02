@@ -9,9 +9,14 @@ router.get('/stories', adminController_1.getAllStories);
 router.put('/stories/:id', adminController_1.updateStory);
 router.delete('/stories/:id', adminController_1.deleteStory);
 router.get('/orders', adminController_1.getAllOrders);
+router.post('/orders/:id/build', adminController_1.buildOrderBook);
 router.post('/team', adminController_1.addAdmin);
 router.get('/team', adminController_1.getTeam);
+router.delete('/team/:id', adminController_1.removeAdmin);
 router.get('/settings', adminController_1.getSettings);
 router.put('/settings', adminController_1.updateSettings);
+router.post('/themes/:themeId/generate-illustrations', adminController_1.generatePreviewIllustrations);
+router.post('/themes/:themeId/generate-photoreal', adminController_1.generatePhotorealPreview);
+router.post('/themes/:themeId/generate-coloring', adminController_1.generateColoringPreview);
 exports.default = router;
 //# sourceMappingURL=adminRoutes.js.map
