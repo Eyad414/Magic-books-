@@ -13,6 +13,12 @@ export interface PrintBuildOpts {
   isColoring: boolean;
   title: string;
   pageTexts?: string[]; // story interior texts (ignored for coloring)
+  // Localized front/back matter (story books only).
+  childPhotoPath?: string;
+  dedication?: string;
+  moral?: string;
+  conclusion?: string;
+  questions?: string[];
 }
 
 /** Build the wraparound cover + interior PDFs for a story and upload them. */
@@ -42,6 +48,11 @@ export async function buildPrintFilesForStory(
         backPath: back,
         imagePaths: images,
         pageTexts: opts.pageTexts || images.map(() => ''),
+        childPhotoPath: opts.childPhotoPath,
+        dedication: opts.dedication,
+        moral: opts.moral,
+        conclusion: opts.conclusion,
+        questions: opts.questions,
       });
 
   return uploadPrintFiles(String(story._id), files);

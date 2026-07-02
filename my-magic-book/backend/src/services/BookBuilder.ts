@@ -33,11 +33,17 @@ function loadLocale(language: string): any {
 }
 
 /** Localized { title, pages[] } for a theme in the chosen language, or null. */
-function localizedStory(theme: string, language: string): { title?: string; pages: string[] } | null {
+function localizedStory(theme: string, language: string): {
+  title?: string; pages: string[]; dedication?: string; moral?: string; conclusion?: string; questions?: string[];
+} | null {
   const s = loadLocale(language)?.stories?.[theme];
   if (!s || !s.pages) return null;
   const pages = Object.keys(s.pages).sort((a, b) => Number(a) - Number(b)).map((k) => s.pages[k] as string);
-  return { title: s.title, pages };
+  const q = s.questions;
+  const questions = Array.isArray(q)
+    ? q
+    : (q && typeof q === 'object' ? Object.keys(q).sort((a, b) => Number(a) - Number(b)).map((k) => q[k]) : undefined);
+  return { title: s.title, pages, dedication: s.dedication, moral: s.moral, conclusion: s.conclusion, questions };
 }
 
 const ILLUSTRATION_PAGES = 13; // matches the 13 image slots in the printed book
@@ -204,10 +210,17 @@ export async function buildBookForOrder(orderId: string): Promise<IOrder> {
     // Build print-ready files (wraparound cover + multiple-of-4 interior) and,
     // if BookPod is configured, submit the print job. Never fails the build.
     try {
+      const printLoc = localizedStory(story.theme, (story as any).language || 'ar');
+      const rt = (s?: string) => (s ? resolveTokens(s, story.childName, story.childGender) : undefined);
       const printResult = await printAndSubmitForOrder(order, story, {
         isColoring: isColoringBook,
         title: storyTitle,
         pageTexts,
+        childPhotoPath: story.childPhotoUrl,
+        dedication: rt(printLoc?.dedication),
+        moral: rt(printLoc?.moral),
+        conclusion: rt(printLoc?.conclusion),
+        questions: printLoc?.questions?.map((q) => resolveTokens(q, story.childName, story.childGender)),
       });
       order.printCoverUrl = printResult.urls.coverUrl;
       order.printInteriorUrl = printResult.urls.interiorUrl;

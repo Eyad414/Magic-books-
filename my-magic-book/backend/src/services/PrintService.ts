@@ -107,13 +107,35 @@ const SHARED_CSS = `
   .fanoos-emblem { font-size: 90pt; }
   /* Closing page */
   .end-page { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20mm; text-align: center; background: #fcfaf2; }
+  /* Final story page (moral + questions + conclusion) */
+  .final-page { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 18mm; text-align: center; background: #fcfaf2; }
+  .final-conclusion { font-weight: 700; color: #0a1628; font-size: 19pt; line-height: 1.7; margin-bottom: 8mm; }
+  .final-moral { font-weight: 700; color: #8a5a00; font-size: 16pt; line-height: 1.6; background: #fff4d6; border-radius: 8mm; padding: 8mm 10mm; margin-bottom: 8mm; }
+  .final-q-title { font-size: 22pt; margin-bottom: 4mm; }
+  .final-q { list-style: none; color: #3a2c10; font-size: 14pt; line-height: 2; font-weight: 700; }
+  /* Copyright page */
+  .copyright-page { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20mm; text-align: center; background: #0a1426; }
+  .cp-brand { color: #e0a82e; font-weight: 700; font-size: 18pt; margin-bottom: 8mm; }
+  .cp-text { color: #cfd8e6; font-size: 12pt; line-height: 1.8; }
 `;
 
 function linePageHtml(src: string): string {
   return `<div class="page"><img class="bleed" src="${src}" alt="" /></div>`;
 }
-function dedicationPageHtml(photoSrc: string, childName: string): string {
-  return `<div class="page page-cream center"><img class="ded-photo" src="${photoSrc}" alt="${childName}" /><div class="ded-text">إلى البطل الرائع ${childName},<br/>نتمنى أن تكون حياتك مليئة بالمغامرات والسعادة.</div></div>`;
+function dedicationPageHtml(photoSrc: string, childName: string, text?: string): string {
+  const body = text || `إلى البطل الرائع ${childName},<br/>نتمنى أن تكون حياتك مليئة بالمغامرات والسعادة.`;
+  return `<div class="page page-cream center"><img class="ded-photo" src="${photoSrc}" alt="${childName}" /><div class="ded-text">${body}</div></div>`;
+}
+function finalStoryPageHtml(moral: string, questions: string[], conclusion: string): string {
+  const qs = (questions || []).filter(Boolean).map((q) => `<li>${q}</li>`).join('');
+  return `<div class="page final-page"><div class="end-mark">🌟 ✦ 🌟</div>` +
+    (conclusion ? `<div class="final-conclusion">${conclusion}</div>` : '') +
+    (moral ? `<div class="final-moral">💡 ${moral}</div>` : '') +
+    (qs ? `<div class="final-q-title">💭</div><ul class="final-q">${qs}</ul>` : '') +
+    `</div>`;
+}
+function copyrightPageHtml(): string {
+  return `<div class="page copyright-page"><div class="cp-brand">✨ Magic Fanoose</div><div class="cp-text">© ${new Date().getFullYear()} Magic Fanoose · MagicFanoose.com</div></div>`;
 }
 const PRINT_PAGE_COLORS = ['#F2607A', '#7C5CE0', '#159B8A', '#2E7BD6', '#E17055', '#3FA34D'];
 function storyTextPageHtml(text: string, idx = 0): string {
@@ -306,30 +328,47 @@ export interface StoryPrintInput {
   backPath: string;
   imagePaths: string[];
   pageTexts: string[];
+  // Front/back matter text (localized) so the printed book matches the on-screen
+  // one: dedication, then the closing moral + discussion questions + conclusion.
+  dedication?: string;
+  moral?: string;
+  conclusion?: string;
+  questions?: string[];
 }
 
 export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<PrintFiles> {
   const images = await Promise.all(input.imagePaths.map(async (p) => upscaleForPrint(await downloadObject(p))));
-  const photoSrc = input.childPhotoPath
-    ? dataUri(...(await (async () => {
-        const u = await upscaleForPrint(await downloadObject(input.childPhotoPath!), { px: 900 });
-        return [u.buffer, u.mime] as [Buffer, string];
-      })()))
-    : '';
+  // Dedication photo — best-effort (skip the page if it can't be fetched, e.g.
+  // a non-GCS URL), so it never fails the whole build.
+  let photoSrc = '';
+  if (input.childPhotoPath && !/^https?:/i.test(input.childPhotoPath)) {
+    try {
+      const u = await upscaleForPrint(await downloadObject(input.childPhotoPath), { px: 900 });
+      photoSrc = dataUri(u.buffer, u.mime);
+    } catch (e: any) {
+      console.warn('[PrintService] dedication photo skipped:', e?.message || e);
+    }
+  }
 
   const interior: string[] = [];
   // Front matter: inside title + lantern separator + dedication.
   interior.push(titlePageHtml(input.title));
   interior.push(fanoosPageHtml());
-  if (photoSrc) interior.push(dedicationPageHtml(photoSrc, input.childName));
+  if (photoSrc) interior.push(dedicationPageHtml(photoSrc, input.childName, input.dedication));
   // Body: each story page is a decorative TEXT page + its full-bleed illustration.
   for (let i = 0; i < input.imagePaths.length; i++) {
     interior.push(storyTextPageHtml(input.pageTexts[i] || '', i));
     interior.push(linePageHtml(dataUri(images[i].buffer, images[i].mime)));
   }
-  // Back matter: closing lantern + end page.
+  // Back matter: lantern separator, the final story page (moral + questions +
+  // conclusion), then the copyright page — mirrors the on-screen book.
   interior.push(fanoosPageHtml());
-  interior.push(endPageHtml(input.childName));
+  if (input.moral || input.conclusion || (input.questions && input.questions.length)) {
+    interior.push(finalStoryPageHtml(input.moral || '', input.questions || [], input.conclusion || ''));
+  } else {
+    interior.push(endPageHtml(input.childName));
+  }
+  interior.push(copyrightPageHtml());
   const padded = padToMultipleOf4(interior);
   const interiorPdf = await renderPrintPdf(squareDoc(padded));
 

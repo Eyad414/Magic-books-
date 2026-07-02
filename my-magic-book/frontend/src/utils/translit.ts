@@ -12,6 +12,8 @@ const NAMES: Forms[] = [
   { en: 'Baha', ar: 'بهاء', he: 'בהאא' },
   { en: 'Lora', ar: 'لورا', he: 'לורה' },
   { en: 'Laura', ar: 'لورا', he: 'לורה' },
+  { en: 'Liam', ar: 'ليام', he: 'ליאם' },
+  { en: 'Yosef', ar: 'يوسف', he: 'יוסף' },
   { en: 'Eyad', ar: 'إياد', he: 'איאד' },
   { en: 'Iyad', ar: 'إياد', he: 'איאד' },
   { en: 'Adam', ar: 'آدم', he: 'אדם' },
