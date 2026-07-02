@@ -17,8 +17,12 @@ export const adminApi = {
     const response = await axiosInstance.get('/admin/team');
     return response.data;
   },
-  addAdmin: async (adminData: any) => {
+  addAdmin: async (adminData: { email: string }) => {
     const response = await axiosInstance.post('/admin/team', adminData);
+    return response.data;
+  },
+  removeAdmin: async (id: string) => {
+    const response = await axiosInstance.delete(`/admin/team/${id}`);
     return response.data;
   },
   getSettings: async () => {

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAllStories, updateStory, deleteStory, addAdmin, getTeam, getSettings, updateSettings, getAllOrders, buildOrderBook, generatePreviewIllustrations, generatePhotorealPreview, generateColoringPreview } from '../controllers/adminController';
+import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam, getSettings, updateSettings, getAllOrders, buildOrderBook, generatePreviewIllustrations, generatePhotorealPreview, generateColoringPreview } from '../controllers/adminController';
 import { protect, adminOnly } from '../utils/authMiddleware';
 
 const router = Router();
@@ -15,6 +15,7 @@ router.post('/orders/:id/build', buildOrderBook);
 
 router.post('/team', addAdmin);
 router.get('/team', getTeam);
+router.delete('/team/:id', removeAdmin);
 
 router.get('/settings', getSettings);
 router.put('/settings', updateSettings);

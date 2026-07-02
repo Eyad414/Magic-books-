@@ -304,7 +304,7 @@ export default function AdminDashboard() {
     e.preventDefault();
     setIsAddingAdmin(true);
     try {
-      const res = await adminApi.addAdmin(adminForm);
+      const res = await adminApi.addAdmin({ email: adminForm.email });
       if (res.success) {
         toast.success(t('admin.add_admin_success'));
         setAdminForm({ name: '', email: '', password: '' });
@@ -314,6 +314,19 @@ export default function AdminDashboard() {
       toast.error(err.response?.data?.message || t('admin.add_admin_fail'));
     } finally {
       setIsAddingAdmin(false);
+    }
+  };
+
+  const handleRemoveAdmin = async (id: string, name: string) => {
+    if (!window.confirm(t('admin.confirm_remove_admin', { name, defaultValue: `إزالة ${name} من فريق المشرفين؟` }))) return;
+    try {
+      const res = await adminApi.removeAdmin(id);
+      if (res.success) {
+        toast.success(t('admin.remove_admin_success', 'تمت الإزالة'));
+        fetchTeam();
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || t('admin.remove_admin_fail', 'فشل في الإزالة'));
     }
   };
 
@@ -462,21 +475,16 @@ export default function AdminDashboard() {
                   <h3 className="font-arabic text-gold-500 font-bold mb-4 flex items-center gap-2">
                     <UserPlus className="w-4 h-4" /> {t('admin.add_new_admin')}
                   </h3>
-                  <form onSubmit={handleAddAdmin} className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
-                    <div>
-                      <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.name')}</label>
-                      <input type="text" className="magic-input w-full" value={adminForm.name} onChange={e => setAdminForm({...adminForm, name: e.target.value})} required />
-                    </div>
+                  {/* Promote an existing account to admin by email — no password
+                      needed (they keep the one they signed up with). */}
+                  <form onSubmit={handleAddAdmin} className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4 items-end">
                     <div>
                       <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.email')}</label>
-                      <input type="email" dir="ltr" className="magic-input w-full" value={adminForm.email} onChange={e => setAdminForm({...adminForm, email: e.target.value})} required />
+                      <input type="email" dir="ltr" className="magic-input w-full" placeholder="name@example.com" value={adminForm.email} onChange={e => setAdminForm({ ...adminForm, email: e.target.value })} required />
                     </div>
-                    <div>
-                      <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.password')}</label>
-                      <input type="password" dir="ltr" className="magic-input w-full" value={adminForm.password} onChange={e => setAdminForm({...adminForm, password: e.target.value})} required />
-                    </div>
-                    <MagicButton type="submit" isLoading={isAddingAdmin} className="sm:col-span-3">{t('admin.add_admin_btn')}</MagicButton>
+                    <MagicButton type="submit" isLoading={isAddingAdmin}>{t('admin.add_admin_btn')}</MagicButton>
                   </form>
+                  <p className="font-arabic text-white/40 text-xs mt-2">{t('admin.add_admin_hint', 'أدخل بريد شخص لديه حساب بالفعل، وسيصبح مشرفاً.')}</p>
                 </div>
 
                 <div className="space-y-3">
@@ -486,7 +494,19 @@ export default function AdminDashboard() {
                         <div className="font-arabic text-white font-bold">{admin.name}</div>
                         <div className="font-sans text-white/50 text-xs">{admin.email}</div>
                       </div>
-                      <div className="px-3 py-1 bg-red-500/20 text-red-400 text-xs font-bold rounded-lg">{t('admin.admin_role')}</div>
+                      <div className="flex items-center gap-2">
+                        <div className="px-3 py-1 bg-red-500/20 text-red-400 text-xs font-bold rounded-lg">{t('admin.admin_role')}</div>
+                        {String(admin._id) !== String((user as any)?.id) && (
+                          <button
+                            onClick={() => handleRemoveAdmin(admin._id, admin.name)}
+                            title={t('admin.remove_admin', 'إزالة من الفريق')}
+                            aria-label={t('admin.remove_admin', 'إزالة من الفريق')}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

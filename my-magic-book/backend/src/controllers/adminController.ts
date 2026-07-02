@@ -70,28 +70,56 @@ export const deleteStory = async (req: Request, res: Response): Promise<void> =>
 };
 
 // @route POST /api/admin/team
+// Promote an EXISTING registered user to admin by email. No password here —
+// the person keeps the password they signed up with (the owner never sees it).
 export const addAdmin = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, email, password } = req.body;
-    
-    if (!name || !email || !password) {
-      res.status(400).json({ success: false, message: 'يرجى تعبئة جميع الحقول المطلوبة' });
+    const { email } = req.body;
+    if (!email) {
+      res.status(400).json({ success: false, message: 'يرجى إدخال البريد الإلكتروني' });
       return;
     }
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      res.status(409).json({ success: false, message: 'البريد الإلكتروني مسجل مسبقاً' });
+    const user = await User.findOne({ email: String(email).trim().toLowerCase() });
+    if (!user) {
+      res.status(404).json({ success: false, message: 'هذا البريد غير مسجّل — اطلب من الشخص إنشاء حساب أولاً' });
+      return;
+    }
+    if (user.role === 'admin') {
+      res.status(409).json({ success: false, message: 'هذا المستخدم مسؤول بالفعل' });
       return;
     }
 
-    const admin = await User.create({ name, email, passwordHash: password, role: 'admin' });
-    
-    res.status(201).json({
+    user.role = 'admin';
+    await user.save();
+
+    res.status(200).json({
       success: true,
-      message: 'تم إضافة مسؤول جديد للفريق!',
-      admin: { id: admin._id, name: admin.name, email: admin.email, role: admin.role }
+      message: 'تمت إضافة المسؤول للفريق!',
+      admin: { id: user._id, name: user.name, email: user.email, role: user.role },
     });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'حدث خطأ في الخادم' });
+  }
+};
+
+// Remove someone from the admin team (demote to a normal user; keep the account).
+export const removeAdmin = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const requesterId = String((req as any).user._id);
+    if (id === requesterId) {
+      res.status(400).json({ success: false, message: 'لا يمكنك إزالة نفسك' });
+      return;
+    }
+    const user = await User.findById(id);
+    if (!user) {
+      res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
+      return;
+    }
+    user.role = 'user';
+    await user.save();
+    res.json({ success: true });
   } catch (error) {
     res.status(500).json({ success: false, message: 'حدث خطأ في الخادم' });
   }

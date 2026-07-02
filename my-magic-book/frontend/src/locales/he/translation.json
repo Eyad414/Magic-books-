@@ -690,7 +690,12 @@
     "sent_to_print": "הספר נבנה והוכן להדפסה ✅",
     "send_failed": "השליחה להדפסה נכשלה",
     "no_files_yet": "אין קבצים עדיין — שלח את ההזמנה להדפסה תחילה",
-    "files_downloading": "מוריד קבצי הדפסה 📁"
+    "files_downloading": "מוריד קבצי הדפסה 📁",
+    "add_admin_hint": "הזן אימייל של מישהו שכבר יש לו חשבון — הוא יהפוך למנהל.",
+    "confirm_remove_admin": "להסיר את {{name}} מצוות המנהלים?",
+    "remove_admin": "הסר מהצוות",
+    "remove_admin_success": "הוסר",
+    "remove_admin_fail": "ההסרה נכשלה"
   },
   "title_page": {
     "presents": "מוגש ל",

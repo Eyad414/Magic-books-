@@ -690,7 +690,12 @@
     "sent_to_print": "تم بناء الكتاب وتجهيزه للطباعة ✅",
     "send_failed": "فشل الإرسال للطباعة",
     "no_files_yet": "لا توجد ملفات بعد — أرسل الطلب للطباعة أولاً",
-    "files_downloading": "جاري تنزيل ملفات الطباعة 📁"
+    "files_downloading": "جاري تنزيل ملفات الطباعة 📁",
+    "add_admin_hint": "أدخل بريد شخص لديه حساب بالفعل، وسيصبح مشرفاً.",
+    "confirm_remove_admin": "إزالة {{name}} من فريق المشرفين؟",
+    "remove_admin": "إزالة من الفريق",
+    "remove_admin_success": "تمت الإزالة",
+    "remove_admin_fail": "فشل في الإزالة"
   },
   "title_page": {
     "presents": "يُقدّم لـ",

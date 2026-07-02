@@ -690,7 +690,12 @@
     "sent_to_print": "Book built and prepared for printing ✅",
     "send_failed": "Failed to send to print",
     "no_files_yet": "No files yet — send the order to print first",
-    "files_downloading": "Downloading print files 📁"
+    "files_downloading": "Downloading print files 📁",
+    "add_admin_hint": "Enter the email of someone who already has an account — they'll become an admin.",
+    "confirm_remove_admin": "Remove {{name}} from the admin team?",
+    "remove_admin": "Remove from team",
+    "remove_admin_success": "Removed",
+    "remove_admin_fail": "Failed to remove"
   },
   "title_page": {
     "presents": "Presented to",
