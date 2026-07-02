@@ -24,7 +24,7 @@ const PORT = process.env.PORT || 5001;
 (0, db_1.connectDB)();
 // Middleware
 // In production, set CORS_ORIGINS to a comma-separated allowlist
-// (e.g. "https://magicfanoose.com,https://www.magicfanoose.com").
+// (e.g. "https://magicfanoos.com,https://www.magicfanoos.com").
 // When unset (local dev) we reflect any origin for convenience.
 const corsAllowlist = (process.env.CORS_ORIGINS || '')
     .split(',')

@@ -15,7 +15,7 @@ export default function FinalStoryPage({
   moralText,
   questions,
   conclusionText,
-  audioUrl = 'https://magicfanoose.com',
+  audioUrl = 'https://magicfanoos.com',
   childName,
 }: FinalStoryPageProps) {
   const { t, i18n } = useTranslation();

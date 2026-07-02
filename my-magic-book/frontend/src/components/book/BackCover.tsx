@@ -80,7 +80,7 @@ export default function BackCover({ childName, childPhoto, currentStoryId }: Bac
         <img src="/logo.png" alt="Magic Fanoos" className="bc-footer-logo" />
         <div className="bc-footer-text">
           <span className="bc-footer-brand">Magic Fanoos</span>
-          <span className="bc-footer-url">🌐 MagicFanoose.com</span>
+          <span className="bc-footer-url">🌐 MagicFanoos.com</span>
         </div>
       </div>
 

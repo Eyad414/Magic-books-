@@ -135,7 +135,7 @@ function finalStoryPageHtml(moral: string, questions: string[], conclusion: stri
     `</div>`;
 }
 function copyrightPageHtml(): string {
-  return `<div class="page copyright-page"><div class="cp-brand">✨ Magic Fanoos</div><div class="cp-text">© ${new Date().getFullYear()} Magic Fanoos · MagicFanoose.com</div></div>`;
+  return `<div class="page copyright-page"><div class="cp-brand">✨ Magic Fanoos</div><div class="cp-text">© ${new Date().getFullYear()} Magic Fanoos · MagicFanoos.com</div></div>`;
 }
 const PRINT_PAGE_COLORS = ['#F2607A', '#7C5CE0', '#159B8A', '#2E7BD6', '#E17055', '#3FA34D'];
 function storyTextPageHtml(text: string, idx = 0): string {

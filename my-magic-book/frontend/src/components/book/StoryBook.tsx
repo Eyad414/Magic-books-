@@ -138,7 +138,7 @@ export default function StoryBook({
   const resolvedPhoto = childPhoto ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(childName)}&background=D4A937&color=0a1628&size=300&bold=true`;
   const resolvedAudio = audioUrl ||
-    `https://magicfanoose.com/stories/${story.id}?child=${encodeURIComponent(childName)}`;
+    `https://magicfanoos.com/stories/${story.id}?child=${encodeURIComponent(childName)}`;
 
   // ── Print handler ─────────────────────────────────────────────────────────
   const handlePrint = () => window.print();

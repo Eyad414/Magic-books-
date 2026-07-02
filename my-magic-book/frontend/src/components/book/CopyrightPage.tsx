@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 export default function CopyrightPage() {
   const { t, i18n } = useTranslation();
-  const websiteUrl = 'https://magicfanoose.com';
+  const websiteUrl = 'https://magicfanoos.com';
 
   return (
     <section className="book-page copyright-page" aria-label={t('storybook.copyright_page_aria', 'صفحة حقوق النشر')} dir={i18n.dir()}>
@@ -19,7 +19,7 @@ export default function CopyrightPage() {
       <div className="cp-info">
         <div className="cp-info-row">
           <span className="cp-info-icon">🌐</span>
-          <a href={websiteUrl} className="cp-link">MagicFanoose.com</a>
+          <a href={websiteUrl} className="cp-link">MagicFanoos.com</a>
         </div>
         <div className="cp-info-row">
           <span className="cp-info-icon">📧</span>
@@ -49,9 +49,9 @@ export default function CopyrightPage() {
       <div className="cp-qr-row">
         <div className="cp-qr-text">
           <p className="cp-qr-label">{t('storybook.visit_website', '🏮 زر موقعنا')}</p>
-          <p className="cp-qr-sub">{t('storybook.scan_website', 'امسح الكود لزيارة MagicFanoose.com واكتشاف المزيد من القصص')}</p>
+          <p className="cp-qr-sub">{t('storybook.scan_website', 'امسح الكود لزيارة MagicFanoos.com واكتشاف المزيد من القصص')}</p>
         </div>
-        <div className="cp-qr-box" aria-label={t('storybook.qr_website_aria', 'QR code لموقع MagicFanoose.com')}>
+        <div className="cp-qr-box" aria-label={t('storybook.qr_website_aria', 'QR code لموقع MagicFanoos.com')}>
           <img
             src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(websiteUrl)}&bgcolor=0a1628&color=D4A937`}
             alt="QR code"

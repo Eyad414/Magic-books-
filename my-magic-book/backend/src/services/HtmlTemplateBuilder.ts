@@ -206,7 +206,7 @@ export function buildBookHtml(data: BookData): string {
         <div class="cover-content">
           <h1 class="cover-title">${storyTitle}</h1>
         </div>
-        <div class="cover-footer">magicfanoose.com</div>
+        <div class="cover-footer">magicfanoos.com</div>
       </div>
 
       <!-- 2. First Page Inside (Title without photo) -->

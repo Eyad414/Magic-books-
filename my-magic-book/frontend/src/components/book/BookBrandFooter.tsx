@@ -21,7 +21,7 @@ export default function BookBrandFooter({ variant = 'page', pageNumber }: BookBr
         <img src="/logo.png" alt="" className="bbf-logo" />
         <span className="bbf-name">Magic Fanoos</span>
         <span className="bbf-dot">•</span>
-        <span className="bbf-url">MagicFanoose.com</span>
+        <span className="bbf-url">MagicFanoos.com</span>
       </div>
       {typeof pageNumber === 'number' && (
         <span className="bbf-page">{pageNumber}</span>

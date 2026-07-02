@@ -44,7 +44,7 @@ export default function TitlePage({ storyTitle, childName }: TitlePageProps) {
 
       {/* Bottom divider */}
       <div className="tp-divider tp-divider--bottom" aria-hidden="true" />
-      <p className="tp-website">MagicFanoose.com</p>
+      <p className="tp-website">MagicFanoos.com</p>
 
       <style>{`
         .title-page {
