@@ -3,7 +3,7 @@ import User from '../models/User';
 import Story from '../models/Story';
 import Order from '../models/Order';
 import SiteSettings from '../models/SiteSettings';
-import { buildBookForOrder, reRenderPrintFilesForOrder } from '../services/BookBuilder';
+import { buildBookForOrder, reRenderPrintFilesForOrder, submitOrderToBookPod } from '../services/BookBuilder';
 import { generateIllustration, COST_PER_IMAGE_USD } from '../services/ImageGenerator';
 import { buildIllustrationPrompt, buildPhotorealPrompt, buildCoverPrompt } from '../services/promptBuilder';
 import { swapFace } from '../services/FaceSwapService';
@@ -275,7 +275,13 @@ export const buildOrderBook = async (req: Request, res: Response): Promise<void>
       }
     }
     // Run synchronously so the admin sees success/failure in the response.
-    const updated = await buildBookForOrder(String(order._id));
+    // If the book is ALREADY built (images generated), don't regenerate — just
+    // (re)submit the existing files to BookPod. Errors here are surfaced (not
+    // swallowed) so a failed submission is visible instead of a false success.
+    const updated =
+      order.illustrationsStatus === 'ready'
+        ? await submitOrderToBookPod(String(order._id))
+        : await buildBookForOrder(String(order._id));
     res.json({ success: true, order: updated });
   } catch (err: any) {
     console.error('buildOrderBook failed:', err);

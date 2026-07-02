@@ -279,7 +279,12 @@ const buildOrderBook = async (req, res) => {
             }
         }
         // Run synchronously so the admin sees success/failure in the response.
-        const updated = await (0, BookBuilder_1.buildBookForOrder)(String(order._id));
+        // If the book is ALREADY built (images generated), don't regenerate — just
+        // (re)submit the existing files to BookPod. Errors here are surfaced (not
+        // swallowed) so a failed submission is visible instead of a false success.
+        const updated = order.illustrationsStatus === 'ready'
+            ? await (0, BookBuilder_1.submitOrderToBookPod)(String(order._id))
+            : await (0, BookBuilder_1.buildBookForOrder)(String(order._id));
         res.json({ success: true, order: updated });
     }
     catch (err) {

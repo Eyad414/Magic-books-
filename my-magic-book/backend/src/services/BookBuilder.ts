@@ -6,7 +6,8 @@ import { generateBookPdf } from './PdfGenerator';
 import { uploadBuffer, pdfFolderPath } from './StorageService';
 import { splitStoryIntoPages, buildIllustrationPrompt } from './promptBuilder';
 import { getSceneTemplate, buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, resolveTokens, COLORING_PAGES } from './sceneTemplates';
-import { printAndSubmitForOrder, buildPrintFilesForStory } from './PrintOrchestrator';
+import { printAndSubmitForOrder, buildPrintFilesForStory, PrintBuildOpts } from './PrintOrchestrator';
+import { isBookPodConfigured } from './BookPodService';
 import fs from 'fs';
 import path from 'path';
 
@@ -245,11 +246,53 @@ export async function buildBookForOrder(orderId: string): Promise<IOrder> {
 }
 
 /**
+ * Reconstruct the print-build options (title + page texts + front/back matter)
+ * for an order whose illustrations already exist. Fully deterministic — no AI
+ * calls, so it costs nothing. Shared by the re-render and BookPod-submit paths.
+ */
+function reconstructPrintOpts(story: any): PrintBuildOpts {
+  const template = getSceneTemplate(story.theme);
+  const isColoringBook =
+    story.bookPackage === 'coloring' && !!template?.coloringScenes && !!template?.coloringCoverScene;
+  const loc = localizedStory(story.theme, (story as any).language || 'ar');
+  const rt = (s?: string) => (s ? resolveTokens(s, story.childName, story.childGender) : undefined);
+  const images: string[] = story.generatedImages || [];
+
+  let pageTexts: string[];
+  let storyTitle: string;
+  if (isColoringBook) {
+    pageTexts = images.map(() => '');
+    storyTitle = `${story.childName} — كتاب تلوين`;
+  } else if (template?.pageTexts && template?.coverScene) {
+    pageTexts = images.map((_: string, i: number) =>
+      resolveTokens(loc?.pages?.[i] ?? template.pageTexts![i] ?? '', story.childName, story.childGender)
+    );
+    storyTitle = resolveTokens(loc?.title || template.titleAr || story.childName, story.childName, story.childGender);
+  } else {
+    const pairs = story.mode === 'template' && Array.isArray(story.templatePages) && story.templatePages.length > 0
+      ? extractPairsFromTemplate(story.templatePages, story.childName)
+      : extractPairsFromAi(story);
+    pageTexts = images.map((_: string, i: number) => pairs[i]?.text ?? '');
+    storyTitle = `${story.childName} ${story.theme}`;
+  }
+
+  return {
+    isColoring: isColoringBook,
+    title: storyTitle,
+    pageTexts,
+    childPhotoPath: story.childPhotoUrl,
+    dedication: rt(loc?.dedication),
+    moral: rt(loc?.moral),
+    conclusion: rt(loc?.conclusion),
+    questions: loc?.questions?.map((q) => resolveTokens(q, story.childName, story.childGender)),
+  };
+}
+
+/**
  * Rebuild ONLY the print-ready PDFs (wraparound cover + interior) for an order
  * whose illustrations are ALREADY generated, reusing the stored images. This
- * costs nothing on the AI side and never re-submits to BookPod — it just brings
- * an older order up to the current print layout. The page texts are reconstructed
- * deterministically from the story (same logic as the build path, no AI calls).
+ * costs nothing on the AI side and never submits to BookPod — it just brings an
+ * older order up to the current print layout.
  */
 export async function reRenderPrintFilesForOrder(orderId: string): Promise<IOrder> {
   const order = await Order.findById(orderId);
@@ -260,47 +303,45 @@ export async function reRenderPrintFilesForOrder(orderId: string): Promise<IOrde
     throw new Error('cannot re-render files: this order has no generated illustrations yet — build it first');
   }
 
-  const template = getSceneTemplate(story.theme);
-  const isColoringBook =
-    story.bookPackage === 'coloring' && !!template?.coloringScenes && !!template?.coloringCoverScene;
-  const loc = localizedStory(story.theme, (story as any).language || 'ar');
-  const rt = (s?: string) => (s ? resolveTokens(s, story.childName, story.childGender) : undefined);
-  const images = story.generatedImages || [];
-
-  // Reconstruct page texts + title without any AI generation.
-  let pageTexts: string[];
-  let storyTitle: string;
-  if (isColoringBook) {
-    pageTexts = images.map(() => '');
-    storyTitle = `${story.childName} — كتاب تلوين`;
-  } else if (template?.pageTexts && template?.coverScene) {
-    pageTexts = images.map((_, i) =>
-      resolveTokens(loc?.pages?.[i] ?? template.pageTexts![i] ?? '', story.childName, story.childGender)
-    );
-    storyTitle = resolveTokens(loc?.title || template.titleAr || story.childName, story.childName, story.childGender);
-  } else {
-    const pairs = story.mode === 'template' && Array.isArray(story.templatePages) && story.templatePages.length > 0
-      ? extractPairsFromTemplate(story.templatePages, story.childName)
-      : extractPairsFromAi(story as any);
-    pageTexts = images.map((_, i) => pairs[i]?.text ?? '');
-    storyTitle = `${story.childName} ${story.theme}`;
-  }
-
-  const urls = await buildPrintFilesForStory(story, {
-    isColoring: isColoringBook,
-    title: storyTitle,
-    pageTexts,
-    childPhotoPath: story.childPhotoUrl,
-    dedication: rt(loc?.dedication),
-    moral: rt(loc?.moral),
-    conclusion: rt(loc?.conclusion),
-    questions: loc?.questions?.map((q) => resolveTokens(q, story.childName, story.childGender)),
-  });
-
+  const urls = await buildPrintFilesForStory(story, reconstructPrintOpts(story));
   order.printCoverUrl = urls.coverUrl;
   order.printInteriorUrl = urls.interiorUrl;
   order.printInteriorPages = urls.interiorPages;
   await order.save();
+  return order;
+}
+
+/**
+ * Submit an ALREADY-BUILT order to BookPod for printing. Rebuilds the print PDFs
+ * from the existing images (no AI cost, no image re-generation) and sends the
+ * print job. Surfaces a clear error if BookPod isn't configured, the order has no
+ * illustrations yet, or BookPod rejects the job — so failures are never silent.
+ */
+export async function submitOrderToBookPod(orderId: string): Promise<IOrder> {
+  const order = await Order.findById(orderId);
+  if (!order) throw new Error(`Order ${orderId} not found`);
+  if (!isBookPodConfigured()) {
+    throw new Error('BookPod is not configured on the server (missing BOOKPOD_USER_ID / BOOKPOD_TOKEN). Restart the backend after setting them in backend/.env.');
+  }
+  const story = await Story.findById(order.storyId);
+  if (!story) throw new Error(`Story ${order.storyId} for order ${orderId} not found`);
+  if (!story.generatedCover || !(story.generatedImages || []).length) {
+    throw new Error('This order has no generated illustrations yet — build the book first.');
+  }
+
+  const result = await printAndSubmitForOrder(order, story, reconstructPrintOpts(story));
+  order.printCoverUrl = result.urls.coverUrl;
+  order.printInteriorUrl = result.urls.interiorUrl;
+  order.printInteriorPages = result.urls.interiorPages;
+  if (result.jobId) {
+    order.bookpodJobId = result.jobId;
+    order.bookpodStatus = 'submitted';
+  }
+  await order.save();
+
+  if (!result.submitted) {
+    throw new Error('Print files were rebuilt but BookPod did not accept the job. Check the server credentials/logs.');
+  }
   return order;
 }
 

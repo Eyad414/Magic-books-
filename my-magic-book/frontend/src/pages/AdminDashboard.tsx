@@ -48,7 +48,13 @@ export default function AdminDashboard() {
     try {
       const res = await adminApi.buildOrder(order._id, { markPaid: true });
       if (res.success) {
-        toast.success(t('admin.sent_to_print', 'تم بناء الكتاب وتجهيزه للطباعة ✅'), { id: toastId });
+        const jobId = res.order?.bookpodJobId;
+        toast.success(
+          jobId
+            ? `${t('admin.sent_to_bookpod_ok', 'تم الإرسال إلى BookPod للطباعة ✅')} (#${jobId})`
+            : t('admin.sent_to_print', 'تم بناء الكتاب وتجهيزه للطباعة ✅'),
+          { id: toastId }
+        );
         setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...res.order } : o)));
       } else {
         toast.error(res.message || t('admin.send_failed', 'فشل الإرسال للطباعة'), { id: toastId });
