@@ -608,42 +608,29 @@ export default function AdminDashboard() {
                             : t('admin.ready_no', 'مسودة (غير ظاهرة للعملاء)')}
                         </label>
 
-                        <Link
-                          to={`/book/${theme.id}?name=${i18n.language === 'en' ? 'Ahmad' : (i18n.language === 'he' ? 'עדי' : 'إياد')}`}
-                          target="_blank"
-                          className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white font-arabic text-sm transition-colors border border-white/10"
-                        >
-                          <Eye className="w-4 h-4" /> {t('admin.book_presentation', 'عرض الكتاب')}
-                        </Link>
-                        
-                        {/* More Preview Languages */}
-                        {i18n.language !== 'ar' && (
-                          <Link 
-                            to={`/book/${theme.id}?name=إياد&lng=ar`} 
-                            target="_blank"
-                            className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-xl text-emerald-400 font-arabic text-sm transition-colors border border-emerald-500/30"
-                          >
-                            {t('admin.preview_arabic', '🇸🇦 عرض بالعربية')}
-                          </Link>
-                        )}
-                        {i18n.language !== 'en' && (
-                          <Link 
-                            to={`/book/${theme.id}?name=Ahmad&lng=en`} 
-                            target="_blank"
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 rounded-xl text-blue-400 font-arabic text-sm transition-colors border border-blue-500/30"
-                          >
-                            {t('admin.preview_english', '🇬🇧 Preview in English')}
-                          </Link>
-                        )}
-                        {i18n.language !== 'he' && (
-                          <Link 
-                            to={`/book/${theme.id}?name=עדי&lng=he`} 
-                            target="_blank"
-                            className="flex items-center gap-2 px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 rounded-xl text-purple-400 font-arabic text-sm transition-colors border border-purple-500/30"
-                          >
-                            {t('admin.preview_hebrew', '🇮🇱 תצוגה בעברית')}
-                          </Link>
-                        )}
+                        {/* View the book — one clean language toggle instead of
+                            several separate per-language buttons. */}
+                        <div className="flex items-center gap-2 flex-wrap p-2 bg-white/5 rounded-xl border border-white/10">
+                          <span className="flex items-center gap-1.5 text-white/70 font-arabic text-xs px-1">
+                            <Eye className="w-4 h-4 text-gold-500" /> {t('admin.book_presentation', 'عرض الكتاب')}
+                          </span>
+                          <div className="flex items-center gap-1 p-0.5 rounded-lg bg-dark-800 border border-white/10">
+                            {[
+                              { lng: 'ar', label: 'عربي', name: 'إياد' },
+                              { lng: 'en', label: 'EN', name: 'Ahmad' },
+                              { lng: 'he', label: 'עברית', name: 'עדי' },
+                            ].map((o) => (
+                              <Link
+                                key={o.lng}
+                                to={`/book/${theme.id}?name=${encodeURIComponent(o.name)}&lng=${o.lng}`}
+                                target="_blank"
+                                className="px-3 py-1.5 rounded-md text-xs font-bold text-white/70 hover:text-gold-500 hover:bg-white/5 transition-colors"
+                              >
+                                {o.label}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
 
                         <button
                           onClick={() => openEditor(index)}
