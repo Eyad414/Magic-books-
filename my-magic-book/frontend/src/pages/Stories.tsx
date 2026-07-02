@@ -12,12 +12,17 @@ import toast from 'react-hot-toast';
 const DEMO_NAME: Record<string, string> = {
   zoo_adventure: 'Baha',
   space: 'Liam',
-  space_real: 'Noor',
+  space_real: 'Baha',
   zoo_coloring: 'Lora',
-  space_coloring: 'Yara',
-  school_coloring: 'Sara',
-  school_hero: 'Sara',
+  space_coloring: 'Ahmad',
+  school_coloring: 'Yosef',
+  school_hero: 'Yosef',
 };
+
+// Some themes reuse another theme's scripted story text (e.g. the realistic
+// space variant shares the space story).
+const TEXT_THEME: Record<string, string> = { space_real: 'space' };
+const textThemeFor = (id: string) => TEXT_THEME[id] || id;
 
 export default function Stories() {
   const [themes, setThemes] = useState<any[]>([]);
@@ -44,7 +49,7 @@ export default function Stories() {
 
   // Story title, e.g. "مغامرة بهاء في الفضاء" / "Baha's Adventure in Space".
   const titleFor = (theme: any) => {
-    const raw = (ft(`stories.${theme.id}.title`, '') as string) || '';
+    const raw = (ft(`stories.${textThemeFor(theme.id)}.title`, '') as string) || '';
     if (raw) return raw.replace(/\[NAME\]/gi, nameFor(theme.id));
     const label = ft(`step2.theme_${theme.id}`, { defaultValue: theme.label || theme.id }) as string;
     return `${nameFor(theme.id)} — ${label}`;
@@ -52,7 +57,7 @@ export default function Stories() {
 
   // Explainer = the first 3 scripted story pages (falls back to the theme desc).
   const explainerFor = (theme: any) => {
-    const pagesObj = ft(`stories.${theme.id}.pages`, { returnObjects: true }) as any;
+    const pagesObj = ft(`stories.${textThemeFor(theme.id)}.pages`, { returnObjects: true }) as any;
     if (pagesObj && typeof pagesObj === 'object') {
       const keys = Object.keys(pagesObj).sort((a, b) => Number(a) - Number(b)).slice(0, 3);
       const txt = keys.map((k) => pagesObj[k]).join(' ').replace(/\[NAME\]/gi, nameFor(theme.id)).trim();
@@ -78,7 +83,7 @@ export default function Stories() {
   const previewPages = useMemo(() => {
     if (!selected) return [];
     return buildThemePreview({
-      theme: selected.id,
+      theme: textThemeFor(selected.id),
       language: i18n.language as any,
       childName: nameFor(selected.id),
       coverImage: toDisplayUrl(selected.generatedCover),
