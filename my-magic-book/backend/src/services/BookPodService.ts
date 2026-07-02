@@ -92,16 +92,28 @@ async function putPdf(uploadUrl: string, bytes: Buffer): Promise<void> {
   }
 }
 
-// Build the gs:// URI for a just-uploaded object from its signed/resumable URL.
+// Build the gs:// URI for a just-uploaded object from its signed upload URL.
+// BookPod returns a V4 signed URL (storage.googleapis.com/<bucket>/<object>?...)
+// and prepends a timestamp to the object name, so we MUST read the real object
+// from the URL path — not the filename we sent.
 function gsUri(uploadUrl: string, fileName: string, fallbackBucket: string): string {
   try {
     const u = new URL(uploadUrl);
-    const m = u.pathname.match(/\/b\/([^/]+)\/o/); // JSON-API resumable form
-    let bucket = m ? decodeURIComponent(m[1]) : '';
-    if (!bucket) bucket = u.pathname.split('/').filter(Boolean)[0] || '';
-    const nameParam = u.searchParams.get('name');
-    const object = nameParam ? decodeURIComponent(nameParam) : fileName;
-    if (bucket && object) return `gs://${bucket}/${object}`;
+    // JSON-API resumable form: /upload/storage/v1/b/<bucket>/o?name=<object>
+    const m = u.pathname.match(/\/b\/([^/]+)\/o/);
+    if (m) {
+      const bucket = decodeURIComponent(m[1]);
+      const nameParam = u.searchParams.get('name');
+      const object = nameParam ? decodeURIComponent(nameParam) : fileName;
+      if (bucket && object) return `gs://${bucket}/${object}`;
+    }
+    // V4 / XML signed-URL form: storage.googleapis.com/<bucket>/<object...>
+    const parts = u.pathname.replace(/^\//, '').split('/').filter(Boolean);
+    if (parts.length >= 2) {
+      const bucket = decodeURIComponent(parts[0]);
+      const object = decodeURIComponent(parts.slice(1).join('/'));
+      if (bucket && object) return `gs://${bucket}/${object}`;
+    }
   } catch { /* fall through */ }
   return `gs://${fallbackBucket}/${fileName}`;
 }
