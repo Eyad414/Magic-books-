@@ -89,6 +89,24 @@ const SHARED_CSS = `
   .end-mark { font-weight: 900; color: #b8860b; font-size: 30pt; margin-bottom: 8mm; }
   .ded-photo { width: 60mm; height: 60mm; border-radius: 50%; object-fit: cover; border: 3mm solid #F5A623; margin-bottom: 12mm; }
   .ded-text { font-weight: 700; color: #0a1628; font-size: 22pt; line-height: 1.7; width: 80%; }
+  /* Decorative story text page (matches the on-screen lantern card) */
+  .stp-page { display: flex; align-items: center; justify-content: center; padding: 16mm; }
+  .stp-card { position: relative; width: 82%; background: radial-gradient(120% 90% at 50% 0%, #fffdf8 0%, #fdf4dd 70%, #f8ead0 100%); border-radius: 14mm; padding: 26mm 16mm 20mm; box-shadow: 0 8mm 18mm rgba(0,0,0,0.25); }
+  .stp-card::before { content: ''; position: absolute; inset: 5mm; border: 0.8mm dashed rgba(201,150,40,0.6); border-radius: 10mm; }
+  .stp-lantern { position: absolute; top: -11mm; left: 50%; transform: translateX(-50%); width: 22mm; height: 22mm; border-radius: 50%; background: radial-gradient(circle at 50% 35%, #fff6da, #f3d98f 70%, #d4a937); border: 1.4mm solid #fff; display: flex; align-items: center; justify-content: center; font-size: 26pt; box-shadow: 0 0 8mm rgba(212,169,55,0.7); }
+  .stp-divider { width: 34mm; height: 1mm; margin: 0 auto 8mm; border-radius: 2mm; background: linear-gradient(90deg, transparent, #d4a937, transparent); }
+  .stp-txt { position: relative; font-weight: 700; color: #3a2c10; font-size: 23pt; line-height: 1.9; text-align: center; }
+  .stp-corner { position: absolute; color: rgba(201,150,40,0.75); font-size: 12pt; }
+  /* Inside title page */
+  .title-page { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20mm; text-align: center; background: radial-gradient(ellipse at 50% 30%, #17294a, #0a1426 70%, #050a15); }
+  .title-brand { color: #e0a82e; font-size: 16pt; font-weight: 700; letter-spacing: 1px; }
+  .title-rule { width: 40mm; height: 1mm; background: rgba(212,169,55,0.6); margin: 8mm 0; }
+  .title-big { color: #fff; font-weight: 900; font-size: 38pt; line-height: 1.2; }
+  /* Lantern separator page */
+  .fanoos-page { display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(ellipse at 50% 40%, #17294a, #0a1426 70%, #050a15); }
+  .fanoos-emblem { font-size: 90pt; }
+  /* Closing page */
+  .end-page { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20mm; text-align: center; background: #fcfaf2; }
 `;
 
 function linePageHtml(src: string): string {
@@ -97,8 +115,23 @@ function linePageHtml(src: string): string {
 function dedicationPageHtml(photoSrc: string, childName: string): string {
   return `<div class="page page-cream center"><img class="ded-photo" src="${photoSrc}" alt="${childName}" /><div class="ded-text">إلى البطل الرائع ${childName},<br/>نتمنى أن تكون حياتك مليئة بالمغامرات والسعادة.</div></div>`;
 }
-function storyTextPageHtml(text: string): string {
-  return `<div class="page page-cream center"><div class="story-text">${text}</div></div>`;
+const PRINT_PAGE_COLORS = ['#F2607A', '#7C5CE0', '#159B8A', '#2E7BD6', '#E17055', '#3FA34D'];
+function storyTextPageHtml(text: string, idx = 0): string {
+  const bg = PRINT_PAGE_COLORS[idx % PRINT_PAGE_COLORS.length];
+  return `<div class="page stp-page" style="background:${bg}"><div class="stp-card">` +
+    `<div class="stp-lantern">🏮</div>` +
+    `<span class="stp-corner" style="top:6mm;left:7mm">✦</span><span class="stp-corner" style="top:6mm;right:7mm">✦</span>` +
+    `<span class="stp-corner" style="bottom:6mm;left:7mm">✦</span><span class="stp-corner" style="bottom:6mm;right:7mm">✦</span>` +
+    `<div class="stp-divider"></div><div class="stp-txt">${text}</div></div></div>`;
+}
+function titlePageHtml(title: string): string {
+  return `<div class="page title-page"><div class="title-brand">✨ Magic Fanoose</div><div class="title-rule"></div><div class="title-big">${title}</div></div>`;
+}
+function fanoosPageHtml(): string {
+  return `<div class="page fanoos-page"><div class="fanoos-emblem">🏮</div></div>`;
+}
+function endPageHtml(childName: string): string {
+  return `<div class="page end-page"><div class="end-mark">🌟 ✦ 🌟</div><div class="ded-text">${childName} 💛<br/>Magic Fanoose</div></div>`;
 }
 function blankPageHtml(): string {
   return `<div class="page"></div>`;
@@ -285,11 +318,18 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
     : '';
 
   const interior: string[] = [];
+  // Front matter: inside title + lantern separator + dedication.
+  interior.push(titlePageHtml(input.title));
+  interior.push(fanoosPageHtml());
   if (photoSrc) interior.push(dedicationPageHtml(photoSrc, input.childName));
+  // Body: each story page is a decorative TEXT page + its full-bleed illustration.
   for (let i = 0; i < input.imagePaths.length; i++) {
-    interior.push(storyTextPageHtml(input.pageTexts[i] || ''));
+    interior.push(storyTextPageHtml(input.pageTexts[i] || '', i));
     interior.push(linePageHtml(dataUri(images[i].buffer, images[i].mime)));
   }
+  // Back matter: closing lantern + end page.
+  interior.push(fanoosPageHtml());
+  interior.push(endPageHtml(input.childName));
   const padded = padToMultipleOf4(interior);
   const interiorPdf = await renderPrintPdf(squareDoc(padded));
 
