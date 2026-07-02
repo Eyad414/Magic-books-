@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { adminApi } from '../api/adminApi';
 import { uploadApi } from '../api/uploadApi';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download } from 'lucide-react';
+import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw } from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -31,6 +31,8 @@ export default function AdminDashboard() {
   const [generatingThemeId, setGeneratingThemeId] = useState<string | null>(null);
   // Which order id is currently being built/sent to print (for the spinner).
   const [buildingOrderId, setBuildingOrderId] = useState<string | null>(null);
+  // Which order id is currently re-rendering its print files (for the spinner).
+  const [rerenderingOrderId, setRerenderingOrderId] = useState<string | null>(null);
 
   // Admin: build the book + print files and send to BookPod. Generates ~15
   // images (costs money), so confirm first. markPaid fulfils cash/COD orders.
@@ -55,6 +57,29 @@ export default function AdminDashboard() {
       toast.error(err?.response?.data?.message || err.message || t('admin.send_failed', 'فشل الإرسال للطباعة'), { id: toastId });
     } finally {
       setBuildingOrderId(null);
+    }
+  };
+
+  // Admin: rebuild the print PDFs from the order's already-generated images.
+  // Free (no AI cost) and never re-submits to BookPod — used to bring an older
+  // order up to the current print layout.
+  const handleReRenderFiles = async (order: any) => {
+    if (rerenderingOrderId || buildingOrderId) return;
+    if (!window.confirm(t('admin.confirm_rerender', 'إعادة تجهيز ملفات الطباعة بالتصميم الجديد؟ (مجاني — بدون توليد صور جديدة)'))) return;
+    setRerenderingOrderId(order._id);
+    const toastId = toast.loading(t('admin.rerendering', 'جاري إعادة تجهيز ملفات الطباعة...'));
+    try {
+      const res = await adminApi.reRenderOrderFiles(order._id);
+      if (res.success) {
+        toast.success(t('admin.rerendered', 'تم تحديث ملفات الطباعة بالتصميم الجديد ✅'), { id: toastId });
+        setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...res.order } : o)));
+      } else {
+        toast.error(res.message || t('admin.rerender_failed', 'فشل إعادة التجهيز'), { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || t('admin.rerender_failed', 'فشل إعادة التجهيز'), { id: toastId });
+    } finally {
+      setRerenderingOrderId(null);
     }
   };
 
@@ -449,6 +474,18 @@ export default function AdminDashboard() {
                                 <><Clock className="w-4 h-4 animate-spin" /> {t('admin.sending', 'جارٍ الإرسال...')}</>
                               ) : (
                                 <><Package className="w-4 h-4" /> {t('admin.send_to_bookpod', 'إرسال إلى BookPod')}</>
+                              )}
+                            </button>
+                            {/* Free re-render of print files from existing images */}
+                            <button
+                              onClick={() => handleReRenderFiles(order)}
+                              disabled={order.illustrationsStatus !== 'ready' || rerenderingOrderId === order._id}
+                              className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white/5 text-white/60 font-arabic font-bold text-sm hover:bg-white/10 transition-all border border-white/10 whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              {rerenderingOrderId === order._id ? (
+                                <><RefreshCw className="w-4 h-4 animate-spin" /> {t('admin.rerendering_short', 'جارٍ التجهيز...')}</>
+                              ) : (
+                                <><RefreshCw className="w-4 h-4" /> {t('admin.rerender_files', 'إعادة تجهيز الملفات')}</>
                               )}
                             </button>
                             {/* Admin-only: download the print-ready files */}

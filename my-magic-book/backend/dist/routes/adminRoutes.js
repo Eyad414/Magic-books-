@@ -10,6 +10,7 @@ router.put('/stories/:id', adminController_1.updateStory);
 router.delete('/stories/:id', adminController_1.deleteStory);
 router.get('/orders', adminController_1.getAllOrders);
 router.post('/orders/:id/build', adminController_1.buildOrderBook);
+router.post('/orders/:id/rerender-files', adminController_1.reRenderOrderFiles);
 router.post('/team', adminController_1.addAdmin);
 router.get('/team', adminController_1.getTeam);
 router.delete('/team/:id', adminController_1.removeAdmin);

@@ -3,7 +3,7 @@ import User from '../models/User';
 import Story from '../models/Story';
 import Order from '../models/Order';
 import SiteSettings from '../models/SiteSettings';
-import { buildBookForOrder } from '../services/BookBuilder';
+import { buildBookForOrder, reRenderPrintFilesForOrder } from '../services/BookBuilder';
 import { generateIllustration, COST_PER_IMAGE_USD } from '../services/ImageGenerator';
 import { buildIllustrationPrompt, buildPhotorealPrompt, buildCoverPrompt } from '../services/promptBuilder';
 import { swapFace } from '../services/FaceSwapService';
@@ -279,6 +279,25 @@ export const buildOrderBook = async (req: Request, res: Response): Promise<void>
     res.json({ success: true, order: updated });
   } catch (err: any) {
     console.error('buildOrderBook failed:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @route POST /api/admin/orders/:id/rerender-files
+// @desc  Rebuild the print-ready PDFs from an order's ALREADY-generated images.
+//        Free (no AI generation) and never re-submits to BookPod — used to bring
+//        an older order up to the current print layout after a template change.
+export const reRenderOrderFiles = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      res.status(404).json({ success: false, message: 'order not found' });
+      return;
+    }
+    const updated = await reRenderPrintFilesForOrder(String(order._id));
+    res.json({ success: true, order: updated });
+  } catch (err: any) {
+    console.error('reRenderOrderFiles failed:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 };

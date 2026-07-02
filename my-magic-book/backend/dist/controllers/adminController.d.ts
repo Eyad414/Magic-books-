@@ -10,6 +10,7 @@ export declare const getPublicSettings: (_req: Request, res: Response) => Promis
 export declare const updateSettings: (req: Request, res: Response) => Promise<void>;
 export declare const getAllOrders: (req: Request, res: Response) => Promise<void>;
 export declare const buildOrderBook: (req: Request, res: Response) => Promise<void>;
+export declare const reRenderOrderFiles: (req: Request, res: Response) => Promise<void>;
 export declare const generatePreviewIllustrations: (req: Request, res: Response) => Promise<void>;
 /**
  * Generate a COLORING-BOOK preview for a theme: a colored front cover + 16

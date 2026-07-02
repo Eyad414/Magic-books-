@@ -6,7 +6,7 @@ import { generateBookPdf } from './PdfGenerator';
 import { uploadBuffer, pdfFolderPath } from './StorageService';
 import { splitStoryIntoPages, buildIllustrationPrompt } from './promptBuilder';
 import { getSceneTemplate, buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, resolveTokens, COLORING_PAGES } from './sceneTemplates';
-import { printAndSubmitForOrder } from './PrintOrchestrator';
+import { printAndSubmitForOrder, buildPrintFilesForStory } from './PrintOrchestrator';
 import fs from 'fs';
 import path from 'path';
 
@@ -242,6 +242,66 @@ export async function buildBookForOrder(orderId: string): Promise<IOrder> {
     await order.save();
     throw err;
   }
+}
+
+/**
+ * Rebuild ONLY the print-ready PDFs (wraparound cover + interior) for an order
+ * whose illustrations are ALREADY generated, reusing the stored images. This
+ * costs nothing on the AI side and never re-submits to BookPod — it just brings
+ * an older order up to the current print layout. The page texts are reconstructed
+ * deterministically from the story (same logic as the build path, no AI calls).
+ */
+export async function reRenderPrintFilesForOrder(orderId: string): Promise<IOrder> {
+  const order = await Order.findById(orderId);
+  if (!order) throw new Error(`Order ${orderId} not found`);
+  const story = await Story.findById(order.storyId);
+  if (!story) throw new Error(`Story ${order.storyId} for order ${orderId} not found`);
+  if (!story.generatedCover || !story.generatedPortrait || !(story.generatedImages || []).length) {
+    throw new Error('cannot re-render files: this order has no generated illustrations yet — build it first');
+  }
+
+  const template = getSceneTemplate(story.theme);
+  const isColoringBook =
+    story.bookPackage === 'coloring' && !!template?.coloringScenes && !!template?.coloringCoverScene;
+  const loc = localizedStory(story.theme, (story as any).language || 'ar');
+  const rt = (s?: string) => (s ? resolveTokens(s, story.childName, story.childGender) : undefined);
+  const images = story.generatedImages || [];
+
+  // Reconstruct page texts + title without any AI generation.
+  let pageTexts: string[];
+  let storyTitle: string;
+  if (isColoringBook) {
+    pageTexts = images.map(() => '');
+    storyTitle = `${story.childName} — كتاب تلوين`;
+  } else if (template?.pageTexts && template?.coverScene) {
+    pageTexts = images.map((_, i) =>
+      resolveTokens(loc?.pages?.[i] ?? template.pageTexts![i] ?? '', story.childName, story.childGender)
+    );
+    storyTitle = resolveTokens(loc?.title || template.titleAr || story.childName, story.childName, story.childGender);
+  } else {
+    const pairs = story.mode === 'template' && Array.isArray(story.templatePages) && story.templatePages.length > 0
+      ? extractPairsFromTemplate(story.templatePages, story.childName)
+      : extractPairsFromAi(story as any);
+    pageTexts = images.map((_, i) => pairs[i]?.text ?? '');
+    storyTitle = `${story.childName} ${story.theme}`;
+  }
+
+  const urls = await buildPrintFilesForStory(story, {
+    isColoring: isColoringBook,
+    title: storyTitle,
+    pageTexts,
+    childPhotoPath: story.childPhotoUrl,
+    dedication: rt(loc?.dedication),
+    moral: rt(loc?.moral),
+    conclusion: rt(loc?.conclusion),
+    questions: loc?.questions?.map((q) => resolveTokens(q, story.childName, story.childGender)),
+  });
+
+  order.printCoverUrl = urls.coverUrl;
+  order.printInteriorUrl = urls.interiorUrl;
+  order.printInteriorPages = urls.interiorPages;
+  await order.save();
+  return order;
 }
 
 interface PagePair {

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generatePhotorealPreview = exports.generateColoringPreview = exports.generatePreviewIllustrations = exports.buildOrderBook = exports.getAllOrders = exports.updateSettings = exports.getPublicSettings = exports.getSettings = exports.getTeam = exports.removeAdmin = exports.addAdmin = exports.deleteStory = exports.updateStory = exports.getAllStories = void 0;
+exports.generatePhotorealPreview = exports.generateColoringPreview = exports.generatePreviewIllustrations = exports.reRenderOrderFiles = exports.buildOrderBook = exports.getAllOrders = exports.updateSettings = exports.getPublicSettings = exports.getSettings = exports.getTeam = exports.removeAdmin = exports.addAdmin = exports.deleteStory = exports.updateStory = exports.getAllStories = void 0;
 const User_1 = __importDefault(require("../models/User"));
 const Story_1 = __importDefault(require("../models/Story"));
 const Order_1 = __importDefault(require("../models/Order"));
@@ -288,6 +288,26 @@ const buildOrderBook = async (req, res) => {
     }
 };
 exports.buildOrderBook = buildOrderBook;
+// @route POST /api/admin/orders/:id/rerender-files
+// @desc  Rebuild the print-ready PDFs from an order's ALREADY-generated images.
+//        Free (no AI generation) and never re-submits to BookPod — used to bring
+//        an older order up to the current print layout after a template change.
+const reRenderOrderFiles = async (req, res) => {
+    try {
+        const order = await Order_1.default.findById(req.params.id);
+        if (!order) {
+            res.status(404).json({ success: false, message: 'order not found' });
+            return;
+        }
+        const updated = await (0, BookBuilder_1.reRenderPrintFilesForOrder)(String(order._id));
+        res.json({ success: true, order: updated });
+    }
+    catch (err) {
+        console.error('reRenderOrderFiles failed:', err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+exports.reRenderOrderFiles = reRenderOrderFiles;
 // @route POST /api/admin/themes/:themeId/generate-illustrations
 // @desc  ADMIN PREVIEW ONLY. Generates 13 body illustrations + 1 back-cover
 //        portrait for a theme via Nano Banana, using the bucket reference photo.
