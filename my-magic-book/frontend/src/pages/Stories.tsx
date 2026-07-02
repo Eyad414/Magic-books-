@@ -6,27 +6,35 @@ import { useTranslation } from 'react-i18next';
 import { useStoryProgress } from '../context/StoryProgressContext';
 import { publicApi } from '../api/publicApi';
 import { toDisplayUrl } from '../api/mediaUrl';
+import { localizeName } from '../utils/translit';
+import { detectGender, applyGenderTokens } from '../utils/gender';
 import toast from 'react-hot-toast';
-
-// Demo child per theme, so titles read like "Baha's adventure in the zoo".
-const DEMO_NAME: Record<string, string> = {
-  zoo_adventure: 'Baha',
-  space: 'Liam',
-  space_real: 'Baha',
-  zoo_coloring: 'Lora',
-  space_coloring: 'Ahmad',
-  school_coloring: 'Yosef',
-  school_hero: 'Yosef',
-};
 
 // Some themes reuse another theme's scripted story text (e.g. the realistic
 // space variant shares the space story).
 const TEXT_THEME: Record<string, string> = { space_real: 'space' };
 const textThemeFor = (id: string) => TEXT_THEME[id] || id;
 
+// Curated showcase — the demo stories + coloring books shown on this page.
+// A `storyId` pins the card to a specific generated story's cover + illustrations
+// (e.g. Lora's real zoo book / Liam's space book) instead of the theme's cover.
+interface Card { key: string; themeId: string; name: string; storyId?: string; }
+const CARDS: Card[] = [
+  { key: 'liam-space',     themeId: 'space',           name: 'Liam',  storyId: '6a43cbf500c3ecaed9218b3c' },
+  { key: 'baha-space',     themeId: 'space_real',      name: 'Baha' },
+  { key: 'baha-zoo',       themeId: 'zoo_adventure',   name: 'Baha' },
+  { key: 'lora-zoo',       themeId: 'zoo_adventure',   name: 'Lora',  storyId: '6a3bbaf645b418d21337de09' },
+  { key: 'lora-coloring',  themeId: 'zoo_coloring',    name: 'Lora' },
+  { key: 'ahmad-coloring', themeId: 'space_coloring',  name: 'Ahmad' },
+  { key: 'yosef-coloring', themeId: 'school_coloring', name: 'Yosef' },
+];
+
+const storyImgs = (id: string) =>
+  Array.from({ length: 13 }, (_, i) => `magic-fanoose/generated/${id}/page-${String(i + 1).padStart(2, '0')}.png`);
+
 export default function Stories() {
-  const [themes, setThemes] = useState<any[]>([]);
-  const [selected, setSelected] = useState<any>(null);
+  const [themes, setThemes] = useState<Record<string, any>>({});
+  const [selected, setSelected] = useState<Card | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
   const { t, i18n } = useTranslation();
   const { resetProgress } = useStoryProgress();
@@ -35,9 +43,9 @@ export default function Stories() {
   useEffect(() => {
     publicApi.getSettings()
       .then((res) => {
-        // Only real, generated demo stories (those that have a cover image).
-        const list = (res?.settings?.themes || []).filter((th: any) => th.generatedCover);
-        setThemes(list);
+        const map: Record<string, any> = {};
+        for (const th of (res?.settings?.themes || [])) map[th.id] = th;
+        setThemes(map);
       })
       .catch(() => {});
     const saved = localStorage.getItem('favorite_stories');
@@ -45,30 +53,42 @@ export default function Stories() {
   }, []);
 
   const ft = useMemo(() => i18n.getFixedT(i18n.language), [i18n.language]);
-  const nameFor = (id: string) => DEMO_NAME[id] || 'Baha';
+  const nameL = (card: Card) => localizeName(card.name, i18n.language);
+  // Insert the (localized) name and resolve {masc|fem} gender tokens.
+  const personalize = (card: Card, text: string) =>
+    applyGenderTokens((text || '').replace(/\[NAME\]/gi, nameL(card)), detectGender(card.name));
 
-  // Story title, e.g. "مغامرة بهاء في الفضاء" / "Baha's Adventure in Space".
-  const titleFor = (theme: any) => {
-    const raw = (ft(`stories.${textThemeFor(theme.id)}.title`, '') as string) || '';
-    if (raw) return raw.replace(/\[NAME\]/gi, nameFor(theme.id));
-    const label = ft(`step2.theme_${theme.id}`, { defaultValue: theme.label || theme.id }) as string;
-    return `${nameFor(theme.id)} — ${label}`;
+  const coverFor = (card: Card) =>
+    card.storyId
+      ? toDisplayUrl(`magic-fanoose/generated/${card.storyId}/page-00.png`)
+      : (themes[card.themeId]?.generatedCover ? toDisplayUrl(themes[card.themeId].generatedCover) : '');
+  const imagesFor = (card: Card) =>
+    card.storyId
+      ? storyImgs(card.storyId).map(toDisplayUrl)
+      : (themes[card.themeId]?.generatedImages || []).map(toDisplayUrl);
+
+  // Story title, e.g. "مغامرة لورا في حديقة الحيوانات" / "Lora's Adventure in the Zoo".
+  const titleFor = (card: Card) => {
+    const raw = (ft(`stories.${textThemeFor(card.themeId)}.title`, '') as string) || '';
+    if (raw) return personalize(card, raw);
+    const label = ft(`step2.theme_${card.themeId}`, { defaultValue: themes[card.themeId]?.label || card.themeId }) as string;
+    return `${nameL(card)} — ${label}`;
   };
-
+  const themeLabelFor = (card: Card) => t(`step2.theme_${card.themeId}`, { defaultValue: themes[card.themeId]?.label || card.themeId });
   // Explainer = the first 3 scripted story pages (falls back to the theme desc).
-  const explainerFor = (theme: any) => {
-    const pagesObj = ft(`stories.${textThemeFor(theme.id)}.pages`, { returnObjects: true }) as any;
+  const explainerFor = (card: Card) => {
+    const pagesObj = ft(`stories.${textThemeFor(card.themeId)}.pages`, { returnObjects: true }) as any;
     if (pagesObj && typeof pagesObj === 'object') {
       const keys = Object.keys(pagesObj).sort((a, b) => Number(a) - Number(b)).slice(0, 3);
-      const txt = keys.map((k) => pagesObj[k]).join(' ').replace(/\[NAME\]/gi, nameFor(theme.id)).trim();
+      const txt = personalize(card, keys.map((k) => pagesObj[k]).join(' ')).trim();
       if (txt) return txt;
     }
-    return ft(`step2.theme_${theme.id}_desc`, { defaultValue: theme.desc || '' }) as string;
+    return ft(`step2.theme_${card.themeId}_desc`, { defaultValue: themes[card.themeId]?.desc || '' }) as string;
   };
 
-  const toggleFavorite = (id: string) => {
-    const isFav = favorites.includes(id);
-    const next = isFav ? favorites.filter((f) => f !== id) : [...favorites, id];
+  const toggleFavorite = (key: string) => {
+    const isFav = favorites.includes(key);
+    const next = isFav ? favorites.filter((f) => f !== key) : [...favorites, key];
     setFavorites(next);
     localStorage.setItem('favorite_stories', JSON.stringify(next));
     toast.success(isFav ? t('stories_page.remove_from_favorites') : t('stories_page.add_to_favorites'));
@@ -83,14 +103,15 @@ export default function Stories() {
   const previewPages = useMemo(() => {
     if (!selected) return [];
     return buildThemePreview({
-      theme: textThemeFor(selected.id),
+      theme: textThemeFor(selected.themeId),
       language: i18n.language as any,
-      childName: nameFor(selected.id),
-      coverImage: toDisplayUrl(selected.generatedCover),
-      pageImages: (selected.generatedImages || []).map(toDisplayUrl),
+      childName: selected.name,
+      coverImage: coverFor(selected),
+      pageImages: imagesFor(selected),
       i18n,
     });
-  }, [selected, i18n.language]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, i18n.language, themes]);
 
   return (
     <div className="min-h-screen pt-24 pb-16 px-4 sm:px-6 lg:px-8">
@@ -113,22 +134,22 @@ export default function Stories() {
 
         {/* Stories Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {themes.map((theme, idx) => {
-            const cover = toDisplayUrl(theme.generatedCover);
+          {CARDS.map((card, idx) => {
+            const cover = coverFor(card);
             const rating = [5.0, 4.9, 4.8][idx % 3];
-            const isFav = favorites.includes(theme.id);
+            const isFav = favorites.includes(card.key);
             return (
-              <div key={theme.id} className="glass-card glass-card-hover overflow-hidden group flex flex-col">
+              <div key={card.key} className="glass-card glass-card-hover overflow-hidden group flex flex-col">
                 {/* Cover — the real generated front cover */}
                 <div className="h-44 relative overflow-hidden bg-dark-800">
-                  {cover && <img src={cover} alt={nameFor(theme.id)} loading="lazy" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />}
+                  {cover && <img src={cover} alt={nameL(card)} loading="lazy" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />}
                   <div className="absolute inset-0 bg-gradient-to-t from-dark-900/50 to-transparent pointer-events-none" />
                   <div className="absolute top-3 right-3 flex items-center gap-1 bg-gold-500 px-2 py-1 rounded-lg">
                     <Star className="w-3 h-3 text-dark-900 fill-dark-900" />
                     <span className="font-arabic font-bold text-dark-900 text-xs">{rating}</span>
                   </div>
                   <button
-                    onClick={() => toggleFavorite(theme.id)}
+                    onClick={() => toggleFavorite(card.key)}
                     aria-label={t('stories_page.add_to_favorites')}
                     className={`absolute top-3 left-3 w-8 h-8 rounded-full flex items-center justify-center transition-all ${isFav ? 'bg-red-500 text-white shadow-lg scale-110' : 'bg-black/25 text-white/70 hover:bg-black/45 hover:text-white'}`}
                   >
@@ -137,20 +158,20 @@ export default function Stories() {
                 </div>
 
                 <div className="p-5 flex flex-col flex-1">
-                  <h3 className="font-arabic font-bold text-white text-lg mb-1">{titleFor(theme)}</h3>
+                  <h3 className="font-arabic font-bold text-white text-lg mb-1">{titleFor(card)}</h3>
                   <p className="font-arabic text-gold-500 text-xs mb-3">
-                    {t('stories_page.theme')} {t(`step2.theme_${theme.id}`, { defaultValue: theme.label || theme.id })}
+                    {t('stories_page.theme')} {themeLabelFor(card)}
                   </p>
 
                   {/* Explainer — first lines of the real story */}
                   <div className="relative mb-4 flex-1">
-                    <p className="font-arabic text-white/70 text-sm leading-relaxed line-clamp-3">{explainerFor(theme)}</p>
+                    <p className="font-arabic text-white/70 text-sm leading-relaxed line-clamp-3">{explainerFor(card)}</p>
                   </div>
 
                   {/* View / lock row */}
                   <div className="flex flex-wrap items-center justify-between p-3 rounded-xl bg-dark-700 border border-white/10 mb-4 gap-2">
                     <div className="flex items-center gap-3">
-                      <button onClick={() => setSelected(theme)} className="flex items-center gap-1 pr-3 group cursor-pointer">
+                      <button onClick={() => setSelected(card)} className="flex items-center gap-1 pr-3 group cursor-pointer">
                         <Eye className="w-3.5 h-3.5 text-gold-500 group-hover:scale-125 transition-transform" />
                         <span className="font-arabic text-gold-500 text-xs border-b border-transparent group-hover:border-gold-500 transition-colors">{t('stories_page.available_30')}</span>
                       </button>
