@@ -2,7 +2,9 @@
 // The bucket blocks public access, so private objects are served through the
 // backend image proxy: GET /api/uploads/image?path=<objectPath>.
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const API_BASE =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD ? 'https://magicfanoos-api.onrender.com/api' : 'http://localhost:5001/api');
 
 /** Convert a GCS object path (e.g. "magic-fanoose/generated/..png") to a proxy URL. */
 export function objectPathToUrl(objectPath: string): string {

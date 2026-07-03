@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "cd my-magic-book/frontend && npm install",
+  "buildCommand": "cd my-magic-book/frontend && npm run build",
+  "outputDirectory": "my-magic-book/frontend/dist",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
