@@ -4,7 +4,7 @@
 
 const API_BASE =
   import.meta.env.VITE_API_URL ||
-  (import.meta.env.PROD ? 'https://magicfanoos-api.onrender.com/api' : 'http://localhost:5001/api');
+  (import.meta.env.PROD ? 'https://magicfanoos-api-us.onrender.com/api' : 'http://localhost:5001/api');
 
 /** Convert a GCS object path (e.g. "magic-fanoose/generated/..png") to a proxy URL. */
 export function objectPathToUrl(objectPath: string): string {
