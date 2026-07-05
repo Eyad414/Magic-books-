@@ -31,6 +31,21 @@ async function makeSignedUrl(objectPath: string): Promise<string> {
   }
 }
 
+/**
+ * Generate a short-lived V4 signed READ url for an object, signed LOCALLY with
+ * the service-account private key (no outbound call to Google). This lets the
+ * BROWSER fetch the bytes directly from GCS, so the backend never needs outbound
+ * access to Google Storage — which is geo-blocked from some hosting regions.
+ */
+export async function getReadSignedUrl(objectPath: string): Promise<string> {
+  const [url] = await bucket.file(objectPath).getSignedUrl({
+    version: 'v4',
+    action: 'read',
+    expires: Date.now() + 2 * 60 * 60 * 1000, // 2 hours
+  });
+  return url;
+}
+
 export async function uploadBuffer(
   buffer: Buffer,
   objectPath: string,

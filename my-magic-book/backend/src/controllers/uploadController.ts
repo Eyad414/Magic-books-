@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import path from 'path';
 import { randomUUID } from 'crypto';
-import { uploadBuffer, pdfFolderPath, streamObject } from '../services/StorageService';
+import { uploadBuffer, pdfFolderPath, getReadSignedUrl } from '../services/StorageService';
 
 const PDF_FOLDER = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
 
@@ -37,7 +37,13 @@ export const proxyImage = async (req: Request, res: Response): Promise<void> => 
       res.status(400).json({ success: false, message: 'invalid path' });
       return;
     }
-    await streamObject(objectPath, res, req);
+    // Sign a short-lived READ url LOCALLY (no outbound Google call) and hand it
+    // to the browser, which fetches the image straight from GCS. Avoids the
+    // backend needing outbound access to Google Storage (geo-blocked from some
+    // hosting regions). Cache the redirect a bit under the URL's lifetime.
+    const url = await getReadSignedUrl(objectPath);
+    res.setHeader('Cache-Control', 'private, max-age=3600');
+    res.redirect(302, url);
   } catch (err: any) {
     console.error('proxyImage failed:', err);
     if (!res.headersSent) res.status(500).json({ success: false, message: err.message });
