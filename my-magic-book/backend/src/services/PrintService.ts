@@ -219,7 +219,21 @@ function wraparoundDoc(a: WraparoundDocArgs): string {
 }
 
 export async function renderPrintPdf(html: string, widthMm = PRINT_PAGE_MM, heightMm = PRINT_PAGE_MM): Promise<Buffer> {
-  const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  // Low-memory Chromium flags — the print pages embed large images, and the host
+  // may only have 512MB RAM. --disable-dev-shm-usage (tiny /dev/shm in containers)
+  // and --single-process are the key ones that keep this under the memory cap.
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--no-zygote',
+      '--single-process',
+      '--disable-extensions',
+    ],
+  });
   try {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'load' });
@@ -295,9 +309,11 @@ export interface ColoringPrintInput {
 }
 
 export async function buildColoringPrintFiles(input: ColoringPrintInput): Promise<PrintFiles> {
-  const lines = await Promise.all(
-    input.pagePaths.map(async (p) => upscaleForPrint(await downloadObject(p), { lineArt: true }))
-  );
+  // One image at a time to keep peak RAM under the 512MB host cap (see story build).
+  const lines: Array<{ buffer: Buffer; mime: string }> = [];
+  for (const p of input.pagePaths) {
+    lines.push(await upscaleForPrint(await downloadObject(p), { lineArt: true }));
+  }
   const interior = padToMultipleOf4(lines.map((u) => linePageHtml(dataUri(u.buffer, u.mime))));
   const interiorPdf = await renderPrintPdf(squareDoc(interior));
 
@@ -337,7 +353,12 @@ export interface StoryPrintInput {
 }
 
 export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<PrintFiles> {
-  const images = await Promise.all(input.imagePaths.map(async (p) => upscaleForPrint(await downloadObject(p))));
+  // Load + upscale one image at a time (NOT Promise.all) — upscaling 13 print-res
+  // images in parallel spikes RAM well past 512MB and OOM-kills the host.
+  const images: Array<{ buffer: Buffer; mime: string }> = [];
+  for (const p of input.imagePaths) {
+    images.push(await upscaleForPrint(await downloadObject(p)));
+  }
   // Dedication photo — best-effort (skip the page if it can't be fetched, e.g.
   // a non-GCS URL), so it never fails the whole build.
   let photoSrc = '';
