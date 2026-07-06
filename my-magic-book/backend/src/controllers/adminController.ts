@@ -3,7 +3,7 @@ import User from '../models/User';
 import Story from '../models/Story';
 import Order from '../models/Order';
 import SiteSettings from '../models/SiteSettings';
-import { buildBookForOrder, reRenderPrintFilesForOrder, submitOrderToBookPod } from '../services/BookBuilder';
+import { buildBookForOrder, reRenderPrintFilesForOrder, submitOrderToBookPod, buildPreviewPrintFiles } from '../services/BookBuilder';
 import { generateIllustration, COST_PER_IMAGE_USD } from '../services/ImageGenerator';
 import { buildIllustrationPrompt, buildPhotorealPrompt, buildCoverPrompt } from '../services/promptBuilder';
 import { swapFace } from '../services/FaceSwapService';
@@ -305,6 +305,32 @@ export const reRenderOrderFiles = async (req: Request, res: Response): Promise<v
   } catch (err: any) {
     console.error('reRenderOrderFiles failed:', err);
     res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @route POST /api/admin/print-book
+// @desc  Build a print-ready PDF (cover + interior) for a showcase/preview book
+//        from the admin book viewer's "Download" button. Not tied to a paid order
+//        and never touches BookPod. The story text is reconstructed server-side.
+export const printBook = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { theme, childName, childGender, language, coverPath, backPath, imagePaths, childPhotoPath, isColoring } = req.body;
+    if (!theme || !coverPath || !backPath || !Array.isArray(imagePaths) || imagePaths.length === 0) {
+      res.status(400).json({ success: false, message: 'بيانات غير مكتملة لتجهيز ملف الطباعة (يلزم توليد صور الكتاب أولاً)' });
+      return;
+    }
+    const urls = await buildPreviewPrintFiles({
+      theme, childName, childGender, language, coverPath, backPath, imagePaths, childPhotoPath, isColoring,
+    });
+    res.json({
+      success: true,
+      interiorPath: urls.interiorPath,
+      coverPath: urls.coverPath,
+      interiorPages: urls.interiorPages,
+    });
+  } catch (err: any) {
+    console.error('printBook failed:', err);
+    res.status(500).json({ success: false, message: err.message || 'فشل تجهيز ملف الطباعة' });
   }
 };
 

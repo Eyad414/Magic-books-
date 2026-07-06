@@ -53,6 +53,23 @@ export const adminApi = {
     const response = await axiosInstance.post(`/admin/orders/${id}/rerender-files`);
     return response.data;
   },
+  // Build a print-ready PDF (cover + interior) for a showcase/preview book in the
+  // book viewer — not tied to an order, never touches BookPod. Returns object
+  // paths for the uploaded PDFs. Long-running: ~30–60s (downloads + composes).
+  buildPreviewPrint: async (payload: {
+    theme: string;
+    childName: string;
+    childGender?: 'male' | 'female';
+    language?: string;
+    coverPath: string;
+    backPath: string;
+    imagePaths: string[];
+    childPhotoPath?: string;
+    isColoring?: boolean;
+  }) => {
+    const response = await axiosInstance.post('/admin/print-book', payload);
+    return response.data;
+  },
   // Generate (or fetch cached) Nano-Banana preview illustrations for a theme.
   // Long-running: ~2.5 min for a fresh 13-page + portrait generation.
   generateThemeIllustrations: async (themeId: string, opts?: { force?: boolean; childName?: string }) => {

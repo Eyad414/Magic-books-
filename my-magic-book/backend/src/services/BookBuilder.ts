@@ -312,6 +312,41 @@ export async function reRenderPrintFilesForOrder(orderId: string): Promise<IOrde
 }
 
 /**
+ * Build the print-ready PDFs (cover + interior) for a showcase/preview book that
+ * is NOT tied to a paid order — e.g. the admin book viewer's "Download" button.
+ * The caller supplies the theme, child name, and the already-generated GCS image
+ * paths; the story TEXT (title, page texts, dedication, moral, questions) is
+ * reconstructed server-side from the theme + name, exactly like an order rebuild.
+ * Nothing is submitted to BookPod. Returns the uploaded PDF paths/urls.
+ */
+export async function buildPreviewPrintFiles(input: {
+  theme: string;
+  childName: string;
+  childGender?: 'male' | 'female';
+  language?: string;
+  coverPath: string;
+  backPath: string;
+  imagePaths: string[];
+  childPhotoPath?: string;
+  isColoring?: boolean;
+}) {
+  const pseudoStory: any = {
+    _id: `preview-${input.theme}-${Date.now()}`,
+    theme: input.theme,
+    childName: input.childName || 'الطفل',
+    childGender: input.childGender,
+    language: input.language || 'ar',
+    generatedCover: input.coverPath,
+    generatedPortrait: input.backPath,
+    generatedImages: input.imagePaths,
+    childPhotoUrl: input.childPhotoPath,
+    bookPackage: input.isColoring ? 'coloring' : 'story',
+    mode: 'template',
+  };
+  return buildPrintFilesForStory(pseudoStory, reconstructPrintOpts(pseudoStory));
+}
+
+/**
  * Submit an ALREADY-BUILT order to BookPod for printing. Rebuilds the print PDFs
  * from the existing images (no AI cost, no image re-generation) and sends the
  * print job. Surfaces a clear error if BookPod isn't configured, the order has no

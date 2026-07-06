@@ -153,6 +153,11 @@ export default function StoryBookPage() {
         customPages={customPages.length > 0 ? customPages : undefined}
         generatedImages={generatedImages.map(toDisplayUrl)}
         onGenerated={handleGenerated}
+        /* Raw GCS paths for the server-side "Download print-ready PDF" build. */
+        rawCoverPath={generatedCover}
+        rawBackPath={generatedPortrait}
+        rawImagePaths={generatedImages}
+        rawChildPhotoPath={storyData?.childPhotoUrl}
       />
     </div>
   );

@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { adminApi } from '../../api/adminApi';
-import { toDisplayUrl } from '../../api/mediaUrl';
+import { toDisplayUrl, objectPathToUrl } from '../../api/mediaUrl';
 import FrontCover        from './FrontCover';
 import TitlePage         from './TitlePage';
 import FanoosPage        from './FanoosPage';
@@ -50,6 +50,12 @@ interface StoryBookProps {
   customPages?:  any[];    // Dynamically overridden story pages from database
   generatedImages?: string[];                                              // Browser-ready AI image URLs, one per body image page
   onGenerated?: (images: string[], portrait: string, cover?: string) => void; // Called after a successful generation
+  // Raw GCS object paths (NOT display URLs) for the "Download print-ready PDF"
+  // button — the backend needs the real object paths to fetch + compose the PDF.
+  rawCoverPath?: string;
+  rawBackPath?: string;
+  rawImagePaths?: string[];
+  rawChildPhotoPath?: string;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -66,12 +72,17 @@ export default function StoryBook({
   customPages    = undefined,
   generatedImages = [],
   onGenerated,
+  rawCoverPath,
+  rawBackPath,
+  rawImagePaths,
+  rawChildPhotoPath,
 }: StoryBookProps) {
 
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.email === 'eyadat720@gmail.com';
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Generate (or refresh) the Nano-Banana preview illustrations for this theme.
   const handleGenerate = async (force = false) => {
@@ -140,8 +151,54 @@ export default function StoryBook({
   const resolvedAudio = audioUrl ||
     `https://magicfanoos.com/stories/${story.id}?child=${encodeURIComponent(childName)}`;
 
-  // ── Print handler ─────────────────────────────────────────────────────────
-  const handlePrint = () => window.print();
+  // ── Download handler ──────────────────────────────────────────────────────
+  // Builds the print-ready PDF (cover + interior, 220×220mm) on the server from
+  // the generated illustrations, then downloads it. Same quality that BookPod
+  // prints — but nothing is submitted to BookPod here.
+  const handleDownload = async () => {
+    if (!rawCoverPath || !rawBackPath || !(rawImagePaths && rawImagePaths.length)) {
+      toast.error(t('storybook.no_images_yet', 'لا توجد صور مولّدة بعد — ولّد صور الكتاب أولاً 🎨'));
+      return;
+    }
+    setIsDownloading(true);
+    const toastId = toast.loading(t('storybook.preparing_pdf', '📄 جاري تجهيز ملف الطباعة... (قد يستغرق حتى دقيقة)'));
+    try {
+      const res = await adminApi.buildPreviewPrint({
+        theme: story.id,
+        childName,
+        childGender: gender,
+        language: i18n.language,
+        coverPath: rawCoverPath,
+        backPath: rawBackPath,
+        imagePaths: rawImagePaths,
+        childPhotoPath: rawChildPhotoPath,
+      });
+      if (res?.success && res.interiorPath) {
+        const safe = (childName || 'book').replace(/[^\p{L}\p{N}_-]+/gu, '_');
+        const files = [
+          { path: res.interiorPath, name: `${safe}-interior.pdf` },
+          { path: res.coverPath, name: `${safe}-cover.pdf` },
+        ].filter((f) => f.path);
+        files.forEach((f) => {
+          const a = document.createElement('a');
+          a.href = objectPathToUrl(f.path);
+          a.download = f.name;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        });
+        toast.success(t('storybook.pdf_ready', 'تم تجهيز ملف الطباعة ✅ (الغلاف + المحتوى)'), { id: toastId });
+      } else {
+        toast.error(res?.message || t('storybook.pdf_failed', 'فشل تجهيز ملف الطباعة'), { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || t('storybook.pdf_failed', 'فشل تجهيز ملف الطباعة'), { id: toastId });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <div className="sb-root" dir={i18n.dir()}>
@@ -201,13 +258,16 @@ export default function StoryBook({
             )}
           </div>
 
-          {/* Print button */}
+          {/* Download print-ready PDF button */}
           <button
-            onClick={handlePrint}
+            onClick={handleDownload}
             className="sb-print-btn"
-            aria-label="طباعة الكتاب بحجم 220×220 ملم"
+            disabled={isDownloading}
+            aria-label="تحميل ملف الطباعة PDF بحجم 220×220 ملم"
           >
-            🖨️ {t('storybook.print_book', 'طباعة الكتاب')}
+            {isDownloading
+              ? `⏳ ${t('storybook.preparing_short', 'جاري التجهيز...')}`
+              : `⬇️ ${t('storybook.download_pdf', 'تحميل ملف الطباعة (PDF)')}`}
             <span className="sb-print-size">220 × 220 mm</span>
           </button>
 
