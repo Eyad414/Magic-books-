@@ -9,6 +9,7 @@ require("dotenv/config");
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const db_1 = require("./config/db");
+const resetAdmin_1 = require("./utils/resetAdmin");
 // Routes
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const storyRoutes_1 = __importDefault(require("./routes/storyRoutes"));
@@ -20,8 +21,10 @@ const publicRoutes_1 = __importDefault(require("./routes/publicRoutes"));
 const uploadRoutes_1 = __importDefault(require("./routes/uploadRoutes"));
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 5001;
-// Connect Database
-(0, db_1.connectDB)();
+// Connect Database, then run the one-shot admin reset if RESET_ADMIN_PASSWORD is set
+(0, db_1.connectDB)().then(() => {
+    (0, resetAdmin_1.maybeResetAdmin)();
+});
 // Middleware
 // In production, set CORS_ORIGINS to a comma-separated allowlist
 // (e.g. "https://magicfanoos.com,https://www.magicfanoos.com").

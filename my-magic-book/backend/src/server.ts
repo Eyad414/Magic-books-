@@ -4,6 +4,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { connectDB } from './config/db';
+import { maybeResetAdmin } from './utils/resetAdmin';
 
 // Routes
 import authRoutes from './routes/authRoutes';
@@ -18,8 +19,10 @@ import uploadRoutes from './routes/uploadRoutes';
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// Connect Database
-connectDB();
+// Connect Database, then run the one-shot admin reset if RESET_ADMIN_PASSWORD is set
+connectDB().then(() => {
+  maybeResetAdmin();
+});
 
 // Middleware
 // In production, set CORS_ORIGINS to a comma-separated allowlist
