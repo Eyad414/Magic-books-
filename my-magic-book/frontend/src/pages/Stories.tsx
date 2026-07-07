@@ -8,26 +8,13 @@ import { publicApi } from '../api/publicApi';
 import { toDisplayUrl } from '../api/mediaUrl';
 import { localizeName } from '../utils/translit';
 import { detectGender, applyGenderTokens } from '../utils/gender';
+import { SHOWCASE_CARDS as CARDS, type ShowcaseCard as Card } from '../data/showcaseCards';
 import toast from 'react-hot-toast';
 
 // Some themes reuse another theme's scripted story text (e.g. the realistic
 // space variant shares the space story).
 const TEXT_THEME: Record<string, string> = { space_real: 'space' };
 const textThemeFor = (id: string) => TEXT_THEME[id] || id;
-
-// Curated showcase — the demo stories + coloring books shown on this page.
-// A `storyId` pins the card to a specific generated story's cover + illustrations
-// (e.g. Lora's real zoo book / Liam's space book) instead of the theme's cover.
-interface Card { key: string; themeId: string; name: string; storyId?: string; }
-const CARDS: Card[] = [
-  { key: 'liam-space',     themeId: 'space',           name: 'Liam',  storyId: '6a43cbf500c3ecaed9218b3c' },
-  { key: 'baha-space',     themeId: 'space_real',      name: 'Baha' },
-  { key: 'baha-zoo',       themeId: 'zoo_adventure',   name: 'Baha' },
-  { key: 'lora-zoo',       themeId: 'zoo_adventure',   name: 'Lora',  storyId: '6a3bbaf645b418d21337de09' },
-  { key: 'lora-coloring',  themeId: 'zoo_coloring',    name: 'Lora' },
-  { key: 'ahmad-coloring', themeId: 'space_coloring',  name: 'Ahmad' },
-  { key: 'yosef-coloring', themeId: 'school_coloring', name: 'Yosef' },
-];
 
 const storyImgs = (id: string) =>
   Array.from({ length: 13 }, (_, i) => `magic-fanoose/generated/${id}/page-${String(i + 1).padStart(2, '0')}.png`);

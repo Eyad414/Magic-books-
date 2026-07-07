@@ -9,28 +9,8 @@ import { BookOpen, Package, Plus, Clock, CheckCircle, Sparkles, User as UserIcon
 import MagicButton from '../components/common/MagicButton';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-
-const SAMPLE_STORIES = [
-  { id: 99, childName: 'إياد', theme: 'space', emoji: '🚀', color: ['#1B1F5E', '#6C3FC5'], rating: 5.0, previewText: 'كان إياد يحلم دائماً بالنجوم. وفي ليلة هادئة، تحول سريره فجأة إلى مركبة فضائية متطورة مليئة بالأزرار اللامعة!...' },
-  { id: 1, childName: 'محمد', theme: 'adventure', emoji: '🗺️', color: ['#1B1F5E', '#6C3FC5'], rating: 5.0, previewText: 'في صحراء لا حدود لها، انطلق محمد بشجاعة لم يعرفها أحد من قبل. كان قلبه يدق بسرعة وعيناه تلمعان بفضول المستكشف...' },
-  { id: 2, childName: 'سارة', theme: 'princess', emoji: '👸', color: ['#4a148c', '#6a1b9a'], rating: 4.9, previewText: 'في مملكة حيث تتساقط الورود من السماء، كانت الأميرة سارة تنتظر مغامرة تختلف عن كل ما رأته...' },
-  { id: 3, childName: 'علي', theme: 'space', emoji: '🚀', color: ['#006064', '#00838f'], rating: 5.0, previewText: 'ارتفعت مركبة الفضاء وعلي يمسك بها بكلتا يديه، أمامه الكون اللامتناهي وقلبه مليء بالتساؤلات...' },
-  { id: 4, childName: 'ريم', theme: 'ocean', emoji: '🌊', color: ['#1a237e', '#283593'], rating: 4.8, previewText: 'غاصت ريم تحت الماء لأول مرة، وما رأته عيناها لم تتخيله في أجمل أحلامها — عالم يتلألأ...' },
-  { id: 5, childName: 'خالد', theme: 'superhero', emoji: '⚡', color: ['#1b5e20', '#2e7d32'], rating: 5.0, previewText: 'اكتشف خالد قوته الخارقة في يوم عادي، لكن مع القوة جاءت مسؤولية لم يكن يتوقعها...' },
-  { id: 6, childName: 'نورة', theme: 'forest', emoji: '🌿', color: ['#bf360c', '#d84315'], rating: 4.9, previewText: 'دخلت نورة الغابة السرية التي لم يدخلها أحد من القرية، وفوجئت بصوت يناديها بالاسم...' },
-  { id: 7, childName: 'يوسف', theme: 'dinosaurs', emoji: '🦖', color: ['#33691e', '#558b2f'], rating: 5.0, previewText: 'عاد يوسف بالزمن إلى عصر العمالقة، حيث كانت الديناصورات تمشي بجانبه وهو يبحث عن ممر العودة...' },
-  { id: 8, childName: 'ليان', theme: 'robots', emoji: '🤖', color: ['#263238', '#455a64'], rating: 4.7, previewText: 'في مختبر سري، قامت ليان بتشغيل روبوتها الصغير لأول مرة، لتبدأ رحلة من البرمجة والمرح الذكي...' },
-  { id: 9, childName: 'حمزة', theme: 'cooking', emoji: '👨‍🍳', color: ['#e65100', '#ef6c00'], rating: 4.9, previewText: 'وضع حمزة قبعة الطباخ وبدأ في خلط المكونات السحرية، ليكتشف أن أكلته تعطي من يتذوقها قدرات خاصة...' },
-  { id: 10, childName: 'جنى', theme: 'music', emoji: '🎸', color: ['#311b92', '#512da8'], rating: 5.0, previewText: 'عزفت جنى على قيثارتها القديمة، وفجأة بدأت الأشجار ترقص والعصافير تغني معها ألحان الأمل...' },
-  { id: 11, childName: 'أحمد', theme: 'animals', emoji: '🦁', color: ['#f57f17', '#fbc02d'], rating: 4.8, previewText: 'انطلق أحمد في رحلة إلى الأدغال، ليكتشف أنه الوحيد الذي يستطيع فهم لغة الحيوانات ومساعدتهم...' },
-  { id: 12, childName: 'سلمى', theme: 'magic', emoji: '🪄', color: ['#4a148c', '#7b1fa2'], rating: 5.0, previewText: 'لوحت سلمى بعصاها السحرية، وتحول كل شيء حولها إلى عالم من الحلوى والغيوم الوردية الطائرة...' },
-  { id: 13, childName: 'زيد', theme: 'space', emoji: '👨‍🚀', color: ['#0d47a1', '#1976d2'], rating: 5.0, previewText: 'الفضاء - الجزء الأول: هبط زيد على سطح القمر ليجد مدينة مخفية تسكنها كائنات من نور...' },
-  { id: 14, childName: 'زيد', theme: 'space', emoji: '🛸', color: ['#01579b', '#0288d1'], rating: 4.9, previewText: 'الفضاء - الجزء الثاني: انطلق زيد بمركبته الجديدة نحو الثقب الأسود ليكتشف بوابة لعالم موازي...' },
-  { id: 15, childName: 'تالا', theme: 'adventure', emoji: '🎒', color: ['#e65100', '#fb8c00'], rating: 4.8, previewText: 'مغامرة المدرسة: وجدت تالا خريطة كنز مخفية داخل حقيبتها المدرسية، لتبدأ رحلة البحث بين الفصول...' },
-  { id: 16, childName: 'سيف', theme: 'adventure', emoji: '🏫', color: ['#1b5e20', '#43a047'], rating: 5.0, previewText: 'أول يوم في المدرسة: لم يكن يوماً عادياً لسيف، فقد اكتشف أن مدرسته تطير فوق السحاب كلما دق الجرس...' },
-  { id: 17, childName: 'لورا', theme: 'ocean', emoji: '🧜‍♀️', color: ['#006064', '#00acc1'], rating: 4.9, previewText: 'مملكة الأعماق: اكتشفت لورا مدينة تحت الماء حيث البيوت من لؤلؤ والحدائق من مرجان ملون...' },
-  { id: 18, childName: 'عمر', theme: 'magic', emoji: '🚗', color: ['#4a148c', '#9c27b0'], rating: 5.0, previewText: 'السيارة الطائرة: حول عمر سيارته اللعبة إلى سيارة حقيقية تطير فوق الزحام وتأخذه إلى بلاد العجائب...' },
-];
+import { localizeName } from '../utils/translit';
+import { SHOWCASE_CARDS } from '../data/showcaseCards';
 
 export default function Dashboard() {
   const { user, isAuthenticated, isLoading, updateUser, logout } = useAuth();
@@ -38,10 +18,10 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [stories, setStories] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
-  const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [tab, setTab] = useState<'stories' | 'orders' | 'favorites' | 'profile' | 'settings' | 'messages'>('stories');
   const [isFetching, setIsFetching] = useState(true);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Profile form state
   const [profileForm, setProfileForm] = useState({ name: '', email: '', phone: '', location: '' });
@@ -161,7 +141,7 @@ export default function Dashboard() {
     ordered: { label: t('dashboard.status_ordered'), color: 'text-gold-500', icon: Package },
   };
 
-  const favoriteStories = SAMPLE_STORIES.filter(story => favoriteIds.includes(story.id));
+  const favoriteStories = SHOWCASE_CARDS.filter((card) => favoriteIds.includes(card.key));
 
   return (
     <div className="min-h-screen pt-24 pb-16 px-4 sm:px-6 lg:px-8">
@@ -320,11 +300,11 @@ export default function Dashboard() {
                 <EmptyState emoji="❤️" title={t('dashboard.empty_favorites_title')} desc={t('dashboard.empty_favorites_desc')} cta={t('dashboard.empty_stories_cta')} onClick={() => navigate('/stories')} />
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {favoriteStories.map((story) => (
-                    <Link to="/stories" key={story.id} className="bg-dark-700/50 rounded-2xl border border-white/5 p-5 hover:-translate-y-1 transition-transform group">
-                      <div className="text-4xl mb-3 group-hover:animate-bounce-slow transition-all">{story.emoji}</div>
-                      <h3 className="font-arabic font-bold text-white text-lg mb-1">{t('stories_page.story_title', { name: t(`stories_page.samples.${story.id}_name`, { defaultValue: story.childName }) })}</h3>
-                      <p className="font-arabic text-gold-500 text-xs">{t(`step2.theme_${story.theme}`)}</p>
+                  {favoriteStories.map((card) => (
+                    <Link to="/stories" key={card.key} className="bg-dark-700/50 rounded-2xl border border-white/5 p-5 hover:-translate-y-1 transition-transform group">
+                      <div className="text-4xl mb-3 group-hover:animate-bounce-slow transition-all">{card.emoji}</div>
+                      <h3 className="font-arabic font-bold text-white text-lg mb-1">{localizeName(card.name, i18n.language)}</h3>
+                      <p className="font-arabic text-gold-500 text-xs">{t(`step2.theme_${card.themeId}`)}</p>
                     </Link>
                   ))}
                 </div>
