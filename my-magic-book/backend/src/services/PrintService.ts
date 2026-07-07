@@ -18,11 +18,18 @@ export const PRINT_TRIM_MM = 220;          // final cut size
 export const PRINT_BLEED_MM = 3;           // extra art past the cut on each side
 export const PRINT_PAGE_MM = PRINT_TRIM_MM + PRINT_BLEED_MM * 2; // 226 (interior pages)
 export const PRINT_SAFE_MM = PRINT_BLEED_MM + 5;                 // keep text inside this margin
-// Source AI illustrations are only ~864x1184px, so 2700px was ~3x interpolation
-// (no real added detail) that spiked RAM past the 512MB host and OOM-crashed the
-// print build. 1800px (~200 DPI at 226mm) still upsamples the source ~2x, keeps
-// all real detail, and fits comfortably in memory.
-export const PRINT_PX = 1800;
+// Source AI illustrations are only ~864x1184px, so the old 2700px was ~3x
+// interpolation (no real added detail) that spiked RAM past the 512MB host and
+// OOM-crashed the print build. 1400px still upsamples the ~864px source, keeps
+// all real detail, and leaves memory headroom on the 512MB tier.
+export const PRINT_PX = 1400;
+
+// Log resident memory at a labelled point in the print build so an OOM kill's
+// last line pinpoints where it died.
+export function logMem(label: string): void {
+  const rssMb = Math.round(process.memoryUsage().rss / 1024 / 1024);
+  console.log(`[Print][mem] ${label}: rss=${rssMb}MB`);
+}
 // Per-interior-page thickness used to estimate the spine. BookPod's template is
 // authoritative — override per build or via env once you have their number.
 export const PRINT_PAGE_THICKNESS_MM = Number(process.env.PRINT_PAGE_THICKNESS_MM || 0.13);
@@ -357,12 +364,14 @@ export interface StoryPrintInput {
 }
 
 export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<PrintFiles> {
+  logMem(`story build start (${input.imagePaths.length} images @ ${PRINT_PX}px)`);
   // Load + upscale one image at a time (NOT Promise.all) — upscaling 13 print-res
   // images in parallel spikes RAM well past 512MB and OOM-kills the host.
   const images: Array<{ buffer: Buffer; mime: string }> = [];
   for (const p of input.imagePaths) {
     images.push(await upscaleForPrint(await downloadObject(p)));
   }
+  logMem('images upscaled');
   // Dedication photo — best-effort (skip the page if it can't be fetched, e.g.
   // a non-GCS URL), so it never fails the whole build.
   let photoSrc = '';
@@ -396,6 +405,7 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
   interior.push(copyrightPageHtml());
   const padded = padToMultipleOf4(interior);
   const interiorPdf = await renderPrintPdf(squareDoc(padded));
+  logMem('interior PDF rendered');
 
   const cover = await buildWraparoundCoverPdf({
     title: input.title,
@@ -405,6 +415,7 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
     interiorPages: padded.length,
     kind: 'story',
   });
+  logMem('cover PDF rendered');
 
   return {
     coverPdf: cover.pdf,
