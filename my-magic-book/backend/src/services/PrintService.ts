@@ -18,7 +18,11 @@ export const PRINT_TRIM_MM = 220;          // final cut size
 export const PRINT_BLEED_MM = 3;           // extra art past the cut on each side
 export const PRINT_PAGE_MM = PRINT_TRIM_MM + PRINT_BLEED_MM * 2; // 226 (interior pages)
 export const PRINT_SAFE_MM = PRINT_BLEED_MM + 5;                 // keep text inside this margin
-export const PRINT_PX = 2700;              // ~300 DPI at 226 mm
+// Source AI illustrations are only ~864x1184px, so 2700px was ~3x interpolation
+// (no real added detail) that spiked RAM past the 512MB host and OOM-crashed the
+// print build. 1800px (~200 DPI at 226mm) still upsamples the source ~2x, keeps
+// all real detail, and fits comfortably in memory.
+export const PRINT_PX = 1800;
 // Per-interior-page thickness used to estimate the spine. BookPod's template is
 // authoritative — override per build or via env once you have their number.
 export const PRINT_PAGE_THICKNESS_MM = Number(process.env.PRINT_PAGE_THICKNESS_MM || 0.13);
