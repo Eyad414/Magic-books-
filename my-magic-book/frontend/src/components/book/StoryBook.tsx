@@ -200,6 +200,10 @@ export default function StoryBook({
     }
   };
 
+  // Option 1 — save the EXACT polished on-screen pages to PDF via the browser
+  // ("Save as PDF" in the print dialog). Captures the real page designs 1:1.
+  const handleBrowserPrint = () => window.print();
+
   return (
     <div className="sb-root" dir={i18n.dir()}>
 
@@ -258,17 +262,27 @@ export default function StoryBook({
             )}
           </div>
 
-          {/* Download print-ready PDF button */}
+          {/* Option 1 — save the polished on-screen pages via the browser dialog */}
+          <button
+            onClick={handleBrowserPrint}
+            className="sb-print-btn"
+            aria-label="حفظ الكتاب PDF من المتصفح — اختر Save as PDF"
+          >
+            📖 {t('storybook.save_pdf_browser', 'حفظ الكتاب PDF (اختر «Save as PDF»)')}
+            <span className="sb-print-size">220 × 220 mm</span>
+          </button>
+
+          {/* Option 2 — server-built print file (for comparison / BookPod) */}
           <button
             onClick={handleDownload}
-            className="sb-print-btn"
+            className="sb-regen-btn"
             disabled={isDownloading}
-            aria-label="تحميل ملف الطباعة PDF بحجم 220×220 ملم"
+            style={{ width: '100%' }}
+            aria-label="نسخة الطباعة من الخادم"
           >
             {isDownloading
               ? `⏳ ${t('storybook.preparing_short', 'جاري التجهيز...')}`
-              : `⬇️ ${t('storybook.download_pdf', 'تحميل ملف الطباعة (PDF)')}`}
-            <span className="sb-print-size">220 × 220 mm</span>
+              : `⚙️ ${t('storybook.download_pdf_server', 'نسخة الخادم (PDF) — للمقارنة')}`}
           </button>
 
           {/* Info strip */}
