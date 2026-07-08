@@ -1,7 +1,43 @@
 import sharp from 'sharp';
 import puppeteer from 'puppeteer';
+import fs from 'fs';
+import path from 'path';
 import { Storage } from '@google-cloud/storage';
 import { uploadBuffer, pdfFolderPath } from './StorageService';
+
+// The Magic Fanoos brand logo, embedded (base64) so the server-side PDF render
+// can show it without a network fetch. Read once and cached.
+let _logoDataUri: string | null = null;
+function logoDataUri(): string {
+  if (_logoDataUri !== null) return _logoDataUri;
+  try {
+    const buf = fs.readFileSync(path.join(process.cwd(), 'assets', 'logo.png'));
+    _logoDataUri = `data:image/png;base64,${buf.toString('base64')}`;
+  } catch (e: any) {
+    console.warn('[PrintService] logo.png not found for cover:', e?.message || e);
+    _logoDataUri = '';
+  }
+  return _logoDataUri;
+}
+
+// "More adventures" teasers shown on the back cover (Arabic print). We drop the
+// teaser that matches the book's own theme so we never recommend the same story.
+const BACK_TEASERS = [
+  { id: 'space',  emoji: '🚀', ar: 'في الفضاء' },
+  { id: 'school', emoji: '🏫', ar: 'في المدرسة' },
+  { id: 'zoo',    emoji: '🦁', ar: 'في حديقة الحيوانات' },
+  { id: 'ocean',  emoji: '🌊', ar: 'في أعماق المحيط' },
+  { id: 'world',  emoji: '🌍', ar: 'حول العالم' },
+];
+const THEME_TEASER_EXCLUDE: Record<string, string> = {
+  zoo_adventure: 'zoo', zoo_coloring: 'zoo',
+  space: 'space', space_real: 'space', space_coloring: 'space',
+  school_coloring: 'school',
+};
+function pickTeasers(theme?: string) {
+  const drop = THEME_TEASER_EXCLUDE[theme || ''] || '';
+  return BACK_TEASERS.filter((t) => t.id !== drop).slice(0, 3);
+}
 
 // ─── Print pipeline ──────────────────────────────────────────────────────────
 // Turns the (screen-resolution) AI images into high-resolution, print-ready
@@ -195,22 +231,50 @@ interface WraparoundDocArgs {
   widthMm: number;
   heightMm: number;
   panelWmm: number;
+  theme?: string;
 }
 
 function wraparoundDoc(a: WraparoundDocArgs): string {
-  const sub = a.kind === 'coloring' ? '🖍️ كتاب تلوين · Magic Fanoos' : '✨ Magic Fanoos';
+  const logo = logoDataUri();
+  // Front cover: title + the brand logo + name (falls back to a text brand line).
+  const brand = logo
+    ? `<div class="cover-brand"><img class="cover-brand-logo" src="${logo}" alt="" /><span class="cover-brand-name">Magic Fanoos</span></div>`
+    : `<div class="cover-sub">${a.kind === 'coloring' ? '🖍️ كتاب تلوين · Magic Fanoos' : '✨ Magic Fanoos'}</div>`;
   const frontPanel = `<div class="panel">
     <img class="bleed" src="${a.frontSrc}" alt="front" />
-    <div class="overlay overlay-bottom"><div class="cover-title">${a.title}</div><div class="cover-sub">${sub}</div></div>
+    <div class="overlay overlay-bottom"><div class="cover-title">${a.title}</div>${brand}</div>
   </div>`;
-  const backOverlay =
-    a.kind === 'coloring'
-      ? `<div class="overlay overlay-bottom"><div class="back-title">🌟 أحسنت يا ${a.childName}!</div></div>`
-      : ''; // story back cover = portrait image only, no text
-  const backPanel = `<div class="panel">
-    <img class="bleed" src="${a.backSrc}" alt="back" />
-    ${backOverlay}
-  </div>`;
+
+  // Story back cover = the branded "well done / more adventures" page (matches the
+  // on-screen back cover). Coloring keeps the simple full-bleed image + greeting.
+  let backPanel: string;
+  if (a.kind === 'story') {
+    const teasers = pickTeasers(a.theme).map((tz) => `
+      <div class="bc-card">
+        <div class="bc-thumb">${logo ? `<img class="bc-thumb-logo" src="${logo}" alt="" />` : ''}<span class="bc-emoji">${tz.emoji}</span></div>
+        <div class="bc-card-title">${a.childName} ${tz.ar}</div>
+      </div>`).join('');
+    backPanel = `<div class="panel back-designed" dir="rtl">
+      <div class="bc-hero">
+        <div class="bc-photo-frame"><div class="bc-photo-ring"></div><img class="bc-photo" src="${a.backSrc}" alt="" /></div>
+        <div class="bc-greeting">أحسنت يا ${a.childName}! 🌟</div>
+        <div class="bc-subtxt">أتممت قراءة قصتك السحرية — استمر في المغامرة!</div>
+      </div>
+      <div class="bc-line"></div>
+      <div class="bc-section">
+        <div class="bc-head">✨ مغامرات أخرى تنتظرك</div>
+        <div class="bc-grid">${teasers}</div>
+      </div>
+      <div class="bc-line"></div>
+      <div class="bc-foot">${logo ? `<img class="bc-foot-logo" src="${logo}" alt="" />` : ''}<div class="bc-foot-text"><span class="bc-foot-brand">Magic Fanoos</span><span class="bc-foot-url">🌐 MagicFanoos.com</span></div></div>
+    </div>`;
+  } else {
+    backPanel = `<div class="panel">
+      <img class="bleed" src="${a.backSrc}" alt="back" />
+      <div class="overlay overlay-bottom"><div class="back-title">🌟 أحسنت يا ${a.childName}!</div></div>
+    </div>`;
+  }
+
   const spineText = a.spineMm >= 8 ? `<div class="spine-text">${a.title}</div>` : '';
   const spinePanel = `<div class="spine">${spineText}</div>`;
   // Lay panels left→right. Arabic (rtl) books read right-to-left, so the FRONT
@@ -225,6 +289,38 @@ function wraparoundDoc(a: WraparoundDocArgs): string {
   .panel { position: relative; width: ${a.panelWmm}mm; height: ${a.heightMm}mm; overflow: hidden; background: #fff; }
   .spine { width: ${a.spineMm}mm; height: ${a.heightMm}mm; background: #0a1628; display: flex; align-items: center; justify-content: center; }
   .spine-text { color: #fff; font-weight: 900; font-size: 12pt; writing-mode: vertical-rl; white-space: nowrap; }
+
+  /* Front cover brand row (logo + name) */
+  .cover-brand { display: flex; align-items: center; justify-content: center; gap: 4mm; margin-top: 5mm; }
+  .cover-brand-logo { width: 16mm; height: 16mm; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6)); }
+  .cover-brand-name { color: #ffd479; font-weight: 900; font-size: 15pt; }
+
+  /* Designed story back cover — mirrors the on-screen back cover */
+  .back-designed {
+    background: linear-gradient(180deg, #0a1628 0%, #060d1a 60%, #03060e 100%);
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    padding: ${PRINT_SAFE_MM + 5}mm ${PRINT_SAFE_MM + 7}mm; gap: 6mm;
+  }
+  .bc-hero { display: flex; flex-direction: column; align-items: center; gap: 4mm; }
+  .bc-photo-frame { position: relative; width: 56mm; height: 56mm; display: flex; align-items: center; justify-content: center; }
+  .bc-photo-ring { position: absolute; inset: -3mm; border-radius: 50%; background: conic-gradient(from 0deg, #D4A937, #fff3c4, #D4A937, #b88c20, #D4A937); }
+  .bc-photo { position: relative; width: 52mm; height: 52mm; border-radius: 50%; object-fit: cover; object-position: center 30%; border: 1.8mm solid #0a1628; box-shadow: 0 4mm 12mm rgba(0,0,0,0.6); }
+  .bc-greeting { font-size: 26pt; font-weight: 900; color: #D4A937; }
+  .bc-subtxt { font-size: 12pt; color: rgba(255,255,255,0.62); max-width: 130mm; line-height: 1.5; }
+  .bc-line { width: 88%; height: 0.4mm; background: linear-gradient(90deg, transparent, rgba(212,169,55,0.4), transparent); }
+  .bc-section { width: 100%; }
+  .bc-head { font-size: 13pt; font-weight: 800; color: rgba(212,169,55,0.9); margin-bottom: 5mm; }
+  .bc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+  .bc-card { background: rgba(255,255,255,0.04); border: 0.4mm solid rgba(212,169,55,0.18); border-radius: 4mm; padding: 4mm 2mm; display: flex; flex-direction: column; align-items: center; gap: 3mm; }
+  .bc-thumb { position: relative; width: 22mm; height: 22mm; border-radius: 50%; overflow: hidden; border: 0.5mm solid rgba(212,169,55,0.3); background: radial-gradient(circle at 50% 45%, #11233f, #0a1628); display: flex; align-items: center; justify-content: center; }
+  .bc-thumb-logo { width: 94%; height: 94%; object-fit: contain; }
+  .bc-emoji { position: absolute; bottom: -1mm; right: -1mm; width: 8mm; height: 8mm; display: flex; align-items: center; justify-content: center; font-size: 10pt; background: #0a1628; border: 0.5mm solid rgba(212,169,55,0.5); border-radius: 50%; }
+  .bc-card-title { font-size: 10pt; font-weight: 700; color: rgba(255,255,255,0.85); line-height: 1.4; }
+  .bc-foot { display: flex; align-items: center; justify-content: center; gap: 4mm; margin-top: auto; }
+  .bc-foot-logo { width: 15mm; height: 15mm; object-fit: contain; filter: drop-shadow(0 0 3mm rgba(212,169,55,0.5)); }
+  .bc-foot-text { display: flex; flex-direction: column; align-items: center; }
+  .bc-foot-brand { font-size: 13pt; font-weight: 800; color: #D4A937; }
+  .bc-foot-url { font-size: 10pt; color: rgba(212,169,55,0.65); font-weight: 600; }
 </style>
 </head><body><div class="wrap" dir="ltr">${order.join('')}</div></body></html>`;
 }
@@ -268,6 +364,7 @@ export interface WraparoundInput {
   kind: 'coloring' | 'story';
   spineMm?: number;
   rtl?: boolean;
+  theme?: string; // used to pick the back-cover "more adventures" teasers
 }
 
 export interface WraparoundResult {
@@ -295,6 +392,7 @@ export async function buildWraparoundCoverPdf(o: WraparoundInput): Promise<Wrapa
     widthMm,
     heightMm,
     panelWmm,
+    theme: o.theme,
   });
   const pdf = await renderPrintPdf(html, widthMm, heightMm);
   return { pdf, widthMm, heightMm, spineMm };
@@ -361,6 +459,7 @@ export interface StoryPrintInput {
   moral?: string;
   conclusion?: string;
   questions?: string[];
+  theme?: string; // used to pick the back-cover "more adventures" teasers
 }
 
 export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<PrintFiles> {
@@ -414,6 +513,7 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
     backPath: input.backPath,
     interiorPages: padded.length,
     kind: 'story',
+    theme: input.theme,
   });
   logMem('cover PDF rendered');
 

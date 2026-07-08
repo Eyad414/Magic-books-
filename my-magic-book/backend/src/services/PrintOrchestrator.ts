@@ -53,6 +53,7 @@ export async function buildPrintFilesForStory(
         moral: opts.moral,
         conclusion: opts.conclusion,
         questions: opts.questions,
+        theme: (story as any).theme,
       });
 
   return uploadPrintFiles(String(story._id), files);
