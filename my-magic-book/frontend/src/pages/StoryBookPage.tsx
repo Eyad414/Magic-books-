@@ -157,7 +157,9 @@ export default function StoryBookPage() {
         rawCoverPath={generatedCover}
         rawBackPath={generatedPortrait}
         rawImagePaths={generatedImages}
-        rawChildPhotoPath={storyData?.childPhotoUrl}
+        /* Real kid photo for the back-cover circle; in admin preview (no real
+           customer) fall back to the same sample photo the on-screen book uses. */
+        rawChildPhotoPath={storyData?.childPhotoUrl || 'magic-fanoose/child-photos/d814d243-9300-489d-b275-29144c91ad19.jpeg'}
       />
     </div>
   );

@@ -232,6 +232,7 @@ interface WraparoundDocArgs {
   heightMm: number;
   panelWmm: number;
   theme?: string;
+  childPhotoSrc?: string; // real uploaded kid photo for the back-cover circle
 }
 
 function wraparoundDoc(a: WraparoundDocArgs): string {
@@ -256,7 +257,7 @@ function wraparoundDoc(a: WraparoundDocArgs): string {
       </div>`).join('');
     backPanel = `<div class="panel back-designed" dir="rtl">
       <div class="bc-hero">
-        <div class="bc-photo-frame"><div class="bc-photo-ring"></div><img class="bc-photo" src="${a.backSrc}" alt="" /></div>
+        <div class="bc-photo-frame"><div class="bc-photo-ring"></div><img class="bc-photo" src="${a.childPhotoSrc || a.backSrc}" alt="" /></div>
         <div class="bc-greeting">أحسنت يا ${a.childName}! 🌟</div>
         <div class="bc-subtxt">أتممت قراءة قصتك السحرية — استمر في المغامرة!</div>
       </div>
@@ -365,6 +366,7 @@ export interface WraparoundInput {
   spineMm?: number;
   rtl?: boolean;
   theme?: string; // used to pick the back-cover "more adventures" teasers
+  childPhotoPath?: string; // real uploaded kid photo for the back-cover circle
 }
 
 export interface WraparoundResult {
@@ -377,6 +379,17 @@ export interface WraparoundResult {
 export async function buildWraparoundCoverPdf(o: WraparoundInput): Promise<WraparoundResult> {
   const front = await upscaleForPrint(await downloadObject(o.frontPath));
   const back = await upscaleForPrint(await downloadObject(o.backPath));
+  // Real uploaded kid photo for the story back-cover circle (best-effort — skip
+  // if missing/non-GCS, then the circle falls back to the AI portrait).
+  let childPhotoSrc = '';
+  if (o.childPhotoPath && !/^https?:/i.test(o.childPhotoPath)) {
+    try {
+      const c = await upscaleForPrint(await downloadObject(o.childPhotoPath), { px: 900 });
+      childPhotoSrc = dataUri(c.buffer, c.mime);
+    } catch (e: any) {
+      console.warn('[PrintService] back-cover kid photo skipped:', e?.message || e);
+    }
+  }
   const spineMm = o.spineMm ?? spineWidthMm(o.interiorPages);
   const panelWmm = PRINT_TRIM_MM + PRINT_BLEED_MM;            // 220 + outer bleed
   const widthMm = 2 * PRINT_TRIM_MM + 2 * PRINT_BLEED_MM + spineMm;
@@ -393,6 +406,7 @@ export async function buildWraparoundCoverPdf(o: WraparoundInput): Promise<Wrapa
     heightMm,
     panelWmm,
     theme: o.theme,
+    childPhotoSrc,
   });
   const pdf = await renderPrintPdf(html, widthMm, heightMm);
   return { pdf, widthMm, heightMm, spineMm };
@@ -514,6 +528,7 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
     interiorPages: padded.length,
     kind: 'story',
     theme: input.theme,
+    childPhotoPath: input.childPhotoPath,
   });
   logMem('cover PDF rendered');
 
