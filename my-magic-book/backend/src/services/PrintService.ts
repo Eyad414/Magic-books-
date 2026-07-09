@@ -72,11 +72,11 @@ export const PRINT_TRIM_MM = 220;          // final cut size
 export const PRINT_BLEED_MM = 3;           // extra art past the cut on each side
 export const PRINT_PAGE_MM = PRINT_TRIM_MM + PRINT_BLEED_MM * 2; // 226 (interior pages)
 export const PRINT_SAFE_MM = PRINT_BLEED_MM + 5;                 // keep text inside this margin
-// Source AI illustrations are only ~864x1184px, so the old 2700px was ~3x
-// interpolation (no real added detail) that spiked RAM past the 512MB host and
-// OOM-crashed the print build. 1400px still upsamples the ~864px source, keeps
-// all real detail, and leaves memory headroom on the 512MB tier.
-export const PRINT_PX = 1400;
+// Source AI illustrations are only ~864x1184px. The interior render (13 images
+// in one Chromium page) sat right at the 512MB host limit at 1400px and
+// intermittently OOM-crashed. 1100px still exceeds the source resolution (no
+// real detail lost) and keeps the peak comfortably under 512MB every time.
+export const PRINT_PX = 1100;
 
 // Log resident memory at a labelled point in the print build so an OOM kill's
 // last line pinpoints where it died.
@@ -630,6 +630,7 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
     interior.push(storyTextPageHtml(input.pageTexts[i] || '', i));
     interior.push(linePageHtml(dataUri(images[i].buffer, images[i].mime)));
   }
+  images.length = 0; // drop the upscaled buffers — the base64 is now in the HTML
   // Back matter: lantern separator, the final story page (moral + questions +
   // conclusion), then the copyright page — mirrors the on-screen book.
   interior.push(fanoosPageHtml());
