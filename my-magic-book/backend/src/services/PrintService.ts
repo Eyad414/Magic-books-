@@ -255,21 +255,17 @@ function dedicationPageHtml(photoSrc: string, childName: string, text?: string):
     <div class="ded2-lines"><div class="ded2-line"></div><div class="ded2-line"></div><div class="ded2-line"></div></div>
   </div>`;
 }
-function finalStoryPageHtml(title: string, moral: string, questions: string[], conclusion: string, childName = '', qr = ''): string {
+function finalStoryPageHtml(title: string, moral: string, questions: string[], conclusion: string, childName = ''): string {
   const qs = (questions || []).filter(Boolean).map((q) => `<li>${q}</li>`).join('');
   return `<div class="page fsp2-page">
     <div class="fsp2-label">✦ نهاية القصة ✦</div>
     <div class="fsp2-title">${title}</div>
     <div class="fsp2-divider"></div>
     ${moral ? `<div><div class="fsp2-head">💡 الدرس المستفاد</div><div class="fsp2-moral">${moral}</div></div>` : ''}
-    ${qs ? `<div class="fsp2-divider"></div><div><div class="fsp2-head">🤔 أسئلة للتفكير معًا</div><ul class="fsp2-q">${qs}</ul></div>` : ''}
+    ${qs ? `<div class="fsp2-divider fsp2-divider--sm"></div><div><div class="fsp2-head">🤔 أسئلة ممتعة للمناقشة مع طفلك</div><ul class="fsp2-q">${qs}</ul></div>` : ''}
     <div class="fsp2-divider"></div>
     ${conclusion ? `<div class="fsp2-concl">${conclusion}</div>` : ''}
     <div class="fsp2-star">⭐ أحسنت يا ${childName}! ⭐</div>
-    <div class="fsp2-qr-row">
-      <div><div class="fsp2-qr-label">📱 استمع لمغامرتك</div><div class="fsp2-qr-sub">امسح الكود لسماع قصة ${childName} بصوت ساحر!</div></div>
-      ${qr ? `<div class="fsp2-qr-box"><img class="fsp2-qr-img" src="${qr}" alt="QR" /></div>` : ''}
-    </div>
   </div>`;
 }
 function copyrightPageHtml(qr = ''): string {
@@ -635,7 +631,7 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
   // conclusion), then the copyright page — mirrors the on-screen book.
   interior.push(fanoosPageHtml());
   if (input.moral || input.conclusion || (input.questions && input.questions.length)) {
-    interior.push(finalStoryPageHtml(input.title, input.moral || '', input.questions || [], input.conclusion || '', input.childName, qrSrc));
+    interior.push(finalStoryPageHtml(input.title, input.moral || '', input.questions || [], input.conclusion || '', input.childName));
   } else {
     interior.push(endPageHtml(input.childName));
   }

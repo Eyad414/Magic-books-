@@ -778,6 +778,11 @@
       "tagline": "An unforgettable journey among animals",
       "moral": "Nature is full of wonders, and every creature deserves love and respect.",
       "conclusion": "Great job, [NAME]! You are now a true friend of animals and their trusted protector. 🦁",
+      "questions": [
+        "Which animal did you like most in the story?",
+        "What did we learn about caring for animals?",
+        "If you visited the zoo, which animal would you want to see first — and why?"
+      ],
       "dedication": "To [NAME], who fills our lives with joy and wonder every day — this magical story is just for you.",
       "pages": {
         "1": "On a bright sunny morning, [NAME] woke up early, jumping with joy. Today was the big trip to the zoo!",
