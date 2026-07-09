@@ -38,6 +38,17 @@ function logoDataUri(): string {
   return _logoDataUri;
 }
 
+// The magic-lamp emblem shown on the story text pages (embedded, cached).
+let _lanternUri: string | null = null;
+function lanternDataUri(): string {
+  if (_lanternUri !== null) return _lanternUri;
+  try {
+    const buf = fs.readFileSync(path.join(process.cwd(), 'assets', 'lantern.png'));
+    _lanternUri = `data:image/png;base64,${buf.toString('base64')}`;
+  } catch { _lanternUri = ''; }
+  return _lanternUri;
+}
+
 // "More adventures" teasers shown on the back cover (Arabic print). We drop the
 // teaser that matches the book's own theme so we never recommend the same story.
 const BACK_TEASERS = [
@@ -156,9 +167,12 @@ const SHARED_CSS = `
   .ded-text { font-weight: 700; color: #0a1628; font-size: 22pt; line-height: 1.7; width: 80%; }
   /* Decorative story text page (matches the on-screen lantern card) */
   .stp-page { display: flex; align-items: center; justify-content: center; padding: 16mm; }
-  .stp-card { position: relative; width: 82%; background: radial-gradient(120% 90% at 50% 0%, #fffdf8 0%, #fdf4dd 70%, #f8ead0 100%); border-radius: 14mm; padding: 26mm 16mm 20mm; box-shadow: 0 8mm 18mm rgba(0,0,0,0.25); }
+  .stp-card { position: relative; z-index: 1; width: 82%; background: radial-gradient(120% 90% at 50% 0%, #fffdf8 0%, #fdf4dd 70%, #f8ead0 100%); border-radius: 14mm; padding: 26mm 16mm 20mm; box-shadow: 0 8mm 18mm rgba(0,0,0,0.25); }
   .stp-card::before { content: ''; position: absolute; inset: 5mm; border: 0.8mm dashed rgba(201,150,40,0.6); border-radius: 10mm; }
-  .stp-lantern { position: absolute; top: -11mm; left: 50%; transform: translateX(-50%); width: 22mm; height: 22mm; border-radius: 50%; background: radial-gradient(circle at 50% 35%, #fff6da, #f3d98f 70%, #d4a937); border: 1.4mm solid #fff; display: flex; align-items: center; justify-content: center; font-size: 26pt; box-shadow: 0 0 8mm rgba(212,169,55,0.7); }
+  .stp-lantern { position: absolute; z-index: 2; top: -13mm; left: 50%; transform: translateX(-50%); width: 26mm; height: 26mm; border-radius: 50%; background-size: cover; background-position: center 42%; border: 1.4mm solid #fff; box-shadow: 0 0 8mm rgba(212,169,55,0.7); }
+  .stp-lantern--emoji { background: radial-gradient(circle at 50% 35%, #fff6da, #f3d98f 70%, #d4a937); display: flex; align-items: center; justify-content: center; font-size: 26pt; }
+  .stp-spark { position: absolute; z-index: 0; }
+  .stp-spark svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 1.2mm rgba(255,255,255,0.55)); }
   .stp-divider { width: 34mm; height: 1mm; margin: 0 auto 8mm; border-radius: 2mm; background: linear-gradient(90deg, transparent, #d4a937, transparent); }
   .stp-txt { position: relative; font-weight: 700; color: #3a2c10; font-size: 23pt; line-height: 1.9; text-align: center; }
   .stp-corner { position: absolute; color: rgba(201,150,40,0.75); font-size: 12pt; }
@@ -290,10 +304,27 @@ function copyrightPageHtml(qr = ''): string {
   </div>`;
 }
 const PRINT_PAGE_COLORS = ['#F2607A', '#7C5CE0', '#159B8A', '#2E7BD6', '#E17055', '#3FA34D'];
-function storyTextPageHtml(text: string, idx = 0): string {
+// A Gemini-style 4-point sparkle (concave sides), scattered on the colored page.
+const GEMINI_SPARK =
+  `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C12 6.6 6.6 12 0 12C6.6 12 12 17.4 12 24C12 17.4 17.4 12 24 12C17.4 12 12 6.6 12 0Z" fill="rgba(255,255,255,0.9)"/></svg>`;
+const SPARK_POS = [
+  { t: 6, l: 8, s: 9 }, { t: 11, l: 88, s: 6 }, { t: 44, l: 5, s: 7 }, { t: 55, l: 93, s: 8 },
+  { t: 88, l: 12, s: 7 }, { t: 92, l: 82, s: 9 }, { t: 24, l: 93, s: 5 }, { t: 78, l: 5, s: 6 },
+];
+function sparklesHtml(): string {
+  return SPARK_POS.map((p) =>
+    `<div class="stp-spark" style="top:${p.t}%;left:${p.l}%;width:${p.s}mm;height:${p.s}mm">${GEMINI_SPARK}</div>`
+  ).join('');
+}
+function storyTextPageHtml(text: string, idx = 0, lantern = ''): string {
   const bg = PRINT_PAGE_COLORS[idx % PRINT_PAGE_COLORS.length];
-  return `<div class="page stp-page" style="background:${bg}"><div class="stp-card">` +
-    `<div class="stp-lantern">🏮</div>` +
+  const emblem = lantern
+    ? `<div class="stp-lantern" style="background-image:url(${lantern})"></div>`
+    : `<div class="stp-lantern stp-lantern--emoji">🏮</div>`;
+  return `<div class="page stp-page" style="background:${bg}">` +
+    sparklesHtml() +
+    `<div class="stp-card">` +
+    emblem +
     `<span class="stp-corner" style="top:6mm;left:7mm">✦</span><span class="stp-corner" style="top:6mm;right:7mm">✦</span>` +
     `<span class="stp-corner" style="bottom:6mm;left:7mm">✦</span><span class="stp-corner" style="bottom:6mm;right:7mm">✦</span>` +
     `<div class="stp-divider"></div><div class="stp-txt">${text}</div></div></div>`;
@@ -616,6 +647,7 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
   }
 
   const qrSrc = await websiteQrDataUri();
+  const lanternUri = lanternDataUri();
   const interior: string[] = [];
   // Front matter: inside title + lantern separator + dedication.
   interior.push(titlePageHtml(input.title, input.childName));
@@ -623,7 +655,7 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
   if (photoSrc) interior.push(dedicationPageHtml(photoSrc, input.childName, input.dedication));
   // Body: each story page is a decorative TEXT page + its full-bleed illustration.
   for (let i = 0; i < input.imagePaths.length; i++) {
-    interior.push(storyTextPageHtml(input.pageTexts[i] || '', i));
+    interior.push(storyTextPageHtml(input.pageTexts[i] || '', i, lanternUri));
     interior.push(linePageHtml(dataUri(images[i].buffer, images[i].mime)));
   }
   images.length = 0; // drop the upscaled buffers — the base64 is now in the HTML
