@@ -164,25 +164,118 @@ const SHARED_CSS = `
   .copyright-page { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20mm; text-align: center; background: #0a1426; }
   .cp-brand { color: #e0a82e; font-weight: 700; font-size: 18pt; margin-bottom: 8mm; }
   .cp-text { color: #cfd8e6; font-size: 12pt; line-height: 1.8; }
+
+  /* ── Rich interior pages (match the on-screen book) ─────────────────────── */
+  /* Inside title page */
+  .pt-page { background: linear-gradient(160deg,#050a15,#0a1628 50%,#0e1f3d); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7mm; padding:24mm; text-align:center; }
+  .pt-logo { width:42mm; height:42mm; object-fit:contain; filter:drop-shadow(0 0 8mm rgba(212,169,55,0.6)); }
+  .pt-brand-name { font-size:15pt; font-weight:800; color:#D4A937; letter-spacing:2px; }
+  .pt-rule { width:44mm; height:0.6mm; background:linear-gradient(90deg,transparent,#D4A937,transparent); }
+  .pt-presents { font-size:13pt; color:rgba(212,169,55,0.8); font-weight:600; letter-spacing:1px; margin-bottom:4mm; }
+  .pt-title { font-size:34pt; font-weight:900; color:#fff; line-height:1.25; max-width:175mm; }
+  .pt-tagline { font-size:14pt; color:rgba(255,255,255,0.5); margin-top:4mm; }
+  .pt-website { font-size:11pt; color:rgba(212,169,55,0.6); letter-spacing:2px; font-weight:600; }
+  /* Full-logo separator page */
+  .fp-page { background:radial-gradient(ellipse at center,#1a2440,#0a1020); display:flex; align-items:center; justify-content:center; padding:20mm; }
+  .fp-logo { max-width:82%; max-height:82%; object-fit:contain; border-radius:6mm; filter:drop-shadow(0 6mm 20mm rgba(0,0,0,0.55)); }
+  /* Dedication page */
+  .ded2-page { background:linear-gradient(145deg,#fdf8ee,#fef3d0 50%,#fff8e1); border:2mm solid #D4A937; display:flex; flex-direction:column; align-items:center; gap:6mm; padding:22mm 18mm; text-align:center; }
+  .ded2-photo { width:54mm; height:54mm; border-radius:50%; object-fit:cover; border:2.5mm solid #D4A937; box-shadow:0 0 0 4mm rgba(212,169,55,0.18); }
+  .ded2-heading { font-size:22pt; font-weight:900; color:#8B5E0A; }
+  .ded2-divider { width:52mm; height:0.6mm; background:linear-gradient(90deg,transparent,#D4A937,transparent); }
+  .ded2-text { font-size:17pt; line-height:1.85; color:#3a2800; font-weight:600; max-width:155mm; font-style:italic; }
+  .ded2-write-label { font-size:12pt; color:#8B5E0A; font-weight:700; margin-top:5mm; align-self:stretch; text-align:right; }
+  .ded2-lines { display:flex; flex-direction:column; gap:7mm; width:100%; margin-top:2mm; }
+  .ded2-line { width:100%; border-bottom:0.4mm dashed rgba(139,94,10,0.45); }
+  /* Final story page */
+  .fsp2-page { background:linear-gradient(160deg,#0a1628,#111840 60%,#0d0f1a); display:flex; flex-direction:column; gap:5mm; padding:20mm 16mm; direction:rtl; }
+  .fsp2-label { font-size:11pt; color:rgba(212,169,55,0.75); letter-spacing:2px; font-weight:700; text-align:center; }
+  .fsp2-title { font-size:24pt; font-weight:900; color:#fff; text-align:center; margin-top:2mm; }
+  .fsp2-divider { width:100%; height:0.4mm; background:linear-gradient(90deg,transparent,rgba(212,169,55,0.4),transparent); }
+  .fsp2-head { font-size:13pt; font-weight:800; color:#D4A937; margin-bottom:2mm; }
+  .fsp2-moral { font-size:14pt; line-height:1.8; color:rgba(255,255,255,0.85); background:rgba(212,169,55,0.06); border-right:1mm solid #D4A937; padding:5mm 7mm; border-radius:0 3mm 3mm 0; }
+  .fsp2-q { list-style:none; display:flex; flex-direction:column; gap:3mm; }
+  .fsp2-q li { font-size:12pt; color:rgba(255,255,255,0.78); line-height:1.6; padding-right:6mm; position:relative; }
+  .fsp2-q li::before { content:"◆"; position:absolute; right:0; color:#D4A937; font-size:8pt; top:1.5mm; }
+  .fsp2-concl { font-size:14pt; color:rgba(255,255,255,0.85); font-weight:600; text-align:center; }
+  .fsp2-star { font-size:16pt; font-weight:900; color:#D4A937; text-align:center; margin-top:1mm; }
+  .fsp2-qr-row { display:flex; align-items:center; justify-content:space-between; gap:6mm; background:rgba(212,169,55,0.06); border:0.4mm solid rgba(212,169,55,0.25); border-radius:5mm; padding:6mm 8mm; margin-top:auto; }
+  .fsp2-qr-label { font-size:13pt; font-weight:800; color:#D4A937; }
+  .fsp2-qr-sub { font-size:10pt; color:rgba(255,255,255,0.55); margin-top:1mm; line-height:1.5; }
+  .fsp2-qr-box { background:#fff; padding:2mm; border-radius:3mm; flex-shrink:0; }
+  .fsp2-qr-img { width:30mm; height:30mm; display:block; }
+  /* Copyright / contact page */
+  .cp2-page { background:linear-gradient(160deg,#0a1628,#050a15); display:flex; flex-direction:column; align-items:center; gap:5mm; padding:22mm 18mm; text-align:center; direction:rtl; }
+  .cp2-logo { width:36mm; height:36mm; object-fit:contain; filter:drop-shadow(0 0 6mm rgba(212,169,55,0.55)); }
+  .cp2-brand { font-size:15pt; font-weight:800; color:#D4A937; letter-spacing:2px; }
+  .cp2-divider { width:100%; height:0.4mm; background:linear-gradient(90deg,transparent,rgba(212,169,55,0.3),transparent); }
+  .cp2-info-row { display:flex; align-items:center; justify-content:center; gap:3mm; font-size:13pt; }
+  .cp2-link { color:rgba(212,169,55,0.9); font-weight:700; direction:ltr; text-decoration:none; }
+  .cp2-policy { max-width:165mm; text-align:right; display:flex; flex-direction:column; gap:3mm; }
+  .cp2-policy p { font-size:10pt; color:rgba(255,255,255,0.6); line-height:1.6; }
+  .cp2-policy strong { color:rgba(212,169,55,0.9); font-weight:800; }
+  .cp2-qr-row { display:flex; align-items:center; gap:6mm; background:rgba(212,169,55,0.06); border:0.4mm solid rgba(212,169,55,0.2); border-radius:5mm; padding:6mm 8mm; max-width:155mm; }
+  .cp2-qr-text { flex:1; text-align:right; }
+  .cp2-qr-label { font-size:13pt; font-weight:800; color:#D4A937; }
+  .cp2-qr-sub { font-size:10pt; color:rgba(255,255,255,0.5); margin-top:1mm; line-height:1.5; }
+  .cp2-qr-box { background:#fff; padding:2mm; border-radius:3mm; flex-shrink:0; }
+  .cp2-qr-img { width:28mm; height:28mm; display:block; }
+  .cp2-copy { font-size:10pt; color:rgba(255,255,255,0.35); line-height:1.7; margin-top:2mm; }
 `;
 
 function linePageHtml(src: string): string {
   return `<div class="page"><img class="bleed" src="${src}" alt="" /></div>`;
 }
 function dedicationPageHtml(photoSrc: string, childName: string, text?: string): string {
-  const body = text || `إلى البطل الرائع ${childName},<br/>نتمنى أن تكون حياتك مليئة بالمغامرات والسعادة.`;
-  return `<div class="page page-cream center"><img class="ded-photo" src="${photoSrc}" alt="${childName}" /><div class="ded-text">${body}</div></div>`;
+  const body = text || `إلى البطل الرائع ${childName}،<br/>نتمنى أن تكون حياتك مليئة بالمغامرات والسعادة.`;
+  return `<div class="page ded2-page">
+    <img class="ded2-photo" src="${photoSrc}" alt="${childName}" />
+    <div class="ded2-heading">🌟 إهداء خاص 🌟</div>
+    <div class="ded2-divider"></div>
+    <div class="ded2-text">${body}</div>
+    <div class="ded2-write-label">✍️ رسالتك الخاصة:</div>
+    <div class="ded2-lines"><div class="ded2-line"></div><div class="ded2-line"></div><div class="ded2-line"></div></div>
+  </div>`;
 }
-function finalStoryPageHtml(moral: string, questions: string[], conclusion: string): string {
+function finalStoryPageHtml(title: string, moral: string, questions: string[], conclusion: string, childName = ''): string {
   const qs = (questions || []).filter(Boolean).map((q) => `<li>${q}</li>`).join('');
-  return `<div class="page final-page"><div class="end-mark">🌟 ✦ 🌟</div>` +
-    (conclusion ? `<div class="final-conclusion">${conclusion}</div>` : '') +
-    (moral ? `<div class="final-moral">💡 ${moral}</div>` : '') +
-    (qs ? `<div class="final-q-title">💭</div><ul class="final-q">${qs}</ul>` : '') +
-    `</div>`;
+  const qr = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent('https://magicfanoos.com')}&bgcolor=ffffff&color=0a1628`;
+  return `<div class="page fsp2-page">
+    <div class="fsp2-label">✦ نهاية القصة ✦</div>
+    <div class="fsp2-title">${title}</div>
+    <div class="fsp2-divider"></div>
+    ${moral ? `<div><div class="fsp2-head">💡 الدرس المستفاد</div><div class="fsp2-moral">${moral}</div></div>` : ''}
+    ${qs ? `<div class="fsp2-divider"></div><div><div class="fsp2-head">🤔 أسئلة للتفكير معًا</div><ul class="fsp2-q">${qs}</ul></div>` : ''}
+    <div class="fsp2-divider"></div>
+    ${conclusion ? `<div class="fsp2-concl">${conclusion}</div>` : ''}
+    <div class="fsp2-star">⭐ أحسنت يا ${childName}! ⭐</div>
+    <div class="fsp2-qr-row">
+      <div><div class="fsp2-qr-label">📱 استمع لمغامرتك</div><div class="fsp2-qr-sub">امسح الكود لسماع قصة ${childName} بصوت ساحر!</div></div>
+      <div class="fsp2-qr-box"><img class="fsp2-qr-img" src="${qr}" alt="QR" /></div>
+    </div>
+  </div>`;
 }
 function copyrightPageHtml(): string {
-  return `<div class="page copyright-page"><div class="cp-brand">✨ Magic Fanoos</div><div class="cp-text">© ${new Date().getFullYear()} Magic Fanoos · MagicFanoos.com</div></div>`;
+  const logo = logoDataUri();
+  const qr = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent('https://magicfanoos.com')}&bgcolor=ffffff&color=0a1628`;
+  return `<div class="page cp2-page">
+    ${logo ? `<img class="cp2-logo" src="${logo}" alt="" />` : ''}
+    <div class="cp2-brand">Magic Fanoos</div>
+    <div class="cp2-divider"></div>
+    <div class="cp2-info-row">🌐 <span class="cp2-link">MagicFanoos.com</span></div>
+    <div class="cp2-info-row">📧 <span class="cp2-link">magicfanoose@gmail.com</span></div>
+    <div class="cp2-divider"></div>
+    <div class="cp2-policy">
+      <p><strong>سياسة المحتوى:</strong> القصة والصور مخصّصة لطفلك للاستخدام العائلي فقط، ولا يجوز إعادة بيعها أو توزيعها تجاريًا.</p>
+      <p><strong>سياسة الطباعة:</strong> المنتج مطبوع خصيصًا لطفلك، لذا لا يمكن استرجاعه بعد بدء الطباعة. نضمن جودة الطباعة — تواصل معنا لأي مشكلة.</p>
+    </div>
+    <div class="cp2-divider"></div>
+    <div class="cp2-qr-row">
+      <div class="cp2-qr-text"><div class="cp2-qr-label">🏮 زر موقعنا</div><div class="cp2-qr-sub">امسح الكود لزيارة MagicFanoos.com واكتشاف المزيد من القصص</div></div>
+      <div class="cp2-qr-box"><img class="cp2-qr-img" src="${qr}" alt="QR" /></div>
+    </div>
+    <div class="cp2-copy">© ${new Date().getFullYear()} Magic Fanoos. جميع الحقوق محفوظة.<br/>هذه القصة مُولَّدة بواسطة الذكاء الاصطناعي وتم تخصيصها خصيصًا لطفلك.</div>
+  </div>`;
 }
 const PRINT_PAGE_COLORS = ['#F2607A', '#7C5CE0', '#159B8A', '#2E7BD6', '#E17055', '#3FA34D'];
 function storyTextPageHtml(text: string, idx = 0): string {
@@ -193,11 +286,24 @@ function storyTextPageHtml(text: string, idx = 0): string {
     `<span class="stp-corner" style="bottom:6mm;left:7mm">✦</span><span class="stp-corner" style="bottom:6mm;right:7mm">✦</span>` +
     `<div class="stp-divider"></div><div class="stp-txt">${text}</div></div></div>`;
 }
-function titlePageHtml(title: string): string {
-  return `<div class="page title-page"><div class="title-brand">✨ Magic Fanoos</div><div class="title-rule"></div><div class="title-big">${title}</div></div>`;
+function titlePageHtml(title: string, childName = ''): string {
+  const logo = logoDataUri();
+  return `<div class="page pt-page">
+    ${logo ? `<img class="pt-logo" src="${logo}" alt="" />` : ''}
+    <div class="pt-brand-name">Magic Fanoos</div>
+    <div class="pt-rule"></div>
+    <div>
+      ${childName ? `<div class="pt-presents">✦ يُقدّم لـ ${childName} ✦</div>` : ''}
+      <div class="pt-title">${title}</div>
+      <div class="pt-tagline">قصة مُهداة إليك وحدك</div>
+    </div>
+    <div class="pt-rule"></div>
+    <div class="pt-website">MagicFanoos.com</div>
+  </div>`;
 }
 function fanoosPageHtml(): string {
-  return `<div class="page fanoos-page"><div class="fanoos-emblem">🏮</div></div>`;
+  const logo = logoDataUri();
+  return `<div class="page fp-page">${logo ? `<img class="fp-logo" src="${logo}" alt="Magic Fanoos" />` : '<div class="fanoos-emblem">🏮</div>'}</div>`;
 }
 function endPageHtml(childName: string): string {
   return `<div class="page end-page"><div class="end-mark">🌟 ✦ 🌟</div><div class="ded-text">${childName} 💛<br/>Magic Fanoos</div></div>`;
@@ -499,7 +605,7 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
 
   const interior: string[] = [];
   // Front matter: inside title + lantern separator + dedication.
-  interior.push(titlePageHtml(input.title));
+  interior.push(titlePageHtml(input.title, input.childName));
   interior.push(fanoosPageHtml());
   if (photoSrc) interior.push(dedicationPageHtml(photoSrc, input.childName, input.dedication));
   // Body: each story page is a decorative TEXT page + its full-bleed illustration.
@@ -511,7 +617,7 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
   // conclusion), then the copyright page — mirrors the on-screen book.
   interior.push(fanoosPageHtml());
   if (input.moral || input.conclusion || (input.questions && input.questions.length)) {
-    interior.push(finalStoryPageHtml(input.moral || '', input.questions || [], input.conclusion || ''));
+    interior.push(finalStoryPageHtml(input.title, input.moral || '', input.questions || [], input.conclusion || '', input.childName));
   } else {
     interior.push(endPageHtml(input.childName));
   }

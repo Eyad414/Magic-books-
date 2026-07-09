@@ -268,7 +268,7 @@ export default function StoryBook({
             className="sb-print-btn"
             aria-label="حفظ الكتاب PDF من المتصفح — اختر Save as PDF"
           >
-            📖 {t('storybook.save_pdf_browser', 'حفظ الكتاب PDF (اختر «Save as PDF»)')}
+            📖 {t('storybook.save_pdf_browser', '(Option 1) حفظ الكتاب PDF (اختر «Save as PDF»)')}
             <span className="sb-print-size">220 × 220 mm</span>
           </button>
 
@@ -282,7 +282,7 @@ export default function StoryBook({
           >
             {isDownloading
               ? `⏳ ${t('storybook.preparing_short', 'جاري التجهيز...')}`
-              : `⚙️ ${t('storybook.download_pdf_server', 'نسخة الخادم (PDF) — للمقارنة')}`}
+              : `⚙️ ${t('storybook.download_pdf_server', '(Option 2) نسخة الخادم (PDF)')}`}
           </button>
 
           {/* Info strip */}
