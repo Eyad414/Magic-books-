@@ -1,9 +1,27 @@
 import sharp from 'sharp';
 import puppeteer from 'puppeteer';
+import QRCode from 'qrcode';
 import fs from 'fs';
 import path from 'path';
 import { Storage } from '@google-cloud/storage';
 import { uploadBuffer, pdfFolderPath } from './StorageService';
+
+// QR code for the website, generated LOCALLY (embedded data URI) so the print
+// render never waits on an external QR service — an external fetch could hang
+// the Chromium render and 502 the request. Generated once and cached.
+let _qrUri: string | null = null;
+async function websiteQrDataUri(): Promise<string> {
+  if (_qrUri !== null) return _qrUri;
+  try {
+    _qrUri = await QRCode.toDataURL('https://magicfanoos.com', {
+      margin: 1, width: 300, color: { dark: '#0a1628ff', light: '#ffffffff' },
+    });
+  } catch (e: any) {
+    console.warn('[PrintService] QR generation failed:', e?.message || e);
+    _qrUri = '';
+  }
+  return _qrUri;
+}
 
 // The Magic Fanoos brand logo, embedded (base64) so the server-side PDF render
 // can show it without a network fetch. Read once and cached.
@@ -237,9 +255,8 @@ function dedicationPageHtml(photoSrc: string, childName: string, text?: string):
     <div class="ded2-lines"><div class="ded2-line"></div><div class="ded2-line"></div><div class="ded2-line"></div></div>
   </div>`;
 }
-function finalStoryPageHtml(title: string, moral: string, questions: string[], conclusion: string, childName = ''): string {
+function finalStoryPageHtml(title: string, moral: string, questions: string[], conclusion: string, childName = '', qr = ''): string {
   const qs = (questions || []).filter(Boolean).map((q) => `<li>${q}</li>`).join('');
-  const qr = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent('https://magicfanoos.com')}&bgcolor=ffffff&color=0a1628`;
   return `<div class="page fsp2-page">
     <div class="fsp2-label">✦ نهاية القصة ✦</div>
     <div class="fsp2-title">${title}</div>
@@ -251,13 +268,12 @@ function finalStoryPageHtml(title: string, moral: string, questions: string[], c
     <div class="fsp2-star">⭐ أحسنت يا ${childName}! ⭐</div>
     <div class="fsp2-qr-row">
       <div><div class="fsp2-qr-label">📱 استمع لمغامرتك</div><div class="fsp2-qr-sub">امسح الكود لسماع قصة ${childName} بصوت ساحر!</div></div>
-      <div class="fsp2-qr-box"><img class="fsp2-qr-img" src="${qr}" alt="QR" /></div>
+      ${qr ? `<div class="fsp2-qr-box"><img class="fsp2-qr-img" src="${qr}" alt="QR" /></div>` : ''}
     </div>
   </div>`;
 }
-function copyrightPageHtml(): string {
+function copyrightPageHtml(qr = ''): string {
   const logo = logoDataUri();
-  const qr = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent('https://magicfanoos.com')}&bgcolor=ffffff&color=0a1628`;
   return `<div class="page cp2-page">
     ${logo ? `<img class="cp2-logo" src="${logo}" alt="" />` : ''}
     <div class="cp2-brand">Magic Fanoos</div>
@@ -272,7 +288,7 @@ function copyrightPageHtml(): string {
     <div class="cp2-divider"></div>
     <div class="cp2-qr-row">
       <div class="cp2-qr-text"><div class="cp2-qr-label">🏮 زر موقعنا</div><div class="cp2-qr-sub">امسح الكود لزيارة MagicFanoos.com واكتشاف المزيد من القصص</div></div>
-      <div class="cp2-qr-box"><img class="cp2-qr-img" src="${qr}" alt="QR" /></div>
+      ${qr ? `<div class="cp2-qr-box"><img class="cp2-qr-img" src="${qr}" alt="QR" /></div>` : ''}
     </div>
     <div class="cp2-copy">© ${new Date().getFullYear()} Magic Fanoos. جميع الحقوق محفوظة.<br/>هذه القصة مُولَّدة بواسطة الذكاء الاصطناعي وتم تخصيصها خصيصًا لطفلك.</div>
   </div>`;
@@ -603,6 +619,7 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
     }
   }
 
+  const qrSrc = await websiteQrDataUri();
   const interior: string[] = [];
   // Front matter: inside title + lantern separator + dedication.
   interior.push(titlePageHtml(input.title, input.childName));
@@ -617,11 +634,11 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
   // conclusion), then the copyright page — mirrors the on-screen book.
   interior.push(fanoosPageHtml());
   if (input.moral || input.conclusion || (input.questions && input.questions.length)) {
-    interior.push(finalStoryPageHtml(input.title, input.moral || '', input.questions || [], input.conclusion || '', input.childName));
+    interior.push(finalStoryPageHtml(input.title, input.moral || '', input.questions || [], input.conclusion || '', input.childName, qrSrc));
   } else {
     interior.push(endPageHtml(input.childName));
   }
-  interior.push(copyrightPageHtml());
+  interior.push(copyrightPageHtml(qrSrc));
   const padded = padToMultipleOf4(interior);
   const interiorPdf = await renderPrintPdf(squareDoc(padded));
   logMem('interior PDF rendered');
