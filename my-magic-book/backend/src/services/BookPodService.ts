@@ -198,7 +198,8 @@ export async function submitPrintJob(input: BookPodJobInput): Promise<BookPodJob
     shippingDetails,
     items: [{ bookid: Number(bookId), quantity: input.quantity }],
   };
-  if (input.totalPrice != null) orderBody.totalprice = input.totalPrice;
+  // Intentionally do NOT send a price/total to BookPod — per requirement, only
+  // the customer's address is recorded, with no delivery fees or order value.
 
   const orderRes = await postJson(`${baseUrl}/api/v1/orders`, headers, orderBody);
   return {
