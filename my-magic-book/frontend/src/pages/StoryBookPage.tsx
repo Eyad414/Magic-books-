@@ -99,6 +99,9 @@ export default function StoryBookPage() {
         setGeneratedImages(
           Array.from({ length: 13 }, (_, i) => `magic-fanoose/generated/${pin}/page-${String(i + 1).padStart(2, '0')}.png`),
         );
+        // page-99 is this book's own child portrait — used on the back cover so
+        // it shows THIS child (e.g. Lora), not a generic sample photo.
+        setGeneratedPortrait(`magic-fanoose/generated/${pin}/page-99.png`);
       }
     } catch (err) {
       console.error(err);
@@ -142,10 +145,11 @@ export default function StoryBookPage() {
     toDisplayUrl(generatedPortrait) ||
     '';
 
-  // The actual uploaded photo for the back-cover circle (no avatar). In admin
-  // preview (no real customer) we show a sample real photo from the bucket.
+  // Back-cover circle photo: the real customer photo → else THIS book's own
+  // child portrait (page-99, e.g. Lora) → else a sample. Never a mismatched kid.
   const realPhoto =
     toDisplayUrl(storyData?.childPhotoUrl) ||
+    toDisplayUrl(generatedPortrait) ||
     toDisplayUrl('magic-fanoose/child-photos/d814d243-9300-489d-b275-29144c91ad19.jpeg');
 
   return (
@@ -167,9 +171,9 @@ export default function StoryBookPage() {
         rawCoverPath={generatedCover}
         rawBackPath={generatedPortrait}
         rawImagePaths={generatedImages}
-        /* Real kid photo for the back-cover circle; in admin preview (no real
-           customer) fall back to the same sample photo the on-screen book uses. */
-        rawChildPhotoPath={storyData?.childPhotoUrl || 'magic-fanoose/child-photos/d814d243-9300-489d-b275-29144c91ad19.jpeg'}
+        /* Back-cover circle: real customer photo → this book's own child portrait
+           (page-99, matches the story) → sample. Never a mismatched child. */
+        rawChildPhotoPath={storyData?.childPhotoUrl || generatedPortrait || 'magic-fanoose/child-photos/d814d243-9300-489d-b275-29144c91ad19.jpeg'}
       />
     </div>
   );
