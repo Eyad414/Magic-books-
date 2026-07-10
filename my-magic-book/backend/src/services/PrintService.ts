@@ -510,7 +510,12 @@ export async function renderPrintPdf(html: string, widthMm = PRINT_PAGE_MM, heig
     const pdf = await page.pdf({ printBackground: true, width: `${widthMm}mm`, height: `${heightMm}mm` });
     return Buffer.from(pdf);
   } finally {
-    await browser.close();
+    // Force-kill Chromium so its memory is fully reclaimed before the next
+    // render — otherwise back-to-back builds accumulate and OOM the 512MB host
+    // (the 2nd download failing while the 1st succeeded).
+    const proc = browser.process();
+    try { await browser.close(); } catch { /* ignore */ }
+    try { proc?.kill('SIGKILL'); } catch { /* ignore */ }
   }
 }
 
