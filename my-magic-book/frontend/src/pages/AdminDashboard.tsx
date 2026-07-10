@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { adminApi } from '../api/adminApi';
 import { uploadApi } from '../api/uploadApi';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw } from 'lucide-react';
+import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail } from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -16,9 +16,10 @@ export default function AdminDashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState<'team' | 'pricing' | 'stories' | 'orders' | 'showcase'>('orders');
+  const [tab, setTab] = useState<'team' | 'pricing' | 'stories' | 'orders' | 'showcase' | 'messages'>('orders');
   const [team, setTeam] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>(null);
   
   // New Admin Form
@@ -303,6 +304,7 @@ export default function AdminDashboard() {
       fetchTeam();
       fetchSettings();
       fetchOrders();
+      fetchMessages();
     }
   }, [user]);
 
@@ -330,6 +332,26 @@ export default function AdminDashboard() {
       if (res.success) setOrders(res.orders);
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const fetchMessages = async () => {
+    try {
+      const res = await adminApi.getMessages();
+      if (res.success) setMessages(res.messages);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteMessage = async (id: string) => {
+    if (!window.confirm(t('admin.confirm_delete_message', 'حذف هذه الرسالة؟'))) return;
+    try {
+      const res = await adminApi.deleteMessage(id);
+      if (res.success) setMessages((prev) => prev.filter((m) => m._id !== id));
+    } catch (err) {
+      console.error(err);
+      toast.error(t('admin.delete_failed', 'فشل الحذف'));
     }
   };
 
@@ -390,6 +412,7 @@ export default function AdminDashboard() {
             <div className="flex flex-col gap-2">
               {[
                 { id: 'orders', label: t('admin.tab_orders'), icon: Package },
+                { id: 'messages', label: t('admin.tab_messages', 'الرسائل'), icon: Mail },
                 { id: 'showcase', label: t('admin.tab_showcase', 'الكتب الجاهزة'), icon: BookOpen },
                 { id: 'stories', label: t('admin.tab_stories'), icon: BookOpen },
                 { id: 'pricing', label: t('admin.tab_pricing'), icon: Settings },
@@ -512,6 +535,39 @@ export default function AdminDashboard() {
                     ))
                   )}
                 </div>
+              </div>
+            ) : tab === 'messages' ? (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-arabic font-bold text-white text-lg">✉️ {t('admin.tab_messages', 'الرسائل')}</h3>
+                  <span className="font-arabic text-white/50 text-sm">{messages.length}</span>
+                </div>
+                {messages.length === 0 ? (
+                  <p className="font-arabic text-white/50 text-sm py-10 text-center">{t('admin.no_messages', 'لا توجد رسائل بعد')}</p>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {messages.map((m) => (
+                      <div key={m._id} className="bg-dark-700/50 border border-white/10 rounded-2xl p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="font-arabic font-bold text-white text-sm">
+                              {m.name}{m.subject ? <span className="text-gold-500"> · {m.subject}</span> : null}
+                            </div>
+                            <div className="font-arabic text-white/50 text-xs mt-0.5 flex flex-wrap gap-x-3">
+                              <a href={`mailto:${m.email}`} className="hover:text-gold-500">{m.email}</a>
+                              {m.phone ? <a href={`tel:${m.phone}`} className="hover:text-gold-500" dir="ltr">{m.phone}</a> : null}
+                              {m.createdAt ? <span>{new Date(m.createdAt).toLocaleString()}</span> : null}
+                            </div>
+                          </div>
+                          <button onClick={() => handleDeleteMessage(m._id)} aria-label={t('admin.delete', 'حذف')} className="text-white/40 hover:text-red-400 shrink-0">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <p className="font-arabic text-white/80 text-sm mt-2 whitespace-pre-wrap leading-relaxed">{m.message}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : tab === 'team' ? (
               <div>

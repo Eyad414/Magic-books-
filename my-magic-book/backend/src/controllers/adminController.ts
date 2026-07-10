@@ -3,6 +3,7 @@ import User from '../models/User';
 import Story from '../models/Story';
 import Order from '../models/Order';
 import SiteSettings from '../models/SiteSettings';
+import ContactMessage from '../models/ContactMessage';
 import { buildBookForOrder, reRenderPrintFilesForOrder, submitOrderToBookPod, buildPreviewPrintFiles, submitPreviewToBookPod } from '../services/BookBuilder';
 import { generateIllustration, COST_PER_IMAGE_USD } from '../services/ImageGenerator';
 import { buildIllustrationPrompt, buildPhotorealPrompt, buildCoverPrompt } from '../services/promptBuilder';
@@ -23,6 +24,28 @@ function substituteName(s: string, name: string): string {
     .replace(/\{\{\s*name\s*\}\}/gi, name)
     .replace(/\{\s*name\s*\}/gi, name);
 }
+
+// @route GET /api/admin/messages
+// @desc List customer contact-form messages (newest first) for the admin inbox
+export const listMessages = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const messages = await ContactMessage.find().sort({ createdAt: -1 }).lean();
+    res.json({ success: true, messages });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @route DELETE /api/admin/messages/:id
+// @desc Remove a contact message from the inbox
+export const deleteMessage = async (req: Request, res: Response): Promise<void> => {
+  try {
+    await ContactMessage.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 
 // @route GET /api/admin/stories
 // @desc Get all stories from all users
