@@ -129,16 +129,25 @@ export default function StoryBookPage() {
   if (isLoading) return <div className="min-h-screen bg-[#03060e] flex items-center justify-center text-gold-500 font-arabic">جاري تحميل القصة...</div>;
 
   // Coloring books render as a coloring layout (cover + line-art pages + back),
-  // not as the 34-page story book.
-  if (storyData?.bookPackage === 'coloring') {
-    const placeMap: Record<string, string> = { zoo_coloring: 'حديقة الحيوانات', space_coloring: 'الفضاء', school_coloring: 'المدرسة' };
+  // not as the 34-page story book. This covers a coloring-package order AND a
+  // Pro order opened with ?view=coloring (its bundled coloring book).
+  const isColoringPackage = storyData?.bookPackage === 'coloring';
+  const viewColoring = searchParams.get('view') === 'coloring';
+  const proColoringReady = !!(storyData?.coloringImages?.length);
+  if (isColoringPackage || (viewColoring && proColoringReady)) {
+    const placeMap: Record<string, string> = { zoo_coloring: 'حديقة الحيوانات', space_coloring: 'الفضاء', school_coloring: 'المدرسة', zoo_adventure: 'حديقة الحيوانات', space: 'الفضاء' };
+    // Coloring-package order stores its coloring on generated*; a Pro order keeps
+    // its color story on generated* and the coloring book on coloring*.
+    const colCover = isColoringPackage ? generatedCover : storyData.coloringCover;
+    const colBack = isColoringPackage ? generatedPortrait : storyData.coloringBackCover;
+    const colPages = isColoringPackage ? generatedImages : (storyData.coloringImages || []);
     return (
       <ColoringBookView
         childName={localizeName(storyData.childName || 'طفلك', i18n.language)}
         place={placeMap[storyData.theme] || ''}
-        cover={toDisplayUrl(generatedCover)}
-        backCover={toDisplayUrl(generatedPortrait)}
-        pages={generatedImages.map(toDisplayUrl)}
+        cover={toDisplayUrl(colCover)}
+        backCover={toDisplayUrl(colBack)}
+        pages={colPages.map(toDisplayUrl)}
       />
     );
   }

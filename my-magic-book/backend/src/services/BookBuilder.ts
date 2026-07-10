@@ -95,38 +95,17 @@ export async function buildBookForOrder(orderId: string): Promise<IOrder> {
 
     if (wantsColoring) {
       // COLORING BOOK: one full-color creative cover + 16 line-art pages (no text).
+      // Back cover (page-98) is stored on generatedPortrait for the viewer.
       isColoringBook = true;
-      const scenes = template!.coloringScenes!;
-      const cover = await generateIllustration(
-        buildColoringCoverPrompt(template!.coloringCoverScene!, story.childName, story.childGender),
-        childPhoto, { storyId: sid, pageNumber: 0 }
-      );
-      const objectPaths: string[] = [];
-      for (let i = 0; i < COLORING_PAGES; i++) {
-        const img = await generateIllustration(
-          buildScenePrompt('page', scenes[i], story.childName, story.childGender, { coloring: true }),
-          childPhoto, { storyId: sid, pageNumber: i + 1 }
-        );
-        objectPaths.push(img.objectPath);
-      }
-      // Creative full-color BACK cover (placed after page 16). Stored on
-      // generatedPortrait, which the coloring viewer renders as the back cover.
-      let backCover: string | undefined;
-      if (template!.coloringBackCoverScene) {
-        const back = await generateIllustration(
-          buildColoringBackCoverPrompt(template!.coloringBackCoverScene, story.childName, story.childGender),
-          childPhoto, { storyId: sid, pageNumber: 98 }
-        );
-        backCover = back.objectPath;
-      }
-      story.generatedCover = cover.objectPath;
-      story.generatedImages = objectPaths;
-      story.generatedPortrait = backCover;
+      const col = await generateColoringArtifacts(story, childPhoto, template!, sid, 0);
+      story.generatedCover = col.cover;
+      story.generatedImages = col.images;
+      story.generatedPortrait = col.backCover;
       await story.save();
 
-      imageUrls = objectPaths.map(proxyUrl);
-      pageTexts = objectPaths.map(() => '');
-      coverImageUrl = proxyUrl(cover.objectPath);
+      imageUrls = col.images.map(proxyUrl);
+      pageTexts = col.images.map(() => '');
+      coverImageUrl = proxyUrl(col.cover);
       storyTitle = `${story.childName} — كتاب تلوين`;
     } else if (template?.pageScenes && template?.pageTexts && template?.coverScene && template?.portraitScene) {
       // PHOTOREAL story book — same story, this customer's face.
@@ -176,6 +155,18 @@ export async function buildBookForOrder(orderId: string): Promise<IOrder> {
       imageUrls = paths.map(proxyUrl);
       coverImageUrl = story.coverImageUrl || imageUrls[0] || '';
       storyTitle = `${story.childName} ${story.theme}`;
+    }
+
+    // PRO bundle: also generate the line-art COLORING book as a second digital
+    // artifact (page numbers offset to +200 so it never overwrites the color
+    // story above). The printed/BookPod book stays the color story; the coloring
+    // book is delivered digitally (viewable in the customer's dashboard).
+    if (story.bookPackage === 'pro' && template?.coloringScenes && template?.coloringCoverScene) {
+      const col = await generateColoringArtifacts(story, childPhoto, template, sid, 200);
+      story.coloringCover = col.cover;
+      story.coloringImages = col.images;
+      story.coloringBackCover = col.backCover;
+      await story.save();
     }
 
     // Assemble pages. A coloring book is image-only (no story text); a story book
@@ -243,6 +234,39 @@ export async function buildBookForOrder(orderId: string): Promise<IOrder> {
     await order.save();
     throw err;
   }
+}
+
+/**
+ * Generate the line-art COLORING book artifacts (full-color creative cover + 16
+ * line-art pages + creative back cover). Reused by the coloring-only path and
+ * the Pro bundle. `base` offsets the page numbers so Pro's coloring images
+ * (page-200..) don't overwrite the color story's images (page-00..13, page-99).
+ */
+async function generateColoringArtifacts(
+  story: any, childPhoto: string, template: any, sid: string, base = 0,
+): Promise<{ cover: string; images: string[]; backCover?: string }> {
+  const scenes = template.coloringScenes!;
+  const coverGen = await generateIllustration(
+    buildColoringCoverPrompt(template.coloringCoverScene!, story.childName, story.childGender),
+    childPhoto, { storyId: sid, pageNumber: base + 0 },
+  );
+  const images: string[] = [];
+  for (let i = 0; i < COLORING_PAGES; i++) {
+    const img = await generateIllustration(
+      buildScenePrompt('page', scenes[i], story.childName, story.childGender, { coloring: true }),
+      childPhoto, { storyId: sid, pageNumber: base + i + 1 },
+    );
+    images.push(img.objectPath);
+  }
+  let backCover: string | undefined;
+  if (template.coloringBackCoverScene) {
+    const back = await generateIllustration(
+      buildColoringBackCoverPrompt(template.coloringBackCoverScene, story.childName, story.childGender),
+      childPhoto, { storyId: sid, pageNumber: base + 98 },
+    );
+    backCover = back.objectPath;
+  }
+  return { cover: coverGen.objectPath, images, backCover };
 }
 
 /**

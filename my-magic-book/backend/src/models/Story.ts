@@ -39,6 +39,11 @@ export interface IStory extends Document {
   generatedImages?: string[];
   generatedCover?: string;
   generatedPortrait?: string;
+  // Pro bundle: a SECOND artifact — the line-art coloring book — generated
+  // alongside the color story. GCS object paths. Only set for 'pro' orders.
+  coloringImages?: string[];
+  coloringCover?: string;
+  coloringBackCover?: string;
   status: StoryStatus;
   // Step 3: Customization
   coverColor?: string;
@@ -74,6 +79,9 @@ const StorySchema = new Schema<IStory>(
     generatedImages: { type: [String], default: undefined },
     generatedCover: { type: String, default: undefined },
     generatedPortrait: { type: String, default: undefined },
+    coloringImages: { type: [String], default: undefined },
+    coloringCover: { type: String, default: undefined },
+    coloringBackCover: { type: String, default: undefined },
     status: {
       type: String,
       enum: ['draft', 'generating', 'ready', 'ordered'],

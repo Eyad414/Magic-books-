@@ -268,13 +268,25 @@ export default function Dashboard() {
                               <status.icon className="w-3.5 h-3.5" />
                               <span className="font-arabic text-xs font-bold">{status.label}</span>
                             </div>
-                            <Link 
-                              to={`/book/${story._id}`}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold-500 text-dark-900 hover:bg-gold-400 transition-colors font-arabic font-bold text-xs shadow-lg shadow-gold-500/20"
-                            >
-                              <BookOpen className="w-3.5 h-3.5" />
-                              {t('dashboard.read_story', 'اقرأ القصة')}
-                            </Link>
+                            <div className="flex items-center gap-2">
+                              {/* Pro bundle: the bundled coloring book (if generated). */}
+                              {story.coloringImages?.length ? (
+                                <Link
+                                  to={`/book/${story._id}?view=coloring`}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors font-arabic font-bold text-xs"
+                                >
+                                  <span aria-hidden="true">🖍️</span>
+                                  {t('dashboard.coloring_book', 'كتاب التلوين')}
+                                </Link>
+                              ) : null}
+                              <Link
+                                to={`/book/${story._id}`}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold-500 text-dark-900 hover:bg-gold-400 transition-colors font-arabic font-bold text-xs shadow-lg shadow-gold-500/20"
+                              >
+                                <BookOpen className="w-3.5 h-3.5" />
+                                {t('dashboard.read_story', 'اقرأ القصة')}
+                              </Link>
+                            </div>
                           </div>
                         </div>
                       );
