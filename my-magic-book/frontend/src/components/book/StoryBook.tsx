@@ -120,7 +120,7 @@ export default function StoryBook({
   const gender: Gender = childGender || detectGender(typedName);
   // The displayed name follows the site language (Arabic→بهاء, English→Baha,
   // Hebrew→בהאא). The input keeps whatever the parent typed (typedName).
-  const childName = useMemo(() => localizeName(typedName, i18n.language), [typedName, i18n.language]);
+  const childName = useMemo(() => localizeName(typedName || 'بهاء', i18n.language), [typedName, i18n.language]);
 
   // ── Look up the story ──────────────────────────────────────────────────────
   const story: StoryDefinition = useMemo(
@@ -257,8 +257,9 @@ export default function StoryBook({
                 id="sb-name-input"
                 type="text"
                 value={typedName}
-                onChange={(e) => setTypedName(e.target.value || 'الطفل')}
-                placeholder={t('storybook.placeholder_name', 'اكتب الاسم هنا')}
+                onChange={(e) => setTypedName(e.target.value)}
+                onFocus={(e) => e.currentTarget.select()}
+                placeholder={t('storybook.placeholder_name', '✍️ اكتب اسم الطفل هنا')}
                 className="sb-name-input"
                 maxLength={30}
               />
