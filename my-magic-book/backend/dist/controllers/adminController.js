@@ -327,6 +327,12 @@ const printBook = async (req, res) => {
         const urls = await (0, BookBuilder_1.buildPreviewPrintFiles)({
             theme, childName, childGender, language, coverPath, backPath, imagePaths, childPhotoPath, isColoring,
         });
+        // Release this build's memory so a rapid second download starts clean on the
+        // 512MB host (needs NODE_OPTIONS=--expose-gc; harmless no-op without it).
+        try {
+            global.gc?.();
+        }
+        catch { /* ignore */ }
         res.json({
             success: true,
             interiorPath: urls.interiorPath,
