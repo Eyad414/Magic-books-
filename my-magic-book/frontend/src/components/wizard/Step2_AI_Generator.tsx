@@ -101,7 +101,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
     const DEFAULT_PACKAGES = [
       { id: 'color', label: t('step3.pkg_color'), price: 60, emoji: '🌈', desc: t('step3.pkg_color_desc') },
       { id: 'coloring', label: t('step3.pkg_coloring'), price: 50, emoji: '🖍️', desc: t('step3.pkg_coloring_desc') },
-      { id: 'audio', label: t('step3.pkg_audio'), price: 20, emoji: '🎧', desc: t('step3.pkg_audio_desc') },
+      { id: 'audio', label: t('step3.pkg_audio'), price: 20, emoji: '🎧', desc: t('step3.pkg_audio_desc'), soon: true },
       { id: 'ebook', label: t('step3.pkg_ebook'), price: 20, emoji: '📱', desc: t('step3.pkg_ebook_desc') },
       { id: 'pro', label: t('step3.pkg_pro'), price: 120, originalPrice: 140, emoji: '✨', desc: t('step3.pkg_pro_desc') },
     ];
@@ -364,24 +364,31 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
       <div>
         <label className="block font-arabic text-white/80 text-sm mb-3">{t('step3.packages_label')}</label>
         <div className="flex gap-2 w-full">
-          {packages.map((pkg) => (
+          {packages.map((pkg) => {
+            const isSoon = (pkg as any).soon;   // e.g. audio — not available yet
+            return (
             <button
               key={pkg.id}
               type="button"
               id={`pkg-${pkg.id}`}
-              onClick={() => setBookPackage(pkg.id)}
-              className={`relative flex-1 flex flex-col items-center justify-center p-2 h-28 rounded-2xl border-2 transition-all text-center group ${bookPackage === pkg.id
+              disabled={isSoon}
+              onClick={() => { if (!isSoon) setBookPackage(pkg.id); }}
+              className={`relative flex-1 flex flex-col items-center justify-center p-2 h-28 rounded-2xl border-2 transition-all text-center group ${isSoon
+                  ? 'border-white/10 bg-dark-700/30 opacity-50 cursor-not-allowed'
+                  : bookPackage === pkg.id
                   ? 'border-gold-500 bg-gold-500/10 shadow-gold-glow'
                   : 'border-white/10 hover:border-white/30 bg-dark-700/50'
                 }`}
             >
-              <span className={`text-2xl mb-1 transition-transform duration-300 ${bookPackage === pkg.id ? 'scale-110' : 'group-hover:scale-110'}`}>
+              <span className={`text-2xl mb-1 transition-transform duration-300 ${bookPackage === pkg.id && !isSoon ? 'scale-110' : 'group-hover:scale-110'}`}>
                 {pkg.emoji}
               </span>
-              <span className={`font-arabic text-xs font-bold leading-tight mb-1 ${bookPackage === pkg.id ? 'text-gold-500' : 'text-white'}`}>
+              <span className={`font-arabic text-xs font-bold leading-tight mb-1 ${bookPackage === pkg.id && !isSoon ? 'text-gold-500' : 'text-white'}`}>
                 {pkg.label}
               </span>
-              {'originalPrice' in pkg && pkg.originalPrice ? (
+              {isSoon ? (
+                <span className="font-arabic text-white/60 font-bold text-xs">{t('step3.coming_soon', 'قريباً')}</span>
+              ) : 'originalPrice' in pkg && pkg.originalPrice ? (
                 <div className="flex items-center gap-1 justify-center">
                   <span className="font-arabic text-white/30 text-xs line-through">{(pkg as any).originalPrice} ₪</span>
                   <span className="font-arabic text-gold-500 font-bold text-xs">{pkg.price} ₪</span>
@@ -389,13 +396,19 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
               ) : (
                 <span className="font-arabic text-gold-500 font-bold text-xs">{pkg.price} ₪</span>
               )}
-              {bookPackage === pkg.id && (
+              {isSoon && (
+                <div className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full bg-white/15 text-white/80 text-[10px] font-bold font-arabic">
+                  {t('step3.coming_soon', 'قريباً')}
+                </div>
+              )}
+              {bookPackage === pkg.id && !isSoon && (
                 <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gold-500 text-dark-900 flex items-center justify-center shadow-lg animate-scale-in">
                   <span className="text-xs font-bold">✓</span>
                 </div>
               )}
             </button>
-          ))}
+            );
+          })}
         </div>
       </div>
 
