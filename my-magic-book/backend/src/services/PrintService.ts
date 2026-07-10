@@ -289,8 +289,8 @@ function copyrightPageHtml(qr = ''): string {
     ${logo ? `<img class="cp2-logo" src="${logo}" alt="" />` : ''}
     <div class="cp2-brand">Magic Fanoos</div>
     <div class="cp2-divider"></div>
-    <div class="cp2-info-row">🌐 <span class="cp2-link">MagicFanoos.com</span></div>
-    <div class="cp2-info-row">📧 <span class="cp2-link">magicfanoose@gmail.com</span></div>
+    <div class="cp2-info-row">${sparkSpan(4)} <span class="cp2-link">MagicFanoos.com</span></div>
+    <div class="cp2-info-row">${sparkSpan(4)} <span class="cp2-link">magicfanoose@gmail.com</span></div>
     <div class="cp2-divider"></div>
     <div class="cp2-policy">
       <p><strong>سياسة المحتوى:</strong> القصة والصور مخصّصة لطفلك للاستخدام العائلي فقط، ولا يجوز إعادة بيعها أو توزيعها تجاريًا.</p>
@@ -420,11 +420,11 @@ function wraparoundDoc(a: WraparoundDocArgs): string {
       </div>
       <div class="bc-line"></div>
       <div class="bc-section">
-        <div class="bc-head">✨ مغامرات أخرى تنتظرك</div>
+        <div class="bc-head">${sparkSpan(4.5)} مغامرات أخرى تنتظرك</div>
         <div class="bc-grid">${teasers}</div>
       </div>
       <div class="bc-line"></div>
-      <div class="bc-foot">${logo ? `<img class="bc-foot-logo" src="${logo}" alt="" />` : ''}<div class="bc-foot-text"><span class="bc-foot-brand">Magic Fanoos</span><span class="bc-foot-url">🌐 MagicFanoos.com</span></div></div>
+      <div class="bc-foot">${logo ? `<img class="bc-foot-logo" src="${logo}" alt="" />` : ''}<div class="bc-foot-text"><span class="bc-foot-brand">Magic Fanoos</span><span class="bc-foot-url">${sparkSpan(3.5)} MagicFanoos.com</span></div></div>
     </div>`;
   } else {
     backPanel = `<div class="panel">
