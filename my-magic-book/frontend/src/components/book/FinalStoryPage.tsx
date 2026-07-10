@@ -33,7 +33,7 @@ export default function FinalStoryPage({
 
       {/* Moral */}
       <div className="fsp-moral">
-        <h3 className="fsp-section-head">💡 {t('storybook.moral_title', 'الدرس المستفاد')}</h3>
+        <h3 className="fsp-section-head"><span style={{ color: '#D4A937' }} aria-hidden="true">✦</span> {t('storybook.moral_title', 'الدرس المستفاد')}</h3>
         <p className="fsp-moral-text">{moralText}</p>
       </div>
 
@@ -41,7 +41,7 @@ export default function FinalStoryPage({
 
       {/* Questions for parent */}
       <div className="fsp-questions">
-        <h3 className="fsp-section-head">🤔 {t('storybook.questions_title', 'أسئلة للتفكير معًا')}</h3>
+        <h3 className="fsp-section-head"><span style={{ color: '#D4A937' }} aria-hidden="true">✦</span> {t('storybook.questions_title', 'أسئلة للتفكير معًا')}</h3>
         <ol className="fsp-q-list">
           {questions.map((q, i) => (
             <li key={i} className="fsp-q-item">{q}</li>

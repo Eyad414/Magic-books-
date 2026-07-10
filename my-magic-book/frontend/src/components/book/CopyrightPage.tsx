@@ -18,11 +18,11 @@ export default function CopyrightPage() {
       {/* Website & contact */}
       <div className="cp-info">
         <div className="cp-info-row">
-          <span className="cp-info-icon">🌐</span>
+          <span className="cp-info-icon" style={{ color: '#D4A937' }} aria-hidden="true">✦</span>
           <a href={websiteUrl} className="cp-link">MagicFanoos.com</a>
         </div>
         <div className="cp-info-row">
-          <span className="cp-info-icon">📧</span>
+          <span className="cp-info-icon" style={{ color: '#D4A937' }} aria-hidden="true">✦</span>
           <a href="mailto:magicfanoose@gmail.com" className="cp-link">magicfanoose@gmail.com</a>
         </div>
       </div>

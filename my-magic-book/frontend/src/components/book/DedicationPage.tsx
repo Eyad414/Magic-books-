@@ -41,7 +41,7 @@ export default function DedicationPage({ childName, childPhoto, dedicationText }
       </div>
 
       {/* Title */}
-      <h2 className="ded-heading">🌟 {t('storybook.special_dedication_title', 'إهداء خاص')} 🌟</h2>
+      <h2 className="ded-heading"><span style={{ color: '#D4A937' }} aria-hidden="true">✦</span> {t('storybook.special_dedication_title', 'إهداء خاص')} <span style={{ color: '#D4A937' }} aria-hidden="true">✦</span></h2>
 
       {/* Divider */}
       <div className="ded-divider" aria-hidden="true" />
