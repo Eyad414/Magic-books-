@@ -25,7 +25,7 @@ export default function BestSellers() {
   // generated cover; name is the demo child. Cards c/d are placeholders the
   // owner can swap for the newest themes.
   const bestSellers = [
-    { id: 1, themeId: 'zoo_adventure', name: 'Lora', emoji: '🦁', rating: 4.9, reviews: 128, tag: t('bestsellers.tag_best_seller'), colors: ['#33691e', '#558b2f'], coverPath: 'magic-fanoose/generated/6a3bbaf645b418d21337de09/page-00.png' },
+    { id: 1, themeId: 'zoo_adventure', name: 'Baha', emoji: '🦁', rating: 4.9, reviews: 128, tag: t('bestsellers.tag_best_seller'), colors: ['#33691e', '#558b2f'] },
     { id: 2, themeId: 'space', name: 'Liam', emoji: '🚀', rating: 4.8, reviews: 94, tag: t('bestsellers.tag_new'), colors: ['#1a237e', '#311b92'], coverPath: 'magic-fanoose/generated/6a43cbf500c3ecaed9218b3c/page-00.png' },
     { id: 3, themeId: 'school_coloring', name: 'Yosef', emoji: '🎒', rating: 5.0, reviews: 76, tag: t('bestsellers.tag_featured'), colors: ['#4a148c', '#6a1b9a'] },
     { id: 4, themeId: 'space_coloring', name: 'Sara', emoji: '🎨', rating: 4.7, reviews: 61, tag: '', colors: ['#006064', '#00838f'] },

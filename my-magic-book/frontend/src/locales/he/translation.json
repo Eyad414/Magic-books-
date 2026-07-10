@@ -186,6 +186,11 @@
   "dashboard": {
     "admin_special_desc": "זהו הסיפור שהזמנת — מוכן לצפייה והדפסה (220×220 מ\"מ)",
     "admin_special_btn": "עיין בספר המלא",
+    "read_story": "קרא את הסיפור",
+    "incl_story": "הסיפור",
+    "incl_coloring": "חוברת צביעה",
+    "incl_ebook": "גרסה דיגיטלית",
+    "incl_audio": "שמע (בקרוב)",
     "view_book": "צפה בספר",
     "order_preparing": "בהכנה...",
     "order_failed": "בעיה ביצירה",

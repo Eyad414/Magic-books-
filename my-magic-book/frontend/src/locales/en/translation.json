@@ -186,6 +186,11 @@
   "dashboard": {
     "admin_special_desc": "This is the story you ordered — ready to view and print (220×220 mm)",
     "admin_special_btn": "Browse the full book",
+    "read_story": "Read the story",
+    "incl_story": "Story",
+    "incl_coloring": "Coloring book",
+    "incl_ebook": "E-book",
+    "incl_audio": "Audio (soon)",
     "view_book": "View book",
     "order_preparing": "Preparing...",
     "order_failed": "Build issue",

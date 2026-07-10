@@ -186,6 +186,11 @@
   "dashboard": {
     "admin_special_desc": "هذه هي القصة التي طلبتها - جاهزة للعرض والطباعة (220×220 ملم)",
     "admin_special_btn": "تصفح الكتاب كاملاً",
+    "read_story": "اقرأ القصة",
+    "incl_story": "القصة",
+    "incl_coloring": "كتاب تلوين",
+    "incl_ebook": "نسخة رقمية",
+    "incl_audio": "صوتي (قريباً)",
     "view_book": "تصفّح الكتاب",
     "order_preparing": "قيد التحضير...",
     "order_failed": "مشكلة في الإنشاء",

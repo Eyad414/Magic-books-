@@ -282,6 +282,12 @@ export default function StoryBook({
   return (
     <div className="sb-root" dir={i18n.dir()}>
 
+      {/* Customers (e-book readers) may READ online but not print/save a PDF —
+          block the browser print dialog for non-admins. */}
+      {!isAdmin && (
+        <style>{`@media print { html, body { display: none !important; } }`}</style>
+      )}
+
       {/* ── Admin toolbar (hidden on print) ────────────────────────────────── */}
       {isAdmin && (
         <div className="sb-toolbar no-print">

@@ -12,6 +12,21 @@ import { useTranslation } from 'react-i18next';
 import { localizeName } from '../utils/translit';
 import { SHOWCASE_CARDS } from '../data/showcaseCards';
 
+// What each book package unlocks for the customer. Pro = everything.
+const PACKAGE_INCLUDES: Record<string, string[]> = {
+  color: ['story'],
+  coloring: ['coloring'],
+  ebook: ['ebook'],
+  audio: ['audio'],
+  pro: ['story', 'coloring', 'ebook', 'audio'],
+};
+const INCLUDE_META: Record<string, { emoji: string; key: string; fallback: string }> = {
+  story: { emoji: '📖', key: 'dashboard.incl_story', fallback: 'القصة' },
+  coloring: { emoji: '🖍️', key: 'dashboard.incl_coloring', fallback: 'كتاب تلوين' },
+  ebook: { emoji: '📱', key: 'dashboard.incl_ebook', fallback: 'نسخة رقمية' },
+  audio: { emoji: '🎧', key: 'dashboard.incl_audio', fallback: 'صوتي (قريباً)' },
+};
+
 export default function Dashboard() {
   const { user, isAuthenticated, isLoading, updateUser, logout } = useAuth();
   const { resetProgress } = useStoryProgress();
@@ -237,6 +252,17 @@ export default function Dashboard() {
                           <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">📚</div>
                           <h3 className="font-arabic font-bold text-white text-lg mb-1">{story.childName}</h3>
                           <p className="font-arabic text-white/40 text-xs mb-3">{story.theme} • {new Date(story.createdAt).toLocaleDateString()}</p>
+                          {/* What this package unlocks (Pro = all). */}
+                          <div className="flex flex-wrap gap-1.5 mb-3">
+                            {(PACKAGE_INCLUDES[story.bookPackage || 'color'] || ['story']).map((inc) => {
+                              const meta = INCLUDE_META[inc];
+                              return (
+                                <span key={inc} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/70 font-arabic text-[10px] font-bold">
+                                  <span aria-hidden="true">{meta.emoji}</span>{t(meta.key, meta.fallback)}
+                                </span>
+                              );
+                            })}
+                          </div>
                           <div className="mt-auto pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-white/5">
                             <div className={`flex items-center gap-1.5 ${status.color} bg-white/5 px-2.5 py-1.5 rounded-lg`}>
                               <status.icon className="w-3.5 h-3.5" />
@@ -247,7 +273,7 @@ export default function Dashboard() {
                               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold-500 text-dark-900 hover:bg-gold-400 transition-colors font-arabic font-bold text-xs shadow-lg shadow-gold-500/20"
                             >
                               <BookOpen className="w-3.5 h-3.5" />
-                              {t('dashboard.admin_special_btn')}
+                              {t('dashboard.read_story', 'اقرأ القصة')}
                             </Link>
                           </div>
                         </div>
