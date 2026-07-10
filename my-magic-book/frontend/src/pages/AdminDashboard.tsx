@@ -8,13 +8,15 @@ import MagicButton from '../components/common/MagicButton';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { findStory } from '../data/stories';
+import { SHOWCASE_CARDS } from '../data/showcaseCards';
+import { localizeName } from '../utils/translit';
 
 export default function AdminDashboard() {
   const { t, i18n } = useTranslation();
   const { user, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState<'team' | 'pricing' | 'stories' | 'orders'>('orders');
+  const [tab, setTab] = useState<'team' | 'pricing' | 'stories' | 'orders' | 'showcase'>('orders');
   const [team, setTeam] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>(null);
@@ -388,6 +390,7 @@ export default function AdminDashboard() {
             <div className="flex flex-col gap-2">
               {[
                 { id: 'orders', label: t('admin.tab_orders'), icon: Package },
+                { id: 'showcase', label: t('admin.tab_showcase', 'الكتب الجاهزة'), icon: BookOpen },
                 { id: 'stories', label: t('admin.tab_stories'), icon: BookOpen },
                 { id: 'pricing', label: t('admin.tab_pricing'), icon: Settings },
                 { id: 'team', label: t('admin.tab_team'), icon: Users },
@@ -807,6 +810,33 @@ export default function AdminDashboard() {
                     <MagicButton onClick={() => saveSettings(settings)} className="mt-4">{t('admin.save_themes')}</MagicButton>
                   </div>
                 )}
+              </div>
+            ) : tab === 'showcase' ? (
+              <div>
+                <h3 className="font-arabic font-bold text-white text-lg mb-2">📚 {t('admin.tab_showcase', 'الكتب الجاهزة')}</h3>
+                <p className="font-arabic text-white/50 text-sm mb-5">{t('admin.showcase_desc', 'افتح أي كتاب لتنزيله (PDF) أو إرساله إلى BookPod للطباعة.')}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {SHOWCASE_CARDS.map((card) => {
+                    const isColoring = card.themeId.includes('coloring');
+                    const href = isColoring
+                      ? `/coloring/${card.themeId}?name=${encodeURIComponent(card.name)}`
+                      : `/book/${card.themeId}?name=${encodeURIComponent(card.name)}&lng=ar${card.storyId ? `&pin=${card.storyId}` : ''}`;
+                    return (
+                      <div key={card.key} className="bg-dark-700/50 rounded-2xl border border-white/5 p-5 flex flex-col gap-3">
+                        <div className="flex items-center gap-3">
+                          <span className="text-4xl">{card.emoji}</span>
+                          <div>
+                            <h4 className="font-arabic font-bold text-white">{localizeName(card.name, i18n.language)}</h4>
+                            <p className="font-arabic text-gold-500 text-xs">{isColoring ? t('admin.coloring_book', 'كتاب تلوين') : t(`step2.theme_${card.themeId}`, card.themeId)}</p>
+                          </div>
+                        </div>
+                        <Link to={href} className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gold-500 text-[#0a1628] rounded-xl font-arabic font-bold text-sm hover:bg-gold-400 transition">
+                          🖨️ {t('admin.open_to_print', 'افتح للطباعة / BookPod')}
+                        </Link>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             ) : null}
           </div>

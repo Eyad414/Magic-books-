@@ -90,6 +90,16 @@ export default function StoryBookPage() {
           }
         }
       }
+      // Pinned showcase book (?pin=<storyId>): load that book's exact generated
+      // illustrations from storage (e.g. Lora's real zoo book), overriding the
+      // generic theme images.
+      const pin = searchParams.get('pin');
+      if (pin) {
+        setGeneratedCover(`magic-fanoose/generated/${pin}/page-00.png`);
+        setGeneratedImages(
+          Array.from({ length: 13 }, (_, i) => `magic-fanoose/generated/${pin}/page-${String(i + 1).padStart(2, '0')}.png`),
+        );
+      }
     } catch (err) {
       console.error(err);
       toast.error('فشل في جلب بيانات القصة');
