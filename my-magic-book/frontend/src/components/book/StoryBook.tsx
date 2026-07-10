@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { adminApi } from '../../api/adminApi';
+import { uploadApi } from '../../api/uploadApi';
 import { toDisplayUrl, objectPathToUrl } from '../../api/mediaUrl';
 import FrontCover        from './FrontCover';
 import TitlePage         from './TitlePage';
@@ -87,6 +88,12 @@ export default function StoryBook({
   const [showBookPod, setShowBookPod] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ship, setShip] = useState({ fullName: '', phone: '', city: '', street: '', buildingNo: '', deliveryMethod: 'delivery' as 'delivery' | 'pickup' });
+  // Admin-uploaded REAL child photo for the back cover (overrides the AI portrait).
+  // uploadedPhotoPath = raw GCS objectPath (for the print/BookPod build);
+  // uploadedPhotoUrl  = signed URL (for the on-screen preview).
+  const [uploadedPhotoPath, setUploadedPhotoPath] = useState('');
+  const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState('');
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   // Generate (or refresh) the Nano-Banana preview illustrations for this theme.
   const handleGenerate = async (force = false) => {
@@ -154,6 +161,32 @@ export default function StoryBook({
   const resolvedAudio = audioUrl ||
     `https://magicfanoos.com/stories/${story.id}?child=${encodeURIComponent(childName)}`;
 
+  // A real uploaded photo (if the admin added one) wins over the AI portrait for
+  // the back-cover circle & dedication — both on screen and in the print build.
+  const backCoverPhotoUrl = uploadedPhotoUrl || realPhoto;
+  const effectiveChildPhotoPath = uploadedPhotoPath || rawChildPhotoPath;
+
+  // ── Upload a REAL child photo for the back cover ──────────────────────────
+  const handleUploadRealPhoto = async (file?: File) => {
+    if (!file) return;
+    setIsUploadingPhoto(true);
+    const toastId = toast.loading(t('storybook.uploading_photo', '📷 جاري رفع صورة الطفل...'));
+    try {
+      const res = await uploadApi.childPhoto(file);
+      if (res?.success && res.objectPath) {
+        setUploadedPhotoPath(res.objectPath);
+        setUploadedPhotoUrl(res.signedUrl || toDisplayUrl(res.objectPath));
+        toast.success(t('storybook.photo_uploaded', 'تم رفع الصورة الحقيقية ✅ ستظهر على الغلاف الخلفي'), { id: toastId });
+      } else {
+        toast.error(t('storybook.photo_upload_failed', 'فشل رفع الصورة'), { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || t('storybook.photo_upload_failed', 'فشل رفع الصورة'), { id: toastId });
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
   // ── Download handler ──────────────────────────────────────────────────────
   // Builds the print-ready PDF (cover + interior, 220×220mm) on the server from
   // the generated illustrations, then downloads it. Same quality that BookPod
@@ -174,7 +207,7 @@ export default function StoryBook({
         coverPath: rawCoverPath,
         backPath: rawBackPath,
         imagePaths: rawImagePaths,
-        childPhotoPath: rawChildPhotoPath,
+        childPhotoPath: effectiveChildPhotoPath,
       });
       if (res?.success && res.interiorPath) {
         const safe = (childName || 'book').replace(/[^\p{L}\p{N}_-]+/gu, '_');
@@ -226,7 +259,7 @@ export default function StoryBook({
         coverPath: rawCoverPath,
         backPath: rawBackPath,
         imagePaths: rawImagePaths,
-        childPhotoPath: rawChildPhotoPath,
+        childPhotoPath: effectiveChildPhotoPath,
         shipping: ship,
       });
       if (res?.success) {
@@ -298,6 +331,26 @@ export default function StoryBook({
             <span className="sb-print-size">220 × 220 mm</span>
           </button>
 
+          {/* Upload a REAL child photo for the back cover (overrides AI portrait) */}
+          <label
+            className="sb-regen-btn"
+            style={{ width: '100%', textAlign: 'center', cursor: isUploadingPhoto ? 'wait' : 'pointer', display: 'block' }}
+            title={t('storybook.upload_real_photo_hint', 'ارفع صورة حقيقية للطفل لتظهر على الغلاف الخلفي والإهداء')}
+          >
+            {isUploadingPhoto
+              ? `⏳ ${t('storybook.uploading_short', 'جاري الرفع...')}`
+              : uploadedPhotoUrl
+                ? `✅ ${t('storybook.real_photo_set', 'تم تعيين صورة حقيقية (اضغط للتغيير)')}`
+                : `📷 ${t('storybook.upload_real_photo', 'رفع صورة حقيقية للطفل (الغلاف الخلفي)')}`}
+            <input
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              disabled={isUploadingPhoto}
+              onChange={(e) => { handleUploadRealPhoto(e.target.files?.[0]); e.currentTarget.value = ''; }}
+            />
+          </label>
+
           {/* Send to BookPod for printing — opens a shipping form (billable) */}
           <button
             onClick={() => setShowBookPod((v) => !v)}
@@ -352,7 +405,7 @@ export default function StoryBook({
       <FanoosPage label={t('storybook.fanoos_start', 'فانوس البداية')} image="/logo.png" />
 
       {/* 4 — Dedication — uses the real uploaded photo (like the back cover), not the AI avatar */}
-      <DedicationPage childName={childName} childPhoto={realPhoto || resolvedPhoto} dedicationText={dedication} />
+      <DedicationPage childName={childName} childPhoto={backCoverPhotoUrl || resolvedPhoto} dedicationText={dedication} />
 
       {/* 5–30 — 26 Story Body Pages */}
       <div className="sb-body-pages">
@@ -428,7 +481,7 @@ export default function StoryBook({
       <CopyrightPage />
 
       {/* 34 — Back Cover (real uploaded photo in the circle, not avatar/portrait) */}
-      <BackCover childName={childName} childPhoto={realPhoto || backCoverPhoto || resolvedPhoto} avatarPhoto={coverScene || backCoverPhoto} currentStoryId={story.id} />
+      <BackCover childName={childName} childPhoto={backCoverPhotoUrl || backCoverPhoto || resolvedPhoto} avatarPhoto={coverScene || backCoverPhoto} currentStoryId={story.id} />
 
       {/* ══════════════════════════════════════════════════════════════════════
           STYLES — Screen + Print
