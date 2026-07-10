@@ -262,7 +262,7 @@ function dedicationPageHtml(photoSrc: string, childName: string, text?: string):
   const body = text || `إلى البطل الرائع ${childName}،<br/>نتمنى أن تكون حياتك مليئة بالمغامرات والسعادة.`;
   return `<div class="page ded2-page">
     <img class="ded2-photo" src="${photoSrc}" alt="${childName}" />
-    <div class="ded2-heading">🌟 إهداء خاص 🌟</div>
+    <div class="ded2-heading">${sparkSpan(6)} إهداء خاص ${sparkSpan(6)}</div>
     <div class="ded2-divider"></div>
     <div class="ded2-text">${body}</div>
     <div class="ded2-write-label">✍️ رسالتك الخاصة:</div>
@@ -275,15 +275,16 @@ function finalStoryPageHtml(title: string, moral: string, questions: string[], c
     <div class="fsp2-label">✦ نهاية القصة ✦</div>
     <div class="fsp2-title">${title}</div>
     <div class="fsp2-divider"></div>
-    ${moral ? `<div><div class="fsp2-head">💡 الدرس المستفاد</div><div class="fsp2-moral">${moral}</div></div>` : ''}
-    ${qs ? `<div class="fsp2-divider fsp2-divider--sm"></div><div><div class="fsp2-head">🤔 أسئلة ممتعة للمناقشة مع طفلك</div><ul class="fsp2-q">${qs}</ul></div>` : ''}
+    ${moral ? `<div><div class="fsp2-head">${sparkSpan(5)} الدرس المستفاد</div><div class="fsp2-moral">${moral}</div></div>` : ''}
+    ${qs ? `<div class="fsp2-divider fsp2-divider--sm"></div><div><div class="fsp2-head">${sparkSpan(5)} أسئلة ممتعة للمناقشة مع طفلك</div><ul class="fsp2-q">${qs}</ul></div>` : ''}
     <div class="fsp2-divider"></div>
     ${conclusion ? `<div class="fsp2-concl">${conclusion}</div>` : ''}
-    <div class="fsp2-star">⭐ أحسنت يا ${childName}! ⭐</div>
+    <div class="fsp2-star">${sparkSpan(6)} أحسنت يا ${childName}! ${sparkSpan(6)}</div>
   </div>`;
 }
 function copyrightPageHtml(qr = ''): string {
   const logo = logoDataUri();
+  const lantern = lanternDataUri();
   return `<div class="page cp2-page">
     ${logo ? `<img class="cp2-logo" src="${logo}" alt="" />` : ''}
     <div class="cp2-brand">Magic Fanoos</div>
@@ -297,16 +298,22 @@ function copyrightPageHtml(qr = ''): string {
     </div>
     <div class="cp2-divider"></div>
     <div class="cp2-qr-row">
-      <div class="cp2-qr-text"><div class="cp2-qr-label">🏮 زر موقعنا</div><div class="cp2-qr-sub">امسح الكود لزيارة MagicFanoos.com واكتشاف المزيد من القصص</div></div>
+      <div class="cp2-qr-text"><div class="cp2-qr-label">${lantern ? `<img src="${lantern}" style="width:7mm;height:7mm;border-radius:50%;object-fit:cover;vertical-align:-2mm;margin-left:1.5mm;" />` : '🏮'} زر موقعنا</div><div class="cp2-qr-sub">امسح الكود لزيارة MagicFanoos.com واكتشاف المزيد من القصص</div></div>
       ${qr ? `<div class="cp2-qr-box"><img class="cp2-qr-img" src="${qr}" alt="QR" /></div>` : ''}
     </div>
     <div class="cp2-copy">© ${new Date().getFullYear()} Magic Fanoos. جميع الحقوق محفوظة.<br/>هذه القصة مُولَّدة بواسطة الذكاء الاصطناعي وتم تخصيصها خصيصًا لطفلك.</div>
   </div>`;
 }
 const PRINT_PAGE_COLORS = ['#F2607A', '#7C5CE0', '#159B8A', '#2E7BD6', '#E17055', '#3FA34D'];
-// A Gemini-style 4-point sparkle (concave sides), scattered on the colored page.
-const GEMINI_SPARK =
-  `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C12 6.6 6.6 12 0 12C6.6 12 12 17.4 12 24C12 17.4 17.4 12 24 12C17.4 12 12 6.6 12 0Z" fill="rgba(255,255,255,0.9)"/></svg>`;
+// A Gemini-style 4-point sparkle (concave sides).
+function sparkSvg(fill: string): string {
+  return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C12 6.6 6.6 12 0 12C6.6 12 12 17.4 12 24C12 17.4 17.4 12 24 12C17.4 12 12 6.6 12 0Z" fill="${fill}"/></svg>`;
+}
+// Inline sparkle used in headings/titles in place of the ⭐/🌟/💡/🤔 emojis.
+function sparkSpan(mm: number, fill = '#D4A937'): string {
+  return `<span style="display:inline-block;width:${mm}mm;height:${mm}mm;vertical-align:-0.12em;margin:0 1.5mm;">${sparkSvg(fill)}</span>`;
+}
+const GEMINI_SPARK = sparkSvg('rgba(255,255,255,0.9)');
 const SPARK_POS = [
   { t: 6, l: 8, s: 9 }, { t: 11, l: 88, s: 6 }, { t: 44, l: 5, s: 7 }, { t: 55, l: 93, s: 8 },
   { t: 88, l: 12, s: 7 }, { t: 92, l: 82, s: 9 }, { t: 24, l: 93, s: 5 }, { t: 78, l: 5, s: 6 },
@@ -407,6 +414,7 @@ function wraparoundDoc(a: WraparoundDocArgs): string {
     backPanel = `<div class="panel back-designed" dir="rtl">
       <div class="bc-hero">
         <div class="bc-photo-frame"><div class="bc-photo-ring"></div><img class="bc-photo" src="${a.childPhotoSrc || a.backSrc}" alt="" /></div>
+        ${logo ? `<img class="bc-greet-logo" src="${logo}" alt="Magic Fanoos" />` : ''}
         <div class="bc-greeting">أحسنت يا ${a.childName}! 🌟</div>
         <div class="bc-subtxt">أتممت قراءة قصتك السحرية — استمر في المغامرة!</div>
       </div>
@@ -455,6 +463,7 @@ function wraparoundDoc(a: WraparoundDocArgs): string {
   .bc-photo-frame { position: relative; width: 56mm; height: 56mm; display: flex; align-items: center; justify-content: center; }
   .bc-photo-ring { position: absolute; inset: -3mm; border-radius: 50%; background: conic-gradient(from 0deg, #D4A937, #fff3c4, #D4A937, #b88c20, #D4A937); }
   .bc-photo { position: relative; width: 52mm; height: 52mm; border-radius: 50%; object-fit: cover; object-position: center 30%; border: 1.8mm solid #0a1628; box-shadow: 0 4mm 12mm rgba(0,0,0,0.6); }
+  .bc-greet-logo { width: 17mm; height: 17mm; object-fit: contain; filter: drop-shadow(0 0 3mm rgba(212,169,55,0.5)); }
   .bc-greeting { font-size: 26pt; font-weight: 900; color: #D4A937; }
   .bc-subtxt { font-size: 12pt; color: rgba(255,255,255,0.62); max-width: 130mm; line-height: 1.5; }
   .bc-line { width: 88%; height: 0.4mm; background: linear-gradient(90deg, transparent, rgba(212,169,55,0.4), transparent); }
