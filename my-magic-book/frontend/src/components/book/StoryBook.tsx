@@ -22,7 +22,7 @@ import CopyrightPage     from './CopyrightPage';
 import BackCover         from './BackCover';
 import { STORIES, findStory } from '../../data/stories';
 import type { StoryDefinition } from '../../data/stories/types';
-import { detectGender, applyGenderTokens, DEMO_NAMES, type Gender } from '../../utils/gender';
+import { detectGender, applyGenderTokens, type Gender } from '../../utils/gender';
 import { localizeName } from '../../utils/translit';
 
 // ── Helper ─────────────────────────────────────────────────────────────────────
@@ -61,7 +61,7 @@ interface StoryBookProps {
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function StoryBook({
   storyId        = 'zoo_adventure',
-  childName: initialName = 'إياد',
+  childName: initialName = 'بهاء',
   childGender,
   childPhoto     = '',
   realPhoto      = '',
@@ -83,6 +83,10 @@ export default function StoryBook({
   const isAdmin = user?.role === 'admin' || user?.email === 'eyadat720@gmail.com';
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  // "Send to BookPod" shipping form (billable — physical print).
+  const [showBookPod, setShowBookPod] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [ship, setShip] = useState({ fullName: '', phone: '', city: '', street: '', buildingNo: '', deliveryMethod: 'delivery' as 'delivery' | 'pickup' });
 
   // Generate (or refresh) the Nano-Banana preview illustrations for this theme.
   const handleGenerate = async (force = false) => {
@@ -110,11 +114,10 @@ export default function StoryBook({
     }
   };
 
-  // ── Editable name (demo — remove in production) ────────────────────────────
+  // ── Editable child name ────────────────────────────────────────────────────
   const [typedName, setTypedName] = useState(initialName);
-  const [demoGender, setDemoGender] = useState<Gender | undefined>(childGender);
-  // Gender: explicit (wizard) wins, then a demo override, then detect from name.
-  const gender: Gender = childGender || demoGender || detectGender(typedName);
+  // Gender: explicit (from the wizard) wins, else detect from the name.
+  const gender: Gender = childGender || detectGender(typedName);
   // The displayed name follows the site language (Arabic→بهاء, English→Baha,
   // Hebrew→בהאא). The input keeps whatever the parent typed (typedName).
   const childName = useMemo(() => localizeName(typedName, i18n.language), [typedName, i18n.language]);
@@ -200,9 +203,44 @@ export default function StoryBook({
     }
   };
 
-  // Option 1 — save the EXACT polished on-screen pages to PDF via the browser
-  // ("Save as PDF" in the print dialog). Captures the real page designs 1:1.
-  const handleBrowserPrint = () => window.print();
+  // Send to BookPod — build + submit a REAL, billable print order. Guarded by the
+  // shipping form + a confirm() so it never fires accidentally.
+  const handleSubmitBookPod = async () => {
+    if (!rawCoverPath || !rawBackPath || !(rawImagePaths && rawImagePaths.length)) {
+      toast.error(t('storybook.no_images_yet', 'لا توجد صور مولّدة بعد — ولّد صور الكتاب أولاً 🎨'));
+      return;
+    }
+    if (!ship.fullName.trim() || !ship.phone.trim()) {
+      toast.error(t('storybook.ship_required', 'يرجى إدخال الاسم ورقم الهاتف'));
+      return;
+    }
+    if (!window.confirm(t('storybook.bookpod_confirm', `إرسال هذا الكتاب إلى BookPod للطباعة والشحن إلى «${ship.fullName}»؟\nهذه عملية طباعة حقيقية ومدفوعة.`))) return;
+    setIsSubmitting(true);
+    const toastId = toast.loading(t('storybook.bookpod_sending', '📤 جاري التجهيز والإرسال إلى BookPod...'));
+    try {
+      const res = await adminApi.submitToBookPod({
+        theme: story.id,
+        childName,
+        childGender: gender,
+        language: i18n.language,
+        coverPath: rawCoverPath,
+        backPath: rawBackPath,
+        imagePaths: rawImagePaths,
+        childPhotoPath: rawChildPhotoPath,
+        shipping: ship,
+      });
+      if (res?.success) {
+        toast.success(`${t('storybook.bookpod_ok', 'تم الإرسال إلى BookPod للطباعة ✅')}${res.jobId ? ` (#${res.jobId})` : ''}`, { id: toastId });
+        setShowBookPod(false);
+      } else {
+        toast.error(res?.message || t('storybook.bookpod_failed', 'فشل الإرسال إلى BookPod'), { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || t('storybook.bookpod_failed', 'فشل الإرسال إلى BookPod'), { id: toastId });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="sb-root" dir={i18n.dir()}>
@@ -228,22 +266,6 @@ export default function StoryBook({
             </div>
           )}
 
-          {/* Demo name quick-picks (boys / girls) to preview gender agreement */}
-          {showNameInput && (
-            <div className="sb-demo-names">
-              {DEMO_NAMES.map((d) => (
-                <button
-                  key={d.name}
-                  type="button"
-                  onClick={() => { setTypedName(d.name); setDemoGender(d.gender); }}
-                  className={`sb-demo-chip ${d.gender === 'female' ? 'sb-demo-chip--f' : 'sb-demo-chip--m'} ${typedName === d.name ? 'sb-demo-chip--active' : ''}`}
-                >
-                  {d.gender === 'female' ? '👧' : '👦'} {d.name}
-                </button>
-              ))}
-            </div>
-          )}
-
           {/* Generate AI photos button */}
           <div className="sb-gen-row">
             <button
@@ -262,28 +284,48 @@ export default function StoryBook({
             )}
           </div>
 
-          {/* Option 1 — save the polished on-screen pages via the browser dialog */}
-          <button
-            onClick={handleBrowserPrint}
-            className="sb-print-btn"
-            aria-label="حفظ الكتاب PDF من المتصفح — اختر Save as PDF"
-          >
-            📖 {t('storybook.save_pdf_browser', '(Option 1) حفظ الكتاب PDF (اختر «Save as PDF»)')}
-            <span className="sb-print-size">220 × 220 mm</span>
-          </button>
-
-          {/* Option 2 — server-built print file (for comparison / BookPod) */}
+          {/* Download the print-ready PDF (server build) */}
           <button
             onClick={handleDownload}
-            className="sb-regen-btn"
+            className="sb-print-btn"
             disabled={isDownloading}
-            style={{ width: '100%' }}
-            aria-label="نسخة الطباعة من الخادم"
+            aria-label="تحميل ملف الطباعة PDF"
           >
             {isDownloading
               ? `⏳ ${t('storybook.preparing_short', 'جاري التجهيز...')}`
-              : `⚙️ ${t('storybook.download_pdf_server', '(Option 2) نسخة الخادم (PDF)')}`}
+              : `⬇️ ${t('storybook.download_pdf', 'تحميل ملف الطباعة (PDF)')}`}
+            <span className="sb-print-size">220 × 220 mm</span>
           </button>
+
+          {/* Send to BookPod for printing — opens a shipping form (billable) */}
+          <button
+            onClick={() => setShowBookPod((v) => !v)}
+            className="sb-regen-btn"
+            style={{ width: '100%' }}
+            disabled={isSubmitting}
+            aria-label="إرسال إلى BookPod للطباعة"
+          >
+            📤 {t('storybook.send_bookpod', 'إرسال إلى BookPod للطباعة')}
+          </button>
+
+          {/* BookPod shipping form (billable — real print + ship) */}
+          {showBookPod && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'rgba(212,169,55,0.08)', border: '1px solid rgba(212,169,55,0.3)', borderRadius: '12px', padding: '0.85rem' }}>
+              <div style={{ color: '#D4A937', fontWeight: 800, fontSize: '0.9rem' }}>📦 {t('storybook.bookpod_ship', 'بيانات الشحن — طباعة عبر BookPod')}</div>
+              <input className="sb-name-input" placeholder={t('storybook.bp_name', 'الاسم الكامل للمستلم *')} value={ship.fullName} onChange={(e) => setShip({ ...ship, fullName: e.target.value })} />
+              <input className="sb-name-input" placeholder={t('storybook.bp_phone', 'رقم الهاتف *')} value={ship.phone} onChange={(e) => setShip({ ...ship, phone: e.target.value })} />
+              <input className="sb-name-input" placeholder={t('storybook.bp_city', 'المدينة')} value={ship.city} onChange={(e) => setShip({ ...ship, city: e.target.value })} />
+              <input className="sb-name-input" placeholder={t('storybook.bp_street', 'الشارع')} value={ship.street} onChange={(e) => setShip({ ...ship, street: e.target.value })} />
+              <input className="sb-name-input" placeholder={t('storybook.bp_building', 'رقم المبنى')} value={ship.buildingNo} onChange={(e) => setShip({ ...ship, buildingNo: e.target.value })} />
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button onClick={handleSubmitBookPod} className="sb-print-btn" disabled={isSubmitting} style={{ flex: 1 }}>
+                  {isSubmitting ? `⏳ ${t('storybook.bookpod_sending_short', 'جاري الإرسال...')}` : `✅ ${t('storybook.bookpod_confirm_btn', 'تأكيد والإرسال للطباعة')}`}
+                </button>
+                <button onClick={() => setShowBookPod(false)} className="sb-regen-btn" disabled={isSubmitting}>{t('storybook.cancel', 'إلغاء')}</button>
+              </div>
+              <div style={{ fontSize: '0.72rem', color: 'rgba(242,96,122,0.95)', fontWeight: 600 }}>⚠️ {t('storybook.bookpod_note', 'طباعة حقيقية ومدفوعة — سيُطبع كتاب ويُشحن للعنوان أعلاه.')}</div>
+            </div>
+          )}
 
           {/* Info strip */}
           <div className="sb-info-strip">

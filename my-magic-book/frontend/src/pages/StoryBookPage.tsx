@@ -142,7 +142,7 @@ export default function StoryBookPage() {
     <div className="min-h-screen bg-[#03060e] pt-20 pb-20 px-2 sm:px-4">
       <StoryBook
         storyId={themeId}
-        childName={storyData?.childName || searchParams.get('name') || 'إياد'}
+        childName={storyData?.childName || searchParams.get('name') || 'بهاء'}
         childGender={storyData?.childGender}
         childPhoto={childPhoto}
         realPhoto={realPhoto}

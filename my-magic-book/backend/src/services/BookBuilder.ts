@@ -347,6 +347,44 @@ export async function buildPreviewPrintFiles(input: {
 }
 
 /**
+ * Build a preview/showcase book and SUBMIT it to BookPod for printing (admin
+ * "Send to BookPod" from the book viewer). Not tied to a paid order — the caller
+ * supplies the shipping details from a form. Billable + prints a physical book,
+ * so it is only ever reached by a deliberate, confirmed admin click.
+ */
+export async function submitPreviewToBookPod(
+  input: {
+    theme: string; childName: string; childGender?: 'male' | 'female'; language?: string;
+    coverPath: string; backPath: string; imagePaths: string[]; childPhotoPath?: string; isColoring?: boolean;
+  },
+  shipping: {
+    fullName: string; phone: string; city?: string; street?: string; buildingNo?: string;
+    floor?: string; postalCode?: string; notes?: string; deliveryMethod?: 'delivery' | 'pickup'; pickupLocation?: string;
+  },
+) {
+  const pseudoStory: any = {
+    _id: `preview-${input.theme}-${Date.now()}`,
+    theme: input.theme,
+    childName: input.childName || 'الطفل',
+    childGender: input.childGender,
+    language: input.language || 'ar',
+    generatedCover: input.coverPath,
+    generatedPortrait: input.backPath,
+    generatedImages: input.imagePaths,
+    childPhotoUrl: input.childPhotoPath,
+    bookPackage: input.isColoring ? 'coloring' : 'story',
+    mode: 'template',
+  };
+  const pseudoOrder: any = {
+    _id: pseudoStory._id,
+    shippingAddress: shipping,
+    userId: null,
+    totalPrice: 0,
+  };
+  return printAndSubmitForOrder(pseudoOrder, pseudoStory, reconstructPrintOpts(pseudoStory));
+}
+
+/**
  * Submit an ALREADY-BUILT order to BookPod for printing. Rebuilds the print PDFs
  * from the existing images (no AI cost, no image re-generation) and sends the
  * print job. Surfaces a clear error if BookPod isn't configured, the order has no

@@ -632,6 +632,7 @@ export interface StoryPrintInput {
   conclusion?: string;
   questions?: string[];
   theme?: string; // used to pick the back-cover "more adventures" teasers
+  rtl?: boolean;  // false for English → the wraparound cover binds on the other side
 }
 
 export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<PrintFiles> {
@@ -690,6 +691,7 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
     kind: 'story',
     theme: input.theme,
     childPhotoPath: input.childPhotoPath,
+    rtl: input.rtl,
   });
   logMem('cover PDF rendered');
 

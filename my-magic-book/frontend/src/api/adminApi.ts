@@ -70,6 +70,23 @@ export const adminApi = {
     const response = await axiosInstance.post('/admin/print-book', payload);
     return response.data;
   },
+  // Build a showcase book AND submit it to BookPod for printing. BILLABLE —
+  // prints + ships a physical book. Only call after an explicit confirmation.
+  submitToBookPod: async (payload: {
+    theme: string;
+    childName: string;
+    childGender?: 'male' | 'female';
+    language?: string;
+    coverPath: string;
+    backPath: string;
+    imagePaths: string[];
+    childPhotoPath?: string;
+    isColoring?: boolean;
+    shipping: { fullName: string; phone: string; city?: string; street?: string; buildingNo?: string; deliveryMethod?: 'delivery' | 'pickup' };
+  }) => {
+    const response = await axiosInstance.post('/admin/print-book/submit', payload);
+    return response.data;
+  },
   // Generate (or fetch cached) Nano-Banana preview illustrations for a theme.
   // Long-running: ~2.5 min for a fresh 13-page + portrait generation.
   generateThemeIllustrations: async (themeId: string, opts?: { force?: boolean; childName?: string }) => {

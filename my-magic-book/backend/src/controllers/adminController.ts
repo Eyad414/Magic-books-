@@ -3,7 +3,7 @@ import User from '../models/User';
 import Story from '../models/Story';
 import Order from '../models/Order';
 import SiteSettings from '../models/SiteSettings';
-import { buildBookForOrder, reRenderPrintFilesForOrder, submitOrderToBookPod, buildPreviewPrintFiles } from '../services/BookBuilder';
+import { buildBookForOrder, reRenderPrintFilesForOrder, submitOrderToBookPod, buildPreviewPrintFiles, submitPreviewToBookPod } from '../services/BookBuilder';
 import { generateIllustration, COST_PER_IMAGE_USD } from '../services/ImageGenerator';
 import { buildIllustrationPrompt, buildPhotorealPrompt, buildCoverPrompt } from '../services/promptBuilder';
 import { swapFace } from '../services/FaceSwapService';
@@ -331,6 +331,36 @@ export const printBook = async (req: Request, res: Response): Promise<void> => {
   } catch (err: any) {
     console.error('printBook failed:', err);
     res.status(500).json({ success: false, message: err.message || 'فشل تجهيز ملف الطباعة' });
+  }
+};
+
+// @route POST /api/admin/print-book/submit
+// @desc  Build a showcase/preview book and SUBMIT it to BookPod for printing,
+//        using shipping details from the viewer's form. BILLABLE — reached only
+//        by a deliberate, confirmed admin click.
+export const printBookSubmit = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { theme, childName, childGender, language, coverPath, backPath, imagePaths, childPhotoPath, isColoring, shipping } = req.body;
+    if (!theme || !coverPath || !backPath || !Array.isArray(imagePaths) || imagePaths.length === 0) {
+      res.status(400).json({ success: false, message: 'بيانات غير مكتملة لتجهيز الكتاب' });
+      return;
+    }
+    if (!shipping || !shipping.fullName || !shipping.phone) {
+      res.status(400).json({ success: false, message: 'يرجى إدخال اسم المستلم ورقم الهاتف على الأقل' });
+      return;
+    }
+    const result = await submitPreviewToBookPod(
+      { theme, childName, childGender, language, coverPath, backPath, imagePaths, childPhotoPath, isColoring },
+      shipping,
+    );
+    if (!result.submitted) {
+      res.status(502).json({ success: false, message: 'تم تجهيز الملفات لكن BookPod لم يقبل الطلب — تحقق من الإعدادات/السجلات' });
+      return;
+    }
+    res.json({ success: true, jobId: result.jobId });
+  } catch (err: any) {
+    console.error('printBookSubmit failed:', err);
+    res.status(500).json({ success: false, message: err.message || 'فشل الإرسال إلى BookPod' });
   }
 };
 

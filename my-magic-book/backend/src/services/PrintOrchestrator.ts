@@ -54,6 +54,7 @@ export async function buildPrintFilesForStory(
         conclusion: opts.conclusion,
         questions: opts.questions,
         theme: (story as any).theme,
+        rtl: ((story as any).language || 'ar') !== 'en',
       });
 
   return uploadPrintFiles(String(story._id), files);

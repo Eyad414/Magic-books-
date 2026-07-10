@@ -12,6 +12,7 @@ export declare const getAllOrders: (req: Request, res: Response) => Promise<void
 export declare const buildOrderBook: (req: Request, res: Response) => Promise<void>;
 export declare const reRenderOrderFiles: (req: Request, res: Response) => Promise<void>;
 export declare const printBook: (req: Request, res: Response) => Promise<void>;
+export declare const printBookSubmit: (req: Request, res: Response) => Promise<void>;
 export declare const generatePreviewIllustrations: (req: Request, res: Response) => Promise<void>;
 /**
  * Generate a COLORING-BOOK preview for a theme: a colored front cover + 16
