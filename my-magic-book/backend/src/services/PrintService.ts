@@ -83,11 +83,11 @@ export const PRINT_TRIM_MM = 220;          // final cut size
 export const PRINT_BLEED_MM = 3;           // extra art past the cut on each side
 export const PRINT_PAGE_MM = PRINT_TRIM_MM + PRINT_BLEED_MM * 2; // 226 (interior pages)
 export const PRINT_SAFE_MM = PRINT_BLEED_MM + 5;                 // keep text inside this margin
-// Source AI illustrations are only ~864x1184px. The interior render (13 images
-// in one Chromium page) sat right at the 512MB host limit at 1400px and
-// intermittently OOM-crashed. 1100px still exceeds the source resolution (no
-// real detail lost) and keeps the peak comfortably under 512MB every time.
-export const PRINT_PX = 1100;
+// Source AI illustrations are only ~864x1184px. Even 1100px kept the interior
+// render (13 images in one Chromium page) right at the 512MB host ceiling, so a
+// rapid second build OOM-crashed. 800px is essentially the source's native size
+// (no real detail lost) and drops the peak well under 512MB for reliable repeats.
+export const PRINT_PX = 800;
 
 // Log resident memory at a labelled point in the print build so an OOM kill's
 // last line pinpoints where it died.
