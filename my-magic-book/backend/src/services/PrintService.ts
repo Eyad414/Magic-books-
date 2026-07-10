@@ -415,7 +415,7 @@ function wraparoundDoc(a: WraparoundDocArgs): string {
       <div class="bc-hero">
         <div class="bc-photo-frame"><div class="bc-photo-ring"></div><img class="bc-photo" src="${a.childPhotoSrc || a.backSrc}" alt="" /></div>
         ${logo ? `<img class="bc-greet-logo" src="${logo}" alt="Magic Fanoos" />` : ''}
-        <div class="bc-greeting">أحسنت يا ${a.childName}! 🌟</div>
+        <div class="bc-greeting">${sparkSpan(5)} أحسنت يا ${a.childName}! ${sparkSpan(5)}</div>
         <div class="bc-subtxt">أتممت قراءة قصتك السحرية — استمر في المغامرة!</div>
       </div>
       <div class="bc-line"></div>
