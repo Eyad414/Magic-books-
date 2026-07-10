@@ -15,6 +15,13 @@ import { useAuth } from '../context/AuthContext';
 import { toDisplayUrl } from '../api/mediaUrl';
 import toast from 'react-hot-toast';
 
+// Fixed REAL child photos for specific showcase books (keyed by ?pin= storyId).
+// These override the AI page-99 portrait on the back cover + dedication so the
+// demo shows the child's actual face. Uploaded to GCS by hand (see child-photos).
+const REAL_BACK_PHOTOS: Record<string, string> = {
+  '6a3bbaf645b418d21337de09': 'magic-fanoose/child-photos/lora-real.jpg', // Lora (zoo)
+};
+
 export default function StoryBookPage() {
   const { storyId } = useParams<{ storyId?: string }>();
   const [searchParams] = useSearchParams();
@@ -139,6 +146,9 @@ export default function StoryBookPage() {
   // The theme id used for both the static story lookup and the generate endpoint.
   const themeId = storyData?.theme || storyId || 'zoo_adventure';
 
+  // A fixed real photo for this showcase book (e.g. Lora), if one is registered.
+  const pinnedRealPhoto = REAL_BACK_PHOTOS[searchParams.get('pin') || ''] || '';
+
   // Prefer the real customer photo; fall back to the generated portrait; else avatar.
   const childPhoto =
     toDisplayUrl(storyData?.childPhotoUrl) ||
@@ -173,7 +183,9 @@ export default function StoryBookPage() {
         rawImagePaths={generatedImages}
         /* Back-cover circle: real customer photo → this book's own child portrait
            (page-99, matches the story) → sample. Never a mismatched child. */
-        rawChildPhotoPath={storyData?.childPhotoUrl || generatedPortrait || 'magic-fanoose/child-photos/d814d243-9300-489d-b275-29144c91ad19.jpeg'}
+        rawChildPhotoPath={pinnedRealPhoto || storyData?.childPhotoUrl || generatedPortrait || 'magic-fanoose/child-photos/d814d243-9300-489d-b275-29144c91ad19.jpeg'}
+        /* Pre-set REAL back-cover photo for a pinned showcase book (e.g. Lora). */
+        realPhotoPath={pinnedRealPhoto}
       />
     </div>
   );

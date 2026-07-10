@@ -57,6 +57,9 @@ interface StoryBookProps {
   rawBackPath?: string;
   rawImagePaths?: string[];
   rawChildPhotoPath?: string;
+  // A fixed REAL child photo (raw GCS path) to pre-set on the back cover — e.g.
+  // Lora's showcase book always opens with her real photo, no manual upload.
+  realPhotoPath?: string;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -77,6 +80,7 @@ export default function StoryBook({
   rawBackPath,
   rawImagePaths,
   rawChildPhotoPath,
+  realPhotoPath = '',
 }: StoryBookProps) {
 
   const { t, i18n } = useTranslation();
@@ -91,8 +95,8 @@ export default function StoryBook({
   // Admin-uploaded REAL child photo for the back cover (overrides the AI portrait).
   // uploadedPhotoPath = raw GCS objectPath (for the print/BookPod build);
   // uploadedPhotoUrl  = signed URL (for the on-screen preview).
-  const [uploadedPhotoPath, setUploadedPhotoPath] = useState('');
-  const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState('');
+  const [uploadedPhotoPath, setUploadedPhotoPath] = useState(realPhotoPath);
+  const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState(realPhotoPath ? toDisplayUrl(realPhotoPath) : '');
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   // Generate (or refresh) the Nano-Banana preview illustrations for this theme.
