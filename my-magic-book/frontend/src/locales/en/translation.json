@@ -817,6 +817,11 @@
       "tagline": "A magical journey among the stars",
       "moral": "Courage opens the doors to new worlds, and the universe is full of beautiful mysteries.",
       "conclusion": "You are a true hero, [NAME], both on Earth and among the stars! 🚀",
+      "questions": [
+        "How did [NAME] help the alien friend?",
+        "What did [NAME] see from the spaceship window?",
+        "If you traveled to space, what would you like to discover?"
+      ],
       "dedication": "To [NAME], our brave hero whose dreams and ambitions reach the vast and starry universe.",
       "pages": {
         "1": "[NAME] always dreamed of the stars. One quiet night, the bed suddenly transformed into a high-tech spaceship filled with glowing buttons!",
@@ -844,6 +849,11 @@
       "tagline": "A magical adventure about kindness and helping others",
       "moral": "Kindness is the ultimate superpower, and working together brings color back to our world.",
       "conclusion": "You are a beacon of light, [NAME]! With your kindness and beautiful spirit, every day is an adventure. 🏫",
+      "questions": [
+        "How did [NAME] bring the colors back to the school?",
+        "What did [NAME] do to save the little cat?",
+        "How can you be a hero in your school too?"
+      ],
       "dedication": "To [NAME], whose pure heart and brilliant smile make school and the world a much brighter place.",
       "pages": {
         "1": "[NAME] woke up with great energy, put on their favorite backpack, and set off towards school with a bright, happy smile.",
