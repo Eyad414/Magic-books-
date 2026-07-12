@@ -62,6 +62,15 @@ export const adminApi = {
     const response = await axiosInstance.post(`/admin/orders/${id}/rerender-files`);
     return response.data;
   },
+  // Pro coloring book: its own rebuild (free) + BookPod submit (a 2nd print job).
+  reRenderOrderColoring: async (id: string) => {
+    const response = await axiosInstance.post(`/admin/orders/${id}/coloring/rerender`);
+    return response.data;
+  },
+  submitOrderColoring: async (id: string) => {
+    const response = await axiosInstance.post(`/admin/orders/${id}/coloring/submit`);
+    return response.data;
+  },
   // Build a print-ready PDF (cover + interior) for a showcase/preview book in the
   // book viewer — not tied to an order, never touches BookPod. Returns object
   // paths for the uploaded PDFs. Long-running: ~30–60s (downloads + composes).

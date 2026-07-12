@@ -4,7 +4,7 @@ import Story from '../models/Story';
 import Order from '../models/Order';
 import SiteSettings from '../models/SiteSettings';
 import ContactMessage from '../models/ContactMessage';
-import { buildBookForOrder, reRenderPrintFilesForOrder, submitOrderToBookPod, buildPreviewPrintFiles, submitPreviewToBookPod } from '../services/BookBuilder';
+import { buildBookForOrder, reRenderPrintFilesForOrder, submitOrderToBookPod, reRenderColoringForOrder, submitColoringForOrder, buildPreviewPrintFiles, submitPreviewToBookPod } from '../services/BookBuilder';
 import { generateIllustration, COST_PER_IMAGE_USD } from '../services/ImageGenerator';
 import { buildIllustrationPrompt, buildPhotorealPrompt, buildCoverPrompt } from '../services/promptBuilder';
 import { swapFace } from '../services/FaceSwapService';
@@ -327,6 +327,32 @@ export const reRenderOrderFiles = async (req: Request, res: Response): Promise<v
     res.json({ success: true, order: updated });
   } catch (err: any) {
     console.error('reRenderOrderFiles failed:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @route POST /api/admin/orders/:id/coloring/rerender  — Pro: rebuild coloring print files (free)
+export const reRenderOrderColoring = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) { res.status(404).json({ success: false, message: 'order not found' }); return; }
+    const updated = await reRenderColoringForOrder(String(order._id));
+    res.json({ success: true, order: updated });
+  } catch (err: any) {
+    console.error('reRenderOrderColoring failed:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @route POST /api/admin/orders/:id/coloring/submit  — Pro: submit coloring book to BookPod
+export const submitOrderColoring = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) { res.status(404).json({ success: false, message: 'order not found' }); return; }
+    const updated = await submitColoringForOrder(String(order._id));
+    res.json({ success: true, order: updated });
+  } catch (err: any) {
+    console.error('submitOrderColoring failed:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 };

@@ -37,6 +37,8 @@ export default function AdminDashboard() {
   const [buildingOrderId, setBuildingOrderId] = useState<string | null>(null);
   // Which order id is currently re-rendering its print files (for the spinner).
   const [rerenderingOrderId, setRerenderingOrderId] = useState<string | null>(null);
+  // Which order's Pro coloring book is currently rebuilding/sending (spinner).
+  const [coloringBusyId, setColoringBusyId] = useState<string | null>(null);
 
   // Admin: build the book + print files and send to BookPod. Generates ~15
   // images (costs money), so confirm first. markPaid fulfils cash/COD orders.
@@ -93,9 +95,51 @@ export default function AdminDashboard() {
     }
   };
 
+  // Pro bundle: rebuild the coloring book's print files (free — no generation).
+  const handleReRenderColoring = async (order: any) => {
+    if (coloringBusyId) return;
+    if (!window.confirm(t('admin.confirm_rerender', 'إعادة تجهيز ملفات الطباعة بالتصميم الجديد؟ (مجاني — بدون توليد صور جديدة)'))) return;
+    setColoringBusyId(order._id);
+    const toastId = toast.loading(t('admin.coloring_rerendering', 'جاري إعادة تجهيز كتاب التلوين...'));
+    try {
+      const res = await adminApi.reRenderOrderColoring(order._id);
+      if (res.success) {
+        toast.success(t('admin.rerendered', 'تم تحديث ملفات الطباعة بالتصميم الجديد ✅'), { id: toastId });
+        setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...res.order } : o)));
+      } else {
+        toast.error(res.message || t('admin.rerender_failed', 'فشل إعادة التجهيز'), { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || t('admin.rerender_failed', 'فشل إعادة التجهيز'), { id: toastId });
+    } finally {
+      setColoringBusyId(null);
+    }
+  };
+
+  // Pro bundle: submit the coloring book to BookPod (a separate, billable print job).
+  const handleSubmitColoring = async (order: any) => {
+    if (coloringBusyId) return;
+    if (!window.confirm(t('admin.confirm_submit_coloring', 'إرسال كتاب التلوين إلى BookPod للطباعة؟ (طباعة حقيقية ومدفوعة — كتاب إضافي)'))) return;
+    setColoringBusyId(order._id);
+    const toastId = toast.loading(t('admin.coloring_sending', 'جاري إرسال كتاب التلوين إلى BookPod...'));
+    try {
+      const res = await adminApi.submitOrderColoring(order._id);
+      if (res.success) {
+        toast.success(t('admin.coloring_sent', 'تم إرسال كتاب التلوين إلى BookPod ✅'), { id: toastId });
+        setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...res.order } : o)));
+      } else {
+        toast.error(res.message || t('admin.send_failed', 'فشل الإرسال للطباعة'), { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || t('admin.send_failed', 'فشل الإرسال للطباعة'), { id: toastId });
+    } finally {
+      setColoringBusyId(null);
+    }
+  };
+
   // Admin-only: download the print-ready files (cover + interior PDFs) so they
   // can be archived or sent to a print shop manually.
-  const handleSaveFolder = (order: any) => {
+  const handleSaveFolder = (order: any, kind: 'story' | 'coloring' = 'story') => {
     // Rebuild the link from the stored object path so old localhost-based URLs
     // (built before RENDER_EXTERNAL_URL) still resolve against the live API.
     const fixUrl = (url?: string): string | undefined => {
@@ -105,9 +149,13 @@ export default function AdminDashboard() {
         return p ? objectPathToUrl(p) : url;
       } catch { return url; }
     };
+    const isColoring = kind === 'coloring';
+    const coverUrl = isColoring ? order.coloringPrintCoverUrl : order.printCoverUrl;
+    const interiorUrl = isColoring ? order.coloringPrintInteriorUrl : order.printInteriorUrl;
+    const suffix = isColoring ? '-coloring' : '';
     const files = [
-      { url: fixUrl(order.printCoverUrl), name: `order-${order._id.slice(-8)}-cover.pdf` },
-      { url: fixUrl(order.printInteriorUrl), name: `order-${order._id.slice(-8)}-interior.pdf` },
+      { url: fixUrl(coverUrl), name: `order-${order._id.slice(-8)}${suffix}-cover.pdf` },
+      { url: fixUrl(interiorUrl), name: `order-${order._id.slice(-8)}${suffix}-interior.pdf` },
     ].filter((f): f is { url: string; name: string } => !!f.url);
     if (files.length === 0) {
       toast.error(t('admin.no_files_yet', 'لا توجد ملفات بعد — أرسل الطلب للطباعة أولاً'));
@@ -539,6 +587,50 @@ export default function AdminDashboard() {
                               <Download className="w-4 h-4" />
                               {t('admin.save_folder', 'حفظ الملفات')}
                             </button>
+
+                            {/* PRO bundle: the coloring book — its own view / send / re-render / save */}
+                            {order.storyId?.bookPackage === 'pro' && !!(order.storyId?.coloringImages?.length) && (
+                              <div className="w-full mt-1 pt-3 border-t border-white/10 flex flex-wrap lg:flex-col justify-center gap-3">
+                                <div className="w-full font-arabic text-white/50 text-xs font-bold text-center lg:text-right">🖍️ {t('admin.coloring_book', 'كتاب التلوين')}</div>
+                                <Link
+                                  to={`/book/${order.storyId?._id}?view=coloring`}
+                                  className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gold-500 text-dark-900 font-arabic font-bold text-sm hover:bg-gold-400 transition-all whitespace-nowrap shadow-lg shadow-gold-500/10"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                  {t('admin.view_coloring', 'عرض كتاب التلوين')}
+                                </Link>
+                                <button
+                                  onClick={() => handleSubmitColoring(order)}
+                                  disabled={coloringBusyId === order._id}
+                                  className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-magic-500/20 text-magic-300 font-arabic font-bold text-sm hover:bg-magic-500/30 transition-all border border-magic-500/30 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  {coloringBusyId === order._id ? (
+                                    <><Clock className="w-4 h-4 animate-spin" /> {t('admin.sending', 'جارٍ الإرسال...')}</>
+                                  ) : (
+                                    <><Package className="w-4 h-4" /> {t('admin.send_coloring', 'إرسال التلوين للطباعة')}</>
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => handleReRenderColoring(order)}
+                                  disabled={coloringBusyId === order._id}
+                                  className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white/5 text-white/60 font-arabic font-bold text-sm hover:bg-white/10 transition-all border border-white/10 whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  {coloringBusyId === order._id ? (
+                                    <><RefreshCw className="w-4 h-4 animate-spin" /> {t('admin.rerendering_short', 'جارٍ التجهيز...')}</>
+                                  ) : (
+                                    <><RefreshCw className="w-4 h-4" /> {t('admin.rerender_files', 'إعادة تجهيز الملفات')}</>
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => handleSaveFolder(order, 'coloring')}
+                                  disabled={!order.coloringPrintInteriorUrl && !order.coloringPrintCoverUrl}
+                                  className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white/5 text-white/60 font-arabic font-bold text-sm hover:bg-white/10 transition-all border border-white/10 whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  <Download className="w-4 h-4" />
+                                  {t('admin.save_folder', 'حفظ الملفات')}
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>

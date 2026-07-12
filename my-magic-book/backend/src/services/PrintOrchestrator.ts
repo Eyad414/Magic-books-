@@ -128,26 +128,30 @@ export async function printAndSubmitForOrder(
  * uploads under a `<storyId>-coloring` path and submits with a
  * `<orderId>-coloring` external id so it's a distinct print job.
  */
-export async function printAndSubmitColoringForOrder(
-  order: IOrder,
-  story: IStory
-): Promise<PrintSubmitResult> {
+/** Build + upload the coloring book's print files only (no BookPod submit). */
+export async function buildColoringPrintForOrder(story: IStory): Promise<PrintUrls> {
   const cover = (story as any).coloringCover as string | undefined;
   const images = ((story as any).coloringImages as string[]) || [];
   const back = (story as any).coloringBackCover as string | undefined;
   if (!cover || images.length === 0) {
     throw new Error('cannot print coloring: story is missing coloringCover/coloringImages');
   }
-
-  const title = `${story.childName} — كتاب تلوين`;
   const files = await buildColoringPrintFiles({
-    title,
+    title: `${story.childName} — كتاب تلوين`,
     childName: story.childName,
     coverPath: cover,
     pagePaths: images,
     backPath: back || cover,
   });
-  const urls = await uploadPrintFiles(`${String(story._id)}-coloring`, files);
+  return uploadPrintFiles(`${String(story._id)}-coloring`, files);
+}
+
+export async function printAndSubmitColoringForOrder(
+  order: IOrder,
+  story: IStory
+): Promise<PrintSubmitResult> {
+  const urls = await buildColoringPrintForOrder(story);
+  const title = `${story.childName} — كتاب تلوين`;
 
   if (!isBookPodConfigured()) {
     console.log(`[Print] order ${order._id}: coloring print built (BookPod not configured, not submitting).`);

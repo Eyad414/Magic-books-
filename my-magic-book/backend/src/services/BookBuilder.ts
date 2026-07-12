@@ -6,7 +6,7 @@ import { generateBookPdf } from './PdfGenerator';
 import { uploadBuffer, pdfFolderPath } from './StorageService';
 import { splitStoryIntoPages, buildIllustrationPrompt } from './promptBuilder';
 import { getSceneTemplate, buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, resolveTokens, COLORING_PAGES } from './sceneTemplates';
-import { printAndSubmitForOrder, printAndSubmitColoringForOrder, buildPrintFilesForStory, PrintBuildOpts } from './PrintOrchestrator';
+import { printAndSubmitForOrder, printAndSubmitColoringForOrder, buildColoringPrintForOrder, buildPrintFilesForStory, PrintBuildOpts } from './PrintOrchestrator';
 import { isBookPodConfigured } from './BookPodService';
 import { localizeName } from '../utils/translit';
 import fs from 'fs';
@@ -358,6 +358,44 @@ export async function reRenderPrintFilesForOrder(orderId: string): Promise<IOrde
   order.printInteriorUrl = urls.interiorUrl;
   order.printInteriorPages = urls.interiorPages;
   await order.save();
+  return order;
+}
+
+/**
+ * Admin: rebuild ONLY the Pro coloring book's print files (no BookPod submit).
+ * Free — reuses the stored coloring images.
+ */
+export async function reRenderColoringForOrder(orderId: string): Promise<IOrder> {
+  const order = await Order.findById(orderId);
+  if (!order) throw new Error(`Order ${orderId} not found`);
+  const story = await Story.findById(order.storyId);
+  if (!story) throw new Error(`Story ${order.storyId} for order ${orderId} not found`);
+  story.childName = localizeName(story.childName, (story as any).language || 'ar');
+  const urls = await buildColoringPrintForOrder(story);
+  order.coloringPrintCoverUrl = urls.coverUrl;
+  order.coloringPrintInteriorUrl = urls.interiorUrl;
+  await order.save();
+  return order;
+}
+
+/**
+ * Admin: submit ONLY the Pro coloring book to BookPod for an existing order
+ * (a separate print job from the story book).
+ */
+export async function submitColoringForOrder(orderId: string): Promise<IOrder> {
+  const order = await Order.findById(orderId);
+  if (!order) throw new Error(`Order ${orderId} not found`);
+  const story = await Story.findById(order.storyId);
+  if (!story) throw new Error(`Story ${order.storyId} for order ${orderId} not found`);
+  story.childName = localizeName(story.childName, (story as any).language || 'ar');
+  const res = await printAndSubmitColoringForOrder(order, story);
+  order.coloringPrintCoverUrl = res.urls.coverUrl;
+  order.coloringPrintInteriorUrl = res.urls.interiorUrl;
+  if (res.jobId) order.coloringBookpodJobId = res.jobId;
+  await order.save();
+  if (!res.submitted) {
+    throw new Error('Coloring files were rebuilt but BookPod did not accept the job. Check credentials/logs.');
+  }
   return order;
 }
 
