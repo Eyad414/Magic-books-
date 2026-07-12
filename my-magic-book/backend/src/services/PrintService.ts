@@ -109,7 +109,11 @@ export function spineWidthMm(interiorPages: number): number {
 
 /** Public URL BookPod can fetch a stored object from (via our image/PDF proxy). */
 export function publicProxyUrl(objectPath: string): string {
-  const base = process.env.PUBLIC_API_URL || 'http://localhost:5001/api';
+  // Prefer an explicit PUBLIC_API_URL; else use Render's auto-provided external
+  // URL (so deployed links never point at localhost); local dev falls back last.
+  const base =
+    process.env.PUBLIC_API_URL ||
+    (process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}/api` : 'http://localhost:5001/api');
   return `${base}/uploads/image?path=${encodeURIComponent(objectPath)}`;
 }
 
