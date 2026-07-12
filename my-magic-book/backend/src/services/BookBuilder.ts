@@ -6,7 +6,7 @@ import { generateBookPdf } from './PdfGenerator';
 import { uploadBuffer, pdfFolderPath } from './StorageService';
 import { splitStoryIntoPages, buildIllustrationPrompt } from './promptBuilder';
 import { getSceneTemplate, buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, resolveTokens, COLORING_PAGES } from './sceneTemplates';
-import { printAndSubmitForOrder, buildPrintFilesForStory, PrintBuildOpts } from './PrintOrchestrator';
+import { printAndSubmitForOrder, printAndSubmitColoringForOrder, buildPrintFilesForStory, PrintBuildOpts } from './PrintOrchestrator';
 import { isBookPodConfigured } from './BookPodService';
 import fs from 'fs';
 import path from 'path';
@@ -222,6 +222,8 @@ export async function buildBookForOrder(orderId: string): Promise<IOrder> {
         order.bookpodStatus = 'submitted';
       }
       await order.save();
+      // PRO bundle: also print the coloring book as a second BookPod job.
+      await maybeSubmitProColoring(order, story);
     } catch (printErr: any) {
       console.warn(`[BookBuilder] print/BookPod step skipped: ${printErr.message}`);
     }
@@ -267,6 +269,25 @@ async function generateColoringArtifacts(
     backCover = back.objectPath;
   }
   return { cover: coverGen.objectPath, images, backCover };
+}
+
+/**
+ * PRO bundle: if the order's story has a generated coloring book, also print it
+ * as a SECOND BookPod job. Best-effort — never fails the main flow. Stores the
+ * coloring print URLs + job id on the order.
+ */
+async function maybeSubmitProColoring(order: any, story: any): Promise<void> {
+  if (story.bookPackage !== 'pro' || !(story.coloringImages?.length) || !story.coloringCover) return;
+  try {
+    const col = await printAndSubmitColoringForOrder(order, story);
+    order.coloringPrintCoverUrl = col.urls.coverUrl;
+    order.coloringPrintInteriorUrl = col.urls.interiorUrl;
+    if (col.jobId) order.coloringBookpodJobId = col.jobId;
+    await order.save();
+    console.log(`[BookBuilder] order ${order._id}: coloring book ${col.submitted ? 'submitted to BookPod' : 'built (not submitted)'}`);
+  } catch (e: any) {
+    console.warn(`[BookBuilder] pro coloring print skipped: ${e?.message || e}`);
+  }
 }
 
 /**
@@ -435,6 +456,8 @@ export async function submitOrderToBookPod(orderId: string): Promise<IOrder> {
     order.bookpodStatus = 'submitted';
   }
   await order.save();
+  // PRO bundle: also print the coloring book as a second BookPod job.
+  await maybeSubmitProColoring(order, story);
 
   if (!result.submitted) {
     throw new Error('Print files were rebuilt but BookPod did not accept the job. Check the server credentials/logs.');

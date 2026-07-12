@@ -39,6 +39,10 @@ export interface IOrder extends Document {
   printInteriorPages?: number;
   bookpodJobId?: string;
   bookpodStatus?: string;
+  // Pro bundle: a SECOND printed book — the coloring book — with its own files + job.
+  coloringPrintCoverUrl?: string;
+  coloringPrintInteriorUrl?: string;
+  coloringBookpodJobId?: string;
   trackingNumber?: string;
   notes?: string;
   createdAt: Date;
@@ -87,6 +91,9 @@ const OrderSchema = new Schema<IOrder>(
     printInteriorPages: { type: Number },
     bookpodJobId: { type: String },
     bookpodStatus: { type: String },
+    coloringPrintCoverUrl: { type: String },
+    coloringPrintInteriorUrl: { type: String },
+    coloringBookpodJobId: { type: String },
     trackingNumber: { type: String },
     notes: { type: String },
   },
