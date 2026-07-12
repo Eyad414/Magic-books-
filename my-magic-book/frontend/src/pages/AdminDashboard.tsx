@@ -61,7 +61,7 @@ export default function AdminDashboard() {
             : t('admin.sent_to_print', 'تم بناء الكتاب وتجهيزه للطباعة ✅'),
           { id: toastId }
         );
-        setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...res.order } : o)));
+        setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...res.order, storyId: o.storyId } : o)));
       } else {
         toast.error(res.message || t('admin.send_failed', 'فشل الإرسال للطباعة'), { id: toastId });
       }
@@ -84,7 +84,7 @@ export default function AdminDashboard() {
       const res = await adminApi.reRenderOrderFiles(order._id);
       if (res.success) {
         toast.success(t('admin.rerendered', 'تم تحديث ملفات الطباعة بالتصميم الجديد ✅'), { id: toastId });
-        setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...res.order } : o)));
+        setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...res.order, storyId: o.storyId } : o)));
       } else {
         toast.error(res.message || t('admin.rerender_failed', 'فشل إعادة التجهيز'), { id: toastId });
       }
@@ -105,7 +105,7 @@ export default function AdminDashboard() {
       const res = await adminApi.reRenderOrderColoring(order._id);
       if (res.success) {
         toast.success(t('admin.rerendered', 'تم تحديث ملفات الطباعة بالتصميم الجديد ✅'), { id: toastId });
-        setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...res.order } : o)));
+        setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...res.order, storyId: o.storyId } : o)));
       } else {
         toast.error(res.message || t('admin.rerender_failed', 'فشل إعادة التجهيز'), { id: toastId });
       }
@@ -126,7 +126,7 @@ export default function AdminDashboard() {
       const res = await adminApi.submitOrderColoring(order._id);
       if (res.success) {
         toast.success(t('admin.coloring_sent', 'تم إرسال كتاب التلوين إلى BookPod ✅'), { id: toastId });
-        setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...res.order } : o)));
+        setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...res.order, storyId: o.storyId } : o)));
       } else {
         toast.error(res.message || t('admin.send_failed', 'فشل الإرسال للطباعة'), { id: toastId });
       }
