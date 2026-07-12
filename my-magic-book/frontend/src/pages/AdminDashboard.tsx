@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { adminApi } from '../api/adminApi';
 import { uploadApi } from '../api/uploadApi';
+import { objectPathToUrl } from '../api/mediaUrl';
 import { useNavigate, Link } from 'react-router-dom';
 import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail } from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
@@ -95,9 +96,18 @@ export default function AdminDashboard() {
   // Admin-only: download the print-ready files (cover + interior PDFs) so they
   // can be archived or sent to a print shop manually.
   const handleSaveFolder = (order: any) => {
+    // Rebuild the link from the stored object path so old localhost-based URLs
+    // (built before RENDER_EXTERNAL_URL) still resolve against the live API.
+    const fixUrl = (url?: string): string | undefined => {
+      if (!url) return url;
+      try {
+        const p = new URL(url, window.location.origin).searchParams.get('path');
+        return p ? objectPathToUrl(p) : url;
+      } catch { return url; }
+    };
     const files = [
-      { url: order.printCoverUrl, name: `order-${order._id.slice(-8)}-cover.pdf` },
-      { url: order.printInteriorUrl, name: `order-${order._id.slice(-8)}-interior.pdf` },
+      { url: fixUrl(order.printCoverUrl), name: `order-${order._id.slice(-8)}-cover.pdf` },
+      { url: fixUrl(order.printInteriorUrl), name: `order-${order._id.slice(-8)}-interior.pdf` },
     ].filter((f) => f.url);
     if (files.length === 0) {
       toast.error(t('admin.no_files_yet', 'لا توجد ملفات بعد — أرسل الطلب للطباعة أولاً'));
