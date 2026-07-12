@@ -215,9 +215,20 @@ export default function Step3_Checkout({ onPrev }: Props) {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <div className="text-5xl mb-3">🚀</div>
-        <h2 className="font-arabic font-bold text-white text-xl mb-1">{t('checkout.title', 'الشحن والدفع')}</h2>
-        <p className="font-arabic text-white/50 text-sm">{t('checkout.desc', 'أدخل بيانات التوصيل وأكمل طلبك')}</p>
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gold-500/10 border border-gold-500/30 text-gold-500 font-arabic text-xs font-bold mb-4">
+          🔒 {t('checkout.secure_badge', 'دفع آمن ومحمي')}
+        </div>
+        <h2 className="font-arabic font-black text-white text-2xl sm:text-3xl mb-2">
+          <span className="shimmer-text">{t('checkout.title', 'الشحن والدفع')}</span>
+        </h2>
+        <p className="font-arabic text-white/50 text-sm">{t('checkout.desc', 'خطوة أخيرة — أدخل بيانات التوصيل وأكمل طلبك')}</p>
+        {/* Trust strip */}
+        <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mt-5 text-white/60 font-arabic text-xs">
+          <span className="flex items-center gap-1.5">🔒 {t('checkout.trust_secure', 'دفع آمن')}</span>
+          <span className="flex items-center gap-1.5">🎨 {t('checkout.trust_preview', 'عاينت قصتك مجاناً')}</span>
+          <span className="flex items-center gap-1.5">🚚 {t('checkout.trust_delivery', 'توصيل لباب منزلك')}</span>
+          <span className="flex items-center gap-1.5">⭐ {t('checkout.trust_quality', 'طباعة فاخرة')}</span>
+        </div>
       </div>
 
       {/* ── Shipping section ─────────────────────────────────────────── */}
