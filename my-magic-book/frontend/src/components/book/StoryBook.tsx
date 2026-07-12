@@ -411,11 +411,11 @@ export default function StoryBook({
       {/* 2 — Inside Title Page */}
       <TitlePage storyTitle={storyTitle} childName={childName} />
 
-      {/* 3 — Fanoos Separator */}
-      <FanoosPage label={t('storybook.fanoos_start', 'فانوس البداية')} image="/logo.png" />
-
-      {/* 4 — Dedication — uses the real uploaded photo (like the back cover), not the AI avatar */}
+      {/* 3 — Dedication (before the logo separator) — uses the real uploaded photo, not the AI avatar */}
       <DedicationPage childName={childName} childPhoto={backCoverPhotoUrl || resolvedPhoto} dedicationText={dedication} />
+
+      {/* 4 — Fanoos Separator */}
+      <FanoosPage label={t('storybook.fanoos_start', 'فانوس البداية')} image="/logo.png" />
 
       {/* 5–30 — 26 Story Body Pages */}
       <div className="sb-body-pages">

@@ -118,6 +118,18 @@ export async function downloadObject(objectPath: string): Promise<Buffer> {
   return buf;
 }
 
+/** Normalize a stored image reference to a bucket object path. The wizard saves
+ * child photos as `gs://<bucket>/<path>` URIs, but downloadObject needs just the
+ * `<path>`. Plain object paths pass through unchanged. */
+function toObjectPath(ref: string): string {
+  if (ref.startsWith('gs://')) {
+    const withoutScheme = ref.slice(5);
+    const slash = withoutScheme.indexOf('/');
+    return slash >= 0 ? withoutScheme.slice(slash + 1) : withoutScheme;
+  }
+  return ref;
+}
+
 export interface UpscaleOpts {
   lineArt?: boolean;
   px?: number;
@@ -545,12 +557,15 @@ export async function buildWraparoundCoverPdf(o: WraparoundInput): Promise<Wrapa
   // Real uploaded kid photo for the story back-cover circle (best-effort — skip
   // if missing/non-GCS, then the circle falls back to the AI portrait).
   let childPhotoSrc = '';
-  if (o.childPhotoPath && !/^https?:/i.test(o.childPhotoPath)) {
-    try {
-      const c = await upscaleForPrint(await downloadObject(o.childPhotoPath), { px: 900 });
-      childPhotoSrc = dataUri(c.buffer, c.mime);
-    } catch (e: any) {
-      console.warn('[PrintService] back-cover kid photo skipped:', e?.message || e);
+  if (o.childPhotoPath) {
+    const objPath = toObjectPath(o.childPhotoPath);
+    if (!/^https?:/i.test(objPath)) {
+      try {
+        const c = await upscaleForPrint(await downloadObject(objPath), { px: 900 });
+        childPhotoSrc = dataUri(c.buffer, c.mime);
+      } catch (e: any) {
+        console.warn('[PrintService] back-cover kid photo skipped:', e?.message || e);
+      }
     }
   }
   const spineMm = o.spineMm ?? spineWidthMm(o.interiorPages);
@@ -652,22 +667,25 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
   // Dedication photo — best-effort (skip the page if it can't be fetched, e.g.
   // a non-GCS URL), so it never fails the whole build.
   let photoSrc = '';
-  if (input.childPhotoPath && !/^https?:/i.test(input.childPhotoPath)) {
-    try {
-      const u = await upscaleForPrint(await downloadObject(input.childPhotoPath), { px: 900 });
-      photoSrc = dataUri(u.buffer, u.mime);
-    } catch (e: any) {
-      console.warn('[PrintService] dedication photo skipped:', e?.message || e);
+  if (input.childPhotoPath) {
+    const objPath = toObjectPath(input.childPhotoPath);
+    if (!/^https?:/i.test(objPath)) {
+      try {
+        const u = await upscaleForPrint(await downloadObject(objPath), { px: 900 });
+        photoSrc = dataUri(u.buffer, u.mime);
+      } catch (e: any) {
+        console.warn('[PrintService] dedication photo skipped:', e?.message || e);
+      }
     }
   }
 
   const qrSrc = await websiteQrDataUri();
   const lanternUri = lanternDataUri();
   const interior: string[] = [];
-  // Front matter: inside title + lantern separator + dedication.
+  // Front matter: inside title, then the dedication (before the logo separator).
   interior.push(titlePageHtml(input.title, input.childName));
-  interior.push(fanoosPageHtml());
   if (photoSrc) interior.push(dedicationPageHtml(photoSrc, input.childName, input.dedication));
+  interior.push(fanoosPageHtml());
   // Body: each story page is a decorative TEXT page + its full-bleed illustration.
   for (let i = 0; i < input.imagePaths.length; i++) {
     interior.push(storyTextPageHtml(input.pageTexts[i] || '', i, lanternUri));
