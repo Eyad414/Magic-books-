@@ -138,7 +138,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
         ...childDetails,
         ...form,
         // Render the child's name in the book's language script (e.g. "Baha" -> "بهاء").
-        childName: localizeName(childDetails.childName, form.language),
+        childName: localizeName(childDetails.childName || '', form.language),
         mode: 'ai',
       });
       const newStoryId = createRes.story._id;
@@ -192,7 +192,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
             ...progress.childDetails,
             ...form,
             // Render the child's name in the book's language script (e.g. "Baha" -> "بهاء").
-            childName: localizeName(progress.childDetails.childName, form.language),
+            childName: localizeName(progress.childDetails.childName || '', form.language),
             mode: 'template',
             templatePages: STORY_TEMPLATES[form.theme], // raw, placeholders intact
           });
