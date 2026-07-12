@@ -8,6 +8,7 @@ import { splitStoryIntoPages, buildIllustrationPrompt } from './promptBuilder';
 import { getSceneTemplate, buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, resolveTokens, COLORING_PAGES } from './sceneTemplates';
 import { printAndSubmitForOrder, printAndSubmitColoringForOrder, buildPrintFilesForStory, PrintBuildOpts } from './PrintOrchestrator';
 import { isBookPodConfigured } from './BookPodService';
+import { localizeName } from '../utils/translit';
 import fs from 'fs';
 import path from 'path';
 
@@ -72,6 +73,8 @@ export async function buildBookForOrder(orderId: string): Promise<IOrder> {
 
   const story = await Story.findById(order.storyId);
   if (!story) throw new Error(`Story ${order.storyId} for order ${orderId} not found`);
+  // Render the child's name in the book's language for print (e.g. "Baha" -> "بهاء").
+  story.childName = localizeName(story.childName, (story as any).language || 'ar');
 
   order.illustrationsStatus = 'generating';
   order.illustrationsError = undefined;
@@ -344,6 +347,8 @@ export async function reRenderPrintFilesForOrder(orderId: string): Promise<IOrde
   if (!order) throw new Error(`Order ${orderId} not found`);
   const story = await Story.findById(order.storyId);
   if (!story) throw new Error(`Story ${order.storyId} for order ${orderId} not found`);
+  // Render the child's name in the book's language for print (e.g. "Baha" -> "بهاء").
+  story.childName = localizeName(story.childName, (story as any).language || 'ar');
   if (!story.generatedCover || !story.generatedPortrait || !(story.generatedImages || []).length) {
     throw new Error('cannot re-render files: this order has no generated illustrations yet — build it first');
   }
@@ -443,6 +448,8 @@ export async function submitOrderToBookPod(orderId: string): Promise<IOrder> {
   }
   const story = await Story.findById(order.storyId);
   if (!story) throw new Error(`Story ${order.storyId} for order ${orderId} not found`);
+  // Render the child's name in the book's language for print (e.g. "Baha" -> "بهاء").
+  story.childName = localizeName(story.childName, (story as any).language || 'ar');
   if (!story.generatedCover || !(story.generatedImages || []).length) {
     throw new Error('This order has no generated illustrations yet — build the book first.');
   }
