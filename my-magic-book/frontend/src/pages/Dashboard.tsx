@@ -5,7 +5,7 @@ import { storyApi } from '../api/storyApi';
 import { orderApi } from '../api/orderApi';
 import { userApi } from '../api/userApi';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookOpen, Package, Plus, Clock, CheckCircle, Sparkles, User as UserIcon, Lock, Settings, MessageSquare, ShieldAlert, Heart, Trash2, AlertTriangle, X } from 'lucide-react';
+import { BookOpen, Package, Plus, Clock, CheckCircle, Sparkles, User as UserIcon, Lock, Settings, ShieldAlert, Heart, Trash2, AlertTriangle, X } from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -34,7 +34,7 @@ export default function Dashboard() {
   const [stories, setStories] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
-  const [tab, setTab] = useState<'stories' | 'orders' | 'favorites' | 'profile' | 'settings' | 'messages'>('stories');
+  const [tab, setTab] = useState<'stories' | 'orders' | 'favorites' | 'profile' | 'settings'>('stories');
   const [isFetching, setIsFetching] = useState(true);
   const { t, i18n } = useTranslation();
 
@@ -172,7 +172,6 @@ export default function Dashboard() {
                 { id: 'favorites', label: t('dashboard.tab_favorites'), icon: Heart },
                 { id: 'profile', label: t('dashboard.tab_profile'), icon: UserIcon },
                 { id: 'settings', label: t('dashboard.tab_settings'), icon: Settings },
-                { id: 'messages', label: t('dashboard.tab_messages'), icon: MessageSquare },
               ].map((t) => (
                 <button
                   key={t.id}
@@ -429,12 +428,6 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </div>
-              </div>
-            ) : tab === 'messages' ? (
-              <div className="text-center py-12">
-                <MessageSquare className="w-12 h-12 text-white/20 mx-auto mb-4" />
-                <h3 className="font-arabic font-bold text-white text-lg">{t('dashboard.messages_title')}</h3>
-                <p className="font-arabic text-white/50 text-sm mt-2">{t('dashboard.messages_desc')}</p>
               </div>
             ) : null}
           </div>

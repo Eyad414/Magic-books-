@@ -525,6 +525,15 @@ export default function AdminDashboard() {
                                 {order.paymentStatus === 'paid' ? <CheckCircle className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
                                 {order.paymentStatus === 'paid' ? t('admin.paid') : t('admin.pending_payment')}
                               </div>
+                              {order.storyId?.bookPackage === 'pro' ? (
+                                <div className="flex items-center gap-1 text-xs font-black px-3 py-1 rounded-lg bg-gradient-to-l from-gold-400 to-amber-500 text-dark-900 shadow-lg shadow-gold-500/40">
+                                  ✨ PRO
+                                </div>
+                              ) : order.storyId?.bookPackage ? (
+                                <div className="text-xs font-bold px-3 py-1 rounded-lg bg-white/10 text-white/70 font-arabic">
+                                  {t(`step3.pkg_${order.storyId.bookPackage}`, order.storyId.bookPackage) as string}
+                                </div>
+                              ) : null}
                               <div className="font-arabic text-white/40 text-xs italic">
                                 {new Date(order.createdAt).toLocaleDateString('ar-EG')}
                               </div>
