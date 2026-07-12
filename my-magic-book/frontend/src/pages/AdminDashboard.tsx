@@ -108,7 +108,7 @@ export default function AdminDashboard() {
     const files = [
       { url: fixUrl(order.printCoverUrl), name: `order-${order._id.slice(-8)}-cover.pdf` },
       { url: fixUrl(order.printInteriorUrl), name: `order-${order._id.slice(-8)}-interior.pdf` },
-    ].filter((f) => f.url);
+    ].filter((f): f is { url: string; name: string } => !!f.url);
     if (files.length === 0) {
       toast.error(t('admin.no_files_yet', 'لا توجد ملفات بعد — أرسل الطلب للطباعة أولاً'));
       return;
