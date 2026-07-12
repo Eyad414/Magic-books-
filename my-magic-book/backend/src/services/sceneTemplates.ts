@@ -147,7 +147,7 @@ export const SCENE_TEMPLATES: Record<string, SceneTemplate> = {
       'a brave child in an astronaut suit climbing carefully down into a dark crater using a glowing magical rope, determined expression',
       'happily placing a glowing energy stone onto a pedestal as the whole alien planet suddenly lights up with bright colorful neon lights like fireworks',
       'gently receiving a small glowing star from the cute alien as a farewell gift, warm emotional goodbye, glowing planet background',
-      'waving goodbye from the spaceship window to the new alien friends among the stars, the ship flying through colorful cotton-candy space clouds toward Earth',
+      'inside the little spaceship soaring home through swirling cotton-candy space clouds, a big beautiful glowing planet Earth ahead filling the view with blue oceans, soft white clouds and warm golden sunrise light along the curved horizon, a sparkling comet streaking alongside the ship, the child pressing happily against the round window with wide wonder-filled eyes and a joyful smile, cinematic dreamy magical glow',
       'back in cozy pajamas, waking up in bed in the morning sunlight, looking with delight at a small glowing star resting in an open hand, joyful smile',
     ],
     coloringCoverScene:

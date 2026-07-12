@@ -8,6 +8,7 @@ import { publicApi } from '../../api/publicApi';
 import { toDisplayUrl } from '../../api/mediaUrl';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { localizeName } from '../../utils/translit';
 import { STORY_TEMPLATES } from '../../data/stories/templates';
 import { buildBook } from '../../data/stories/builder';
 import type { StoryMode } from '../../context/StoryProgressContext';
@@ -136,6 +137,8 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
       const createRes = await storyApi.create({
         ...childDetails,
         ...form,
+        // Render the child's name in the book's language script (e.g. "Baha" -> "بهاء").
+        childName: localizeName(childDetails.childName, form.language),
         mode: 'ai',
       });
       const newStoryId = createRes.story._id;
@@ -188,6 +191,8 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
           const createRes = await storyApi.create({
             ...progress.childDetails,
             ...form,
+            // Render the child's name in the book's language script (e.g. "Baha" -> "بهاء").
+            childName: localizeName(progress.childDetails.childName, form.language),
             mode: 'template',
             templatePages: STORY_TEMPLATES[form.theme], // raw, placeholders intact
           });
