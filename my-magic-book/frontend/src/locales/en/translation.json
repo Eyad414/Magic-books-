@@ -476,6 +476,8 @@
     "order_on_way": "Your order is on its way! 🚀",
     "order_desc": "Your magic book will arrive within 5-8 business days",
     "story_details_title": "Story Details",
+    "cover_preview_hero": "{name}'s Book",
+    "cover_preview_hint": "Cover preview",
     "story_hero": "Story Hero",
     "gender": "Gender",
     "girl": "Girl 👧",
@@ -911,7 +913,12 @@
   },
   "checkout": {
     "title": "Shipping & payment",
-    "desc": "Enter your delivery details and complete your order.",
+    "secure_badge": "Secure & protected payment",
+    "trust_secure": "Secure payment",
+    "trust_preview": "You previewed your story free",
+    "trust_delivery": "Delivered to your door",
+    "trust_quality": "Premium printing",
+    "desc": "Last step — enter your delivery details and complete your order.",
     "err_shipping": "Please complete your shipping details first"
   }
 }

@@ -5,6 +5,7 @@ import MagicButton from '../common/MagicButton';
 import { ChevronRight, CreditCard, Shield, Package, CheckCircle, Tag, Plus, MapPin } from 'lucide-react';
 import { orderApi } from '../../api/orderApi';
 import { publicApi } from '../../api/publicApi';
+import { toDisplayUrl } from '../../api/mediaUrl';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -68,6 +69,9 @@ export default function Step3_Checkout({ onPrev }: Props) {
   const navigate = useNavigate();
 
   const { childDetails, storyConfig, bookCustomization } = progress;
+
+  // Child photo rendered as the cover thumbnail in the order summary.
+  const coverPhoto = toDisplayUrl(childDetails.childPhotoUrl);
 
   // ── Shipping form (from old step 4) ──────────────────────────────────
   const [shippingForm, setShippingForm] = useState({
@@ -430,6 +434,35 @@ export default function Step3_Checkout({ onPrev }: Props) {
             <h3 className="font-arabic font-bold text-white text-sm mb-3 flex items-center gap-2">
               <span>📖</span> {t('step5.story_details_title')}
             </h3>
+
+            {/* Book-cover preview: the child's photo mocked up as a mini cover */}
+            <div className="flex items-center gap-3 mb-3 pb-3 border-b border-white/5">
+              <div className="relative w-16 h-20 rounded-lg overflow-hidden shrink-0 border border-gold-500/40 bg-dark-800 shadow-lg shadow-black/40">
+                {coverPhoto ? (
+                  <img src={coverPhoto} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-2xl">📖</div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/10" />
+                {/* spine sheen */}
+                <div className="absolute inset-y-0 right-0 w-1 bg-gradient-to-l from-white/25 to-transparent" />
+                <div className="absolute top-1 left-1 text-xs drop-shadow">✨</div>
+                <div className="absolute inset-x-0 bottom-0 px-1 pb-1 text-center">
+                  <span className="font-arabic font-black text-white text-[9px] leading-tight drop-shadow block truncate">
+                    {childDetails.childName || ''}
+                  </span>
+                </div>
+              </div>
+              <div className="min-w-0">
+                <p className="font-arabic font-black text-white text-sm leading-tight truncate">
+                  {(t('step5.cover_preview_hero', 'كتاب {name}') as string).replace('{name}', childDetails.childName || '')}
+                </p>
+                <p className="font-arabic text-gold-500/80 text-[11px] mt-0.5">
+                  🪄 {t('step5.cover_preview_hint', 'معاينة الغلاف')}
+                </p>
+              </div>
+            </div>
+
             <Row label={t('step5.story_hero')} value={childDetails.childName || '-'} />
             <Row label={t('step5.gender')} value={childDetails.childGender === 'female' ? t('step5.girl') : t('step5.boy')} />
             <Row label={t('step5.hero_age')} value={childDetails.childAge ? `${childDetails.childAge} ${t('step5.years')}` : '-'} />
@@ -498,9 +531,9 @@ export default function Step3_Checkout({ onPrev }: Props) {
             </div>
             {couponApplied && <Row label={`خصم ${discount}%`} value={`- ${basePrice - discountedBase} ₪`} />}
             <Row label={t('step5.delivery_fee')} value={deliveryFee === 0 ? `${t('step3.free_delivery', 'مجاني')} 🎉` : `${deliveryFee} ₪`} />
-            <div className="border-t border-gold-500/30 pt-2 flex items-center justify-between">
+            <div className="mt-1 flex items-center justify-between rounded-xl bg-gold-500/15 border border-gold-500/40 px-3 py-2.5">
               <span className="font-arabic font-black text-white text-lg">{t('step5.total')}</span>
-              <span className="font-arabic font-black text-gold-500 text-2xl">{totalPrice} ₪</span>
+              <span className="font-arabic font-black text-gold-500 text-2xl drop-shadow-[0_0_10px_rgba(212,169,55,0.4)]">{totalPrice} ₪</span>
             </div>
           </div>
         </div>
@@ -586,16 +619,21 @@ export default function Step3_Checkout({ onPrev }: Props) {
         <MagicButton variant="outline" size="lg" onClick={onPrev} icon={<ChevronRight className="w-5 h-5 nav-icon" />}>
           {t('wizard.prev_btn')}
         </MagicButton>
-        <MagicButton
-          id="checkout-btn"
-          fullWidth
-          size="lg"
-          onClick={handleCheckout}
-          isLoading={isProcessing}
-          icon={<CreditCard className="w-5 h-5" />}
-        >
-          {isAuthenticated ? t('step5.pay_now').replace('{price}', String(totalPrice)) : t('step5.login_to_pay')}
-        </MagicButton>
+        <div className="relative flex-1 group">
+          <div className="pointer-events-none absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-gold-500 via-amber-400 to-gold-500 opacity-40 blur-md animate-pulse group-hover:opacity-70 transition-opacity" />
+          <div className="relative">
+            <MagicButton
+              id="checkout-btn"
+              fullWidth
+              size="lg"
+              onClick={handleCheckout}
+              isLoading={isProcessing}
+              icon={<CreditCard className="w-5 h-5" />}
+            >
+              {isAuthenticated ? t('step5.pay_now').replace('{price}', String(totalPrice)) : t('step5.login_to_pay')}
+            </MagicButton>
+          </div>
+        </div>
       </div>
     </div>
   );

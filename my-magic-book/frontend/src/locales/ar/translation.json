@@ -476,6 +476,8 @@
     "order_on_way": "طلبك في الطريق! 🚀",
     "order_desc": "سيصلك كتابك السحري خلال 5-8 أيام عمل",
     "story_details_title": "تفاصيل القصة",
+    "cover_preview_hero": "كتاب {name}",
+    "cover_preview_hint": "معاينة الغلاف",
     "story_hero": "بطل القصة",
     "gender": "الجنس",
     "girl": "بنت 👧",
@@ -896,7 +898,12 @@
   },
   "checkout": {
     "title": "الشحن والدفع",
-    "desc": "أدخل بيانات التوصيل وأكمل طلبك",
+    "secure_badge": "دفع آمن ومحمي",
+    "trust_secure": "دفع آمن",
+    "trust_preview": "عاينت قصتك مجاناً",
+    "trust_delivery": "توصيل لباب منزلك",
+    "trust_quality": "طباعة فاخرة",
+    "desc": "خطوة أخيرة — أدخل بيانات التوصيل وأكمل طلبك",
     "err_shipping": "يرجى إكمال بيانات الشحن أولاً"
   }
 }
