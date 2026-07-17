@@ -47,6 +47,45 @@ export const deleteMessage = async (req: Request, res: Response): Promise<void> 
   }
 };
 
+// @route GET /api/admin/customer?email=<email>
+// @desc  Full customer profile for a contact message: their account (if
+//        registered), their orders/books, their stories, and all their
+//        messages — so the admin can see everything about one person.
+export const getCustomerByEmail = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const email = String(req.query.email || '').toLowerCase().trim();
+    if (!email) { res.status(400).json({ success: false, message: 'email required' }); return; }
+
+    const user = await User.findOne({ email }).select('-passwordHash').lean();
+    const messages = await ContactMessage.find({ email }).sort({ createdAt: -1 }).lean();
+
+    let orders: any[] = [];
+    let storiesCount = 0;
+    if (user) {
+      orders = await Order.find({ userId: user._id })
+        .populate('storyId', 'childName theme bookPackage')
+        .sort({ createdAt: -1 })
+        .lean();
+      storiesCount = await Story.countDocuments({ userId: user._id });
+    }
+
+    res.json({
+      success: true,
+      customer: {
+        email,
+        user,               // null if this sender never created an account
+        orders,
+        ordersCount: orders.length,
+        storiesCount,
+        messages,
+        messagesCount: messages.length,
+      },
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 // @route GET /api/admin/stories
 // @desc Get all stories from all users
 export const getAllStories = async (req: Request, res: Response): Promise<void> => {

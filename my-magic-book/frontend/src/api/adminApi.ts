@@ -46,6 +46,11 @@ export const adminApi = {
     const response = await axiosInstance.delete(`/admin/messages/${id}`);
     return response.data;
   },
+  // Full profile for a contact-message sender: account, orders/books, messages.
+  getCustomer: async (email: string) => {
+    const response = await axiosInstance.get('/admin/customer', { params: { email } });
+    return response.data;
+  },
   // Build the book + print files for an order and (when BookPod is configured)
   // submit the print job. markPaid lets an admin fulfil a cash/COD order.
   // Long-running: generates ~15 images, ~3 min.

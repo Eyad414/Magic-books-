@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam, getSettings, updateSettings, getAllOrders, buildOrderBook, reRenderOrderFiles, reRenderOrderColoring, submitOrderColoring, printBook, printBookSubmit, generatePreviewIllustrations, generatePhotorealPreview, generateColoringPreview, listMessages, deleteMessage } from '../controllers/adminController';
+import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam, getSettings, updateSettings, getAllOrders, buildOrderBook, reRenderOrderFiles, reRenderOrderColoring, submitOrderColoring, printBook, printBookSubmit, generatePreviewIllustrations, generatePhotorealPreview, generateColoringPreview, listMessages, deleteMessage, getCustomerByEmail } from '../controllers/adminController';
 import { protect, adminOnly } from '../utils/authMiddleware';
 
 const router = Router();
@@ -24,6 +24,7 @@ router.delete('/team/:id', removeAdmin);
 
 router.get('/messages', listMessages);
 router.delete('/messages/:id', deleteMessage);
+router.get('/customer', getCustomerByEmail);
 
 router.get('/settings', getSettings);
 router.put('/settings', updateSettings);

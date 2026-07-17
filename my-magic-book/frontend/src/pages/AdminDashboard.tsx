@@ -4,7 +4,7 @@ import { adminApi } from '../api/adminApi';
 import { uploadApi } from '../api/uploadApi';
 import { objectPathToUrl } from '../api/mediaUrl';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail } from 'lucide-react';
+import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail, X } from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +22,9 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>(null);
+  // Customer profile modal (opened from a message).
+  const [customer, setCustomer] = useState<any>(null);
+  const [customerLoading, setCustomerLoading] = useState(false);
   
   // New Admin Form
   const [adminForm, setAdminForm] = useState({ name: '', email: '', password: '' });
@@ -413,6 +416,24 @@ export default function AdminDashboard() {
     }
   };
 
+  // Open the full customer profile for a message sender (account + books + messages).
+  const openCustomer = async (email: string) => {
+    if (!email) return;
+    setCustomerLoading(true);
+    setCustomer({ email }); // opens the modal with a loading state
+    try {
+      const res = await adminApi.getCustomer(email);
+      if (res.success) setCustomer(res.customer);
+      else { toast.error(t('admin.customer_load_failed', 'تعذّر تحميل بيانات العميل')); setCustomer(null); }
+    } catch (err) {
+      console.error(err);
+      toast.error(t('admin.customer_load_failed', 'تعذّر تحميل بيانات العميل'));
+      setCustomer(null);
+    } finally {
+      setCustomerLoading(false);
+    }
+  };
+
   const handleAddAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsAddingAdmin(true);
@@ -658,21 +679,30 @@ export default function AdminDashboard() {
                 ) : (
                   <div className="flex flex-col gap-3">
                     {messages.map((m) => (
-                      <div key={m._id} className="bg-dark-700/50 border border-white/10 rounded-2xl p-4">
+                      <div
+                        key={m._id}
+                        onClick={() => openCustomer(m.email)}
+                        className="bg-dark-700/50 border border-white/10 rounded-2xl p-4 cursor-pointer hover:border-gold-500/40 hover:bg-dark-700 transition-all"
+                      >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
                             <div className="font-arabic font-bold text-white text-sm">
                               {m.name}{m.subject ? <span className="text-gold-500"> · {m.subject}</span> : null}
                             </div>
                             <div className="font-arabic text-white/50 text-xs mt-0.5 flex flex-wrap gap-x-3">
-                              <a href={`mailto:${m.email}`} className="hover:text-gold-500">{m.email}</a>
-                              {m.phone ? <a href={`tel:${m.phone}`} className="hover:text-gold-500" dir="ltr">{m.phone}</a> : null}
+                              <a href={`mailto:${m.email}`} onClick={(e) => e.stopPropagation()} className="hover:text-gold-500">{m.email}</a>
+                              {m.phone ? <a href={`tel:${m.phone}`} onClick={(e) => e.stopPropagation()} className="hover:text-gold-500" dir="ltr">{m.phone}</a> : null}
                               {m.createdAt ? <span>{new Date(m.createdAt).toLocaleString()}</span> : null}
                             </div>
                           </div>
-                          <button onClick={() => handleDeleteMessage(m._id)} aria-label={t('admin.delete', 'حذف')} className="text-white/40 hover:text-red-400 shrink-0">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="hidden sm:flex items-center gap-1 text-gold-500/80 text-xs font-arabic">
+                              <Eye className="w-3.5 h-3.5" /> {t('admin.view_account', 'عرض الحساب')}
+                            </span>
+                            <button onClick={(e) => { e.stopPropagation(); handleDeleteMessage(m._id); }} aria-label={t('admin.delete', 'حذف')} className="text-white/40 hover:text-red-400">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                         <p className="font-arabic text-white/80 text-sm mt-2 whitespace-pre-wrap leading-relaxed">{m.message}</p>
                       </div>
@@ -1174,6 +1204,103 @@ export default function AdminDashboard() {
                 💾 حفظ الكل
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Customer profile modal — opened by clicking a message */}
+      {customer && (
+        <div className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-4 overflow-y-auto">
+          <div className="absolute inset-0 bg-dark-900/90 backdrop-blur-md" onClick={() => setCustomer(null)} />
+          <div className="relative w-full max-w-2xl my-8 bg-dark-800 border border-white/10 rounded-2xl shadow-2xl p-6">
+            <button onClick={() => setCustomer(null)} aria-label={t('admin.close', 'إغلاق')} className="absolute top-4 left-4 p-2 rounded-full bg-white/5 hover:bg-gold-500 hover:text-dark-900 text-white/50 transition-all">
+              <X className="w-5 h-5" />
+            </button>
+
+            <h3 className="font-arabic font-black text-white text-xl mb-1 pr-10">
+              👤 {customer.user?.name || customer.email}
+            </h3>
+            <a href={`mailto:${customer.email}`} className="font-sans text-gold-500 text-sm hover:underline" dir="ltr">{customer.email}</a>
+
+            {customerLoading ? (
+              <p className="font-arabic text-white/50 text-center py-10">{t('admin.loading')}</p>
+            ) : (
+              <div className="mt-5 space-y-5">
+                {/* Stat tiles */}
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { n: customer.ordersCount ?? 0, label: t('admin.books_label', 'الكتب') },
+                    { n: customer.storiesCount ?? 0, label: t('admin.stories_label', 'القصص') },
+                    { n: customer.messagesCount ?? 0, label: t('admin.messages_label', 'الرسائل') },
+                  ].map((s, i) => (
+                    <div key={i} className="bg-white/5 rounded-xl border border-white/10 p-3 text-center">
+                      <div className="font-arabic font-black text-gold-500 text-2xl">{s.n}</div>
+                      <div className="font-arabic text-white/50 text-xs mt-0.5">{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Account details */}
+                <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+                  <h4 className="font-arabic text-white/50 text-xs mb-3">{t('admin.customer_account', 'حساب العميل')}</h4>
+                  {customer.user ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 font-arabic text-sm">
+                      <div className="text-white/60">{t('admin.name')}: <span className="text-white font-bold">{customer.user.name}</span></div>
+                      {customer.user.phone && <div className="text-white/60" dir="ltr">{t('admin.phone_label', 'الهاتف')}: <span className="text-white">{customer.user.phone}</span></div>}
+                      {customer.user.location && <div className="text-white/60">{t('admin.location_label', 'الموقع')}: <span className="text-white">{customer.user.location}</span></div>}
+                      <div className="text-white/60">{t('admin.role_label', 'الصلاحية')}: <span className="text-white">{customer.user.role}</span></div>
+                      {customer.user.createdAt && <div className="text-white/60">{t('admin.registered_label', 'مسجّل منذ')}: <span className="text-white">{new Date(customer.user.createdAt).toLocaleDateString(i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'he' ? 'he-IL' : 'en-US')}</span></div>}
+                      {customer.user.lastLoginAt && <div className="text-white/60">{t('admin.last_login_label', 'آخر دخول')}: <span className="text-white">{new Date(customer.user.lastLoginAt).toLocaleDateString(i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'he' ? 'he-IL' : 'en-US')}</span></div>}
+                    </div>
+                  ) : (
+                    <p className="font-arabic text-white/40 text-sm">{t('admin.no_account', 'لا يوجد حساب مسجّل بهذا البريد (رسالة من زائر).')}</p>
+                  )}
+                </div>
+
+                {/* Orders / books */}
+                <div>
+                  <h4 className="font-arabic text-white/50 text-xs mb-2">📦 {t('admin.orders_title')} ({customer.ordersCount ?? 0})</h4>
+                  {customer.orders?.length ? (
+                    <div className="flex flex-col gap-2">
+                      {customer.orders.map((o: any) => (
+                        <div key={o._id} className="bg-dark-700/60 rounded-xl border border-white/5 p-3 flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="font-arabic text-white text-sm font-bold truncate">
+                              {o.storyId?.childName || t('admin.no_name')}
+                              {o.storyId?.theme && <span className="text-white/40 font-normal"> · {t(`step2.theme_${o.storyId.theme}`, { defaultValue: o.storyId.theme }) as string}</span>}
+                            </div>
+                            <div className="font-arabic text-white/40 text-xs mt-0.5">
+                              {o.storyId?.bookPackage ? (t(`step3.pkg_${o.storyId.bookPackage}`, { defaultValue: o.storyId.bookPackage }) as string) : ''} · {new Date(o.createdAt).toLocaleDateString(i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'he' ? 'he-IL' : 'en-US')}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className={`text-xs font-bold px-2 py-1 rounded-lg ${o.paymentStatus === 'paid' ? 'bg-green-500/20 text-green-400' : 'bg-gold-500/20 text-gold-500'}`}>
+                              {o.paymentStatus === 'paid' ? t('admin.paid') : t('admin.pending_payment')}
+                            </span>
+                            <span className="font-arabic text-white/60 text-xs whitespace-nowrap">{o.totalPrice} {o.currency}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="font-arabic text-white/40 text-sm">{t('admin.no_orders_customer', 'لا توجد طلبات لهذا العميل.')}</p>
+                  )}
+                </div>
+
+                {/* Their messages */}
+                <div>
+                  <h4 className="font-arabic text-white/50 text-xs mb-2">✉️ {t('admin.tab_messages', 'الرسائل')} ({customer.messagesCount ?? 0})</h4>
+                  <div className="flex flex-col gap-2">
+                    {customer.messages?.map((mm: any) => (
+                      <div key={mm._id} className="bg-dark-700/60 rounded-xl border border-white/5 p-3">
+                        <div className="font-arabic text-gold-500 text-xs font-bold">{mm.subject || '—'} <span className="text-white/30 font-normal">· {new Date(mm.createdAt).toLocaleDateString(i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'he' ? 'he-IL' : 'en-US')}</span></div>
+                        <p className="font-arabic text-white/70 text-sm mt-1 whitespace-pre-wrap leading-relaxed">{mm.message}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
