@@ -1,16 +1,23 @@
-import { useState, useEffect } from 'react';
-import { Star, TrendingUp } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Star, TrendingUp, Eye, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { publicApi } from '../../api/publicApi';
 import { toDisplayUrl } from '../../api/mediaUrl';
 import { localizeName } from '../../utils/translit';
+import FlipbookPreview, { buildThemePreview } from '../wizard/FlipbookPreview';
+
+// Some themes reuse another theme's scripted story text (mirrors Stories page).
+const TEXT_THEME: Record<string, string> = { space_real: 'space' };
+const textThemeFor = (id: string) => TEXT_THEME[id] || id;
 
 export default function BestSellers() {
   const { t, i18n } = useTranslation();
 
   // Live themes (for the real generated front-cover images).
   const [themes, setThemes] = useState<Record<string, any>>({});
+  // The story currently open in the preview modal (same UX as the Stories page).
+  const [selected, setSelected] = useState<any>(null);
   useEffect(() => {
     publicApi.getSettings()
       .then((res) => {
@@ -31,7 +38,25 @@ export default function BestSellers() {
     { id: 4, themeId: 'space_coloring', name: 'Sara', emoji: '🎨', rating: 4.7, reviews: 61, tag: '', colors: ['#006064', '#00838f'] },
   ];
 
+  // Build the 30%-readable flipbook preview for the selected card (rest is locked).
+  const previewPages = useMemo(() => {
+    if (!selected) return [];
+    const theme = themes[selected.themeId];
+    const cover = selected.coverPath ? toDisplayUrl(selected.coverPath)
+      : theme?.generatedCover ? toDisplayUrl(theme.generatedCover) : '';
+    return buildThemePreview({
+      theme: textThemeFor(selected.themeId),
+      language: i18n.language as any,
+      childName: selected.name,
+      coverImage: cover,
+      pageImages: (theme?.generatedImages || []).map(toDisplayUrl),
+      i18n,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, themes, i18n.language]);
+
   return (
+    <>
     <section className="py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -85,6 +110,16 @@ export default function BestSellers() {
                       {book.tag}
                     </div>
                   )}
+                  {/* Preview (eye) — opens the same 30%-readable flipbook as the Stories page */}
+                  <button
+                    type="button"
+                    onClick={() => setSelected(book)}
+                    aria-label={t('step2.book_preview_label', 'معاينة الكتاب')}
+                    className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-dark-900/70 backdrop-blur border border-white/15 text-gold-500 hover:bg-gold-500 hover:text-dark-900 transition-all"
+                  >
+                    <Eye className="w-4 h-4" />
+                    <span className="font-arabic text-xs font-bold">{t('step2.book_preview_label', 'معاينة الكتاب')}</span>
+                  </button>
                 </div>
 
                 {/* Content */}
@@ -117,5 +152,35 @@ export default function BestSellers() {
         </div>
       </div>
     </section>
+
+    {/* Illustrated book preview modal — 30% readable, the rest locked (same as Stories) */}
+    {selected && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 lg:p-8 animate-fade-in text-center">
+        <div className="absolute inset-0 bg-dark-900/90 backdrop-blur-md" onClick={() => setSelected(null)} />
+        <div className="relative w-full max-w-4xl glass-card rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-dark-900/95 p-6 md:p-8 pt-10">
+          <button onClick={() => setSelected(null)} className="absolute top-4 left-4 p-2 rounded-full bg-white/5 hover:bg-gold-500 hover:text-dark-900 text-white/50 transition-all z-20">
+            <X className="w-6 h-6" />
+          </button>
+          <div className="mb-2">
+            <h3 className="font-arabic font-black text-white text-2xl">
+              <span className="text-gold-500">{t('stories_page.story_title', { name: localizeName(selected.name, i18n.language) })}</span>
+            </h3>
+            <p className="font-arabic text-white/50 text-sm mt-2 flex items-center justify-center gap-2">
+              <Eye className="w-4 h-4 text-gold-500" />
+              {t('stories_page.modal_desc')}
+            </p>
+          </div>
+          <div className="my-6 flex justify-center">
+            <FlipbookPreview pages={previewPages} language={i18n.language as any} />
+          </div>
+          <div className="flex justify-center mt-4">
+            <Link to="/create" onClick={() => setSelected(null)} className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-l from-gold-500 to-gold-600 text-dark-900 font-arabic font-bold text-lg hover:shadow-gold-glow hover:-translate-y-1 transition-all">
+              {t('stories_page.modal_cta')}
+            </Link>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
