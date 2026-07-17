@@ -133,23 +133,23 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
         .fbp-num { position:absolute; bottom:6px; left:8px; background: linear-gradient(135deg, #fff6da, #f3d98f); color:#6b4a00; font-size:8px; font-weight:800; padding:1px 6px; border-radius:999px; z-index:4; }
         @keyframes fbp-tw { 0%,100%{opacity:0.35; transform:scale(0.8);} 50%{opacity:1; transform:scale(1.1);} }
       `}</style>
-      <div className="relative shadow-2xl" style={{ width: '100%', maxWidth: '700px' }}>
+      <div className="relative shadow-2xl mx-auto" style={{ width: '100%', maxWidth: '300px' }}>
         {/* @ts-ignore — react-pageflip has loose types */}
         <HTMLFlipBook
           key={flipKey}
-          width={250}
-          height={250}
+          width={280}
+          height={280}
           size="stretch"
-          minWidth={180}
-          maxWidth={280}
-          minHeight={180}
-          maxHeight={280}
+          minWidth={200}
+          maxWidth={300}
+          minHeight={200}
+          maxHeight={300}
           maxShadowOpacity={0.5}
           showCover={true}
           mobileScrollSupport={true}
-          usePortrait={false}
+          usePortrait={true}
           flippingTime={1200}
-          className="flipbook-container"
+          className="flipbook-container mx-auto"
         >
           {resolved.map((page, i) => (
             <div key={i} className="relative overflow-hidden">

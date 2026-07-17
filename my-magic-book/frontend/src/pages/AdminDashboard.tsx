@@ -535,7 +535,7 @@ export default function AdminDashboard() {
                                 </div>
                               ) : null}
                               <div className="font-arabic text-white/40 text-xs italic">
-                                {new Date(order.createdAt).toLocaleDateString('ar-EG')}
+                                {new Date(order.createdAt).toLocaleDateString(i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'he' ? 'he-IL' : 'en-US')}
                               </div>
                             </div>
 
@@ -549,7 +549,7 @@ export default function AdminDashboard() {
                               <div>
                                 <h4 className="font-arabic text-white/50 text-xs mb-2">{t('admin.story_details')}</h4>
                                 <div className="font-arabic text-gold-500 font-bold">{order.storyId?.childName || t('admin.no_name')}</div>
-                                <div className="font-arabic text-white/60 text-sm">{t('admin.theme')} {order.storyId?.theme || '...'}</div>
+                                <div className="font-arabic text-white/60 text-sm">{t('admin.theme')} {order.storyId?.theme ? (t(`step2.theme_${order.storyId.theme}`, { defaultValue: order.storyId.theme }) as string) : '...'}</div>
                                 <div className="font-arabic text-white/60 text-sm">{t('admin.amount')} {order.totalPrice} {order.currency}</div>
                               </div>
                             </div>
