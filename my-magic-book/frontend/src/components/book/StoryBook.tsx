@@ -415,7 +415,7 @@ export default function StoryBook({
       <DedicationPage childName={childName} childPhoto={backCoverPhotoUrl || resolvedPhoto} dedicationText={dedication} />
 
       {/* 4 — Fanoos Separator */}
-      <FanoosPage label={t('storybook.fanoos_start', 'فانوس البداية')} image="/logo.png" />
+      <FanoosPage label={t('storybook.fanoos_start', 'فانوس البداية')} image="/logo.png?v=7" />
 
       {/* 5–30 — 26 Story Body Pages */}
       <div className="sb-body-pages">
@@ -475,7 +475,7 @@ export default function StoryBook({
       </div>
 
       {/* 31 — Fanoos Separator */}
-      <FanoosPage label={t('storybook.fanoos_end', 'فانوس النهاية')} image="/logo.png" />
+      <FanoosPage label={t('storybook.fanoos_end', 'فانوس النهاية')} image="/logo.png?v=7" />
 
       {/* 32 — Final Story Page */}
       <FinalStoryPage

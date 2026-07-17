@@ -18,7 +18,7 @@ export default function BookBrandFooter({ variant = 'page', pageNumber }: BookBr
   return (
     <div className={`bbf bbf--${variant}`} aria-hidden="true">
       <div className="bbf-inner">
-        <img src="/logo.png" alt="" className="bbf-logo" />
+        <img src="/logo.png?v=7" alt="" className="bbf-logo" />
         <span className="bbf-name">Magic Fanoos</span>
         <span className="bbf-dot">•</span>
         <span className="bbf-url">MagicFanoos.com</span>

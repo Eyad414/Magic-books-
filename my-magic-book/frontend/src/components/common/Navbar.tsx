@@ -53,7 +53,7 @@ export default function Navbar() {
           {/* Logo + name */}
           <Link to="/" className="flex items-center gap-2.5 group">
             <img
-              src="/logo.png"
+              src="/logo.png?v=7"
               alt="Magic Fanoos"
               className="h-12 md:h-14 w-auto object-contain transition-transform group-hover:scale-105 drop-shadow-[0_0_10px_rgba(212,169,55,0.45)]"
             />

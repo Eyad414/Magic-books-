@@ -42,7 +42,7 @@ export default function FrontCover({ childName, storyTitle, coverImage, childPho
         <h1 className="cover-title">{storyTitle}</h1>
 
         <div className="cover-brand">
-          <img src="/logo.png" alt="" className="cover-brand-logo" />
+          <img src="/logo.png?v=7" alt="" className="cover-brand-logo" />
           <div className="cover-brand-text">
             <span className="cover-brand-name">Magic Fanoos</span>
             <span className="cover-brand-tag">{t('storybook.cover_brand_tag', 'قصة بتصميم شخصي من Magic Fanoos')}</span>

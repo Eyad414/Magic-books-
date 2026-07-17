@@ -9,7 +9,7 @@ export default function CopyrightPage() {
 
       {/* Logo */}
       <div className="cp-logo-row">
-        <img src="/logo.png" alt="Magic Fanoos" className="cp-logo" />
+        <img src="/logo.png?v=7" alt="Magic Fanoos" className="cp-logo" />
         <span className="cp-brand">Magic Fanoos</span>
       </div>
 

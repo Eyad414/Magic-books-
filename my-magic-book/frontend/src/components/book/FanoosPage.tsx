@@ -7,7 +7,7 @@ interface FanoosPageProps {
   image?: string;
 }
 
-export default function FanoosPage({ label, image = '/logo.png' }: FanoosPageProps) {
+export default function FanoosPage({ label, image = '/logo.png?v=7' }: FanoosPageProps) {
   const { t } = useTranslation();
   const resolvedLabel = label || t('storybook.fanoos_label', 'صفحة الفانوس');
 
