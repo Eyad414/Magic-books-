@@ -680,6 +680,8 @@
     "price_sar": "السعر (ريال/شيكل)",
     "description": "الوصف",
     "save_pricing": "حفظ أسعار الباقات",
+    "home_stats_title": "أرقام الصفحة الرئيسية",
+    "home_stats_hint": "الأرقام التي تظهر تحت العنوان في الصفحة الرئيسية.",
     "stories_title": "إدارة القصص والمواضيع",
     "emoji_icon": "الأيقونة (Emoji)",
     "add_new_theme": "+ إضافة موضوع جديد",

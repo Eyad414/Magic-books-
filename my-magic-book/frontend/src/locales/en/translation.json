@@ -680,6 +680,8 @@
     "price_sar": "Price (SAR/ILS)",
     "description": "Description",
     "save_pricing": "Save Pricing Packages",
+    "home_stats_title": "Home page numbers",
+    "home_stats_hint": "The counters shown under the headline on the home page.",
     "stories_title": "Stories & Themes Management",
     "emoji_icon": "Emoji Icon",
     "add_new_theme": "+ Add New Theme",

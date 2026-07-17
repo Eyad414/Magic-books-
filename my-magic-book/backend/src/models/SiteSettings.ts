@@ -36,10 +36,26 @@ export interface ITheme {
   coloringBackCoverScene?: string;
 }
 
+/** Editable "trust" counters shown on the home hero (admin-controlled). */
+export interface IHomeStats {
+  storiesCreated: string;
+  happyFamilies: string;
+  readyStories: string;
+  rating: string;
+}
+
 export interface ISiteSettings extends Document {
   bookPackages: IBookPackage[];
   themes: ITheme[];
+  homeStats?: IHomeStats;
 }
+
+export const DEFAULT_HOME_STATS: IHomeStats = {
+  storiesCreated: '+500',
+  happyFamilies: '+100',
+  readyStories: '+20',
+  rating: '5 ⭐',
+};
 
 const SiteSettingsSchema = new Schema<ISiteSettings>(
   {
@@ -73,6 +89,12 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
         coloringBackCoverScene: { type: String, default: undefined },
       },
     ],
+    homeStats: {
+      storiesCreated: { type: String, default: DEFAULT_HOME_STATS.storiesCreated },
+      happyFamilies: { type: String, default: DEFAULT_HOME_STATS.happyFamilies },
+      readyStories: { type: String, default: DEFAULT_HOME_STATS.readyStories },
+      rating: { type: String, default: DEFAULT_HOME_STATS.rating },
+    },
   },
   { timestamps: true }
 );

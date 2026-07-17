@@ -680,6 +680,8 @@
     "price_sar": "מחיר (SAR/ILS)",
     "description": "תיאור",
     "save_pricing": "שמור חבילות תמחור",
+    "home_stats_title": "מספרים בדף הבית",
+    "home_stats_hint": "המספרים שמוצגים מתחת לכותרת בדף הבית.",
     "stories_title": "ניהול סיפורים ונושאים",
     "emoji_icon": "סמל Emoji",
     "add_new_theme": "+ הוסף נושא חדש",

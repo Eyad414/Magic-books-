@@ -756,6 +756,32 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   ))}
+
+                  {/* Home hero stats — editable trust counters shown on the landing page */}
+                  <div className="mt-8 p-4 bg-white/5 rounded-xl border border-white/10">
+                    <h3 className="font-arabic font-bold text-white mb-1">{t('admin.home_stats_title', 'أرقام الصفحة الرئيسية')}</h3>
+                    <p className="font-arabic text-white/40 text-xs mb-4">{t('admin.home_stats_hint', 'الأرقام التي تظهر تحت العنوان في الصفحة الرئيسية')}</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {[
+                        { key: 'storiesCreated', label: t('hero.stats_stories_created'), def: '+500' },
+                        { key: 'happyFamilies', label: t('hero.stats_happy_families'), def: '+100' },
+                        { key: 'readyStories', label: t('hero.stats_ready_stories'), def: '+20' },
+                        { key: 'rating', label: t('hero.stats_rating'), def: '5 ⭐' },
+                      ].map((s) => (
+                        <div key={s.key}>
+                          <label className="block font-arabic text-white/70 text-xs mb-1">{s.label}</label>
+                          <input
+                            type="text"
+                            dir="ltr"
+                            className="magic-input w-full text-center"
+                            value={settings.homeStats?.[s.key] ?? s.def}
+                            onChange={(e) => setSettings({ ...settings, homeStats: { ...(settings.homeStats || {}), [s.key]: e.target.value } })}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   <MagicButton onClick={() => saveSettings(settings)} className="mt-4">{t('admin.save_pricing')}</MagicButton>
                 </div>
               </div>

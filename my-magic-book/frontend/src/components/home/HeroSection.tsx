@@ -1,12 +1,25 @@
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, Star, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useStoryProgress } from '../../context/StoryProgressContext';
+import { publicApi } from '../../api/publicApi';
+
+// Fallback stats if the backend hasn't set custom ones yet.
+const DEFAULT_STATS = { storiesCreated: '+500', happyFamilies: '+100', readyStories: '+20', rating: '5 ⭐' };
 
 export default function HeroSection() {
   const { t } = useTranslation();
   const { resetProgress } = useStoryProgress();
   const navigate = useNavigate();
+
+  // Admin-editable trust counters (from site settings).
+  const [stats, setStats] = useState(DEFAULT_STATS);
+  useEffect(() => {
+    publicApi.getSettings()
+      .then((res) => { if (res?.settings?.homeStats) setStats({ ...DEFAULT_STATS, ...res.settings.homeStats }); })
+      .catch(() => {});
+  }, []);
 
   const handleStartStory = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -64,10 +77,10 @@ export default function HeroSection() {
             {/* Stats */}
             <div className="flex items-center justify-center lg:justify-end gap-8 mt-10">
               {[
-                { value: '+500', label: t('hero.stats_stories_created') },
-                { value: '+100', label: t('hero.stats_happy_families') },
-                { value: '+20', label: t('hero.stats_ready_stories') },
-                { value: '5 ⭐', label: t('hero.stats_rating') },
+                { value: stats.storiesCreated, label: t('hero.stats_stories_created') },
+                { value: stats.happyFamilies, label: t('hero.stats_happy_families') },
+                { value: stats.readyStories, label: t('hero.stats_ready_stories') },
+                { value: stats.rating, label: t('hero.stats_rating') },
               ].map((stat) => (
                 <div key={stat.label} className="text-center">
                   <div className="font-arabic font-black text-gold-500 text-2xl" dir="ltr">{stat.value}</div>
