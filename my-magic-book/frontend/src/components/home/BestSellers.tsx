@@ -114,11 +114,11 @@ export default function BestSellers() {
                   <button
                     type="button"
                     onClick={() => setSelected(book)}
-                    aria-label={t('step2.book_preview_label', 'معاينة الكتاب')}
+                    aria-label={t('step3.book_preview_label', 'معاينة الكتاب')}
                     className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-dark-900/70 backdrop-blur border border-white/15 text-gold-500 hover:bg-gold-500 hover:text-dark-900 transition-all"
                   >
                     <Eye className="w-4 h-4" />
-                    <span className="font-arabic text-xs font-bold">{t('step2.book_preview_label', 'معاينة الكتاب')}</span>
+                    <span className="font-arabic text-xs font-bold">{t('step3.book_preview_label', 'معاينة الكتاب')}</span>
                   </button>
                 </div>
 
