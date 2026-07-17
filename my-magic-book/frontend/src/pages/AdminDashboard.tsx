@@ -556,7 +556,7 @@ export default function AdminDashboard() {
                                 </div>
                               ) : null}
                               <div className="font-arabic text-white/40 text-xs italic">
-                                {new Date(order.createdAt).toLocaleDateString(i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'he' ? 'he-IL' : 'en-US')}
+                                {new Date(order.createdAt).toLocaleString(i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'he' ? 'he-IL' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' })}
                               </div>
                             </div>
 
@@ -1270,7 +1270,7 @@ export default function AdminDashboard() {
                               {o.storyId?.theme && <span className="text-white/40 font-normal"> · {t(`step2.theme_${o.storyId.theme}`, { defaultValue: o.storyId.theme }) as string}</span>}
                             </div>
                             <div className="font-arabic text-white/40 text-xs mt-0.5">
-                              {o.storyId?.bookPackage ? (t(`step3.pkg_${o.storyId.bookPackage}`, { defaultValue: o.storyId.bookPackage }) as string) : ''} · {new Date(o.createdAt).toLocaleDateString(i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'he' ? 'he-IL' : 'en-US')}
+                              {o.storyId?.bookPackage ? (t(`step3.pkg_${o.storyId.bookPackage}`, { defaultValue: o.storyId.bookPackage }) as string) : ''} · {new Date(o.createdAt).toLocaleString(i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'he' ? 'he-IL' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' })}
                             </div>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
