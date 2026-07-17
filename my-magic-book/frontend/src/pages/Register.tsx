@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import MagicButton from '../components/common/MagicButton';
-import { BookOpen, Mail, Lock, User, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -44,9 +44,11 @@ export default function Register() {
       <div className="w-full max-w-md relative z-10">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 justify-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-navy-800 to-magic-500 flex items-center justify-center shadow-magic-glow">
-            <BookOpen className="w-6 h-6 text-gold-500" />
-          </div>
+          <img
+            src="/logo.png?v=7"
+            alt="Magic Fanoos"
+            className="h-14 w-auto object-contain drop-shadow-[0_0_12px_rgba(212,169,55,0.5)]"
+          />
           <div>
             <div className="font-arabic font-black text-gold-500 text-xl">{t('nav.home_brand')}</div>
           </div>
