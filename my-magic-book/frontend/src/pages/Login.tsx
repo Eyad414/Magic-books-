@@ -40,7 +40,10 @@ export default function Login() {
             alt="Magic Fanoos"
             className="h-14 w-auto object-contain drop-shadow-[0_0_12px_rgba(212,169,55,0.5)]"
           />
-          <div className="font-arabic font-black text-gold-500 text-xl">{t('nav.home_brand')}</div>
+          <div className="flex flex-col leading-tight">
+            <span className="font-brand font-bold text-gold-500 text-xl tracking-wider">Magic Fanoos</span>
+            <span className="font-['Marhey'] font-bold text-gold-500/75 text-base">الفانوس السحري</span>
+          </div>
         </Link>
 
         <div className="glass-card p-8">
