@@ -248,16 +248,32 @@ export const getSettings = async (req: Request, res: Response): Promise<void> =>
         await settings.save();
       }
 
-      // Auto-inject the "magic_book" story theme if missing (story text lives in
+      // Auto-inject / repair the "magic_book" theme (story text lives in
       // translation.json stories.magic_book; these pages drive image prompts).
-      const hasMagicBook = settings.themes.some((t: any) => t.id === 'magic_book');
-      if (!hasMagicBook) {
+      // Its demo illustrations (Baha) are pre-generated in GCS.
+      const mbFolder = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
+      const mbCover = `${mbFolder}/generated/theme_magic_book/page-00.png`;
+      const mbImages = Array.from({ length: 13 }, (_, i) => `${mbFolder}/generated/theme_magic_book/page-${String(i + 1).padStart(2, '0')}.png`);
+      const mbTheme: any = settings.themes.find((t: any) => t.id === 'magic_book');
+      if (mbTheme && (!mbTheme.generatedImages || mbTheme.generatedImages.length === 0)) {
+        // Theme already exists but has no demo images yet — attach them.
+        mbTheme.generatedCover = mbCover;
+        mbTheme.generatedImages = mbImages;
+        mbTheme.generatedPortrait = mbCover;
+        mbTheme.ready = true;
+        settings.markModified('themes');
+        await settings.save();
+      }
+      if (!mbTheme) {
         settings.themes.push({
           id: 'magic_book',
           emoji: '📖',
           label: 'رحلة الكتاب المسحور',
           desc: 'مغامرة سحرية داخل عالم الكتب لإعادة الألوان والسعادة',
           ready: true,
+          generatedCover: mbCover,
+          generatedImages: mbImages,
+          generatedPortrait: mbCover,
           pages: [
             { text: "في غرفةٍ صغيرةٍ مليئةٍ بالألعاب، كان {{name}} يجلس وحيداً يقلّب صفحات كتابٍ قديمٍ وجده في الخزانة. وفجأةً بدأت الصفحات تلمع بضوءٍ ذهبيٍّ غريب!", imageSrc: "" },
             { text: "\"يا إلهي!\" صرخ {{name}}. سحب الضوءُ يده ببطء، وفي لمح البصر وجد نفسه يطير داخل دوّامةٍ من الألوان والكلمات الطائرة.", imageSrc: "" },
