@@ -293,6 +293,7 @@ export default function AdminDashboard() {
       pages = loadDefaultPages(theme.id);
     }
     setDraftPages(pages);
+    setEditingStory(index); // open the editor modal (it only renders when this is non-null)
   };
 
   const deleteTheme = (index: number) => {
