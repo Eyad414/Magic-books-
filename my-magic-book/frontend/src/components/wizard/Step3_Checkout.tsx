@@ -14,6 +14,11 @@ import { useTranslation } from 'react-i18next';
 // (old step 5) on a single screen, so the customer pays in one place.
 interface Props { onPrev: () => void; }
 
+// Online payment gateways (Visa/PayPal/Apple Pay) aren't live yet — only
+// cash-on-delivery is enabled for now. Flip this to `true` (one line) to
+// turn the online options back on when the gateway is ready.
+const ONLINE_PAYMENTS_ENABLED = false;
+
 // Supported cities for shipping validation and dropdowns.
 const SUPPORTED_CITIES = [
   'القدس', 'تل أبيب', 'حيفا', 'يافا', 'الناصرة', 'عكا', 'بئر السبع',
@@ -92,7 +97,9 @@ export default function Step3_Checkout({ onPrev }: Props) {
   // ── Review / payment state (from old step 5) ─────────────────────────
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal' | 'applepay' | 'cash'>('card');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal' | 'applepay' | 'cash'>(
+    ONLINE_PAYMENTS_ENABLED ? 'card' : 'cash'
+  );
   const [liveSettings, setLiveSettings] = useState<any>(null);
 
   useEffect(() => {
@@ -546,26 +553,35 @@ export default function Step3_Checkout({ onPrev }: Props) {
             </h3>
             <div className="flex items-center gap-1 p-1 rounded-full bg-dark-800 border border-white/5 overflow-x-auto">
               {[
-                { id: 'card', label: t('step5.credit_card'), icon: '💳' },
-                { id: 'paypal', label: 'PayPal', icon: '🅿️' },
-                { id: 'applepay', label: 'Apple Pay', icon: '🍎' },
-                { id: 'cash', label: t('step5.cash', 'نقدًا عند الاستلام'), icon: '💵' },
+                { id: 'card', label: t('step5.credit_card'), icon: '💳', soon: !ONLINE_PAYMENTS_ENABLED },
+                { id: 'paypal', label: 'PayPal', icon: '🅿️', soon: !ONLINE_PAYMENTS_ENABLED },
+                { id: 'applepay', label: 'Apple Pay', icon: '🍎', soon: !ONLINE_PAYMENTS_ENABLED },
+                { id: 'cash', label: t('step5.cash', 'نقدًا عند الاستلام'), icon: '💵', soon: false },
               ].map((method) => {
                 const active = paymentMethod === method.id;
+                const soon = method.soon;
                 return (
                   <button
                     key={method.id}
                     type="button"
-                    onClick={() => setPaymentMethod(method.id as any)}
-                    title={method.label}
+                    disabled={soon}
+                    onClick={() => { if (!soon) setPaymentMethod(method.id as any); }}
+                    title={soon ? `${method.label} — ${t('step5.soon', 'قريباً')}` : method.label}
                     className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-arabic font-bold whitespace-nowrap transition-all ${
-                      active
-                        ? 'bg-gold-500 text-dark-900 shadow-[0_0_12px_rgba(212,169,55,0.4)]'
-                        : 'text-white/60 hover:text-white hover:bg-white/5'
+                      soon
+                        ? 'text-white/35 cursor-not-allowed'
+                        : active
+                          ? 'bg-gold-500 text-dark-900 shadow-[0_0_12px_rgba(212,169,55,0.4)]'
+                          : 'text-white/60 hover:text-white hover:bg-white/5'
                     }`}
                   >
-                    <span className="text-base leading-none">{method.icon}</span>
+                    <span className={`text-base leading-none ${soon ? 'opacity-60' : ''}`}>{method.icon}</span>
                     <span className={active ? '' : 'hidden sm:inline'}>{method.label}</span>
+                    {soon && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gold-500/15 text-gold-500/80 border border-gold-500/25">
+                        {t('step5.soon', 'قريباً')}
+                      </span>
+                    )}
                   </button>
                 );
               })}

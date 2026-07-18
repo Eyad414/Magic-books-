@@ -502,6 +502,7 @@
     "total": "Total",
     "payment_method_title": "Payment Method",
     "credit_card": "Credit Card",
+    "soon": "Soon",
     "card_number": "Card Number",
     "expiry_date": "Expiry Date",
     "secure_payment": "Secure and encrypted payment via global gateways",
