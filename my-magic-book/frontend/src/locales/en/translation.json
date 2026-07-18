@@ -372,7 +372,9 @@
     "theme_space_coloring": "Coloring Book: Space",
     "theme_space_coloring_desc": "Pages to color, starring your child",
     "theme_school_coloring": "Coloring Book: School",
-    "theme_school_coloring_desc": "Pages to color, starring your child"
+    "theme_school_coloring_desc": "Pages to color, starring your child",
+    "theme_magic_book": "The Magic Book Journey",
+    "theme_magic_book_desc": "A magical adventure inside a world of books to bring back color and joy"
   },
   "step3": {
     "title": "Customize Your Book",
@@ -819,11 +821,11 @@
       "tagline": "An unforgettable journey among animals",
       "moral": "Nature is full of wonders, and every creature deserves love and respect.",
       "conclusion": "Great job, [NAME]! You are now a true friend of animals and their trusted protector. 🦁",
-      "questions": [
-        "Which animal did you like most in the story?",
-        "What did we learn about caring for animals?",
-        "If you visited the zoo, which animal would you want to see first — and why?"
-      ],
+      "questions": {
+        "0": "What animal did you like the most in the story?",
+        "1": "What did we learn about taking care of animals?",
+        "2": "If you were [NAME], what would you do at the zoo?"
+      },
       "dedication": "To [NAME], who fills our lives with joy and wonder every day — this magical story is just for you.",
       "pages": {
         "1": "On a bright sunny morning, [NAME] woke up early, jumping with joy. Today was the big trip to the zoo!",
@@ -839,11 +841,6 @@
         "21": "Under the shady trees, [NAME] saw giant pandas slowly chewing on fresh green bamboo shoots.",
         "23": "As the sun began to set, the animal keeper walked over and presented [NAME] with a shiny 'Animal Friend' badge.",
         "25": "[NAME] walked back home happily, holding the badge tight, excited to share all the animal adventures with family."
-      },
-      "questions": {
-        "0": "What animal did you like the most in the story?",
-        "1": "What did we learn about taking care of animals?",
-        "2": "If you were [NAME], what would you do at the zoo?"
       }
     },
     "space": {
@@ -851,11 +848,11 @@
       "tagline": "A magical journey among the stars",
       "moral": "Courage opens the doors to new worlds, and the universe is full of beautiful mysteries.",
       "conclusion": "You are a true hero, [NAME], both on Earth and among the stars! 🚀",
-      "questions": [
-        "How did [NAME] help the alien friend?",
-        "What did [NAME] see from the spaceship window?",
-        "If you traveled to space, what would you like to discover?"
-      ],
+      "questions": {
+        "0": "How did [NAME] help the alien friend?",
+        "1": "What did [NAME] see from the spaceship window?",
+        "2": "If you traveled to space, what would you like to discover?"
+      },
       "dedication": "To [NAME], our brave hero whose dreams and ambitions reach the vast and starry universe.",
       "pages": {
         "1": "[NAME] always dreamed of the stars. One quiet night, the bed suddenly transformed into a high-tech spaceship filled with glowing buttons!",
@@ -871,11 +868,6 @@
         "21": "To show its gratitude, the alien gifted [NAME] a tiny star that glows in the dark, and then it was time to say goodbye.",
         "23": "The spaceship launched once again, carrying the little hero back to Earth through clouds that looked like sweet cotton candy.",
         "25": "[NAME] woke up in bed and looked at their hand to find the little star still glowing! [NAME] smiled, knowing that courage reveals the universe's secrets."
-      },
-      "questions": {
-        "0": "How did [NAME] help the alien friend?",
-        "1": "What did [NAME] see from the spaceship window?",
-        "2": "If you traveled to space, what would you like to discover?"
       }
     },
     "school_hero": {
@@ -883,11 +875,11 @@
       "tagline": "A magical adventure about kindness and helping others",
       "moral": "Kindness is the ultimate superpower, and working together brings color back to our world.",
       "conclusion": "You are a beacon of light, [NAME]! With your kindness and beautiful spirit, every day is an adventure. 🏫",
-      "questions": [
-        "How did [NAME] bring the colors back to the school?",
-        "What did [NAME] do to save the little cat?",
-        "How can you be a hero in your school too?"
-      ],
+      "questions": {
+        "0": "How did [NAME] bring the colors back to school?",
+        "1": "What did [NAME] do to save the little kitten?",
+        "2": "How can you also be a hero in your school?"
+      },
       "dedication": "To [NAME], whose pure heart and brilliant smile make school and the world a much brighter place.",
       "pages": {
         "1": "[NAME] woke up with great energy, put on their favorite backpack, and set off towards school with a bright, happy smile.",
@@ -903,11 +895,29 @@
         "21": "At the end of the school day, everyone clapped warmly, and the principal presented [NAME] with the 'Little Hero' medal for their courage and kindness.",
         "23": "[NAME] ran home excited, proudly telling their mother how school is not just lessons, but a place for adventure and helping others.",
         "25": "[NAME] placed the shiny medal next to the bed and closed their eyes, excited and waiting for a brand new school adventure."
+      }
+    },
+    "magic_book": {
+      "title": "[NAME] and the Journey of the Magic Book",
+      "pages": {
+        "1": "In a small room full of toys, [NAME] sat alone, flipping through an old book he had found in the cupboard. Suddenly, the pages began to glow with a strange golden light!",
+        "2": "\"Oh my!\" cried [NAME]. The light gently pulled his hand, and in the blink of an eye he was flying inside a swirling vortex of colors and floating words.",
+        "3": "[NAME] landed softly on a ground made of paper. The trees there were giant crayons, and the sky was painted in bright watercolors.",
+        "4": "A little rabbit wearing glasses and holding a paintbrush appeared and said: \"Welcome, [NAME], to the World of Stories! We have been waiting for you for so long.\"",
+        "5": "The rabbit told [NAME] that the \"Color of Happiness\" had vanished from the book, and the whole world was turning black and white — and only the courage of a real child could bring it back.",
+        "6": "[NAME] began his journey and reached the \"River of Blue Ink,\" but the bridge was broken. He thought cleverly, picked up a giant pencil, and drew a strong bridge to cross safely.",
+        "7": "In the dark forest, [NAME] met a wise owl who asked him: \"What is the strongest thing in the world?\" [NAME] answered: \"Imagination!\" The owl smiled and handed him a glowing key.",
+        "8": "[NAME] reached the Mountain of Tales. The path was rough, but he remembered his mother's words about patience and kept climbing until he reached the very top.",
+        "9": "At the top, [NAME] found an old, locked box. He used the glowing key, and when it opened, thousands of colorful butterflies flew out, coloring everything they touched.",
+        "10": "The trees turned green and the flowers turned red — the \"Color of Happiness\" returned to the world, all thanks to [NAME]'s courage.",
+        "11": "All the characters of the book gathered to celebrate. The rabbit and the owl danced with [NAME] and thanked him for saving their world from disappearing.",
+        "12": "The rabbit said: \"It's time to go home, hero — but always remember, this book is your second home, and your imagination is the key.\" [NAME] waved goodbye as the golden vortex appeared to carry him back.",
+        "13": "[NAME] opened his eyes to find himself back in his room, the book in his lap. It no longer glowed, but his heart was full of excitement. He smiled and closed it, knowing his next adventure always lives between the pages of his magic book."
       },
       "questions": {
-        "0": "How did [NAME] bring the colors back to school?",
-        "1": "What did [NAME] do to save the little kitten?",
-        "2": "How can you also be a hero in your school?"
+        "0": "What was the strongest thing that helped [NAME] on the journey?",
+        "1": "What did we learn about courage and patience from [NAME]'s story?",
+        "2": "If you were [NAME], what would you draw with the magic pencil?"
       }
     }
   },
