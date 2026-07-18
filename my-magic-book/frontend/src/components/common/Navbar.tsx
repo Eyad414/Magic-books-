@@ -11,7 +11,6 @@ const navLinks = [
   { to: '/stories', labelKey: 'stories' },
   { to: '/about', labelKey: 'about' },
   { to: '/contact', labelKey: 'contact' },
-  { to: '/policy', labelKey: 'policy' },
 ];
 
 export default function Navbar() {

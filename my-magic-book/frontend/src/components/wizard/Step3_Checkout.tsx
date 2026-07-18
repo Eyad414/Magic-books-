@@ -588,7 +588,7 @@ export default function Step3_Checkout({ onPrev }: Props) {
             </div>
           </div>
 
-          {paymentMethod === 'card' && (
+          {ONLINE_PAYMENTS_ENABLED && paymentMethod === 'card' && (
             <div className="mt-3 p-3 bg-dark-800 rounded-lg border border-white/5 animate-fade-in">
               <div className="grid grid-cols-1 sm:grid-cols-[1fr_100px_80px] gap-2">
                 <div>
