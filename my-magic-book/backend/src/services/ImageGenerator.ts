@@ -21,6 +21,29 @@ export function imagesGeneratedSoFar(): number {
 
 const storage = new Storage({ projectId: process.env.GCP_PROJECT_ID });
 
+// Vertex AI on a freshly-enabled project has a low per-minute quota for the
+// image model. On a 429 / RESOURCE_EXHAUSTED, wait out the window and retry so
+// every page still gets generated (generation runs post-payment, so a slower,
+// reliable pace is fine). No-op for the AI Studio path, which rarely 429s.
+async function generateContentRetrying(request: any): Promise<any> {
+  const WAITS_MS = [20000, 40000, 60000, 60000, 60000];
+  for (let i = 0; ; i++) {
+    try {
+      return await genaiClient().models.generateContent(request);
+    } catch (err: any) {
+      const code = err?.status ?? err?.code ?? err?.error?.code;
+      const msg = String(err?.message ?? err ?? '');
+      const rateLimited = code === 429 || /RESOURCE_EXHAUSTED|exhausted|quota|rate limit/i.test(msg);
+      if (rateLimited && i < WAITS_MS.length) {
+        console.warn(`[ImageGenerator] rate-limited (429); waiting ${WAITS_MS[i] / 1000}s then retry ${i + 1}/${WAITS_MS.length}`);
+        await new Promise((r) => setTimeout(r, WAITS_MS[i]));
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
 /**
  * Generates an illustration for a story page and persists it in GCS.
  * Calls Gemini 2.5 Flash Image with the per-page prompt and the customer's
@@ -44,7 +67,7 @@ export async function generateIllustration(
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     const promptText =
       attempt === 1 ? prompt : `${prompt}\n\nOutput an IMAGE only. Do not reply with text.`;
-    const response = await genaiClient().models.generateContent({
+    const response = await generateContentRetrying({
       model: MODEL,
       contents: [
         {
