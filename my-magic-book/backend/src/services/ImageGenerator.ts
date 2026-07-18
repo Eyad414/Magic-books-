@@ -1,6 +1,6 @@
-import { GoogleGenAI } from '@google/genai';
 import { Storage } from '@google-cloud/storage';
 import { uploadBuffer, pdfFolderPath, StoredObject } from './StorageService';
+import { genaiClient } from './genaiClient';
 
 interface GenerateOpts {
   pageNumber?: number;
@@ -17,16 +17,6 @@ export const COST_PER_IMAGE_USD = 0.039;
 let _imagesGenerated = 0;
 export function imagesGeneratedSoFar(): number {
   return _imagesGenerated;
-}
-
-// Lazy-init so missing key only fails when an actual generation is attempted.
-let _client: GoogleGenAI | null = null;
-function client(): GoogleGenAI {
-  if (_client) return _client;
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('GEMINI_API_KEY missing — refusing to generate illustrations.');
-  _client = new GoogleGenAI({ apiKey });
-  return _client;
 }
 
 const storage = new Storage({ projectId: process.env.GCP_PROJECT_ID });
@@ -54,7 +44,7 @@ export async function generateIllustration(
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     const promptText =
       attempt === 1 ? prompt : `${prompt}\n\nOutput an IMAGE only. Do not reply with text.`;
-    const response = await client().models.generateContent({
+    const response = await genaiClient().models.generateContent({
       model: MODEL,
       contents: [
         {

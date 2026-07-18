@@ -65,11 +65,12 @@ export const generateStoryWithAI = async (options: StoryGeneratorOptions): Promi
   const { childName, theme, language } = options;
   const prompt = buildPrompt(options);
 
-  // 1) Gemini (preferred — uses the existing GEMINI_API_KEY; text is ~free).
-  if (process.env.GEMINI_API_KEY) {
+  // 1) Gemini (preferred — text is ~free). Uses Vertex or AI Studio per env
+  //    (GENAI_USE_VERTEX), via the shared genaiClient.
+  if (process.env.GENAI_USE_VERTEX === 'true' || process.env.GEMINI_API_KEY) {
     try {
-      const { GoogleGenAI } = await import('@google/genai');
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const { genaiClient } = await import('./genaiClient');
+      const ai = genaiClient();
       const res = await ai.models.generateContent({
         model: process.env.GEMINI_TEXT_MODEL || 'gemini-2.5-flash',
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
