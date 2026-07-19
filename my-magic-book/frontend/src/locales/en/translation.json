@@ -918,7 +918,10 @@
         "0": "What was the strongest thing that helped [NAME] on the journey?",
         "1": "What did we learn about courage and patience from [NAME]'s story?",
         "2": "If you were [NAME], what would you draw with the magic pencil?"
-      }
+      },
+      "moral": "Imagination is the strongest power in the world, and courage brings color and joy back to everything.",
+      "conclusion": "You are a real hero, [NAME] — and your imagination is the key to every adventure! ✨",
+      "dedication": "To [NAME], the child who holds a whole world of imagination in their hands."
     }
   },
   "order_success": {

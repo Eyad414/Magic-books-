@@ -10,6 +10,7 @@ import type { StoryDefinition } from './types';
 import { zooAdventure } from './story01_zoo';
 import { spaceAdventure } from './story02_space';
 import { schoolAdventure } from './story03_school';
+import { magicBookJourney } from './story04_magicbook';
 
 // ── Future stories — uncomment as you add them ────────────────────────────────
 // import { oceanAdventure }    from './story03_ocean';
@@ -35,6 +36,7 @@ export const STORIES: StoryDefinition[] = [
   zooAdventure,
   spaceAdventure,
   schoolAdventure,
+  magicBookJourney,
   // oceanAdventure,
   // forestAdventure,
   // desertAdventure,

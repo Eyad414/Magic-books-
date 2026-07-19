@@ -174,6 +174,49 @@ export const SCENE_TEMPLATES: Record<string, SceneTemplate> = {
       'waving goodbye with a big happy smile from a cute rocket window, friendly smiling planets and stars around, a little alien waving too, colorful confetti, bright cheerful colors, open space at the bottom',
   },
 
+  // ── The Magic Book Journey (رحلة الكتاب المسحور) — a permanent showcase theme.
+  //    Every scene is a REALISTIC cinematic magical environment (NOT flat paper /
+  //    crayon cartoon worlds) so the photoreal child fits naturally, the same way
+  //    the zoo book works. Keeps the story beats but renders them photoreal.
+  magic_book: {
+    style: 'photoreal',
+    titleAr: '[NAME] ورحلة الكتاب المسحور',
+    pageTexts: [
+      'في غرفةٍ صغيرةٍ مليئةٍ بالألعاب، كان [NAME] يجلس وحيداً يقلّب صفحات كتابٍ قديمٍ وجده في الخزانة. وفجأةً بدأت الصفحات تلمع بضوءٍ ذهبيٍّ غريب!',
+      '"يا إلهي!" صرخ [NAME]. سحب الضوءُ يده ببطء، وفي لمح البصر وجد نفسه يطير داخل دوّامةٍ من الألوان والكلمات الطائرة.',
+      'سقط [NAME] بلطفٍ على أرضٍ مصنوعةٍ من الورق. كانت الأشجار هناك أقلام تلوينٍ ضخمة، والسماء مرسومةً بألوانٍ مائيةٍ زاهية.',
+      'ظهر أرنبٌ صغيرٌ يرتدي نظارةً ويحمل ريشة رسم، وقال: "أهلاً بك يا [NAME] في عالم القصص! نحن بانتظارك منذ زمن."',
+      'أخبر الأرنبُ [NAME] أنّ "لون السعادة" قد اختفى من الكتاب، وأنّ العالم يتحوّل إلى الأبيض والأسود، ولا يعيده إلا شجاعة طفلٍ حقيقي.',
+      'بدأ [NAME] رحلته ووصل إلى "نهر الحبر الأزرق"، لكنّ الجسر كان مكسوراً. ففكّر بذكاء، وأمسك قلم رصاصٍ عملاقاً ورسم جسراً قوياً عبر به بسلام.',
+      'في الغابة المظلمة، التقى [NAME] بومةً حكيمة سألته: "ما أقوى شيءٍ في العالم؟" فأجاب: "الخيال!". ابتسمت البومة وأعطته مفتاحاً مضيئاً.',
+      'وصل [NAME] إلى جبل الحكايات. كان الطريق وعراً، لكنه تذكّر كلمات والدته عن الصبر، فواصل التسلّق حتى بلغ القمة.',
+      'في القمة وجد [NAME] صندوقاً قديماً مغلقاً. استخدم المفتاح المضيء، وحين فتحه انطلقت آلاف الفراشات الملوّنة تلوّن كلّ ما تلمسه.',
+      'بدأت الأشجار تكتسي بالأخضر، والأزهار بالأحمر، وعاد "لون السعادة" إلى العالم بفضل شجاعة [NAME].',
+      'اجتمعت كلّ شخصيات الكتاب للاحتفال، ورقص الأرنب والبومة مع [NAME]، وشكروه لأنه أنقذ عالمهم من الاختفاء.',
+      'قال الأرنب: "حان وقت العودة يا بطل، لكن تذكّر أنّ هذا الكتاب بيتك الثاني، وخيالك هو مفتاح الدخول." ولوّح [NAME] مودّعاً بينما ظهرت الدوّامة الذهبية لتأخذه.',
+      'فتح [NAME] عينيه ليجد نفسه في غرفته والكتاب في حضنه. لم يعد يلمع، لكنّ قلبه امتلأ بالحماس. ابتسم وأغلقه، وهو يعلم أنّ مغامرته القادمة تسكن دائماً بين صفحات كتابه السحري.',
+    ],
+    coverScene:
+      'holding a large open antique leather storybook from which a warm river of golden sparkling light and tiny glowing stars gently swirls upward, a big joyful wonder-filled smile. Around the child a warm enchanted library-forest bathed in golden magical light — glowing floating books, soft warm bokeh, cozy amber glow filling the whole frame (bright and warm, NOT a dark night sky)',
+    portraitScene:
+      'with a warm natural smile looking at the camera, gently holding a small glowing storybook, soft warm golden magical bokeh background',
+    pageScenes: [
+      'sitting cross-legged on a cozy rug in a warm softly-lit child\'s bedroom at night, holding a large old leather book whose open pages glow with warm golden light on the face, wonder and delight, a small bedside lamp glowing nearby',
+      'standing with arms slightly raised, full body grounded in a warm dim room as a swirling stream of golden glowing light and faint softly-glowing letters lifts gently around from an open glowing book, cinematic golden sparkles all around, amazed joyful face (the child stays fully present and naturally lit, NOT a floating head)',
+      'standing and looking around in wonder inside a breathtaking enchanted forest where the trees glow softly and warm golden light dapples the mossy ground, drifting magical fireflies, cinematic photoreal fantasy',
+      'crouching down and smiling warmly at a small fluffy REAL white rabbit wearing tiny round glasses, sitting on a mossy log in a sunlit magical forest glade, soft warm light, realistic fur',
+      'standing in an enchanted garden that is dramatically split — one side softly faded and grey, the other bursting with vivid glowing flowers and rich color — reaching wonderingly toward the colorful side, cinematic dramatic light, photoreal on both sides',
+      'kneeling at the edge of a glowing blue magical river in an enchanted forest, holding a giant ornate wooden pencil and drawing a softly glowing bridge of light arcing across the water, determined focused smile, cinematic',
+      'in a misty enchanted forest at twilight, holding up a small glowing golden key toward a wise owl perched on a mossy branch, warm magical rim light, cinematic photoreal',
+      'carefully climbing a huge towering mountain of old leather books, reaching upward toward a glowing feather quill resting at the very top, dramatic warm cinematic light, magical dust in the air',
+      'standing on a rocky peak above soft clouds at golden sunrise, having just opened an old ornate treasure chest from which hundreds of glowing colorful butterflies stream up into the sky, awe and joy, cinematic',
+      'standing with arms open wide in pure joy in a lush enchanted meadow bursting with vivid real flowers and a few glowing butterflies, warm golden light washing over the whole scene, photoreal, fully lit and integrated',
+      'celebrating happily in a magical glowing forest clearing softly decorated with tiny warm lanterns and little bunting, a friendly real fluffy white rabbit and a gentle wise owl beside, warm festive magical light',
+      'standing on a grassy magical hill at dusk beside a warm glowing golden swirl of light (a gentle magical portal), waving goodbye with a soft smile, a small white rabbit and an owl beside, a faint glowing castle far in the distance, cinematic photoreal',
+      'back in the cozy bedroom at night, sitting on the rug holding the now-quiet old book against the chest with a happy content smile, soft moonlight and warm lamp light, calm and cozy',
+    ],
+  },
+
   // ── School (بطل المدرسة) — coloring-only entry (school's full story book is
   //    generated via the cartoon preview path; here we add its coloring set).
   school_hero: {
