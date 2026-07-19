@@ -31,17 +31,19 @@ const DEFAULT_THEME_DESCS = [
 ];
 
 export function getThemeLabel(theme: { id: string; label?: string }, t: TFn): string {
-  const isCustomized = !!theme.label && !DEFAULT_THEME_LABELS.includes(theme.label);
-  if (isCustomized) return theme.label as string;
+  const label = theme.label?.trim();
+  const isCustomized = !!label && !DEFAULT_THEME_LABELS.includes(label);
+  if (isCustomized) return label;
   const key = `step2.theme_${theme.id}`;
   const translated = t(key);
-  return translated !== key ? translated : (theme.label || theme.id);
+  return translated !== key ? translated : (label || theme.id);
 }
 
 export function getThemeDesc(theme: { id: string; desc?: string }, t: TFn): string {
-  const isCustomized = !!theme.desc && !DEFAULT_THEME_DESCS.includes(theme.desc);
-  if (isCustomized) return theme.desc as string;
+  const desc = theme.desc?.trim();
+  const isCustomized = !!desc && !DEFAULT_THEME_DESCS.includes(desc);
+  if (isCustomized) return desc;
   const key = `step2.theme_${theme.id}_desc`;
   const translated = t(key);
-  return translated !== key ? translated : (theme.desc || '');
+  return translated !== key ? translated : (desc || '');
 }
