@@ -58,10 +58,25 @@ export function getThemeLabel(
   return translated !== key ? translated : (label || theme.id);
 }
 
-export function getThemeDesc(theme: { id: string; desc?: string }, t: TFn): string {
+export function getThemeDesc(
+  theme: { id: string; desc?: string; descriptions?: ThemeTitles },
+  t: TFn,
+  lang?: string,
+): string {
+  // 1. An explicit admin-set description for THIS UI language wins.
+  const L = (lang || '').toLowerCase();
+  const perLang =
+    L.startsWith('en') ? theme.descriptions?.en :
+    L.startsWith('he') ? theme.descriptions?.he :
+    L.startsWith('ar') ? theme.descriptions?.ar : undefined;
+  if (perLang?.trim()) return perLang.trim();
+
+  // 2. A customized single Arabic description wins over the built-in i18n one.
   const desc = theme.desc?.trim();
   const isCustomized = !!desc && !DEFAULT_THEME_DESCS.includes(desc);
   if (isCustomized) return desc;
+
+  // 3. Built-in, un-edited theme → localized i18n description.
   const key = `step2.theme_${theme.id}_desc`;
   const translated = t(key);
   return translated !== key ? translated : (desc || '');

@@ -17,6 +17,9 @@ export interface ITheme {
    *  `label`; `titles.en` / `titles.he` override the name for those UI
    *  languages (empty → falls back to the built-in localized name). */
   titles?: { ar?: string; en?: string; he?: string };
+  /** Same idea for the description: Arabic stays in `desc`; `descriptions.en` /
+   *  `descriptions.he` override it for those UI languages. */
+  descriptions?: { ar?: string; en?: string; he?: string };
   pages?: any[];
   /** Admin-controlled gate: only `ready` themes are shown in the customer wizard. */
   ready: boolean;
@@ -79,6 +82,7 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
         label: { type: String, required: true },
         desc: { type: String, required: true },
         titles: { type: Schema.Types.Mixed, default: undefined },
+        descriptions: { type: Schema.Types.Mixed, default: undefined },
         pages: { type: Schema.Types.Mixed, default: [] },
         ready: { type: Boolean, default: false },
         generatedImages: { type: [String], default: undefined },

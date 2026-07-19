@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 import { findStory } from '../data/stories';
 import { SHOWCASE_CARDS } from '../data/showcaseCards';
 import { localizeName } from '../utils/translit';
-import { getThemeDesc } from '../utils/themeLabel';
 
 export default function AdminDashboard() {
   const { t, i18n } = useTranslation();
@@ -305,9 +304,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // Shared with the customer wizard (Step 2) so the theme name/desc the admin
-  // types here is exactly what customers see. See utils/themeLabel.
-  const getLocalizedThemeDesc = (theme: any) => getThemeDesc(theme, t);
 
   const getLocalizedPkgLabel = (pkg: any) => {
     const defaultArabicNames = ['قصة ملونة', 'دفتر تلوين', 'ملف صوتي (Audio)', 'نسخة رقمية (E-Book)', 'باقة Pro الشاملة'];
@@ -811,12 +807,17 @@ export default function AdminDashboard() {
                 <div className="space-y-4">
                   {settings.themes.map((theme: any, index: number) => theme.isColoring ? null : (
                     <div key={theme.id} className="p-4 bg-white/5 rounded-xl border border-white/10 grid grid-cols-1 sm:grid-cols-4 gap-4 items-center">
-                      {/* Per-language titles: Arabic lives in `label`; English &
-                          Hebrew live in `titles` and override the name for those
-                          UI languages (empty = fall back to the built-in name). */}
+                      {/* Emoji + per-language titles. Arabic lives in `label`;
+                          English & Hebrew live in `titles` and override the name
+                          for those UI languages (empty = built-in localized name). */}
                       <div className="sm:col-span-4">
                         <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.title_langs', 'اسم القصة (لكل لغة)')}</label>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          <input type="text" className="magic-input w-full text-center" placeholder={t('admin.emoji_icon', 'أيقونة')} value={theme.emoji} onChange={(e) => {
+                            const newThemes = [...settings.themes];
+                            newThemes[index].emoji = e.target.value;
+                            setSettings({ ...settings, themes: newThemes });
+                          }} />
                           <input type="text" dir="rtl" className="magic-input w-full" placeholder={t('admin.title_ar', 'بالعربية')} value={theme.label || ''} onChange={(e) => {
                             const newThemes = [...settings.themes];
                             newThemes[index].label = e.target.value;
@@ -834,21 +835,27 @@ export default function AdminDashboard() {
                           }} />
                         </div>
                       </div>
-                      <div className="sm:col-span-1">
-                        <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.emoji_icon')}</label>
-                        <input type="text" className="magic-input w-full text-center" value={theme.emoji} onChange={(e) => {
-                          const newThemes = [...settings.themes];
-                          newThemes[index].emoji = e.target.value;
-                          setSettings({...settings, themes: newThemes});
-                        }} />
-                      </div>
-                      <div className="sm:col-span-3">
-                        <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.description')}</label>
-                        <input type="text" className="magic-input w-full" value={getLocalizedThemeDesc(theme)} onChange={(e) => {
-                          const newThemes = [...settings.themes];
-                          newThemes[index].desc = e.target.value;
-                          setSettings({...settings, themes: newThemes});
-                        }} />
+                      {/* Per-language descriptions. Arabic lives in `desc`; English
+                          & Hebrew live in `descriptions` (empty = built-in one). */}
+                      <div className="sm:col-span-4">
+                        <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.desc_langs', 'الوصف (لكل لغة)')}</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <input type="text" dir="rtl" className="magic-input w-full" placeholder={t('admin.desc_ar', 'الوصف بالعربية')} value={theme.desc || ''} onChange={(e) => {
+                            const newThemes = [...settings.themes];
+                            newThemes[index].desc = e.target.value;
+                            setSettings({ ...settings, themes: newThemes });
+                          }} />
+                          <input type="text" dir="ltr" className="magic-input w-full" placeholder={t('admin.desc_en', 'Description (English)')} value={theme.descriptions?.en || ''} onChange={(e) => {
+                            const newThemes = [...settings.themes];
+                            newThemes[index].descriptions = { ...(newThemes[index].descriptions || {}), en: e.target.value };
+                            setSettings({ ...settings, themes: newThemes });
+                          }} />
+                          <input type="text" dir="rtl" className="magic-input w-full" placeholder={t('admin.desc_he', 'תיאור (עברית)')} value={theme.descriptions?.he || ''} onChange={(e) => {
+                            const newThemes = [...settings.themes];
+                            newThemes[index].descriptions = { ...(newThemes[index].descriptions || {}), he: e.target.value };
+                            setSettings({ ...settings, themes: newThemes });
+                          }} />
+                        </div>
                       </div>
                       <div className="sm:col-span-4 flex flex-wrap items-center gap-3 mt-2">
                         {/* Ready toggle — only `ready` themes appear in the customer wizard */}

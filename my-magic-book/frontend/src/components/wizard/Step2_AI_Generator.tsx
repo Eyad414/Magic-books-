@@ -26,6 +26,7 @@ interface ApiTheme {
   label: string;
   desc: string;
   titles?: { ar?: string; en?: string; he?: string };
+  descriptions?: { ar?: string; en?: string; he?: string };
   ready?: boolean;
   // Sample illustrations (generated with the demo child "Baha") so the preview
   // can show what a finished book looks like.
@@ -62,6 +63,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
             label: dbTheme.label,
             desc: dbTheme.desc,
             titles: dbTheme.titles,
+            descriptions: dbTheme.descriptions,
             generatedCover: dbTheme.generatedCover,
             generatedImages: dbTheme.generatedImages,
           };
@@ -426,7 +428,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
           const selectedTheme = THEMES.find(t => t.id === form.theme);
           return selectedTheme ? (
             <p className="font-arabic text-gold-500/80 text-xs mb-6 text-center">
-              {selectedTheme.emoji} {getThemeLabel(selectedTheme, t, i18n.language)} — {getThemeDesc(selectedTheme, t)}
+              {selectedTheme.emoji} {getThemeLabel(selectedTheme, t, i18n.language)} — {getThemeDesc(selectedTheme, t, i18n.language)}
             </p>
           ) : null;
         })()}
