@@ -13,6 +13,10 @@ export interface ITheme {
   emoji: string;
   label: string;
   desc: string;
+  /** Optional per-language story titles set by the admin. Arabic stays in
+   *  `label`; `titles.en` / `titles.he` override the name for those UI
+   *  languages (empty → falls back to the built-in localized name). */
+  titles?: { ar?: string; en?: string; he?: string };
   pages?: any[];
   /** Admin-controlled gate: only `ready` themes are shown in the customer wizard. */
   ready: boolean;
@@ -74,6 +78,7 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
         emoji: { type: String, required: true },
         label: { type: String, required: true },
         desc: { type: String, required: true },
+        titles: { type: Schema.Types.Mixed, default: undefined },
         pages: { type: Schema.Types.Mixed, default: [] },
         ready: { type: Boolean, default: false },
         generatedImages: { type: [String], default: undefined },

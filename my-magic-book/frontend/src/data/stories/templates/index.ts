@@ -2,6 +2,7 @@ import type { TemplatePage } from '../builder';
 
 import { spaceStory } from './space';
 import { zooStory } from './zoo';
+import { magicBookStory } from './magicBook';
 
 // 1. You can write each story as a separate array
 const adventureStory: TemplatePage[] = [
@@ -53,6 +54,7 @@ export const STORY_TEMPLATES: Record<string, TemplatePage[]> = {
   "space": spaceStory,
   "ocean": oceanStory,
   "school_hero": schoolStory,
+  "magic_book": magicBookStory,
   "princess": [], // Add your princess array here
   "superhero": [], // Add your superhero array here
   "animals": [], // Add your animals array here

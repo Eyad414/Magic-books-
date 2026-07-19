@@ -25,6 +25,7 @@ interface ApiTheme {
   emoji: string;
   label: string;
   desc: string;
+  titles?: { ar?: string; en?: string; he?: string };
   ready?: boolean;
   // Sample illustrations (generated with the demo child "Baha") so the preview
   // can show what a finished book looks like.
@@ -55,11 +56,12 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
           return {
             id: dbTheme.id,
             emoji: dbTheme.emoji,
-            // Keep the RAW admin label/desc — the display name is resolved at
-            // render via getThemeLabel/getThemeDesc, so an admin-edited title
+            // Keep the RAW admin label/desc/titles — the display name is resolved
+            // at render via getThemeLabel/getThemeDesc, so an admin-edited title
             // wins and the label re-localizes when the UI language changes.
             label: dbTheme.label,
             desc: dbTheme.desc,
+            titles: dbTheme.titles,
             generatedCover: dbTheme.generatedCover,
             generatedImages: dbTheme.generatedImages,
           };
@@ -301,7 +303,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
                 }`}
             >
               <span className={`font-arabic font-bold text-xs ${form.theme === theme.id ? 'text-gold-500' : 'text-white/70'}`}>
-                {getThemeLabel(theme, t)} {theme.emoji}
+                {getThemeLabel(theme, t, i18n.language)} {theme.emoji}
               </span>
             </button>
           ))}
@@ -424,7 +426,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
           const selectedTheme = THEMES.find(t => t.id === form.theme);
           return selectedTheme ? (
             <p className="font-arabic text-gold-500/80 text-xs mb-6 text-center">
-              {selectedTheme.emoji} {getThemeLabel(selectedTheme, t)} — {getThemeDesc(selectedTheme, t)}
+              {selectedTheme.emoji} {getThemeLabel(selectedTheme, t, i18n.language)} — {getThemeDesc(selectedTheme, t)}
             </p>
           ) : null;
         })()}

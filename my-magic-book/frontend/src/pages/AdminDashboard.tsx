@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { findStory } from '../data/stories';
 import { SHOWCASE_CARDS } from '../data/showcaseCards';
 import { localizeName } from '../utils/translit';
-import { getThemeLabel, getThemeDesc } from '../utils/themeLabel';
+import { getThemeDesc } from '../utils/themeLabel';
 
 export default function AdminDashboard() {
   const { t, i18n } = useTranslation();
@@ -307,7 +307,6 @@ export default function AdminDashboard() {
 
   // Shared with the customer wizard (Step 2) so the theme name/desc the admin
   // types here is exactly what customers see. See utils/themeLabel.
-  const getLocalizedThemeLabel = (theme: any) => getThemeLabel(theme, t);
   const getLocalizedThemeDesc = (theme: any) => getThemeDesc(theme, t);
 
   const getLocalizedPkgLabel = (pkg: any) => {
@@ -812,13 +811,28 @@ export default function AdminDashboard() {
                 <div className="space-y-4">
                   {settings.themes.map((theme: any, index: number) => theme.isColoring ? null : (
                     <div key={theme.id} className="p-4 bg-white/5 rounded-xl border border-white/10 grid grid-cols-1 sm:grid-cols-4 gap-4 items-center">
-                      <div className="sm:col-span-1">
-                        <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.name')}</label>
-                        <input type="text" className="magic-input w-full" value={getLocalizedThemeLabel(theme)} onChange={(e) => {
-                          const newThemes = [...settings.themes];
-                          newThemes[index].label = e.target.value;
-                          setSettings({...settings, themes: newThemes});
-                        }} />
+                      {/* Per-language titles: Arabic lives in `label`; English &
+                          Hebrew live in `titles` and override the name for those
+                          UI languages (empty = fall back to the built-in name). */}
+                      <div className="sm:col-span-4">
+                        <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.title_langs', 'اسم القصة (لكل لغة)')}</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <input type="text" dir="rtl" className="magic-input w-full" placeholder={t('admin.title_ar', 'بالعربية')} value={theme.label || ''} onChange={(e) => {
+                            const newThemes = [...settings.themes];
+                            newThemes[index].label = e.target.value;
+                            setSettings({ ...settings, themes: newThemes });
+                          }} />
+                          <input type="text" dir="ltr" className="magic-input w-full" placeholder={t('admin.title_en', 'English')} value={theme.titles?.en || ''} onChange={(e) => {
+                            const newThemes = [...settings.themes];
+                            newThemes[index].titles = { ...(newThemes[index].titles || {}), en: e.target.value };
+                            setSettings({ ...settings, themes: newThemes });
+                          }} />
+                          <input type="text" dir="rtl" className="magic-input w-full" placeholder={t('admin.title_he', 'עברית')} value={theme.titles?.he || ''} onChange={(e) => {
+                            const newThemes = [...settings.themes];
+                            newThemes[index].titles = { ...(newThemes[index].titles || {}), he: e.target.value };
+                            setSettings({ ...settings, themes: newThemes });
+                          }} />
+                        </div>
                       </div>
                       <div className="sm:col-span-1">
                         <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.emoji_icon')}</label>
@@ -828,7 +842,7 @@ export default function AdminDashboard() {
                           setSettings({...settings, themes: newThemes});
                         }} />
                       </div>
-                      <div className="sm:col-span-2">
+                      <div className="sm:col-span-3">
                         <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.description')}</label>
                         <input type="text" className="magic-input w-full" value={getLocalizedThemeDesc(theme)} onChange={(e) => {
                           const newThemes = [...settings.themes];
