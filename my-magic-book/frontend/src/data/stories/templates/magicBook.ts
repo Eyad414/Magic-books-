@@ -10,7 +10,7 @@ export const magicBookStory: TemplatePage[] = [
   { type: 'text', content: 'في غرفةٍ صغيرةٍ مليئةٍ بالألعاب، كان {{name}} يجلس وحيداً يقلّب صفحات كتابٍ قديمٍ وجده في الخزانة. وفجأةً بدأت الصفحات تلمع بضوءٍ ذهبيٍّ غريب!' },
   { type: 'image', prompt: 'A child named {{name}} sitting on a cozy rug in a warm bedroom at night, holding a large old leather book whose pages glow with golden light, wonder on the face.' },
   { type: 'text', content: '"يا إلهي!" صرخ {{name}}. سحب الضوءُ يده ببطء، وفي لمح البصر وجد نفسه يطير داخل دوّامةٍ من الألوان والكلمات الطائرة.' },
-  { type: 'image', prompt: 'A child named {{name}} joyfully floating inside a swirling magical vortex of golden light, colorful ribbons and glowing letters spiraling all around.' },
+  { type: 'image', prompt: 'A child named {{name}} joyfully spinning and soaring upward through a spectacular swirling magical portal erupting from a glowing open book — a whirling tunnel of rainbow light, flying storybook pages, glowing letters and tiny sparkling story-worlds streaming all around, dynamic cinematic motion.' },
   { type: 'text', content: 'سقط {{name}} بلطفٍ على أرضٍ مصنوعةٍ من الورق. كانت الأشجار هناك أقلام تلوينٍ ضخمة، والسماء مرسومةً بألوانٍ مائيةٍ زاهية.' },
   { type: 'image', prompt: 'A child named {{name}} standing in awe in a surreal storybook world made of paper, with giant colorful crayons like trees, floating books and a bright watercolor sky.' },
   { type: 'text', content: 'ظهر أرنبٌ صغيرٌ يرتدي نظارةً ويحمل ريشة رسم، وقال: "أهلاً بك يا {{name}} في عالم القصص! نحن بانتظارك منذ زمن."' },
