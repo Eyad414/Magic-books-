@@ -3,6 +3,7 @@ import { useStoryProgress } from '../../context/StoryProgressContext';
 import MagicButton from '../common/MagicButton';
 import { User, Baby, ChevronLeft, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { localizeName } from '../../utils/translit';
 import { uploadApi } from '../../api/uploadApi';
 
 // Props Interface: Defines the properties this component expects to receive from its parent (CreateStory.tsx)
@@ -10,7 +11,7 @@ interface Props { onNext: () => void; }
 
 export default function Step1_ChildDetails({ onNext }: Props) { // To move to the next page in the steps
   const { progress, setChildDetails } = useStoryProgress(); // To save User Choices in the steps
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Local State: Manages the form inputs specifically for this step before saving them globally
   const [form, setForm] = useState({
@@ -202,8 +203,8 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
         <div className="p-4 rounded-xl bg-magic-500/10 border border-magic-500/20">
           <p className="font-arabic text-white/70 text-sm text-center">
             {form.childGender === 'male'
-              ? <>{t('step1.preview_male')}<strong className="text-gold-500">{form.childName}</strong>{t('step1.preview_male_suffix')}</>
-              : <>{t('step1.preview_female')}<strong className="text-gold-500">{form.childName}</strong>{t('step1.preview_female_suffix')}</>
+              ? <>{t('step1.preview_male')}<strong className="text-gold-500">{localizeName(form.childName, i18n.language)}</strong>{t('step1.preview_male_suffix')}</>
+              : <>{t('step1.preview_female')}<strong className="text-gold-500">{localizeName(form.childName, i18n.language)}</strong>{t('step1.preview_female_suffix')}</>
             }
           </p>
         </div>

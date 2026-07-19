@@ -240,7 +240,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
       <div className="text-center">
         <div className="text-5xl mb-3">✨</div>
         <h2 className="font-arabic font-bold text-white text-xl mb-1">{t('step2.title')}</h2>
-        <p className="font-arabic text-white/50 text-sm">{t('step2.desc').replace('{name}', progress.childDetails.childName || '')}</p>
+        <p className="font-arabic text-white/50 text-sm">{t('step2.desc').replace('{name}', localizeName(progress.childDetails.childName || '', i18n.language))}</p>
       </div>
 
       {/* Mode Toggle: how the customer authors the story */}
