@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { localizeName } from '../../utils/translit';
 import { getThemeLabel, getThemeDesc } from '../../utils/themeLabel';
 import { STORY_TEMPLATES } from '../../data/stories/templates';
-import { buildBook } from '../../data/stories/builder';
+import { buildBook, type TemplatePage } from '../../data/stories/builder';
 import type { StoryMode } from '../../context/StoryProgressContext';
 import { buildThemePreview, type PreviewPage } from './FlipbookPreview';
 
@@ -20,6 +20,21 @@ interface Props { onNext: () => void; onPrev: () => void; }
 
 const INITIAL_THEME_COUNT = 8;
 
+// Convert an admin theme's saved pages ([{ text, imageSrc }]) into the
+// TemplatePage[] shape (text page + image page per entry). This lets ANY theme
+// the admin adds/edits work in "ready story" (template) mode — without a
+// hardcoded STORY_TEMPLATES entry — instead of showing "under preparation".
+function dbPagesToTemplate(pages?: any[]): TemplatePage[] | null {
+  if (!Array.isArray(pages) || pages.length === 0) return null;
+  const out: TemplatePage[] = [];
+  for (const p of pages) {
+    const text = (p?.text ?? '').toString();
+    out.push({ type: 'text', content: text });
+    out.push({ type: 'image', prompt: (p?.imagePrompt ?? p?.prompt ?? text ?? '').toString() });
+  }
+  return out;
+}
+
 interface ApiTheme {
   id: string;
   emoji: string;
@@ -27,6 +42,9 @@ interface ApiTheme {
   desc: string;
   titles?: { ar?: string; en?: string; he?: string };
   descriptions?: { ar?: string; en?: string; he?: string };
+  /** Admin-authored story pages ([{text, imageSrc}]) — used as the template in
+   *  "ready story" mode for themes without a hardcoded STORY_TEMPLATES entry. */
+  pages?: any[];
   ready?: boolean;
   // Sample illustrations (generated with the demo child "Baha") so the preview
   // can show what a finished book looks like.
@@ -64,6 +82,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
             desc: dbTheme.desc,
             titles: dbTheme.titles,
             descriptions: dbTheme.descriptions,
+            pages: dbTheme.pages,
             generatedCover: dbTheme.generatedCover,
             generatedImages: dbTheme.generatedImages,
           };
@@ -163,13 +182,22 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
     }
   };
 
-  // Function: Looks up the handwritten template for the currently-selected theme
-  // and substitutes the kid's name. Returns null if no template exists.
+  // The raw template pages for the selected theme: a hardcoded STORY_TEMPLATES
+  // entry if one exists, otherwise the theme's own admin-authored pages from the
+  // database. This is what makes every ready theme usable in template mode.
+  const effectiveTemplate = useMemo<TemplatePage[] | null>(() => {
+    const hardcoded = STORY_TEMPLATES[form.theme];
+    if (hardcoded && hardcoded.length > 0) return hardcoded;
+    const dbPages = THEMES.find((th) => th.id === form.theme)?.pages;
+    return dbPagesToTemplate(dbPages);
+  }, [form.theme, THEMES]);
+
+  // Function: Builds the template preview for the currently-selected theme and
+  // substitutes the kid's name. Returns null if no template exists.
   const templatePagesForCurrentTheme = useMemo(() => {
-    const raw = STORY_TEMPLATES[form.theme];
-    if (!raw || raw.length === 0) return null;
-    return buildBook(raw, progress.childDetails.childName || '...', progress.childDetails.childPhotoUrl || '');
-  }, [form.theme, progress.childDetails.childName, progress.childDetails.childPhotoUrl]);
+    if (!effectiveTemplate || effectiveTemplate.length === 0) return null;
+    return buildBook(effectiveTemplate, progress.childDetails.childName || '...', progress.childDetails.childPhotoUrl || '');
+  }, [effectiveTemplate, progress.childDetails.childName, progress.childDetails.childPhotoUrl]);
 
   // Function: Ensures the story is ready before proceeding to Step 3.
   // In template mode this is also where we create the Story in the DB
@@ -180,7 +208,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
       toast.error(t('step2.err_not_generated'));
       return;
     }
-    if (mode === 'template' && !STORY_TEMPLATES[form.theme]) {
+    if (mode === 'template' && (!effectiveTemplate || effectiveTemplate.length === 0)) {
       toast.error(t('step2.err_template_missing', 'هذه القصة قيد الإعداد، الرجاء اختيار أخرى أو استخدام الذكاء الاصطناعي.'));
       return;
     }
@@ -197,7 +225,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
             // Render the child's name in the book's language script (e.g. "Baha" -> "بهاء").
             childName: localizeName(progress.childDetails.childName || '', form.language),
             mode: 'template',
-            templatePages: STORY_TEMPLATES[form.theme], // raw, placeholders intact
+            templatePages: effectiveTemplate, // raw, placeholders intact
           });
           nextStoryId = createRes.story._id;
           setStoryId(nextStoryId);
