@@ -9,6 +9,7 @@ import { toDisplayUrl } from '../../api/mediaUrl';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { localizeName } from '../../utils/translit';
+import { getThemeLabel, getThemeDesc } from '../../utils/themeLabel';
 import { STORY_TEMPLATES } from '../../data/stories/templates';
 import { buildBook } from '../../data/stories/builder';
 import type { StoryMode } from '../../context/StoryProgressContext';
@@ -51,16 +52,14 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
           // story vs coloring book) is chosen as a "package" in the next step.
           .filter((dbTheme: any) => !dbTheme.isColoring)
           .map((dbTheme: any) => {
-          const labelKey = `step2.theme_${dbTheme.id}`;
-          const descKey = `step2.theme_${dbTheme.id}_desc`;
-          const localizedLabel = t(labelKey);
-          const localizedDesc = t(descKey);
           return {
             id: dbTheme.id,
             emoji: dbTheme.emoji,
-            // Prefer the i18n string if one exists, otherwise fall back to the admin-edited label.
-            label: localizedLabel !== labelKey ? localizedLabel : dbTheme.label,
-            desc: localizedDesc !== descKey ? localizedDesc : dbTheme.desc,
+            // Keep the RAW admin label/desc — the display name is resolved at
+            // render via getThemeLabel/getThemeDesc, so an admin-edited title
+            // wins and the label re-localizes when the UI language changes.
+            label: dbTheme.label,
+            desc: dbTheme.desc,
             generatedCover: dbTheme.generatedCover,
             generatedImages: dbTheme.generatedImages,
           };
@@ -302,7 +301,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
                 }`}
             >
               <span className={`font-arabic font-bold text-xs ${form.theme === theme.id ? 'text-gold-500' : 'text-white/70'}`}>
-                {theme.label} {theme.emoji}
+                {getThemeLabel(theme, t)} {theme.emoji}
               </span>
             </button>
           ))}
@@ -425,7 +424,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
           const selectedTheme = THEMES.find(t => t.id === form.theme);
           return selectedTheme ? (
             <p className="font-arabic text-gold-500/80 text-xs mb-6 text-center">
-              {selectedTheme.emoji} {selectedTheme.label} — {selectedTheme.desc}
+              {selectedTheme.emoji} {getThemeLabel(selectedTheme, t)} — {getThemeDesc(selectedTheme, t)}
             </p>
           ) : null;
         })()}

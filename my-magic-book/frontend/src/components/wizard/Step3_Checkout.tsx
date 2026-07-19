@@ -9,6 +9,7 @@ import { toDisplayUrl } from '../../api/mediaUrl';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { localizeName } from '../../utils/translit';
 
 // Merged checkout step: shipping address (old step 4) + order review & payment
 // (old step 5) on a single screen, so the customer pays in one place.
@@ -74,6 +75,11 @@ export default function Step3_Checkout({ onPrev }: Props) {
   const navigate = useNavigate();
 
   const { childDetails, storyConfig, bookCustomization } = progress;
+
+  // The hero name rendered in the child's script for the book's language, so an
+  // Arabic book shows "بهاء" even if the parent typed "Baha" (matches the actual
+  // printed book, which localizes the name to the story language).
+  const heroName = localizeName(childDetails.childName || '', storyConfig?.language);
 
   // Child photo rendered as the cover thumbnail in the order summary.
   const coverPhoto = toDisplayUrl(childDetails.childPhotoUrl);
@@ -456,13 +462,13 @@ export default function Step3_Checkout({ onPrev }: Props) {
                 <div className="absolute top-1 left-1 text-xs drop-shadow">✨</div>
                 <div className="absolute inset-x-0 bottom-0 px-1 pb-1 text-center">
                   <span className="font-arabic font-black text-white text-[9px] leading-tight drop-shadow block truncate">
-                    {childDetails.childName || ''}
+                    {heroName || ''}
                   </span>
                 </div>
               </div>
               <div className="min-w-0">
                 <p className="font-arabic font-black text-white text-sm leading-tight truncate">
-                  {(t('step5.cover_preview_hero', 'كتاب {name}') as string).replace('{name}', childDetails.childName || '')}
+                  {(t('step5.cover_preview_hero', 'كتاب {name}') as string).replace('{name}', heroName || '')}
                 </p>
                 <p className="font-arabic text-gold-500/80 text-[11px] mt-0.5">
                   🪄 {t('step5.cover_preview_hint', 'معاينة الغلاف')}
@@ -470,7 +476,7 @@ export default function Step3_Checkout({ onPrev }: Props) {
               </div>
             </div>
 
-            <Row label={t('step5.story_hero')} value={childDetails.childName || '-'} />
+            <Row label={t('step5.story_hero')} value={heroName || '-'} />
             <Row label={t('step5.gender')} value={childDetails.childGender === 'female' ? t('step5.girl') : t('step5.boy')} />
             <Row label={t('step5.hero_age')} value={childDetails.childAge ? `${childDetails.childAge} ${t('step5.years')}` : '-'} />
             <Row label={t('step5.theme')} value={storyConfig?.theme ? t(`step2.theme_${storyConfig.theme}`) || storyConfig.theme : t('step2.theme_adventure')} />

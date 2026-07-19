@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { findStory } from '../data/stories';
 import { SHOWCASE_CARDS } from '../data/showcaseCards';
 import { localizeName } from '../utils/translit';
+import { getThemeLabel, getThemeDesc } from '../utils/themeLabel';
 
 export default function AdminDashboard() {
   const { t, i18n } = useTranslation();
@@ -304,28 +305,10 @@ export default function AdminDashboard() {
     }
   };
 
-  const getLocalizedThemeLabel = (theme: any) => {
-    const defaultArabicNames = ['مغامرة', 'مغامرة حديقة الحيوان', 'الفضاء', 'بطل المدرسة'];
-    const isCustomized = theme.label && !defaultArabicNames.includes(theme.label);
-    if (isCustomized) return theme.label;
-    const key = `step2.theme_${theme.id}`;
-    const translated = t(key);
-    return translated !== key ? translated : theme.label;
-  };
-
-  const getLocalizedThemeDesc = (theme: any) => {
-    const defaultArabicDescs = [
-      'استكشاف ومغامرات مثيرة',
-      'رحلة مثيرة بين الحيوانات اللطيفة',
-      'رحلة بين النجوم والكواكب',
-      'مساعدة الآخرين ونشر اللطف والألوان في المدرسة'
-    ];
-    const isCustomized = theme.desc && !defaultArabicDescs.includes(theme.desc);
-    if (isCustomized) return theme.desc;
-    const key = `step2.theme_${theme.id}_desc`;
-    const translated = t(key);
-    return translated !== key ? translated : theme.desc;
-  };
+  // Shared with the customer wizard (Step 2) so the theme name/desc the admin
+  // types here is exactly what customers see. See utils/themeLabel.
+  const getLocalizedThemeLabel = (theme: any) => getThemeLabel(theme, t);
+  const getLocalizedThemeDesc = (theme: any) => getThemeDesc(theme, t);
 
   const getLocalizedPkgLabel = (pkg: any) => {
     const defaultArabicNames = ['قصة ملونة', 'دفتر تلوين', 'ملف صوتي (Audio)', 'نسخة رقمية (E-Book)', 'باقة Pro الشاملة'];
