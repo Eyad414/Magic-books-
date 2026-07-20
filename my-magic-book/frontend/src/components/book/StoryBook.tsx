@@ -88,6 +88,7 @@ export default function StoryBook({
   const isAdmin = user?.role === 'admin' || user?.email === 'eyadat720@gmail.com';
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isPreviewing, setIsPreviewing] = useState(false);
   // "Send to BookPod" shipping form (billable — physical print).
   const [showBookPod, setShowBookPod] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -240,6 +241,47 @@ export default function StoryBook({
     }
   };
 
+  // ── Preview handler ───────────────────────────────────────────────────────
+  // Builds the SAME print-ready PDF as the BookPod submission and OPENS it in a
+  // new tab to review — without submitting anything to BookPod. Lets the admin
+  // verify the exact print output before the billable "send".
+  const handlePreviewBook = async () => {
+    if (!rawCoverPath || !rawBackPath || !(rawImagePaths && rawImagePaths.length)) {
+      toast.error(t('storybook.no_images_yet', 'لا توجد صور مولّدة بعد — ولّد صور الكتاب أولاً 🎨'));
+      return;
+    }
+    // Open the tab synchronously (inside the click) so the popup blocker allows
+    // it; we point it at the built PDF once it's ready.
+    const win = window.open('', '_blank');
+    setIsPreviewing(true);
+    const toastId = toast.loading(t('storybook.preparing_preview', '👁️ جاري تجهيز معاينة الكتاب... (قد يستغرق حتى دقيقة)'));
+    try {
+      const res = await adminApi.buildPreviewPrint({
+        theme: story.id,
+        childName,
+        childGender: gender,
+        language: i18n.language,
+        coverPath: rawCoverPath,
+        backPath: rawBackPath,
+        imagePaths: rawImagePaths,
+        childPhotoPath: effectiveChildPhotoPath,
+      });
+      if (res?.success && res.interiorPath) {
+        const url = objectPathToUrl(res.interiorPath);
+        if (win) win.location.href = url; else window.open(url, '_blank');
+        toast.success(t('storybook.preview_ready', 'تم فتح معاينة الكتاب في نافذة جديدة ✅ (راجعها قبل الإرسال)'), { id: toastId });
+      } else {
+        if (win) win.close();
+        toast.error(res?.message || t('storybook.pdf_failed', 'فشل تجهيز ملف الطباعة'), { id: toastId });
+      }
+    } catch (err: any) {
+      if (win) win.close();
+      toast.error(err?.response?.data?.message || err.message || t('storybook.pdf_failed', 'فشل تجهيز ملف الطباعة'), { id: toastId });
+    } finally {
+      setIsPreviewing(false);
+    }
+  };
+
   // Send to BookPod — build + submit a REAL, billable print order. Guarded by the
   // shipping form + a confirm() so it never fires accidentally.
   const handleSubmitBookPod = async () => {
@@ -381,6 +423,10 @@ export default function StoryBook({
               <input className="sb-name-input" placeholder={t('storybook.bp_city', 'المدينة')} value={ship.city} onChange={(e) => setShip({ ...ship, city: e.target.value })} />
               <input className="sb-name-input" placeholder={t('storybook.bp_street', 'الشارع')} value={ship.street} onChange={(e) => setShip({ ...ship, street: e.target.value })} />
               <input className="sb-name-input" placeholder={t('storybook.bp_building', 'رقم المبنى')} value={ship.buildingNo} onChange={(e) => setShip({ ...ship, buildingNo: e.target.value })} />
+              {/* Review the exact print PDF before the billable send */}
+              <button onClick={handlePreviewBook} className="sb-regen-btn" disabled={isPreviewing || isSubmitting} style={{ width: '100%' }}>
+                {isPreviewing ? `⏳ ${t('storybook.preparing_short', 'جاري التجهيز...')}` : `👁️ ${t('storybook.preview_before_send', 'معاينة الكتاب قبل الإرسال')}`}
+              </button>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button onClick={handleSubmitBookPod} className="sb-print-btn" disabled={isSubmitting} style={{ flex: 1 }}>
                   {isSubmitting ? `⏳ ${t('storybook.bookpod_sending_short', 'جاري الإرسال...')}` : `✅ ${t('storybook.bookpod_confirm_btn', 'تأكيد والإرسال للطباعة')}`}
