@@ -40,9 +40,14 @@ export const proxyImage = async (req: Request, res: Response): Promise<void> => 
     // Sign a short-lived READ url LOCALLY (no outbound Google call) and hand it
     // to the browser, which fetches the image straight from GCS. Avoids the
     // backend needing outbound access to Google Storage (geo-blocked from some
-    // hosting regions). Cache the redirect a bit under the URL's lifetime.
+    // hosting regions).
+    // Only cache the REDIRECT briefly: a longer cache pins the browser to the
+    // same signed URL (and the image cached under it), so regenerated images
+    // don't show without a hard-refresh. A short window lets a normal reload
+    // pick up a fresh signed URL — and therefore the updated image — while
+    // still avoiding a proxy round-trip on every image within a single view.
     const url = await getReadSignedUrl(objectPath);
-    res.setHeader('Cache-Control', 'private, max-age=3600');
+    res.setHeader('Cache-Control', 'private, max-age=30, must-revalidate');
     res.redirect(302, url);
   } catch (err: any) {
     console.error('proxyImage failed:', err);
