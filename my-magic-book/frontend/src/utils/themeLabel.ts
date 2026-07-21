@@ -18,6 +18,7 @@ const DEFAULT_THEME_LABELS = [
   'المحيط',
   'بطل المدرسة',
   'رحلة الكتاب المسحور',
+  'رحلة الكتاب السحري',
 ];
 
 const DEFAULT_THEME_DESCS = [
