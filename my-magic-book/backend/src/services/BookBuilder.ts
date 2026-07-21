@@ -21,17 +21,18 @@ function proxyUrl(objectPath: string): string {
 // The printed book must match the language the customer chose. The page texts
 // live in the same translation files the web book uses, so we read them here
 // (graceful fallback to the Arabic scene template if unavailable).
-const _localeCache: Record<string, any> = {};
+// Read the locale file FRESH on every call. It used to be cached in memory for
+// the whole process lifetime, which meant a title/text change never took effect
+// until the server restarted (a rebuilt book kept the stale title). Book builds
+// are infrequent, so re-reading a small JSON each time is negligible.
 function loadLocale(language: string): any {
   const lang = ['ar', 'en', 'he'].includes(language) ? language : 'ar';
-  if (_localeCache[lang]) return _localeCache[lang];
   try {
     const file = path.join(__dirname, '..', '..', '..', 'frontend', 'src', 'locales', lang, 'translation.json');
-    _localeCache[lang] = JSON.parse(fs.readFileSync(file, 'utf8'));
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
   } catch {
-    _localeCache[lang] = {};
+    return {};
   }
-  return _localeCache[lang];
 }
 
 /** Localized { title, pages[] } for a theme in the chosen language, or null. */
