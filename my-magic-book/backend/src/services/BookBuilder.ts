@@ -59,7 +59,7 @@ const ILLUSTRATION_PAGES = 13; // matches the 13 image slots in the printed book
  * Idempotent: if illustrationsStatus is already 'generating' or 'ready', we
  * skip. Failures land in 'failed' with the error captured for the admin UI.
  */
-export async function buildBookForOrder(orderId: string): Promise<IOrder> {
+export async function buildBookForOrder(orderId: string, submitToBookPod = true): Promise<IOrder> {
   const order = await Order.findById(orderId);
   if (!order) throw new Error(`Order ${orderId} not found`);
 
@@ -216,7 +216,7 @@ export async function buildBookForOrder(orderId: string): Promise<IOrder> {
         moral: rt(printLoc?.moral),
         conclusion: rt(printLoc?.conclusion),
         questions: printLoc?.questions?.map((q) => resolveTokens(q, story.childName, story.childGender)),
-      });
+      }, submitToBookPod);
       order.printCoverUrl = printResult.urls.coverUrl;
       order.printInteriorUrl = printResult.urls.interiorUrl;
       order.printInteriorPages = printResult.urls.interiorPages;
@@ -226,7 +226,7 @@ export async function buildBookForOrder(orderId: string): Promise<IOrder> {
       }
       await order.save();
       // PRO bundle: also print the coloring book as a second BookPod job.
-      await maybeSubmitProColoring(order, story);
+      if (submitToBookPod) await maybeSubmitProColoring(order, story);
     } catch (printErr: any) {
       console.warn(`[BookBuilder] print/BookPod step skipped: ${printErr.message}`);
     }

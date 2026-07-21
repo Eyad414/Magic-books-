@@ -387,14 +387,19 @@ export const buildOrderBook = async (req: Request, res: Response): Promise<void>
         return;
       }
     }
+    // buildOnly = generate + prepare the print files but DON'T submit to BookPod,
+    // so the admin can review the book before the billable send.
+    const buildOnly = req.body?.buildOnly === true;
     // Run synchronously so the admin sees success/failure in the response.
     // If the book is ALREADY built (images generated), don't regenerate — just
-    // (re)submit the existing files to BookPod. Errors here are surfaced (not
-    // swallowed) so a failed submission is visible instead of a false success.
-    const updated =
-      order.illustrationsStatus === 'ready'
-        ? await submitOrderToBookPod(String(order._id))
-        : await buildBookForOrder(String(order._id));
+    // (re)submit the existing files to BookPod (unless buildOnly). Errors here
+    // are surfaced (not swallowed) so a failure is visible, not a false success.
+    let updated: Awaited<ReturnType<typeof buildBookForOrder>>;
+    if (order.illustrationsStatus === 'ready') {
+      updated = buildOnly ? order : await submitOrderToBookPod(String(order._id));
+    } else {
+      updated = await buildBookForOrder(String(order._id), !buildOnly);
+    }
     res.json({ success: true, order: updated });
   } catch (err: any) {
     console.error('buildOrderBook failed:', err);

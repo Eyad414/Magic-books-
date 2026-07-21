@@ -74,13 +74,14 @@ export interface PrintSubmitResult {
 export async function printAndSubmitForOrder(
   order: IOrder,
   story: IStory,
-  opts: PrintBuildOpts
+  opts: PrintBuildOpts,
+  submit = true
 ): Promise<PrintSubmitResult> {
   const urls = await buildPrintFilesForStory(story, opts);
 
-  if (!isBookPodConfigured()) {
+  if (!submit || !isBookPodConfigured()) {
     console.log(
-      `[Print] order ${order._id}: print files built (not submitting — BookPod not configured).\n` +
+      `[Print] order ${order._id}: print files built (not submitting — ${submit ? 'BookPod not configured' : 'build-only'}).\n` +
       `        cover:    ${urls.coverUrl}\n` +
       `        interior: ${urls.interiorUrl} (${urls.interiorPages}pp, spine ${urls.spineMm}mm)`
     );

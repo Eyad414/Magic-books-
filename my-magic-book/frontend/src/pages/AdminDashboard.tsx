@@ -42,6 +42,8 @@ export default function AdminDashboard() {
   const [rerenderingOrderId, setRerenderingOrderId] = useState<string | null>(null);
   // Which order's Pro coloring book is currently rebuilding/sending (spinner).
   const [coloringBusyId, setColoringBusyId] = useState<string | null>(null);
+  // Which order is currently being BUILT (generate + prepare, no BookPod send).
+  const [buildOnlyId, setBuildOnlyId] = useState<string | null>(null);
 
   // Admin: build the book + print files and send to BookPod. Generates ~15
   // images (costs money), so confirm first. markPaid fulfils cash/COD orders.
@@ -72,6 +74,32 @@ export default function AdminDashboard() {
       toast.error(err?.response?.data?.message || err.message || t('admin.send_failed', 'فشل الإرسال للطباعة'), { id: toastId });
     } finally {
       setBuildingOrderId(null);
+    }
+  };
+
+  // Admin: BUILD the book (generate images + prepare print files) WITHOUT
+  // submitting to BookPod — so it can be reviewed before the billable send.
+  const handleBuildOnly = async (order: any) => {
+    if (buildOnlyId || buildingOrderId) return;
+    const already = order.illustrationsStatus === 'ready';
+    const msg = already
+      ? t('admin.confirm_rebuild_files', 'الكتاب مبني بالفعل. أعد تجهيز ملفات الطباعة للمراجعة؟ (مجاني)')
+      : t('admin.confirm_build_only', 'بناء الكتاب للمراجعة (توليد الصور + تجهيز الملفات) بدون الإرسال إلى BookPod؟ (تكلفة توليد على واجهة الذكاء الاصطناعي)');
+    if (!window.confirm(msg)) return;
+    setBuildOnlyId(order._id);
+    const toastId = toast.loading(t('admin.building_only', 'جاري بناء الكتاب للمراجعة... (قد يستغرق عدة دقائق)'));
+    try {
+      const res = await adminApi.buildOrder(order._id, { markPaid: true, buildOnly: true });
+      if (res.success) {
+        toast.success(t('admin.built_for_review', 'تم بناء الكتاب ✅ راجعه ثم أرسله إلى BookPod'), { id: toastId });
+        setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...res.order, storyId: o.storyId } : o)));
+      } else {
+        toast.error(res.message || t('admin.build_failed', 'فشل بناء الكتاب'), { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || t('admin.build_failed', 'فشل بناء الكتاب'), { id: toastId });
+    } finally {
+      setBuildOnlyId(null);
     }
   };
 
@@ -564,6 +592,18 @@ export default function AdminDashboard() {
                               <Eye className="w-4 h-4" />
                               {t('admin.view_story_review')}
                             </Link>
+                            {/* Build the book for review — generate + prepare files, WITHOUT sending to BookPod */}
+                            <button
+                              onClick={() => handleBuildOnly(order)}
+                              disabled={buildOnlyId === order._id || buildingOrderId === order._id}
+                              className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-emerald-500/15 text-emerald-300 font-arabic font-bold text-sm hover:bg-emerald-500/25 transition-all border border-emerald-500/30 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {buildOnlyId === order._id ? (
+                                <><Clock className="w-4 h-4 animate-spin" /> {t('admin.building_short', 'جارٍ البناء...')}</>
+                              ) : (
+                                <><BookOpen className="w-4 h-4" /> {t('admin.build_book', 'بناء الكتاب للمراجعة')}</>
+                              )}
+                            </button>
                             <button
                               onClick={() => handleSendToBookPod(order)}
                               disabled={buildingOrderId === order._id}
