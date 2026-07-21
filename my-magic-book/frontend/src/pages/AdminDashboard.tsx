@@ -544,7 +544,7 @@ export default function AdminDashboard() {
                   ) : (
                     orders.map((order) => (
                       <div key={order._id} className="bg-dark-700/50 rounded-2xl border border-white/5 p-6 hover:border-gold-500/30 transition-all group">
-                        <div className="flex flex-col lg:flex-row gap-6">
+                        <div className="flex flex-col gap-5">
                           {/* Order Info */}
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-4">
@@ -587,11 +587,11 @@ export default function AdminDashboard() {
                             </div>
                           </div>
 
-                          {/* Actions */}
-                          <div className="flex flex-wrap lg:flex-col justify-center gap-3">
+                          {/* Actions — all buttons in one horizontal row (wraps on narrow screens) */}
+                          <div className="flex flex-wrap items-center gap-2">
                             <Link
                               to={`/book/${order.storyId?._id}`}
-                              className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gold-500 text-dark-900 font-arabic font-bold text-sm hover:bg-gold-400 transition-all whitespace-nowrap shadow-lg shadow-gold-500/10"
+                              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-gold-500 text-dark-900 font-arabic font-bold text-sm hover:bg-gold-400 transition-all whitespace-nowrap shadow-lg shadow-gold-500/10"
                             >
                               <Eye className="w-4 h-4" />
                               {t('admin.view_story_review')}
@@ -606,7 +606,7 @@ export default function AdminDashboard() {
                             <button
                               onClick={() => handleBuildOnly(order)}
                               disabled={orderBusy || isBuilt}
-                              className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-arabic font-bold text-sm transition-all border whitespace-nowrap ${
+                              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg font-arabic font-bold text-sm transition-all border whitespace-nowrap ${
                                 buildOnlyId === order._id
                                   ? 'bg-emerald-500/35 text-emerald-100 border-emerald-400 ring-2 ring-emerald-400/60 cursor-wait'
                                   : isBuilt
@@ -625,7 +625,7 @@ export default function AdminDashboard() {
                             <button
                               onClick={() => handleSendToBookPod(order)}
                               disabled={orderBusy}
-                              className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-arabic font-bold text-sm transition-all border whitespace-nowrap ${
+                              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg font-arabic font-bold text-sm transition-all border whitespace-nowrap ${
                                 buildingOrderId === order._id
                                   ? 'bg-magic-500/40 text-magic-100 border-magic-400 ring-2 ring-magic-400/60 cursor-wait'
                                   : 'bg-magic-500/20 text-magic-300 border-magic-500/30 hover:bg-magic-500/30 disabled:opacity-40 disabled:cursor-not-allowed'
@@ -641,7 +641,7 @@ export default function AdminDashboard() {
                             <button
                               onClick={() => handleReRenderFiles(order)}
                               disabled={order.illustrationsStatus !== 'ready' || orderBusy}
-                              className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-arabic font-bold text-sm transition-all border whitespace-nowrap ${
+                              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg font-arabic font-bold text-sm transition-all border whitespace-nowrap ${
                                 rerenderingOrderId === order._id
                                   ? 'bg-white/25 text-white border-white/40 ring-2 ring-white/40 cursor-wait'
                                   : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed'
@@ -658,7 +658,7 @@ export default function AdminDashboard() {
                             <button
                               onClick={() => handleSaveFolder(order)}
                               disabled={!order.printInteriorUrl && !order.printCoverUrl}
-                              className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white/5 text-white/60 font-arabic font-bold text-sm hover:bg-white/10 transition-all border border-white/10 whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 text-white/60 font-arabic font-bold text-sm hover:bg-white/10 transition-all border border-white/10 whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               <Download className="w-4 h-4" />
                               {t('admin.save_folder', 'حفظ الملفات')}
@@ -666,11 +666,11 @@ export default function AdminDashboard() {
 
                             {/* PRO bundle: the coloring book — its own view / send / re-render / save */}
                             {order.storyId?.bookPackage === 'pro' && !!(order.storyId?.coloringImages?.length) && (
-                              <div className="w-full mt-1 pt-3 border-t border-white/10 flex flex-wrap lg:flex-col justify-center gap-3">
+                              <div className="w-full mt-1 pt-3 border-t border-white/10 flex flex-wrap items-center gap-2">
                                 <div className="w-full font-arabic text-white/50 text-xs font-bold text-center lg:text-right">🖍️ {t('admin.coloring_book', 'كتاب التلوين')}</div>
                                 <Link
                                   to={`/book/${order.storyId?._id}?view=coloring`}
-                                  className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gold-500 text-dark-900 font-arabic font-bold text-sm hover:bg-gold-400 transition-all whitespace-nowrap shadow-lg shadow-gold-500/10"
+                                  className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-gold-500 text-dark-900 font-arabic font-bold text-sm hover:bg-gold-400 transition-all whitespace-nowrap shadow-lg shadow-gold-500/10"
                                 >
                                   <Eye className="w-4 h-4" />
                                   {t('admin.view_coloring', 'عرض كتاب التلوين')}
@@ -678,7 +678,7 @@ export default function AdminDashboard() {
                                 <button
                                   onClick={() => handleSubmitColoring(order)}
                                   disabled={coloringBusyId === order._id}
-                                  className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-magic-500/20 text-magic-300 font-arabic font-bold text-sm hover:bg-magic-500/30 transition-all border border-magic-500/30 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                                  className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-magic-500/20 text-magic-300 font-arabic font-bold text-sm hover:bg-magic-500/30 transition-all border border-magic-500/30 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   {coloringBusyId === order._id ? (
                                     <><Clock className="w-4 h-4 animate-spin" /> {t('admin.sending', 'جارٍ الإرسال...')}</>
@@ -689,7 +689,7 @@ export default function AdminDashboard() {
                                 <button
                                   onClick={() => handleReRenderColoring(order)}
                                   disabled={coloringBusyId === order._id}
-                                  className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white/5 text-white/60 font-arabic font-bold text-sm hover:bg-white/10 transition-all border border-white/10 whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
+                                  className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 text-white/60 font-arabic font-bold text-sm hover:bg-white/10 transition-all border border-white/10 whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                   {coloringBusyId === order._id ? (
                                     <><RefreshCw className="w-4 h-4 animate-spin" /> {t('admin.rerendering_short', 'جارٍ التجهيز...')}</>
@@ -700,7 +700,7 @@ export default function AdminDashboard() {
                                 <button
                                   onClick={() => handleSaveFolder(order, 'coloring')}
                                   disabled={!order.coloringPrintInteriorUrl && !order.coloringPrintCoverUrl}
-                                  className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white/5 text-white/60 font-arabic font-bold text-sm hover:bg-white/10 transition-all border border-white/10 whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
+                                  className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 text-white/60 font-arabic font-bold text-sm hover:bg-white/10 transition-all border border-white/10 whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                   <Download className="w-4 h-4" />
                                   {t('admin.save_folder', 'حفظ الملفات')}
@@ -829,6 +829,17 @@ export default function AdminDashboard() {
                           newPkgs[index].desc = e.target.value;
                           setSettings({...settings, bookPackages: newPkgs});
                         }} />
+                      </div>
+                      {/* Hide this package from customers (Step 2 & 3) */}
+                      <div className="sm:col-span-4">
+                        <label className={`flex items-center gap-2 font-arabic text-sm cursor-pointer w-fit px-3 py-1.5 rounded-lg border transition-colors ${pkg.hidden ? 'bg-white/5 text-white/50 border-white/10' : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'}`}>
+                          <input type="checkbox" className="accent-emerald-500" checked={!pkg.hidden} onChange={(e) => {
+                            const newPkgs = [...settings.bookPackages];
+                            newPkgs[index].hidden = !e.target.checked;
+                            setSettings({ ...settings, bookPackages: newPkgs });
+                          }} />
+                          {pkg.hidden ? t('admin.pkg_hidden', 'مخفية عن العملاء (اضغط للإظهار)') : t('admin.pkg_visible', 'ظاهرة للعملاء (اضغط للإخفاء)')}
+                        </label>
                       </div>
                     </div>
                   ))}

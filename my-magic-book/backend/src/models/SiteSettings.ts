@@ -6,6 +6,8 @@ export interface IBookPackage {
   price: number;
   emoji: string;
   desc: string;
+  /** Admin toggle: when true the package is hidden from customers (Step 2 & 3). */
+  hidden?: boolean;
 }
 
 export interface ITheme {
@@ -73,6 +75,7 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
         price: { type: Number, required: true },
         emoji: { type: String, required: true },
         desc: { type: String, required: true },
+        hidden: { type: Boolean, default: false },
       },
     ],
     themes: [

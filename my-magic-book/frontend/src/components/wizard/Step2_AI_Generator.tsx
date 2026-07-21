@@ -129,10 +129,12 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
       { id: 'pro', label: t('step3.pkg_pro'), price: 120, originalPrice: 140, emoji: '✨', desc: t('step3.pkg_pro_desc') },
     ];
     if (liveSettings?.bookPackages) {
-      return DEFAULT_PACKAGES.map((defaultPkg) => {
-        const livePkg = liveSettings.bookPackages.find((p: any) => p.id === defaultPkg.id);
-        return livePkg ? { ...defaultPkg, price: livePkg.price } : defaultPkg;
-      });
+      return DEFAULT_PACKAGES
+        .map((defaultPkg) => {
+          const livePkg = liveSettings.bookPackages.find((p: any) => p.id === defaultPkg.id);
+          return livePkg ? { ...defaultPkg, price: livePkg.price, hidden: livePkg.hidden } : defaultPkg;
+        })
+        .filter((pkg) => !(pkg as any).hidden); // admin-hidden packages don't show
     }
     return DEFAULT_PACKAGES;
   }, [liveSettings, t]);

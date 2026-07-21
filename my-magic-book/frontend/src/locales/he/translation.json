@@ -745,7 +745,9 @@
     "confirm_remove_admin": "להסיר את {{name}} מצוות המנהלים?",
     "remove_admin": "הסר מהצוות",
     "remove_admin_success": "הוסר",
-    "remove_admin_fail": "ההסרה נכשלה"
+    "remove_admin_fail": "ההסרה נכשלה",
+    "pkg_visible": "גלוי ללקוחות (לחץ להסתרה)",
+    "pkg_hidden": "מוסתר מהלקוחות (לחץ להצגה)"
   },
   "title_page": {
     "presents": "מוגש ל",

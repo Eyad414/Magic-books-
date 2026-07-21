@@ -745,7 +745,9 @@
     "confirm_remove_admin": "Remove {{name}} from the admin team?",
     "remove_admin": "Remove from team",
     "remove_admin_success": "Removed",
-    "remove_admin_fail": "Failed to remove"
+    "remove_admin_fail": "Failed to remove",
+    "pkg_visible": "Visible to customers (click to hide)",
+    "pkg_hidden": "Hidden from customers (click to show)"
   },
   "title_page": {
     "presents": "Presented to",

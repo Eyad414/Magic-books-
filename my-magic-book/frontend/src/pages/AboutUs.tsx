@@ -1,7 +1,12 @@
+import { useState, useEffect } from 'react';
 import { Star, BookOpen, Heart, Award, Globe, Zap, Languages } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStoryProgress } from '../context/StoryProgressContext';
+import { publicApi } from '../api/publicApi';
+
+// Same editable trust-counters the Home hero uses (admin → Pricing tab).
+const DEFAULT_STATS = { storiesCreated: '+500', happyFamilies: '+100', readyStories: '+20', rating: '5 ⭐' };
 
 function ScrollIndicator() {
   const { t } = useTranslation();
@@ -52,6 +57,12 @@ export default function AboutUs() {
   const { t } = useTranslation();
   const { resetProgress } = useStoryProgress();
   const navigate = useNavigate();
+  const [stats, setStats] = useState(DEFAULT_STATS);
+  useEffect(() => {
+    publicApi.getSettings()
+      .then((res) => { if (res?.settings?.homeStats) setStats({ ...DEFAULT_STATS, ...res.settings.homeStats }); })
+      .catch(() => {});
+  }, []);
   
   const handleStartStory = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -103,9 +114,9 @@ export default function AboutUs() {
       <section className="px-4 sm:px-6 lg:px-8 mb-20">
         <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-5">
           {[
-            { value: '+500', label: t('hero.stats_stories_created'), emoji: '📖' },
-            { value: '+100', label: t('hero.stats_happy_families'), emoji: '👨‍👩‍👧‍👦' },
-            { value: '+20', label: t('about.stats_themes'), emoji: '🌟' },
+            { value: stats.storiesCreated, label: t('hero.stats_stories_created'), emoji: '📖' },
+            { value: stats.happyFamilies, label: t('hero.stats_happy_families'), emoji: '👨‍👩‍👧‍👦' },
+            { value: stats.readyStories, label: t('about.stats_themes'), emoji: '🌟' },
             { value: '3', label: t('about.stats_languages'), emoji: '🌍' },
           ].map((stat) => (
             <div key={stat.label} className="glass-card p-6 text-center">

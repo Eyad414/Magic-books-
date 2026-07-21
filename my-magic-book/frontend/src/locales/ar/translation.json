@@ -745,7 +745,9 @@
     "confirm_remove_admin": "إزالة {{name}} من فريق المشرفين؟",
     "remove_admin": "إزالة من الفريق",
     "remove_admin_success": "تمت الإزالة",
-    "remove_admin_fail": "فشل في الإزالة"
+    "remove_admin_fail": "فشل في الإزالة",
+    "pkg_visible": "ظاهرة للعملاء (اضغط للإخفاء)",
+    "pkg_hidden": "مخفية عن العملاء (اضغط للإظهار)"
   },
   "title_page": {
     "presents": "يُقدّم لـ",
