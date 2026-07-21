@@ -747,7 +747,16 @@
     "remove_admin_success": "تمت الإزالة",
     "remove_admin_fail": "فشل في الإزالة",
     "pkg_visible": "ظاهرة للعملاء (اضغط للإخفاء)",
-    "pkg_hidden": "مخفية عن العملاء (اضغط للإظهار)"
+    "pkg_hidden": "مخفية عن العملاء (اضغط للإظهار)",
+    "story_name": "اسم القصة",
+    "ready_short": "جاهزة",
+    "draft_short": "مسودة",
+    "edit_short": "تعديل",
+    "regen_short": "الصور",
+    "faceswap_short": "تبديل الوجه",
+    "delete_short": "حذف",
+    "generating_short": "جاري...",
+    "new_story_default": "قصة جديدة"
   },
   "title_page": {
     "presents": "يُقدّم لـ",

@@ -884,61 +884,20 @@ export default function AdminDashboard() {
                 <p className="font-arabic text-white/50 text-sm mb-6">{t('admin.story_books_desc', 'قصص كاملة بالنص والصور (٣٤ صفحة)')}</p>
                 <div className="space-y-4">
                   {settings.themes.map((theme: any, index: number) => theme.isColoring ? null : (
-                    <div key={theme.id} className="p-4 bg-white/5 rounded-xl border border-white/10 grid grid-cols-1 sm:grid-cols-4 gap-4 items-center">
-                      {/* Emoji + per-language titles. Arabic lives in `label`;
-                          English & Hebrew live in `titles` and override the name
-                          for those UI languages (empty = built-in localized name). */}
-                      <div className="sm:col-span-4">
-                        <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.title_langs', 'اسم القصة (لكل لغة)')}</label>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                          <input type="text" className="magic-input w-full text-center" placeholder={t('admin.emoji_icon', 'أيقونة')} value={theme.emoji} onChange={(e) => {
-                            const newThemes = [...settings.themes];
-                            newThemes[index].emoji = e.target.value;
-                            setSettings({ ...settings, themes: newThemes });
-                          }} />
-                          <input type="text" dir="rtl" className="magic-input w-full" placeholder={t('admin.title_ar', 'بالعربية')} value={theme.label || ''} onChange={(e) => {
-                            const newThemes = [...settings.themes];
-                            newThemes[index].label = e.target.value;
-                            setSettings({ ...settings, themes: newThemes });
-                          }} />
-                          <input type="text" dir="ltr" className="magic-input w-full" placeholder={t('admin.title_en', 'English')} value={theme.titles?.en || ''} onChange={(e) => {
-                            const newThemes = [...settings.themes];
-                            newThemes[index].titles = { ...(newThemes[index].titles || {}), en: e.target.value };
-                            setSettings({ ...settings, themes: newThemes });
-                          }} />
-                          <input type="text" dir="rtl" className="magic-input w-full" placeholder={t('admin.title_he', 'עברית')} value={theme.titles?.he || ''} onChange={(e) => {
-                            const newThemes = [...settings.themes];
-                            newThemes[index].titles = { ...(newThemes[index].titles || {}), he: e.target.value };
-                            setSettings({ ...settings, themes: newThemes });
-                          }} />
-                        </div>
+                    <div key={theme.id} className="p-4 bg-white/5 rounded-xl border border-white/10 flex flex-col gap-3">
+                      {/* Single story name — no emoji, no per-language, no description */}
+                      <div>
+                        <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.story_name', 'اسم القصة')}</label>
+                        <input type="text" className="magic-input w-full sm:max-w-sm" value={theme.label || ''} onChange={(e) => {
+                          const newThemes = [...settings.themes];
+                          newThemes[index].label = e.target.value;
+                          setSettings({ ...settings, themes: newThemes });
+                        }} />
                       </div>
-                      {/* Per-language descriptions. Arabic lives in `desc`; English
-                          & Hebrew live in `descriptions` (empty = built-in one). */}
-                      <div className="sm:col-span-4">
-                        <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.desc_langs', 'الوصف (لكل لغة)')}</label>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <input type="text" dir="rtl" className="magic-input w-full" placeholder={t('admin.desc_ar', 'الوصف بالعربية')} value={theme.desc || ''} onChange={(e) => {
-                            const newThemes = [...settings.themes];
-                            newThemes[index].desc = e.target.value;
-                            setSettings({ ...settings, themes: newThemes });
-                          }} />
-                          <input type="text" dir="ltr" className="magic-input w-full" placeholder={t('admin.desc_en', 'Description (English)')} value={theme.descriptions?.en || ''} onChange={(e) => {
-                            const newThemes = [...settings.themes];
-                            newThemes[index].descriptions = { ...(newThemes[index].descriptions || {}), en: e.target.value };
-                            setSettings({ ...settings, themes: newThemes });
-                          }} />
-                          <input type="text" dir="rtl" className="magic-input w-full" placeholder={t('admin.desc_he', 'תיאור (עברית)')} value={theme.descriptions?.he || ''} onChange={(e) => {
-                            const newThemes = [...settings.themes];
-                            newThemes[index].descriptions = { ...(newThemes[index].descriptions || {}), he: e.target.value };
-                            setSettings({ ...settings, themes: newThemes });
-                          }} />
-                        </div>
-                      </div>
-                      <div className="sm:col-span-4 flex flex-wrap items-center gap-3 mt-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         {/* Ready toggle — only `ready` themes appear in the customer wizard */}
                         <label
-                          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-arabic text-sm cursor-pointer transition-colors border ${
+                          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-arabic text-xs cursor-pointer transition-colors border ${
                             theme.ready
                               ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
                               : 'bg-white/5 hover:bg-white/10 text-white/60 border-white/10'
@@ -956,15 +915,15 @@ export default function AdminDashboard() {
                             }}
                           />
                           {theme.ready
-                            ? t('admin.ready_yes', 'جاهزة للعرض')
-                            : t('admin.ready_no', 'مسودة (غير ظاهرة للعملاء)')}
+                            ? t('admin.ready_short', 'جاهزة')
+                            : t('admin.draft_short', 'مسودة')}
                         </label>
 
                         {/* View the book — one clean language toggle instead of
                             several separate per-language buttons. */}
-                        <div className="flex items-center gap-2 flex-wrap p-2 bg-white/5 rounded-xl border border-white/10">
+                        <div className="flex items-center gap-1 p-1 bg-white/5 rounded-lg border border-white/10">
                           <span className="flex items-center gap-1.5 text-white/70 font-arabic text-xs px-1">
-                            <Eye className="w-4 h-4 text-gold-500" /> {t('admin.book_presentation', 'عرض الكتاب')}
+                            <Eye className="w-3.5 h-3.5 text-gold-500" />
                           </span>
                           <div className="flex items-center gap-1 p-0.5 rounded-lg bg-dark-800 border border-white/10">
                             {[
@@ -976,7 +935,7 @@ export default function AdminDashboard() {
                                 key={o.lng}
                                 to={`/book/${theme.id}?name=${encodeURIComponent(o.name)}&lng=${o.lng}`}
                                 target="_blank"
-                                className="px-3 py-1.5 rounded-md text-xs font-bold text-white/70 hover:text-gold-500 hover:bg-white/5 transition-colors"
+                                className="px-1.5 py-0.5 rounded text-xs font-bold text-white/70 hover:text-gold-500 hover:bg-white/5 transition-colors"
                               >
                                 {o.label}
                               </Link>
@@ -986,43 +945,43 @@ export default function AdminDashboard() {
 
                         <button
                           onClick={() => openEditor(index)}
-                          className="flex items-center gap-2 px-4 py-2 bg-gold-500/20 hover:bg-gold-500/30 text-gold-500 rounded-xl font-arabic text-sm transition-colors border border-gold-500/30"
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gold-500/20 hover:bg-gold-500/30 text-gold-500 rounded-lg font-arabic text-xs transition-colors border border-gold-500/30"
                         >
-                          <BookOpen className="w-4 h-4" /> {t('admin.edit_content_story', 'تعديل محتوى القصة')}
+                          <BookOpen className="w-3.5 h-3.5" /> {t('admin.edit_short', 'تعديل')}
                         </button>
 
                         {/* Generate AI photos */}
                         <button
                           onClick={() => handleGenerateTheme(theme.id, (theme.generatedImages?.length ?? 0) > 0)}
                           disabled={generatingThemeId === theme.id}
-                          className="flex items-center gap-2 px-4 py-2 bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 rounded-xl font-arabic text-sm transition-colors border border-purple-500/30 disabled:opacity-50"
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 rounded-lg font-arabic text-xs transition-colors border border-purple-500/30 disabled:opacity-50"
                           title={t('admin.generate_ai_help', 'توليد صور الذكاء الاصطناعي لهذه القصة')}
                         >
                           {generatingThemeId === theme.id
-                            ? `⏳ ${t('admin.generating', 'جاري التوليد...')}`
+                            ? `⏳ ${t('admin.generating_short', 'جاري...')}`
                             : (theme.generatedImages?.length ?? 0) > 0
-                              ? `✅ ${t('admin.regenerate_ai', 'إعادة توليد الصور')}`
-                              : `🎨 ${t('admin.generate_ai', 'توليد صور AI')}`}
+                              ? `✅ ${t('admin.regen_short', 'الصور')}`
+                              : `🎨 ${t('admin.regen_short', 'الصور')}`}
                         </button>
 
                         {/* Generate photoreal (face-swap) — Style B / Taletoons */}
                         <button
                           onClick={() => handleGeneratePhotoreal(theme.id)}
                           disabled={generatingThemeId === theme.id}
-                          className="flex items-center gap-2 px-4 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 rounded-xl font-arabic text-sm transition-colors border border-emerald-500/30 disabled:opacity-50"
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 rounded-lg font-arabic text-xs transition-colors border border-emerald-500/30 disabled:opacity-50"
                           title={t('admin.generate_photoreal_help', 'توليد قوالب واقعية وتبديل وجه الطفل (نمط Taletoons)')}
                         >
                           {theme.previewStyle === 'photoreal'
-                            ? `📸 ${t('admin.regenerate_photoreal', 'إعادة النمط الواقعي')}`
-                            : `📸 ${t('admin.generate_photoreal', 'نمط واقعي (تبديل الوجه)')}`}
+                            ? `📸 ${t('admin.faceswap_short', 'تبديل الوجه')}`
+                            : `📸 ${t('admin.faceswap_short', 'تبديل الوجه')}`}
                         </button>
 
                         <button 
                           onClick={() => deleteTheme(index)}
-                          className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl font-arabic text-sm transition-colors border border-red-500/30"
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg font-arabic text-xs transition-colors border border-red-500/30"
                           title={t('admin.delete_theme', 'حذف الموضوع')}
                         >
-                          <Trash2 className="w-4 h-4" /> {t('admin.delete_theme', 'حذف الموضوع')}
+                          <Trash2 className="w-3.5 h-3.5" /> {t('admin.delete_short', 'حذف')}
                         </button>
                       </div>
                     </div>
@@ -1030,7 +989,7 @@ export default function AdminDashboard() {
                   <button onClick={() => {
                      setSettings({
                        ...settings,
-                       themes: [...settings.themes, { id: 'new_'+Date.now(), label: 'موضوع جديد', emoji: '✨', desc: 'وصف جديد', ready: false }]
+                       themes: [...settings.themes, { id: 'new_'+Date.now(), label: t('admin.new_story_default', 'قصة جديدة'), emoji: '✨', desc: '', ready: false }]
                      })
                   }} className="text-gold-500 font-arabic text-sm hover:underline block mb-4">{t('admin.add_new_theme')}</button>
                   <MagicButton onClick={() => saveSettings(settings)}>{t('admin.save_themes')}</MagicButton>

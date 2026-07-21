@@ -747,7 +747,16 @@
     "remove_admin_success": "הוסר",
     "remove_admin_fail": "ההסרה נכשלה",
     "pkg_visible": "גלוי ללקוחות (לחץ להסתרה)",
-    "pkg_hidden": "מוסתר מהלקוחות (לחץ להצגה)"
+    "pkg_hidden": "מוסתר מהלקוחות (לחץ להצגה)",
+    "story_name": "שם הסיפור",
+    "ready_short": "מוכן",
+    "draft_short": "טיוטה",
+    "edit_short": "עריכה",
+    "regen_short": "תמונות",
+    "faceswap_short": "החלפת פנים",
+    "delete_short": "מחיקה",
+    "generating_short": "עובד...",
+    "new_story_default": "סיפור חדש"
   },
   "title_page": {
     "presents": "מוגש ל",

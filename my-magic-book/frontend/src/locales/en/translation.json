@@ -747,7 +747,16 @@
     "remove_admin_success": "Removed",
     "remove_admin_fail": "Failed to remove",
     "pkg_visible": "Visible to customers (click to hide)",
-    "pkg_hidden": "Hidden from customers (click to show)"
+    "pkg_hidden": "Hidden from customers (click to show)",
+    "story_name": "Story name",
+    "ready_short": "Ready",
+    "draft_short": "Draft",
+    "edit_short": "Edit",
+    "regen_short": "Images",
+    "faceswap_short": "Face swap",
+    "delete_short": "Delete",
+    "generating_short": "Working...",
+    "new_story_default": "New story"
   },
   "title_page": {
     "presents": "Presented to",
