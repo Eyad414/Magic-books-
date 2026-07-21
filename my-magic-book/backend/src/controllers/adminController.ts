@@ -396,7 +396,11 @@ export const buildOrderBook = async (req: Request, res: Response): Promise<void>
     // are surfaced (not swallowed) so a failure is visible, not a false success.
     let updated: Awaited<ReturnType<typeof buildBookForOrder>>;
     if (order.illustrationsStatus === 'ready') {
-      updated = buildOnly ? order : await submitOrderToBookPod(String(order._id));
+      // Already built: buildOnly rebuilds the print files (so a review reflects
+      // the current images) without submitting; otherwise (re)submit to BookPod.
+      updated = buildOnly
+        ? await reRenderPrintFilesForOrder(String(order._id))
+        : await submitOrderToBookPod(String(order._id));
     } else {
       updated = await buildBookForOrder(String(order._id), !buildOnly);
     }
