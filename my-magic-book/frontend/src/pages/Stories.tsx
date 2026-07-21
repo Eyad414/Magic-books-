@@ -147,13 +147,9 @@ export default function Stories() {
 
                 <div className="p-5 flex flex-col flex-1">
                   <h3 className="font-arabic font-bold text-white text-lg mb-1">{titleFor(card)}</h3>
-                  {/* Show the "موضوع:" line only when it adds info — i.e. it isn't
-                      just a repeat of the title (as it is for the Magic Book). */}
-                  {titleFor(card) !== themeLabelFor(card) && (
-                    <p className="font-arabic text-gold-500 text-xs mb-3">
-                      {t('stories_page.theme')} {themeLabelFor(card)}
-                    </p>
-                  )}
+                  <p className="font-arabic text-gold-500 text-xs mb-3">
+                    {t('stories_page.theme')} {themeLabelFor(card)}
+                  </p>
 
                   {/* Explainer — first lines of the real story */}
                   <div className="relative mb-4 flex-1">
