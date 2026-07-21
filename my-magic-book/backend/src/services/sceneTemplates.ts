@@ -180,7 +180,7 @@ export const SCENE_TEMPLATES: Record<string, SceneTemplate> = {
   //    the zoo book works. Keeps the story beats but renders them photoreal.
   magic_book: {
     style: 'photoreal',
-    titleAr: '[NAME] ورحلة الكتاب المسحور',
+    titleAr: 'رحلة الكتاب السحري',
     pageTexts: [
       'في غرفةٍ صغيرةٍ مليئةٍ بالألعاب، كان [NAME] يجلس وحيداً يقلّب صفحات كتابٍ قديمٍ وجده في الخزانة. وفجأةً بدأت الصفحات تلمع بضوءٍ ذهبيٍّ غريب!',
       '"يا إلهي!" صرخ [NAME]. سحب الضوءُ يده ببطء، وفي لمح البصر وجد نفسه يطير داخل دوّامةٍ من الألوان والكلمات الطائرة.',

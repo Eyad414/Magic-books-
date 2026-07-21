@@ -27,7 +27,7 @@ const AR_PAGES: string[] = [
 export const magicBookJourney: StoryDefinition = {
   id: 'magic_book',
   order: 4,
-  titleAr: '[NAME] ورحلة الكتاب المسحور',
+  titleAr: 'رحلة الكتاب السحري',
   taglineAr: 'مغامرة سحرية داخل عالم الكتب',
   moralAr: 'الخيال هو أقوى قوة في العالم، والشجاعة تعيد الألوان والسعادة إلى كل مكان.',
   questionsAr: [
