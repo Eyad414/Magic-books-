@@ -44,6 +44,9 @@ export default function AdminDashboard() {
   const [coloringBusyId, setColoringBusyId] = useState<string | null>(null);
   // Which order is currently being BUILT (generate + prepare, no BookPod send).
   const [buildOnlyId, setBuildOnlyId] = useState<string | null>(null);
+  // Orders already built this session — their Build button stays "done" (locked)
+  // so it can't be clicked again by accident.
+  const [builtOrderIds, setBuiltOrderIds] = useState<Set<string>>(new Set());
 
   // Admin: build the book + print files and send to BookPod. Generates ~15
   // images (costs money), so confirm first. markPaid fulfils cash/COD orders.
@@ -92,6 +95,7 @@ export default function AdminDashboard() {
       const res = await adminApi.buildOrder(order._id, { markPaid: true, buildOnly: true });
       if (res.success) {
         toast.success(t('admin.built_for_review', 'تم بناء الكتاب ✅ راجعه ثم أرسله إلى BookPod'), { id: toastId });
+        setBuiltOrderIds((prev) => new Set(prev).add(order._id));
         setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...res.order, storyId: o.storyId } : o)));
       } else {
         toast.error(res.message || t('admin.build_failed', 'فشل بناء الكتاب'), { id: toastId });
@@ -595,19 +599,25 @@ export default function AdminDashboard() {
                             {/* While ANY of these actions runs for this order, all three lock so
                                 you can't press twice or trigger a conflicting action. The active
                                 one shows a clear "working" state (ring + brighter), not just dimmed. */}
-                            {(() => { const orderBusy = buildOnlyId === order._id || buildingOrderId === order._id || rerenderingOrderId === order._id; return (<>
-                            {/* Build the book for review — generate + prepare files, WITHOUT sending to BookPod */}
+                            {(() => { const orderBusy = buildOnlyId === order._id || buildingOrderId === order._id || rerenderingOrderId === order._id; const isBuilt = builtOrderIds.has(order._id); return (<>
+                            {/* Build the book for review — generate + prepare files, WITHOUT sending to
+                                BookPod. Once built this session it locks as "تم البناء ✅" so it can't
+                                be re-clicked by accident. */}
                             <button
                               onClick={() => handleBuildOnly(order)}
-                              disabled={orderBusy}
+                              disabled={orderBusy || isBuilt}
                               className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-arabic font-bold text-sm transition-all border whitespace-nowrap ${
                                 buildOnlyId === order._id
                                   ? 'bg-emerald-500/35 text-emerald-100 border-emerald-400 ring-2 ring-emerald-400/60 cursor-wait'
+                                  : isBuilt
+                                  ? 'bg-emerald-500/25 text-emerald-200 border-emerald-500/40 cursor-default'
                                   : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25 disabled:opacity-40 disabled:cursor-not-allowed'
                               }`}
                             >
                               {buildOnlyId === order._id ? (
                                 <><Clock className="w-4 h-4 animate-spin" /> {t('admin.building_short', 'جارٍ البناء...')}</>
+                              ) : isBuilt ? (
+                                <><CheckCircle className="w-4 h-4" /> {t('admin.built_done', 'تم البناء ✅')}</>
                               ) : (
                                 <><BookOpen className="w-4 h-4" /> {t('admin.build_book', 'بناء الكتاب للمراجعة')}</>
                               )}
