@@ -478,12 +478,21 @@ export default function Step3_Checkout({ onPrev }: Props) {
               </div>
             </div>
 
-            <Row label={t('step5.story_hero')} value={heroName || '-'} />
-            <Row label={t('step5.gender')} value={childDetails.childGender === 'female' ? t('step5.girl') : t('step5.boy')} />
-            <Row label={t('step5.hero_age')} value={childDetails.childAge ? `${childDetails.childAge} ${t('step5.years')}` : '-'} />
-            <Row label={t('step5.theme')} value={storyConfig?.theme ? t(`step2.theme_${storyConfig.theme}`) || storyConfig.theme : t('step2.theme_adventure')} />
-            <Row label={t('step5.language')} value={storyConfig?.language === 'en' ? t('step5.lang_en') : storyConfig?.language === 'he' ? t('step5.lang_he') : t('step5.lang_ar')} />
-            <Row label={t('step5.package_type')} value={`${selectedPkg.emoji} ${t(`step3.pkg_${selectedPkg.id}`) || selectedPkg.label}`} />
+            {/* Order review — all details in one compact wrapping row */}
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs pt-1">
+              {[
+                { l: t('step5.story_hero'), v: heroName || '-' },
+                { l: t('step5.gender'), v: childDetails.childGender === 'female' ? t('step5.girl') : t('step5.boy') },
+                { l: t('step5.hero_age'), v: childDetails.childAge ? `${childDetails.childAge} ${t('step5.years')}` : '-' },
+                { l: t('step5.theme'), v: storyConfig?.theme ? (t(`step2.theme_${storyConfig.theme}`) as string) || storyConfig.theme : (t('step2.theme_adventure') as string) },
+                { l: t('step5.language'), v: storyConfig?.language === 'en' ? t('step5.lang_en') : storyConfig?.language === 'he' ? t('step5.lang_he') : t('step5.lang_ar') },
+                { l: t('step5.package_type'), v: `${selectedPkg.emoji} ${(t(`step3.pkg_${selectedPkg.id}`) as string) || selectedPkg.label}` },
+              ].map((r, i) => (
+                <span key={i} className="font-arabic text-white/45 whitespace-nowrap">
+                  {r.l} <span className="text-white/90 font-bold">{r.v}</span>
+                </span>
+              ))}
+            </div>
           </div>
 
           {/* Want another book? Create a separate story (its own order). */}

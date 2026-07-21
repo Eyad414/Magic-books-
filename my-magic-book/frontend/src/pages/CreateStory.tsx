@@ -4,11 +4,16 @@ import Step2_AI_Generator from '../components/wizard/Step2_AI_Generator';
 import Step3_Checkout from '../components/wizard/Step3_Checkout';
 import { CheckCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../context/AuthContext';
 
 const TOTAL_STEPS = 3;
 
 export default function CreateStory() {
   const { progress, setStep } = useStoryProgress();
+  const { user } = useAuth();
+  // Admins can jump freely between steps (to review pages) without filling in
+  // the details; customers can only step back to a completed step.
+  const isAdmin = user?.role === 'admin' || user?.email === 'eyadat720@gmail.com';
   // Clamp: returning users may have a stale step (4/5) saved from the old
   // 5-step wizard in localStorage — never render an out-of-range slot.
   const currentStep = Math.min(Math.max(progress.currentStep || 1, 1), TOTAL_STEPS);
@@ -45,12 +50,13 @@ export default function CreateStory() {
             {STEPS.map((step, index) => {
               const isDone = currentStep > step.number;
               const isActive = currentStep === step.number;
+              const canJump = isAdmin || isDone; // admins can jump to any step
 
               return (
                 <div key={step.number} className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                   <button
-                    onClick={() => isDone && setStep(step.number)}
-                    className={`flex flex-col items-center gap-1 group ${isDone ? 'cursor-pointer' : 'cursor-default'}`}
+                    onClick={() => canJump && setStep(step.number)}
+                    className={`flex flex-col items-center gap-1 group ${canJump ? 'cursor-pointer' : 'cursor-default'}`}
                   >
                     <div
                       className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${

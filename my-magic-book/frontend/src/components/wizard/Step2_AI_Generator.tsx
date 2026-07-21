@@ -20,6 +20,9 @@ interface Props { onNext: () => void; onPrev: () => void; }
 
 const INITIAL_THEME_COUNT = 8;
 
+// Live preview in Step 2 — hidden per request. Flip to true to bring it back.
+const SHOW_LIVE_PREVIEW = false;
+
 // Convert an admin theme's saved pages ([{ text, imageSrc }]) into the
 // TemplatePage[] shape (text page + image page per entry). This lets ANY theme
 // the admin adds/edits work in "ready story" (template) mode — without a
@@ -450,7 +453,8 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
         </div>
       </div>
 
-      {/* Live Preview: Interactive Flipbook to let parents visualize how the book will look */}
+      {/* Live Preview — hidden per request (flip SHOW_LIVE_PREVIEW to restore) */}
+      {SHOW_LIVE_PREVIEW && (
       <div className="mt-8 flex flex-col items-center justify-center bg-dark-700/30 rounded-3xl border border-white/5 w-full py-12 relative min-h-[50px]">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gold-500/50 to-transparent" />
         <label className="block font-arabic text-white/80 text-sm mb-2 text-center w-full">{t('step2.preview_label')}</label>
@@ -467,6 +471,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
         </div>
 
       </div>
+      )}
 
       {mode === 'ai' ? (
         <MagicButton
