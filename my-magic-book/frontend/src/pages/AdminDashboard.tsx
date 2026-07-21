@@ -592,11 +592,19 @@ export default function AdminDashboard() {
                               <Eye className="w-4 h-4" />
                               {t('admin.view_story_review')}
                             </Link>
+                            {/* While ANY of these actions runs for this order, all three lock so
+                                you can't press twice or trigger a conflicting action. The active
+                                one shows a clear "working" state (ring + brighter), not just dimmed. */}
+                            {(() => { const orderBusy = buildOnlyId === order._id || buildingOrderId === order._id || rerenderingOrderId === order._id; return (<>
                             {/* Build the book for review — generate + prepare files, WITHOUT sending to BookPod */}
                             <button
                               onClick={() => handleBuildOnly(order)}
-                              disabled={buildOnlyId === order._id || buildingOrderId === order._id}
-                              className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-emerald-500/15 text-emerald-300 font-arabic font-bold text-sm hover:bg-emerald-500/25 transition-all border border-emerald-500/30 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                              disabled={orderBusy}
+                              className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-arabic font-bold text-sm transition-all border whitespace-nowrap ${
+                                buildOnlyId === order._id
+                                  ? 'bg-emerald-500/35 text-emerald-100 border-emerald-400 ring-2 ring-emerald-400/60 cursor-wait'
+                                  : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25 disabled:opacity-40 disabled:cursor-not-allowed'
+                              }`}
                             >
                               {buildOnlyId === order._id ? (
                                 <><Clock className="w-4 h-4 animate-spin" /> {t('admin.building_short', 'جارٍ البناء...')}</>
@@ -606,8 +614,12 @@ export default function AdminDashboard() {
                             </button>
                             <button
                               onClick={() => handleSendToBookPod(order)}
-                              disabled={buildingOrderId === order._id}
-                              className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-magic-500/20 text-magic-300 font-arabic font-bold text-sm hover:bg-magic-500/30 transition-all border border-magic-500/30 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                              disabled={orderBusy}
+                              className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-arabic font-bold text-sm transition-all border whitespace-nowrap ${
+                                buildingOrderId === order._id
+                                  ? 'bg-magic-500/40 text-magic-100 border-magic-400 ring-2 ring-magic-400/60 cursor-wait'
+                                  : 'bg-magic-500/20 text-magic-300 border-magic-500/30 hover:bg-magic-500/30 disabled:opacity-40 disabled:cursor-not-allowed'
+                              }`}
                             >
                               {buildingOrderId === order._id ? (
                                 <><Clock className="w-4 h-4 animate-spin" /> {t('admin.sending', 'جارٍ الإرسال...')}</>
@@ -618,8 +630,12 @@ export default function AdminDashboard() {
                             {/* Free re-render of print files from existing images */}
                             <button
                               onClick={() => handleReRenderFiles(order)}
-                              disabled={order.illustrationsStatus !== 'ready' || rerenderingOrderId === order._id}
-                              className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white/5 text-white/60 font-arabic font-bold text-sm hover:bg-white/10 transition-all border border-white/10 whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
+                              disabled={order.illustrationsStatus !== 'ready' || orderBusy}
+                              className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-arabic font-bold text-sm transition-all border whitespace-nowrap ${
+                                rerenderingOrderId === order._id
+                                  ? 'bg-white/25 text-white border-white/40 ring-2 ring-white/40 cursor-wait'
+                                  : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed'
+                              }`}
                             >
                               {rerenderingOrderId === order._id ? (
                                 <><RefreshCw className="w-4 h-4 animate-spin" /> {t('admin.rerendering_short', 'جارٍ التجهيز...')}</>
@@ -627,6 +643,7 @@ export default function AdminDashboard() {
                                 <><RefreshCw className="w-4 h-4" /> {t('admin.rerender_files', 'إعادة تجهيز الملفات')}</>
                               )}
                             </button>
+                            </>); })()}
                             {/* Admin-only: download the print-ready files */}
                             <button
                               onClick={() => handleSaveFolder(order)}
