@@ -72,7 +72,9 @@ export const generateStoryWithAI = async (options: StoryGeneratorOptions): Promi
       const { genaiClient } = await import('./genaiClient');
       const ai = genaiClient();
       const res = await ai.models.generateContent({
-        model: process.env.GEMINI_TEXT_MODEL || 'gemini-2.5-flash',
+        // `gemini-2.5-flash` / `2.0-flash` now 404 for this key ("no longer
+        // available to new users"); flash-lite-latest is current + works.
+        model: process.env.GEMINI_TEXT_MODEL || 'gemini-flash-lite-latest',
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
       });
       const text =
