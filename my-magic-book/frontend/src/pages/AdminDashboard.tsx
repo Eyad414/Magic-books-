@@ -40,6 +40,8 @@ export default function AdminDashboard() {
   const [buildingOrderId, setBuildingOrderId] = useState<string | null>(null);
   // Which order id is currently re-rendering its print files (for the spinner).
   const [rerenderingOrderId, setRerenderingOrderId] = useState<string | null>(null);
+  // Which order's child gender is currently being toggled (boy/girl pill).
+  const [genderUpdatingId, setGenderUpdatingId] = useState<string | null>(null);
   // Which order's Pro coloring book is currently rebuilding/sending (spinner).
   const [coloringBusyId, setColoringBusyId] = useState<string | null>(null);
   // Which order is currently being BUILT (generate + prepare, no BookPod send).
@@ -127,6 +129,30 @@ export default function AdminDashboard() {
       toast.error(err?.response?.data?.message || err.message || t('admin.rerender_failed', 'فشل إعادة التجهيز'), { id: toastId });
     } finally {
       setRerenderingOrderId(null);
+    }
+  };
+
+  // Flip the child's stored gender (boy⇄girl) on the linked story, then the admin
+  // re-renders to update the book text. Fixes an order saved with the wrong
+  // gender (the wizard defaults to male) when the name isn't auto-detected.
+  const handleToggleGender = async (order: any) => {
+    const storyId = order.storyId?._id;
+    if (!storyId || genderUpdatingId) return;
+    const next = order.storyId?.childGender === 'female' ? 'male' : 'female';
+    setGenderUpdatingId(order._id);
+    try {
+      await adminApi.updateStory(storyId, { childGender: next });
+      setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, storyId: { ...o.storyId, childGender: next } } : o)));
+      toast.success(
+        (next === 'female'
+          ? t('admin.gender_set_girl', 'تم التعيين: بنت 👧')
+          : t('admin.gender_set_boy', 'تم التعيين: ولد 👦')) +
+          ' — ' + t('admin.gender_rerender_hint', 'أعِد تجهيز الملفات لتحديث الكتاب')
+      );
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || t('admin.gender_failed', 'فشل تغيير الجنس'));
+    } finally {
+      setGenderUpdatingId(null);
     }
   };
 
@@ -580,7 +606,22 @@ export default function AdminDashboard() {
                               </div>
                               <div>
                                 <h4 className="font-arabic text-white/50 text-xs mb-2">{t('admin.story_details')}</h4>
-                                <div className="font-arabic text-gold-500 font-bold">{order.storyId?.childName || t('admin.no_name')}</div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-arabic text-gold-500 font-bold">{order.storyId?.childName || t('admin.no_name')}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleGender(order)}
+                                    disabled={genderUpdatingId === order._id || !order.storyId?._id}
+                                    title={t('admin.toggle_gender_hint', 'اضغط لتبديل جنس الطفل (ولد/بنت)، ثم أعِد تجهيز الملفات')}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-arabic border border-white/15 text-white/80 hover:border-gold-500/50 hover:text-gold-400 transition-all disabled:opacity-50 disabled:cursor-wait"
+                                  >
+                                    {genderUpdatingId === order._id
+                                      ? '…'
+                                      : order.storyId?.childGender === 'female'
+                                      ? t('admin.gender_girl', '👧 بنت')
+                                      : t('admin.gender_boy', '👦 ولد')}
+                                  </button>
+                                </div>
                                 <div className="font-arabic text-white/60 text-sm">{t('admin.theme')} {order.storyId?.theme ? (t(`step2.theme_${order.storyId.theme}`, { defaultValue: order.storyId.theme }) as string) : '...'}</div>
                                 <div className="font-arabic text-white/60 text-sm">{t('admin.amount')} {order.totalPrice} {order.currency}</div>
                               </div>

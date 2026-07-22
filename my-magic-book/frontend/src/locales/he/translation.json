@@ -765,7 +765,14 @@
     "faceswap_short": "החלפת פנים",
     "delete_short": "מחיקה",
     "generating_short": "עובד...",
-    "new_story_default": "סיפור חדש"
+    "new_story_default": "סיפור חדש",
+    "gender_boy": "👦 ילד",
+    "gender_girl": "👧 ילדה",
+    "gender_set_boy": "נקבע: ילד 👦",
+    "gender_set_girl": "נקבע: ילדה 👧",
+    "gender_rerender_hint": "הפק מחדש את הקבצים לעדכון הספר",
+    "gender_failed": "שינוי המגדר נכשל",
+    "toggle_gender_hint": "לחצו כדי להחליף את מגדר הילד/ה, ואז הפיקו מחדש את הקבצים"
   },
   "title_page": {
     "presents": "מוגש ל",

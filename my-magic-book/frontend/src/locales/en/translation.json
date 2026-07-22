@@ -765,7 +765,14 @@
     "faceswap_short": "Face swap",
     "delete_short": "Delete",
     "generating_short": "Working...",
-    "new_story_default": "New story"
+    "new_story_default": "New story",
+    "gender_boy": "👦 Boy",
+    "gender_girl": "👧 Girl",
+    "gender_set_boy": "Set to: Boy 👦",
+    "gender_set_girl": "Set to: Girl 👧",
+    "gender_rerender_hint": "re-render the files to update the book",
+    "gender_failed": "Failed to change gender",
+    "toggle_gender_hint": "Click to switch the child's gender (boy/girl), then re-render the files"
   },
   "title_page": {
     "presents": "Presented to",

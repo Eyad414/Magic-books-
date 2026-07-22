@@ -765,7 +765,14 @@
     "faceswap_short": "تبديل الوجه",
     "delete_short": "حذف",
     "generating_short": "جاري...",
-    "new_story_default": "قصة جديدة"
+    "new_story_default": "قصة جديدة",
+    "gender_boy": "👦 ولد",
+    "gender_girl": "👧 بنت",
+    "gender_set_boy": "تم التعيين: ولد 👦",
+    "gender_set_girl": "تم التعيين: بنت 👧",
+    "gender_rerender_hint": "أعِد تجهيز الملفات لتحديث الكتاب",
+    "gender_failed": "فشل تغيير الجنس",
+    "toggle_gender_hint": "اضغط لتبديل جنس الطفل (ولد/بنت)، ثم أعِد تجهيز الملفات"
   },
   "title_page": {
     "presents": "يُقدّم لـ",
