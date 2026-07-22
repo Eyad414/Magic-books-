@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { localizeName } from '../../utils/translit';
 import { getThemeLabel, getThemeDesc } from '../../utils/themeLabel';
 import { STORY_TEMPLATES } from '../../data/stories/templates';
+import ThemeChatHelper from './ThemeChatHelper';
 import { buildBook, type TemplatePage } from '../../data/stories/builder';
 import type { StoryMode } from '../../context/StoryProgressContext';
 import { buildThemePreview, type PreviewPage } from './FlipbookPreview';
@@ -310,6 +311,22 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
           </button>
         </div>
       </div>
+
+      {/* AI helper: chat that recommends one of the ready themes for this child */}
+      {!themesLoading && THEMES.length > 0 && (
+        <ThemeChatHelper
+          language={i18n.language}
+          onApply={(themeId) => {
+            setForm((f) => ({ ...f, theme: themeId }));
+            setMode('template');
+            toast.success(t('step2.chat_applied'));
+          }}
+          resolveThemeName={(themeId) => {
+            const th = THEMES.find((x) => x.id === themeId);
+            return th ? getThemeLabel(th, t, i18n.language) : undefined;
+          }}
+        />
+      )}
 
       {/* Theme Selection: Core subject/plot that the AI will use to build the child's story */}
       <div>
