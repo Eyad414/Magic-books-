@@ -5,6 +5,8 @@ import { publicApi, type ChatMessage } from '../../api/publicApi';
 
 interface Props {
   language: string;
+  /** Child details already collected in Step 1 — so the assistant doesn't re-ask. */
+  childInfo?: { name?: string; age?: string; gender?: 'male' | 'female' };
   /** Apply the recommended theme to the wizard. */
   onApply: (themeId: string) => void;
   /** Resolve a theme id to its display name (undefined → theme not selectable). */
@@ -17,7 +19,7 @@ interface Props {
  * story text — so the only cost is a short chat call per message). When it
  * recommends a theme the parent can apply it with one tap.
  */
-export default function ThemeChatHelper({ language, onApply, resolveThemeName }: Props) {
+export default function ThemeChatHelper({ language, childInfo, onApply, resolveThemeName }: Props) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [convo, setConvo] = useState<ChatMessage[]>([]);
@@ -40,7 +42,7 @@ export default function ThemeChatHelper({ language, onApply, resolveThemeName }:
     setInput('');
     setLoading(true);
     try {
-      const res = await publicApi.storyChat({ messages: nextConvo, language });
+      const res = await publicApi.storyChat({ messages: nextConvo, language, childInfo });
       setConvo([...nextConvo, { role: 'assistant', content: res.reply }]);
       setSuggestionId(res.suggestion?.themeId || '');
     } catch {

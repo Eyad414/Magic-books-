@@ -18,7 +18,11 @@ export const publicApi = {
     const res = await api.get('/public/settings');
     return res.data;
   },
-  storyChat: async (payload: { messages: ChatMessage[]; language: string }): Promise<StoryChatResult> => {
+  storyChat: async (payload: {
+    messages: ChatMessage[];
+    language: string;
+    childInfo?: { name?: string; age?: string; gender?: 'male' | 'female' };
+  }): Promise<StoryChatResult> => {
     const res = await api.post('/public/story-chat', payload);
     return res.data;
   },

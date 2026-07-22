@@ -48,15 +48,22 @@ export function getThemeLabel(
     L.startsWith('ar') ? theme.titles?.ar : undefined;
   if (perLang?.trim()) return perLang.trim();
 
-  // 2. A customized single Arabic label wins over the built-in i18n name.
   const label = theme.label?.trim();
-  const isCustomized = !!label && !DEFAULT_THEME_LABELS.includes(label);
-  if (isCustomized) return label;
-
-  // 3. Built-in, un-edited theme → localized i18n name.
   const key = `step2.theme_${theme.id}`;
   const translated = t(key);
-  return translated !== key ? translated : (label || theme.id);
+  const hasI18n = translated !== key;
+
+  // `label` always holds the ARABIC name. On a non-Arabic UI with no explicit
+  // per-language title, prefer the localized i18n name over the raw Arabic label
+  // (otherwise an admin-renamed theme shows Arabic text in English/Hebrew).
+  if (!(L.startsWith('ar') || L === '') && hasI18n) return translated;
+
+  // 2. Arabic UI: a customized single Arabic label wins over the built-in name.
+  const isCustomized = !!label && !DEFAULT_THEME_LABELS.includes(label);
+  if (isCustomized) return label!;
+
+  // 3. Built-in, un-edited theme → localized i18n name.
+  return hasI18n ? translated : (label || theme.id);
 }
 
 export function getThemeDesc(
@@ -72,13 +79,19 @@ export function getThemeDesc(
     L.startsWith('ar') ? theme.descriptions?.ar : undefined;
   if (perLang?.trim()) return perLang.trim();
 
-  // 2. A customized single Arabic description wins over the built-in i18n one.
   const desc = theme.desc?.trim();
-  const isCustomized = !!desc && !DEFAULT_THEME_DESCS.includes(desc);
-  if (isCustomized) return desc;
-
-  // 3. Built-in, un-edited theme → localized i18n description.
   const key = `step2.theme_${theme.id}_desc`;
   const translated = t(key);
-  return translated !== key ? translated : (desc || '');
+  const hasI18n = translated !== key;
+
+  // `desc` always holds ARABIC. On a non-Arabic UI with no per-language
+  // description, prefer the localized i18n text over the raw Arabic.
+  if (!(L.startsWith('ar') || L === '') && hasI18n) return translated;
+
+  // 2. Arabic UI: a customized single Arabic description wins.
+  const isCustomized = !!desc && !DEFAULT_THEME_DESCS.includes(desc);
+  if (isCustomized) return desc!;
+
+  // 3. Built-in, un-edited theme → localized i18n description.
+  return hasI18n ? translated : (desc || '');
 }

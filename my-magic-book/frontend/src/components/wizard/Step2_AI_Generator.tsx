@@ -312,13 +312,18 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
         </div>
       </div>
 
-      {/* AI helper: chat that recommends one of the ready themes for this child */}
-      {!themesLoading && THEMES.length > 0 && (
+      {/* AI helper — shown only for AI mode: chat that recommends a theme for
+          this child. Hidden in "ready story" mode (the customer browses themes). */}
+      {mode === 'ai' && !themesLoading && THEMES.length > 0 && (
         <ThemeChatHelper
           language={i18n.language}
+          childInfo={{
+            name: progress.childDetails.childName,
+            age: progress.childDetails.childAge,
+            gender: progress.childDetails.childGender,
+          }}
           onApply={(themeId) => {
             setForm((f) => ({ ...f, theme: themeId }));
-            setMode('template');
             toast.success(t('step2.chat_applied'));
           }}
           resolveThemeName={(themeId) => {

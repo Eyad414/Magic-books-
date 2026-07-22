@@ -18,6 +18,13 @@ export interface ChatResult {
   suggestion: ChatSuggestion | null;
 }
 
+/** Child details already collected in Step 1 — so the assistant never re-asks. */
+export interface ChildInfo {
+  name?: string;
+  age?: string;
+  gender?: 'male' | 'female';
+}
+
 const LANG_NAME: Record<string, string> = { ar: 'Arabic', en: 'English', he: 'Hebrew' };
 
 /** The Gemini model that powers the wizard chat (same billing as image gen).
@@ -69,6 +76,7 @@ function extractJson(text: string): any | null {
 export async function storyChatSuggest(
   messages: ChatMessage[],
   language: string,
+  childInfo?: ChildInfo,
 ): Promise<ChatResult> {
   const lang = LANG_NAME[language] ? language : 'ar';
   const themes = await loadReadyThemes(lang);
@@ -83,9 +91,18 @@ export async function storyChatSuggest(
 
   const themeList = themes.map((t) => `- id="${t.id}": ${t.name}${t.desc ? ` — ${t.desc}` : ''}`).join('\n');
 
+  // The child's name/age/gender come from Step 1 — tell the model so it never re-asks.
+  const known: string[] = [];
+  if (childInfo?.name) known.push(`name: ${childInfo.name}`);
+  if (childInfo?.age) known.push(`age: ${childInfo.age}`);
+  if (childInfo?.gender) known.push(`gender: ${childInfo.gender === 'female' ? 'girl' : 'boy'}`);
+  const knownBlock = known.length
+    ? `\n\nYou ALREADY KNOW the child from the order form: ${known.join(', ')}. Do NOT ask for the name, age or gender again — you have them. Address the child by name where natural.`
+    : '';
+
   const system = `You are the friendly helper of "Magic Fanoos" (الفانوس السحري), a service that makes personalised children's picture books where the child is the hero.
 
-Your job: chat warmly with the parent and help them choose ONE story theme for their child from the AVAILABLE THEMES below. Ask a light question or two about the child (age, what they love, personality) if you don't know yet, then recommend the best-matching theme. Keep every reply short and warm (1–3 sentences). Never invent themes that are not in the list. Do NOT write or draft any story text — only recommend a theme.
+Your job: chat warmly with the parent and help them choose ONE story theme for their child from the AVAILABLE THEMES below. If helpful, ask at most one short question about what the child loves or their personality, then recommend the best-matching theme. Keep every reply short and warm (1–3 sentences). Never invent themes that are not in the list. Do NOT write or draft any story text — only recommend a theme.${knownBlock}
 
 Always answer in ${LANG_NAME[lang]}.
 

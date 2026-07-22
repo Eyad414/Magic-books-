@@ -9,12 +9,12 @@ import { storyChatSuggest, type ChatMessage } from '../services/StoryChatService
  */
 export const storyChat = async (req: Request, res: Response) => {
   try {
-    const { messages, language } = req.body || {};
+    const { messages, language, childInfo } = req.body || {};
     if (!Array.isArray(messages)) {
       return res.status(400).json({ message: 'messages must be an array' });
     }
     const lang = ['ar', 'en', 'he'].includes(language) ? language : 'ar';
-    const result = await storyChatSuggest(messages as ChatMessage[], lang);
+    const result = await storyChatSuggest(messages as ChatMessage[], lang, childInfo);
     return res.json(result);
   } catch (err: any) {
     console.error('[aiController] storyChat error:', err);
