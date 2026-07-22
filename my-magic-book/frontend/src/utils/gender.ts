@@ -32,6 +32,24 @@ export function detectGender(name?: string): Gender {
   return 'male';
 }
 
+// Unisex names we must NOT auto-flip to female (a boy could be نور/ملك).
+const AMBIGUOUS_NAMES = new Set(['نور', 'nour', 'noor', 'ملك', 'malak']);
+
+/**
+ * The gender to actually use for display. The wizard defaults gender to 'male',
+ * so a girl whose order was never toggled ends up 'male'; this corrects it when
+ * the name is an unambiguous girl name. Explicit 'female' is always honored;
+ * an omitted `stored` falls back to name detection (previous behavior).
+ */
+export function resolveGender(name?: string, stored?: Gender): Gender {
+  const base: Gender = stored ?? detectGender(name);
+  if (base === 'female') return 'female';
+  const n = (name || '').trim().toLowerCase();
+  const first = n.split(/\s+/)[0];
+  const isFemaleName = (FEMALE_NAMES.has(n) || FEMALE_NAMES.has(first)) && !AMBIGUOUS_NAMES.has(n) && !AMBIGUOUS_NAMES.has(first);
+  return isFemaleName ? 'female' : base;
+}
+
 /** Replace {masc|fem} tokens in text according to gender. */
 export function applyGenderTokens(text: string, gender: Gender): string {
   if (!text) return '';

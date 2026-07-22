@@ -23,7 +23,7 @@ import CopyrightPage     from './CopyrightPage';
 import BackCover         from './BackCover';
 import { STORIES, findStory } from '../../data/stories';
 import type { StoryDefinition } from '../../data/stories/types';
-import { detectGender, applyGenderTokens, type Gender } from '../../utils/gender';
+import { resolveGender, applyGenderTokens, type Gender } from '../../utils/gender';
 import { localizeName } from '../../utils/translit';
 
 // ── Helper ─────────────────────────────────────────────────────────────────────
@@ -128,8 +128,9 @@ export default function StoryBook({
 
   // ── Editable child name ────────────────────────────────────────────────────
   const [typedName, setTypedName] = useState(initialName);
-  // Gender: explicit (from the wizard) wins, else detect from the name.
-  const gender: Gender = childGender || detectGender(typedName);
+  // Gender: explicit 'female' wins; an obvious girl name corrects a stale male
+  // default; otherwise the stored/detected value stands.
+  const gender: Gender = resolveGender(typedName, childGender);
   // The displayed name follows the site language (Arabic→بهاء, English→Baha,
   // Hebrew→בהאא). The input keeps whatever the parent typed (typedName).
   const childName = useMemo(() => localizeName(typedName || 'بهاء', i18n.language), [typedName, i18n.language]);

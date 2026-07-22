@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import HTMLFlipBook from 'react-pageflip';
-import { detectGender, applyGenderTokens } from '../../utils/gender';
+import { resolveGender, applyGenderTokens } from '../../utils/gender';
 import { localizeName } from '../../utils/translit';
 
 // Rotating page background colors for the decorative text pages.
@@ -36,7 +36,7 @@ export function buildThemePreview(opts: {
     childName || (language === 'ar' ? 'طفلك' : language === 'he' ? 'הילד' : 'your child'),
     language,
   );
-  const gender = childGender || detectGender(childName);
+  const gender = resolveGender(childName, childGender);
   const ft = i18n.getFixedT(language);
   const personalize = (s: string) => applyGenderTokens((s || '').replace(/\[NAME\]/gi, name), gender);
 

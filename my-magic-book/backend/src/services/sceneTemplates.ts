@@ -39,12 +39,43 @@ export interface SceneTemplate {
 /** Standard coloring-book length (interior pages, cover excluded). */
 export const COLORING_PAGES = 16;
 
+// Curated girl names (Arabic + transliterations). Deliberately EXCLUDES common
+// unisex names (نور، ملك) so we never mis-flip a boy. Used only to CORRECT a
+// gender that was left at the wizard's "male" default for an obvious girl name.
+const FEMALE_NAMES = new Set(
+  [
+    'سارة', 'ساره', 'ريم', 'ريما', 'رؤى', 'لين', 'جنى', 'ميرا', 'تالا', 'سيلين',
+    'ميسم', 'رهف', 'جودي', 'ريناد', 'لمار', 'دانة', 'دانه', 'جوري', 'شهد',
+    'رزان', 'لينا', 'مايا', 'ميار', 'تولين', 'سما', 'يارا', 'ياره', 'ليان', 'روان',
+    'هيا', 'رتاج', 'بيسان', 'إلين', 'ايلين', 'سيدرا', 'كادي', 'غلا',
+    'sara', 'sarah', 'reem', 'rem', 'rima', 'reema', 'lin', 'lyn', 'jana', 'mira',
+    'tala', 'celine', 'maysam', 'rahaf', 'judy', 'renad', 'lamar', 'dana',
+    'joury', 'shahd', 'razan', 'lina', 'maya', 'mayar', 'sama', 'yara', 'layan',
+    'rawan', 'haya', 'sidra', 'kadi',
+  ].map((n) => n.toLowerCase())
+);
+
+/**
+ * The gender to actually use for a child. The wizard defaults `childGender` to
+ * 'male', so a girl whose order was never toggled ends up stored as male; this
+ * corrects it when the name is an unambiguous girl name. Explicit 'female' is
+ * always honored. Everything else keeps the stored value.
+ */
+export function resolveGender(childName: string | undefined, childGender: 'male' | 'female'): 'male' | 'female' {
+  if (childGender === 'female') return 'female';
+  const n = (childName || '').trim().toLowerCase();
+  if (!n) return childGender;
+  if (FEMALE_NAMES.has(n) || FEMALE_NAMES.has(n.split(/\s+/)[0])) return 'female';
+  return childGender;
+}
+
 /** Resolves [NAME] + {masculine|feminine} tokens for a specific child. */
 export function resolveTokens(text: string, childName: string, childGender: 'male' | 'female'): string {
+  const gender = resolveGender(childName, childGender);
   return (text || '')
     .replace(/\[NAME\]/gi, childName)
     .replace(/\{\{\s*name\s*\}\}/gi, childName)
-    .replace(/\{([^|{}]*)\|([^|{}]*)\}/g, (_m, masc, fem) => (childGender === 'female' ? fem : masc));
+    .replace(/\{([^|{}]*)\|([^|{}]*)\}/g, (_m, masc, fem) => (gender === 'female' ? fem : masc));
 }
 
 /** Themes that have a hand-tuned scene template. Keyed by theme id. */
