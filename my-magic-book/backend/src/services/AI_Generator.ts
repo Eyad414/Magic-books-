@@ -9,9 +9,9 @@ interface StoryGeneratorOptions {
 }
 
 const STORY_LENGTH_MAP = {
-  short: 300,
-  medium: 600,
-  long: 1000,
+  short: 500,
+  medium: 900,
+  long: 1400,
 };
 
 const THEME_LABELS_AR: Record<string, string> = {
@@ -64,6 +64,7 @@ Make ${childName} the main hero. Start directly with the story text, no commenta
 export const generateStoryWithAI = async (options: StoryGeneratorOptions): Promise<string> => {
   const { childName, theme, language } = options;
   const prompt = buildPrompt(options);
+  const wordCount = STORY_LENGTH_MAP[options.storyLength];
 
   // 1) Gemini (preferred — text is ~free). Uses Vertex or AI Studio per env
   //    (GENAI_USE_VERTEX), via the shared genaiClient.
@@ -73,9 +74,16 @@ export const generateStoryWithAI = async (options: StoryGeneratorOptions): Promi
       const ai = genaiClient();
       const res = await ai.models.generateContent({
         // `gemini-2.5-flash` / `2.0-flash` now 404 for this key ("no longer
-        // available to new users"); flash-lite-latest is current + works.
-        model: process.env.GEMINI_TEXT_MODEL || 'gemini-flash-lite-latest',
+        // available to new users"). flash-latest writes richer, longer prose;
+        // it's a "thinking" model, so give it generous output room below.
+        model: process.env.GEMINI_TEXT_MODEL || 'gemini-flash-latest',
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        config: {
+          temperature: 0.9,
+          // Arabic is token-heavy (~2–3 tokens/word) and the model also spends
+          // tokens "thinking" — leave plenty so a long story never truncates.
+          maxOutputTokens: Math.min(8192, wordCount * 5 + 2000),
+        },
       });
       const text =
         (res as any).text ||
