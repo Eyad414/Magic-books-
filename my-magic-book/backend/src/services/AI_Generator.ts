@@ -76,11 +76,14 @@ export const generateStoryWithAI = async (options: StoryGeneratorOptions): Promi
       const { genaiClient } = await import('./genaiClient');
       const ai = genaiClient();
       const res = await ai.models.generateContent({
-        // `gemini-2.5-flash` / `2.0-flash` now 404 for this key ("no longer
-        // available to new users"). flash-lite is ~2x faster than flash-latest
-        // (no "thinking" tokens) and hits the same length via the tuned targets
-        // above — measured ~913 words in ~10s vs ~845 words in ~21s.
-        model: process.env.GEMINI_TEXT_MODEL || 'gemini-flash-lite-latest',
+        // Model ids differ per backend: Vertex does NOT serve the AI-Studio
+        // "-latest" aliases (they 500), and AI Studio no longer serves
+        // `gemini-2.5-*` for new keys (404). Both pick a fast, non-"thinking"
+        // flash-lite. Measured — AI Studio: ~913 words/10.5s; Vertex: ~1066
+        // words/15.4s.
+        model:
+          process.env.GEMINI_TEXT_MODEL ||
+          (process.env.GENAI_USE_VERTEX === 'true' ? 'gemini-2.5-flash-lite' : 'gemini-flash-lite-latest'),
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         config: {
           temperature: 0.9,

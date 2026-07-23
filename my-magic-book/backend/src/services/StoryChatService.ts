@@ -28,9 +28,15 @@ export interface ChildInfo {
 const LANG_NAME: Record<string, string> = { ar: 'Arabic', en: 'English', he: 'Hebrew' };
 
 /** The Gemini model that powers the wizard chat (same billing as image gen).
- *  flash-lite is fast (~1s), cheap and doesn't burn tokens "thinking" — ideal
- *  for a short guided chat. Override with STORY_CHAT_MODEL if needed. */
-const CHAT_MODEL = process.env.STORY_CHAT_MODEL || 'gemini-flash-lite-latest';
+ *  flash-lite is fast, cheap and doesn't burn tokens "thinking" — ideal for a
+ *  short guided chat. Model ids differ per backend: Vertex does NOT serve the
+ *  AI-Studio "-latest" aliases, and AI Studio no longer serves `gemini-2.5-*`
+ *  for new keys. Read lazily so it picks up env loaded after import.
+ *  Override with STORY_CHAT_MODEL. */
+function chatModel(): string {
+  if (process.env.STORY_CHAT_MODEL) return process.env.STORY_CHAT_MODEL;
+  return process.env.GENAI_USE_VERTEX === 'true' ? 'gemini-2.5-flash-lite' : 'gemini-flash-lite-latest';
+}
 
 /** Load the themes a customer may actually pick (ready, non-coloring), with a
  *  name/description resolved to the conversation language. */
@@ -131,7 +137,7 @@ Set themeId to "" until you are confident enough to recommend one.`;
     const { genaiClient } = await import('./genaiClient');
     const ai = genaiClient();
     const res = await ai.models.generateContent({
-      model: CHAT_MODEL,
+      model: chatModel(),
       contents,
       config: {
         systemInstruction: system,
