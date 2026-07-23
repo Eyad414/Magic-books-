@@ -8,10 +8,13 @@ interface StoryGeneratorOptions {
   customThemeNote?: string;
 }
 
+// Word counts we ASK the model for. flash-lite is fast but reliably writes
+// ~65–70% of the requested count, so these are tuned upward to land near
+// 500 / 900 / 1300 ACTUAL words (measured: ask 1400 → ~913 words).
 const STORY_LENGTH_MAP = {
-  short: 500,
-  medium: 900,
-  long: 1400,
+  short: 800,
+  medium: 1400,
+  long: 2000,
 };
 
 const THEME_LABELS_AR: Record<string, string> = {
@@ -74,9 +77,10 @@ export const generateStoryWithAI = async (options: StoryGeneratorOptions): Promi
       const ai = genaiClient();
       const res = await ai.models.generateContent({
         // `gemini-2.5-flash` / `2.0-flash` now 404 for this key ("no longer
-        // available to new users"). flash-latest writes richer, longer prose;
-        // it's a "thinking" model, so give it generous output room below.
-        model: process.env.GEMINI_TEXT_MODEL || 'gemini-flash-latest',
+        // available to new users"). flash-lite is ~2x faster than flash-latest
+        // (no "thinking" tokens) and hits the same length via the tuned targets
+        // above — measured ~913 words in ~10s vs ~845 words in ~21s.
+        model: process.env.GEMINI_TEXT_MODEL || 'gemini-flash-lite-latest',
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         config: {
           temperature: 0.9,
