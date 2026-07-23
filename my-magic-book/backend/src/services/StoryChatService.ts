@@ -16,6 +16,9 @@ export interface ChatSuggestion {
 export interface ChatResult {
   reply: string;
   suggestion: ChatSuggestion | null;
+  /** Short, sanitized reason when generation fell back (no keys/secrets).
+   *  Present only on failure — lets us diagnose a silent fallback in prod. */
+  diag?: string;
 }
 
 /** Child details already collected in Step 1 — so the assistant never re-asks. */
@@ -89,10 +92,10 @@ export async function storyChatSuggest(
 
   // No themes to suggest, or no Gemini configured → graceful, no crash.
   if (themes.length === 0) {
-    return { reply: fallbackReply(lang), suggestion: null };
+    return { reply: fallbackReply(lang), suggestion: null, diag: 'no ready themes' };
   }
   if (process.env.GENAI_USE_VERTEX !== 'true' && !process.env.GEMINI_API_KEY) {
-    return { reply: fallbackReply(lang), suggestion: null };
+    return { reply: fallbackReply(lang), suggestion: null, diag: 'genai not configured' };
   }
 
   const themeList = themes.map((t) => `- id="${t.id}": ${t.name}${t.desc ? ` — ${t.desc}` : ''}`).join('\n');
@@ -167,9 +170,11 @@ Set themeId to "" until you are confident enough to recommend one.`;
     }
     // Model didn't return JSON — still surface its words rather than fail.
     return { reply: raw || fallbackReply(lang), suggestion: null };
-  } catch (err) {
+  } catch (err: any) {
     console.error('[StoryChatService] chat failed:', err);
-    return { reply: fallbackReply(lang), suggestion: null };
+    // Truncated + whitespace-collapsed; provider errors carry no credentials.
+    const msg = String(err?.message || err || 'unknown').replace(/\s+/g, ' ').slice(0, 200);
+    return { reply: fallbackReply(lang), suggestion: null, diag: msg };
   }
 }
 

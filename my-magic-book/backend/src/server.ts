@@ -43,9 +43,26 @@ app.use('/api/orders/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Health check
+// Health check. Includes a small NON-SENSITIVE generation-config summary
+// (booleans + model ids, never keys) so we can tell from outside which AI
+// backend a deploy is actually using when generation silently falls back.
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'OK', message: 'My Magic Book API is running ✨', timestamp: new Date().toISOString() });
+  const vertex = process.env.GENAI_USE_VERTEX === 'true';
+  res.json({
+    status: 'OK',
+    message: 'My Magic Book API is running ✨',
+    timestamp: new Date().toISOString(),
+    genai: {
+      vertex,
+      projectSet: !!process.env.GCP_PROJECT_ID,
+      location: process.env.GCP_LOCATION || 'global',
+      apiKeySet: !!process.env.GEMINI_API_KEY,
+      textModel:
+        process.env.GEMINI_TEXT_MODEL ||
+        (vertex ? 'gemini-2.5-flash-lite' : 'gemini-flash-lite-latest'),
+      imageModel: process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image',
+    },
+  });
 });
 
 // API Routes
