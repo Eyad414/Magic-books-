@@ -1,4 +1,5 @@
 import SiteSettings from '../models/SiteSettings';
+import { envFlag } from '../utils/envFlag';
 
 export type ChatRole = 'user' | 'assistant';
 export interface ChatMessage {
@@ -38,7 +39,7 @@ const LANG_NAME: Record<string, string> = { ar: 'Arabic', en: 'English', he: 'He
  *  Override with STORY_CHAT_MODEL. */
 function chatModel(): string {
   if (process.env.STORY_CHAT_MODEL) return process.env.STORY_CHAT_MODEL;
-  return process.env.GENAI_USE_VERTEX === 'true' ? 'gemini-2.5-flash-lite' : 'gemini-flash-lite-latest';
+  return envFlag('GENAI_USE_VERTEX') ? 'gemini-2.5-flash-lite' : 'gemini-flash-lite-latest';
 }
 
 /** Load the themes a customer may actually pick (ready, non-coloring), with a
@@ -94,7 +95,7 @@ export async function storyChatSuggest(
   if (themes.length === 0) {
     return { reply: fallbackReply(lang), suggestion: null, diag: 'no ready themes' };
   }
-  if (process.env.GENAI_USE_VERTEX !== 'true' && !process.env.GEMINI_API_KEY) {
+  if (!envFlag('GENAI_USE_VERTEX') && !process.env.GEMINI_API_KEY) {
     return { reply: fallbackReply(lang), suggestion: null, diag: 'genai not configured' };
   }
 

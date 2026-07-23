@@ -1,3 +1,5 @@
+import { envFlag } from '../utils/envFlag';
+
 interface StoryGeneratorOptions {
   childName: string;
   childAge: number;
@@ -71,7 +73,7 @@ export const generateStoryWithAI = async (options: StoryGeneratorOptions): Promi
 
   // 1) Gemini (preferred — text is ~free). Uses Vertex or AI Studio per env
   //    (GENAI_USE_VERTEX), via the shared genaiClient.
-  if (process.env.GENAI_USE_VERTEX === 'true' || process.env.GEMINI_API_KEY) {
+  if (envFlag('GENAI_USE_VERTEX') || process.env.GEMINI_API_KEY) {
     try {
       const { genaiClient } = await import('./genaiClient');
       const ai = genaiClient();
@@ -83,7 +85,7 @@ export const generateStoryWithAI = async (options: StoryGeneratorOptions): Promi
         // words/15.4s.
         model:
           process.env.GEMINI_TEXT_MODEL ||
-          (process.env.GENAI_USE_VERTEX === 'true' ? 'gemini-2.5-flash-lite' : 'gemini-flash-lite-latest'),
+          (envFlag('GENAI_USE_VERTEX') ? 'gemini-2.5-flash-lite' : 'gemini-flash-lite-latest'),
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         config: {
           temperature: 0.9,

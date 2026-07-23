@@ -1,11 +1,12 @@
 import { GoogleGenAI } from '@google/genai';
+import { envFlag } from '../utils/envFlag';
 
 let _client: GoogleGenAI | null = null;
 
 /** True when generation should run through Vertex AI (billed to the GCP
  *  project → covered by the Google Cloud credit) instead of AI Studio. */
 export function usingVertex(): boolean {
-  return process.env.GENAI_USE_VERTEX === 'true';
+  return envFlag('GENAI_USE_VERTEX');
 }
 
 /**

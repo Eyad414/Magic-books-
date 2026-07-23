@@ -15,6 +15,7 @@ import adminRoutes from './routes/adminRoutes';
 import userRoutes from './routes/userRoutes';
 import publicRoutes from './routes/publicRoutes';
 import uploadRoutes from './routes/uploadRoutes';
+import { envFlag } from './utils/envFlag';
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -47,7 +48,7 @@ app.use(express.urlencoded({ extended: true }));
 // (booleans + model ids, never keys) so we can tell from outside which AI
 // backend a deploy is actually using when generation silently falls back.
 app.get('/api/health', (_req, res) => {
-  const vertex = process.env.GENAI_USE_VERTEX === 'true';
+  const vertex = envFlag('GENAI_USE_VERTEX');
   res.json({
     status: 'OK',
     message: 'My Magic Book API is running ✨',
