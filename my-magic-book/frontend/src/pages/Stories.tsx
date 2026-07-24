@@ -62,16 +62,6 @@ export default function Stories() {
     return `${nameL(card)} — ${label}`;
   };
   const themeLabelFor = (card: Card) => t(`step2.theme_${card.themeId}`, { defaultValue: themes[card.themeId]?.label || card.themeId });
-  // Explainer = the first 3 scripted story pages (falls back to the theme desc).
-  const explainerFor = (card: Card) => {
-    const pagesObj = ft(`stories.${textThemeFor(card.themeId)}.pages`, { returnObjects: true }) as any;
-    if (pagesObj && typeof pagesObj === 'object') {
-      const keys = Object.keys(pagesObj).sort((a, b) => Number(a) - Number(b)).slice(0, 3);
-      const txt = personalize(card, keys.map((k) => pagesObj[k]).join(' ')).trim();
-      if (txt) return txt;
-    }
-    return ft(`step2.theme_${card.themeId}_desc`, { defaultValue: themes[card.themeId]?.desc || '' }) as string;
-  };
 
   const toggleFavorite = (key: string) => {
     const isFav = favorites.includes(key);
@@ -151,13 +141,8 @@ export default function Stories() {
                     {t('stories_page.theme')} {themeLabelFor(card)}
                   </p>
 
-                  {/* Explainer — first lines of the real story */}
-                  <div className="relative mb-4 flex-1">
-                    <p className="font-arabic text-white/70 text-sm leading-relaxed line-clamp-3">{explainerFor(card)}</p>
-                  </div>
-
                   {/* View / lock row */}
-                  <div className="flex flex-wrap items-center justify-between p-3 rounded-xl bg-dark-700 border border-white/10 mb-4 gap-2">
+                  <div className="flex flex-wrap items-center justify-between p-3 rounded-xl bg-dark-700 border border-white/10 mb-4 gap-2 mt-auto">
                     <div className="flex items-center gap-3">
                       <button onClick={() => setSelected(card)} className="flex items-center gap-1 pr-3 group cursor-pointer">
                         <Eye className="w-3.5 h-3.5 text-gold-500 group-hover:scale-125 transition-transform" />
