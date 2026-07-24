@@ -48,19 +48,22 @@ app.use(express.urlencoded({ extended: true }));
 // (booleans + model ids, never keys) so we can tell from outside which AI
 // backend a deploy is actually using when generation silently falls back.
 app.get('/api/health', (_req, res) => {
-  const vertex = envFlag('GENAI_USE_VERTEX');
+  const preferVertex = envFlag('GENAI_USE_VERTEX');
+  const studioAvailable = !!process.env.GEMINI_API_KEY;
+  const vertexAvailable = !!process.env.GCP_PROJECT_ID;
   res.json({
     status: 'OK',
     message: 'My Magic Book API is running ✨',
     timestamp: new Date().toISOString(),
     genai: {
-      vertex,
-      projectSet: !!process.env.GCP_PROJECT_ID,
+      // Generation tries the preferred backend, then automatically falls back to
+      // the other on a credits/quota/auth failure — so it works as long as ONE
+      // of these is available.
+      preferVertex,
+      order: preferVertex ? ['vertex', 'studio'] : ['studio', 'vertex'],
+      vertexAvailable,
+      studioAvailable,
       location: process.env.GCP_LOCATION || 'global',
-      apiKeySet: !!process.env.GEMINI_API_KEY,
-      textModel:
-        process.env.GEMINI_TEXT_MODEL ||
-        (vertex ? 'gemini-2.5-flash-lite' : 'gemini-flash-lite-latest'),
       imageModel: process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image',
     },
   });

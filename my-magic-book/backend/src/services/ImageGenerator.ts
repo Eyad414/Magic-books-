@@ -1,6 +1,6 @@
 import { Storage } from '@google-cloud/storage';
 import { uploadBuffer, pdfFolderPath, StoredObject } from './StorageService';
-import { genaiClient } from './genaiClient';
+import { backendOrder, clientFor } from './genaiClient';
 
 interface GenerateOpts {
   pageNumber?: number;
@@ -21,27 +21,50 @@ export function imagesGeneratedSoFar(): number {
 
 const storage = new Storage({ projectId: process.env.GCP_PROJECT_ID });
 
-// Vertex AI on a freshly-enabled project has a low per-minute quota for the
-// image model. On a 429 / RESOURCE_EXHAUSTED, wait out the window and retry so
-// every page still gets generated (generation runs post-payment, so a slower,
-// reliable pace is fine). No-op for the AI Studio path, which rarely 429s.
+// Runs the image call resiliently across both billing backends (same model id
+// works on Vertex and AI Studio). If the preferred backend is out of credits or
+// auth-blocked (e.g. AI Studio "prepayment credits are depleted"), switch to the
+// other. Within a backend, a TRANSIENT rate-limit (Vertex's low per-minute image
+// quota) is waited out and retried, since generation runs post-payment and a
+// slower, reliable pace is fine.
 async function generateContentRetrying(request: any): Promise<any> {
+  const order = backendOrder();
+  if (order.length === 0) throw new Error('No GenAI backend configured for image generation.');
   const WAITS_MS = [20000, 40000, 60000, 60000, 60000];
-  for (let i = 0; ; i++) {
-    try {
-      return await genaiClient().models.generateContent(request);
-    } catch (err: any) {
-      const code = err?.status ?? err?.code ?? err?.error?.code;
-      const msg = String(err?.message ?? err ?? '');
-      const rateLimited = code === 429 || /RESOURCE_EXHAUSTED|exhausted|quota|rate limit/i.test(msg);
-      if (rateLimited && i < WAITS_MS.length) {
-        console.warn(`[ImageGenerator] rate-limited (429); waiting ${WAITS_MS[i] / 1000}s then retry ${i + 1}/${WAITS_MS.length}`);
-        await new Promise((r) => setTimeout(r, WAITS_MS[i]));
-        continue;
+  let lastErr: any;
+  for (let bi = 0; bi < order.length; bi++) {
+    const b = order[bi];
+    const isLastBackend = bi === order.length - 1;
+    for (let i = 0; ; i++) {
+      try {
+        return await clientFor(b).models.generateContent(request);
+      } catch (err: any) {
+        lastErr = err;
+        const code = err?.status ?? err?.code ?? err?.error?.code;
+        const msg = String(err?.message ?? err ?? '');
+        // Permanent for this backend (credits gone / auth) → jump to the other one now.
+        const permanent = code === 401 || code === 403 || /depleted|credit|PERMISSION|unauthenticated|API key/i.test(msg);
+        if (permanent && !isLastBackend) {
+          console.warn(`[ImageGenerator] ${b} unavailable (${code}) — switching backend.`);
+          break;
+        }
+        // Transient rate-limit → wait out the window and retry the SAME backend.
+        const rateLimited = code === 429 || /RESOURCE_EXHAUSTED|exhausted|quota|rate limit/i.test(msg);
+        if (rateLimited && i < WAITS_MS.length) {
+          console.warn(`[ImageGenerator] ${b} rate-limited; waiting ${WAITS_MS[i] / 1000}s then retry ${i + 1}/${WAITS_MS.length}`);
+          await new Promise((r) => setTimeout(r, WAITS_MS[i]));
+          continue;
+        }
+        // Exhausted this backend — try the next one if there is one.
+        if (!isLastBackend) {
+          console.warn(`[ImageGenerator] ${b} failed (${code}) — switching backend.`);
+          break;
+        }
+        throw err;
       }
-      throw err;
     }
   }
+  throw lastErr;
 }
 
 /**

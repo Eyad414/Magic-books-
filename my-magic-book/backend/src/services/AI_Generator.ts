@@ -1,5 +1,3 @@
-import { envFlag } from '../utils/envFlag';
-
 interface StoryGeneratorOptions {
   childName: string;
   childAge: number;
@@ -71,29 +69,25 @@ export const generateStoryWithAI = async (options: StoryGeneratorOptions): Promi
   const prompt = buildPrompt(options);
   const wordCount = STORY_LENGTH_MAP[options.storyLength];
 
-  // 1) Gemini (preferred — text is ~free). Uses Vertex or AI Studio per env
-  //    (GENAI_USE_VERTEX), via the shared genaiClient.
-  if (envFlag('GENAI_USE_VERTEX') || process.env.GEMINI_API_KEY) {
+  // 1) Gemini (preferred — text is ~free). Runs resiliently across AI Studio and
+  //    Vertex: the env-preferred backend (GENAI_USE_VERTEX) is tried first, the
+  //    other is the automatic fallback when it's out of credits/quota. Model ids
+  //    differ per backend (Vertex 500s on "-latest" aliases; AI Studio 404s on
+  //    2.5-*), so both are supplied. flash-lite is fast (no "thinking" tokens).
+  if (process.env.GEMINI_API_KEY || process.env.GCP_PROJECT_ID) {
     try {
-      const { genaiClient } = await import('./genaiClient');
-      const ai = genaiClient();
-      const res = await ai.models.generateContent({
-        // Model ids differ per backend: Vertex does NOT serve the AI-Studio
-        // "-latest" aliases (they 500), and AI Studio no longer serves
-        // `gemini-2.5-*` for new keys (404). Both pick a fast, non-"thinking"
-        // flash-lite. Measured — AI Studio: ~913 words/10.5s; Vertex: ~1066
-        // words/15.4s.
-        model:
-          process.env.GEMINI_TEXT_MODEL ||
-          (envFlag('GENAI_USE_VERTEX') ? 'gemini-2.5-flash-lite' : 'gemini-flash-lite-latest'),
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        config: {
-          temperature: 0.9,
-          // Arabic is token-heavy (~2–3 tokens/word) and the model also spends
-          // tokens "thinking" — leave plenty so a long story never truncates.
-          maxOutputTokens: Math.min(8192, wordCount * 5 + 2000),
-        },
-      });
+      const { generateResilient } = await import('./genaiClient');
+      const override = process.env.GEMINI_TEXT_MODEL;
+      const res = await generateResilient(
+        { studio: override || 'gemini-flash-lite-latest', vertex: override || 'gemini-2.5-flash-lite' },
+        (model) => ({
+          model,
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          // Arabic is token-heavy (~2–3 tokens/word) — leave room so a long
+          // story never truncates.
+          config: { temperature: 0.9, maxOutputTokens: Math.min(8192, wordCount * 5 + 2000) },
+        }),
+      );
       const text =
         (res as any).text ||
         (res.candidates?.[0]?.content?.parts ?? [])

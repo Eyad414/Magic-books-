@@ -1,5 +1,4 @@
 import SiteSettings from '../models/SiteSettings';
-import { envFlag } from '../utils/envFlag';
 
 export type ChatRole = 'user' | 'assistant';
 export interface ChatMessage {
@@ -30,17 +29,6 @@ export interface ChildInfo {
 }
 
 const LANG_NAME: Record<string, string> = { ar: 'Arabic', en: 'English', he: 'Hebrew' };
-
-/** The Gemini model that powers the wizard chat (same billing as image gen).
- *  flash-lite is fast, cheap and doesn't burn tokens "thinking" — ideal for a
- *  short guided chat. Model ids differ per backend: Vertex does NOT serve the
- *  AI-Studio "-latest" aliases, and AI Studio no longer serves `gemini-2.5-*`
- *  for new keys. Read lazily so it picks up env loaded after import.
- *  Override with STORY_CHAT_MODEL. */
-function chatModel(): string {
-  if (process.env.STORY_CHAT_MODEL) return process.env.STORY_CHAT_MODEL;
-  return envFlag('GENAI_USE_VERTEX') ? 'gemini-2.5-flash-lite' : 'gemini-flash-lite-latest';
-}
 
 /** Load the themes a customer may actually pick (ready, non-coloring), with a
  *  name/description resolved to the conversation language. */
@@ -95,7 +83,7 @@ export async function storyChatSuggest(
   if (themes.length === 0) {
     return { reply: fallbackReply(lang), suggestion: null, diag: 'no ready themes' };
   }
-  if (!envFlag('GENAI_USE_VERTEX') && !process.env.GEMINI_API_KEY) {
+  if (!process.env.GEMINI_API_KEY && !process.env.GCP_PROJECT_ID) {
     return { reply: fallbackReply(lang), suggestion: null, diag: 'genai not configured' };
   }
 
@@ -138,20 +126,21 @@ Set themeId to "" until you are confident enough to recommend one.`;
   }
 
   try {
-    const { genaiClient } = await import('./genaiClient');
-    const ai = genaiClient();
-    const res = await ai.models.generateContent({
-      model: chatModel(),
-      contents,
-      config: {
-        systemInstruction: system,
-        temperature: 0.7,
-        // Generous ceiling so a "thinking" model (if configured via
-        // STORY_CHAT_MODEL) still has room to emit the JSON after reasoning.
-        maxOutputTokens: 1500,
-        responseMimeType: 'application/json',
-      },
-    });
+    const { generateResilient } = await import('./genaiClient');
+    const override = process.env.STORY_CHAT_MODEL;
+    const res = await generateResilient(
+      { studio: override || 'gemini-flash-lite-latest', vertex: override || 'gemini-2.5-flash-lite' },
+      (model) => ({
+        model,
+        contents,
+        config: {
+          systemInstruction: system,
+          temperature: 0.7,
+          maxOutputTokens: 1500,
+          responseMimeType: 'application/json',
+        },
+      }),
+    );
     const raw = (
       (res as any).text ||
       (res.candidates?.[0]?.content?.parts ?? [])
