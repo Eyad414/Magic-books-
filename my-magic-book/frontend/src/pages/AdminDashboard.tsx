@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import { adminApi } from '../api/adminApi';
 import { uploadApi } from '../api/uploadApi';
@@ -1291,8 +1292,11 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Customer profile modal — opened by clicking a message */}
-      {customer && (
+      {/* Customer profile modal — opened by clicking a message. Portaled to
+          <body> so it escapes MainLayout's <main relative z-10> stacking
+          context; otherwise the fixed Navbar (z-50) and Footer (z-10) paint
+          on top of it. */}
+      {customer && createPortal(
         <div className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-4 overflow-y-auto">
           <div className="absolute inset-0 bg-dark-900/90 backdrop-blur-md" onClick={() => setCustomer(null)} />
           <div className="relative w-full max-w-2xl my-8 bg-dark-800 border border-white/10 rounded-2xl shadow-2xl p-6">
@@ -1385,7 +1389,8 @@ export default function AdminDashboard() {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
