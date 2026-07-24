@@ -5,8 +5,9 @@ import { storyApi } from '../api/storyApi';
 import { orderApi } from '../api/orderApi';
 import { userApi } from '../api/userApi';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookOpen, Package, Plus, Clock, CheckCircle, Sparkles, User as UserIcon, Lock, Settings, ShieldAlert, Heart, Trash2, AlertTriangle, X } from 'lucide-react';
+import { BookOpen, Package, Plus, Clock, CheckCircle, Sparkles, User as UserIcon, Lock, Settings, ShieldAlert, Heart, Trash2, AlertTriangle, X, Eye, MapPin, Phone, Palette } from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
+import Modal from '../components/common/Modal';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { localizeName } from '../utils/translit';
@@ -35,6 +36,7 @@ export default function Dashboard() {
   const [orders, setOrders] = useState<any[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [tab, setTab] = useState<'stories' | 'orders' | 'favorites' | 'profile' | 'settings'>('stories');
+  const [detailsOrder, setDetailsOrder] = useState<any>(null);
   const [isFetching, setIsFetching] = useState(true);
   const { t, i18n } = useTranslation();
 
@@ -319,6 +321,13 @@ export default function Dashboard() {
                       <div className={`self-start sm:self-center px-3 py-1 rounded-lg text-xs font-arabic font-bold ${order.paymentStatus === 'paid' ? 'bg-green-500/20 text-green-400' : 'bg-gold-500/20 text-gold-500'}`}>
                         {order.paymentStatus === 'paid' ? t('dashboard.paid') : t('dashboard.pending')}
                       </div>
+                      {/* Order details — always available */}
+                      <button
+                        onClick={() => setDetailsOrder(order)}
+                        className="self-start sm:self-center inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/80 font-arabic font-bold text-sm hover:bg-white/10 hover:border-gold-500/40 hover:text-gold-400 transition whitespace-nowrap"
+                      >
+                        <Eye className="w-4 h-4" /> {t('dashboard.details_btn', 'التفاصيل')}
+                      </button>
                       {/* View the finished book */}
                       {order.illustrationsStatus === 'ready' && (typeof order.storyId === 'object' ? order.storyId?._id : order.storyId) && (
                         <Link
@@ -434,6 +443,75 @@ export default function Dashboard() {
         </div>
 
       </div>
+
+      {/* Order details modal */}
+      {detailsOrder && (
+        <Modal onClose={() => setDetailsOrder(null)} size="max-w-lg">
+          {(() => {
+            const o = detailsOrder;
+            const story = typeof o.storyId === 'object' && o.storyId ? o.storyId : null;
+            const sh = o.shippingAddress || {};
+            const paid = o.paymentStatus === 'paid';
+            const themeLabel = story?.theme ? (t(`step2.theme_${story.theme}`, { defaultValue: story.theme }) as string) : '—';
+            const pkgLabel = o.bookPackage ? (t(`step3.pkg_${o.bookPackage}`, { defaultValue: o.bookPackage }) as string) : '—';
+            const Row = ({ icon: Icon, label, value }: { icon: any; label: string; value?: string }) => (
+              <div className="flex items-start gap-3 py-2.5 border-b border-white/5 last:border-0">
+                <Icon className="w-4 h-4 text-gold-500 mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-arabic text-white/40 text-xs">{label}</div>
+                  <div className="font-arabic text-white text-sm font-bold break-words">{value || '—'}</div>
+                </div>
+              </div>
+            );
+            return (
+              <>
+                <h3 className="font-arabic font-black text-white text-xl mb-3 pr-10">📦 {t('dashboard.order_details', 'تفاصيل الطلب')}</h3>
+                <div className="flex items-center gap-2 flex-wrap mb-4">
+                  <span className="font-mono text-gold-500 text-sm bg-gold-500/10 px-2 py-0.5 rounded">#{o._id.slice(-8).toUpperCase()}</span>
+                  <span className={`px-2.5 py-0.5 rounded-lg text-xs font-arabic font-bold ${paid ? 'bg-green-500/20 text-green-400' : 'bg-gold-500/20 text-gold-500'}`}>
+                    {paid ? t('dashboard.paid') : t('dashboard.pending')}
+                  </span>
+                  {paid && o.illustrationsStatus && o.illustrationsStatus !== 'ready' && (
+                    <span className="px-2.5 py-0.5 rounded-lg text-xs font-arabic font-bold bg-magic-500/20 text-magic-300">
+                      {o.illustrationsStatus === 'failed' ? t('dashboard.order_failed', 'مشكلة في الإنشاء') : t('dashboard.order_preparing', 'قيد التحضير...')}
+                    </span>
+                  )}
+                  {o.illustrationsStatus === 'ready' && (
+                    <span className="px-2.5 py-0.5 rounded-lg text-xs font-arabic font-bold bg-green-500/20 text-green-400">✅ {t('dashboard.order_ready', 'جاهز')}</span>
+                  )}
+                </div>
+
+                <div className="rounded-xl bg-white/5 border border-white/10 px-4 mb-4">
+                  <Row icon={UserIcon} label={t('dashboard.child', 'الطفل')} value={story?.childName ? localizeName(story.childName, i18n.language) : undefined} />
+                  <Row icon={Sparkles} label={t('dashboard.theme', 'الموضوع')} value={themeLabel} />
+                  <Row icon={Palette} label={t('dashboard.package', 'الباقة')} value={pkgLabel} />
+                  <Row icon={Package} label={t('dashboard.total', 'الإجمالي')} value={`${o.totalPrice} ₪`} />
+                  <Row icon={Clock} label={t('dashboard.order_date_label', 'تاريخ الطلب')} value={new Date(o.createdAt).toLocaleString(i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'he' ? 'he-IL' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' })} />
+                </div>
+
+                <h4 className="font-arabic text-white/50 text-xs mb-2">{sh.deliveryMethod === 'pickup' ? t('dashboard.pickup', 'الاستلام') : t('dashboard.shipping', 'الشحن')}</h4>
+                <div className="rounded-xl bg-white/5 border border-white/10 px-4">
+                  {sh.deliveryMethod === 'pickup' ? (
+                    <Row icon={MapPin} label={t('dashboard.pickup_location', 'نقطة الاستلام')} value={sh.pickupLocation} />
+                  ) : (
+                    <>
+                      <Row icon={UserIcon} label={t('dashboard.recipient', 'المستلم')} value={sh.fullName} />
+                      <Row icon={Phone} label={t('dashboard.phone', 'الهاتف')} value={sh.phone} />
+                      <Row icon={MapPin} label={t('dashboard.address', 'العنوان')} value={[sh.city, sh.district, sh.street, sh.buildingNo].filter(Boolean).join('، ')} />
+                    </>
+                  )}
+                </div>
+
+                {o.illustrationsStatus === 'ready' && story?._id && (
+                  <Link to={`/book/${story._id}`} onClick={() => setDetailsOrder(null)} className="mt-5 w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gold-500 text-[#0a1628] font-arabic font-bold hover:bg-gold-400 transition">
+                    📖 {t('dashboard.view_book', 'تصفّح الكتاب')}
+                  </Link>
+                )}
+              </>
+            );
+          })()}
+        </Modal>
+      )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (

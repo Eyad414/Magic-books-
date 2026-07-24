@@ -252,7 +252,21 @@
     "delete_story": "מחק סיפור",
     "confirm_delete_story": "למחוק את הסיפור של {{name}}? לא ניתן לבטל.",
     "story_deleted": "הסיפור נמחק",
-    "story_delete_failed": "מחיקת הסיפור נכשלה"
+    "story_delete_failed": "מחיקת הסיפור נכשלה",
+    "details_btn": "פרטים",
+    "order_details": "פרטי ההזמנה",
+    "order_ready": "מוכן",
+    "child": "הילד/ה",
+    "theme": "נושא",
+    "package": "חבילה",
+    "total": "סה\"כ",
+    "order_date_label": "תאריך ההזמנה",
+    "shipping": "משלוח",
+    "pickup": "איסוף",
+    "pickup_location": "נקודת איסוף",
+    "recipient": "הנמען",
+    "phone": "טלפון",
+    "address": "כתובת"
   },
   "wizard": {
     "step1_label": "הילד שלך",
@@ -772,7 +786,8 @@
     "gender_set_girl": "נקבע: ילדה 👧",
     "gender_rerender_hint": "הפק מחדש את הקבצים לעדכון הספר",
     "gender_failed": "שינוי המגדר נכשל",
-    "toggle_gender_hint": "לחצו כדי להחליף את מגדר הילד/ה, ואז הפיקו מחדש את הקבצים"
+    "toggle_gender_hint": "לחצו כדי להחליף את מגדר הילד/ה, ואז הפיקו מחדש את הקבצים",
+    "actions": "פעולות"
   },
   "title_page": {
     "presents": "מוגש ל",

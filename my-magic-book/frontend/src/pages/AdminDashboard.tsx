@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import { adminApi } from '../api/adminApi';
 import { uploadApi } from '../api/uploadApi';
 import { objectPathToUrl } from '../api/mediaUrl';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail, X } from 'lucide-react';
+import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail, User, Phone, Sparkles } from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
+import Modal from '../components/common/Modal';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { findStory } from '../data/stories';
@@ -598,17 +598,33 @@ export default function AdminDashboard() {
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                              <div>
-                                <h4 className="font-arabic text-white/50 text-xs mb-2">{t('admin.customer_info')}</h4>
-                                <div className="font-arabic text-white font-bold">{order.userId?.name}</div>
-                                <div className="text-white/40 text-sm font-sans">{order.userId?.email}</div>
-                                <div className="text-white/40 text-sm font-sans">{order.shippingAddress?.phone}</div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              {/* Customer */}
+                              <div className="rounded-xl bg-white/5 border border-white/10 p-4 space-y-2.5">
+                                <h4 className="font-arabic text-white/40 text-[11px] font-bold uppercase tracking-wide flex items-center gap-1.5">
+                                  <Users className="w-3.5 h-3.5 text-gold-500/80" /> {t('admin.customer_info')}
+                                </h4>
+                                <div className="flex items-center gap-2 font-arabic text-white font-bold text-sm">
+                                  <User className="w-4 h-4 text-white/30 shrink-0" /> {order.userId?.name || '—'}
+                                </div>
+                                {order.userId?.email && (
+                                  <a href={`mailto:${order.userId.email}`} dir="ltr" className="flex items-center gap-2 text-white/50 text-sm font-sans hover:text-gold-400 transition-colors truncate">
+                                    <Mail className="w-4 h-4 text-white/30 shrink-0" /> <span className="truncate">{order.userId.email}</span>
+                                  </a>
+                                )}
+                                {order.shippingAddress?.phone && (
+                                  <div className="flex items-center gap-2 text-white/50 text-sm font-sans" dir="ltr">
+                                    <Phone className="w-4 h-4 text-white/30 shrink-0" /> {order.shippingAddress.phone}
+                                  </div>
+                                )}
                               </div>
-                              <div>
-                                <h4 className="font-arabic text-white/50 text-xs mb-2">{t('admin.story_details')}</h4>
+                              {/* Story */}
+                              <div className="rounded-xl bg-white/5 border border-white/10 p-4 space-y-2.5">
+                                <h4 className="font-arabic text-white/40 text-[11px] font-bold uppercase tracking-wide flex items-center gap-1.5">
+                                  <BookOpen className="w-3.5 h-3.5 text-gold-500/80" /> {t('admin.story_details')}
+                                </h4>
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-arabic text-gold-500 font-bold">{order.storyId?.childName || t('admin.no_name')}</span>
+                                  <span className="font-arabic text-gold-500 font-bold text-sm">{order.storyId?.childName || t('admin.no_name')}</span>
                                   <button
                                     type="button"
                                     onClick={() => handleToggleGender(order)}
@@ -623,14 +639,20 @@ export default function AdminDashboard() {
                                       : t('admin.gender_boy', '👦 ولد')}
                                   </button>
                                 </div>
-                                <div className="font-arabic text-white/60 text-sm">{t('admin.theme')} {order.storyId?.theme ? (t(`step2.theme_${order.storyId.theme}`, { defaultValue: order.storyId.theme }) as string) : '...'}</div>
-                                <div className="font-arabic text-white/60 text-sm">{t('admin.amount')} {order.totalPrice} {order.currency}</div>
+                                <div className="flex items-center gap-2 font-arabic text-white/60 text-sm">
+                                  <Sparkles className="w-4 h-4 text-white/30 shrink-0" /> {order.storyId?.theme ? (t(`step2.theme_${order.storyId.theme}`, { defaultValue: order.storyId.theme }) as string) : '...'}
+                                </div>
+                                <div className="flex items-center gap-2 font-arabic text-white font-bold text-sm">
+                                  <span className="w-4 text-center text-white/30 shrink-0">💰</span> {order.totalPrice} {order.currency}
+                                </div>
                               </div>
                             </div>
                           </div>
 
-                          {/* Actions — all buttons in one horizontal row (wraps on narrow screens) */}
-                          <div className="flex flex-wrap items-center gap-2">
+                          {/* Actions — grouped under a labelled divider (wraps on narrow screens) */}
+                          <div className="pt-4 border-t border-white/5">
+                            <div className="font-arabic text-white/30 text-[11px] font-bold uppercase tracking-wide mb-2.5">{t('admin.actions', 'الإجراءات')}</div>
+                            <div className="flex flex-wrap items-center gap-2">
                             <Link
                               to={`/book/${order.storyId?._id}`}
                               className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-gold-500 text-dark-900 font-arabic font-bold text-sm hover:bg-gold-400 transition-all whitespace-nowrap shadow-lg shadow-gold-500/10"
@@ -749,6 +771,7 @@ export default function AdminDashboard() {
                                 </button>
                               </div>
                             )}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1292,17 +1315,9 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Customer profile modal — opened by clicking a message. Portaled to
-          <body> so it escapes MainLayout's <main relative z-10> stacking
-          context; otherwise the fixed Navbar (z-50) and Footer (z-10) paint
-          on top of it. */}
-      {customer && createPortal(
-        <div className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-4 overflow-y-auto">
-          <div className="absolute inset-0 bg-dark-900/90 backdrop-blur-md" onClick={() => setCustomer(null)} />
-          <div className="relative w-full max-w-2xl my-8 bg-dark-800 border border-white/10 rounded-2xl shadow-2xl p-6">
-            <button onClick={() => setCustomer(null)} aria-label={t('admin.close', 'إغلاق')} className="absolute top-4 left-4 p-2 rounded-full bg-white/5 hover:bg-gold-500 hover:text-dark-900 text-white/50 transition-all">
-              <X className="w-5 h-5" />
-            </button>
+      {/* Customer profile modal — opened by clicking a message. */}
+      {customer && (
+        <Modal onClose={() => setCustomer(null)} closeLabel={t('admin.close', 'إغلاق')}>
 
             <h3 className="font-arabic font-black text-white text-xl mb-1 pr-10">
               👤 {customer.user?.name || customer.email}
@@ -1388,9 +1403,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
             )}
-          </div>
-        </div>,
-        document.body
+        </Modal>
       )}
     </div>
   );

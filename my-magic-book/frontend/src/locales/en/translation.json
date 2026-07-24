@@ -252,7 +252,21 @@
     "delete_story": "Delete story",
     "confirm_delete_story": "Delete {{name}}'s story? This can't be undone.",
     "story_deleted": "Story deleted",
-    "story_delete_failed": "Failed to delete story"
+    "story_delete_failed": "Failed to delete story",
+    "details_btn": "Details",
+    "order_details": "Order details",
+    "order_ready": "Ready",
+    "child": "Child",
+    "theme": "Theme",
+    "package": "Package",
+    "total": "Total",
+    "order_date_label": "Order date",
+    "shipping": "Shipping",
+    "pickup": "Pickup",
+    "pickup_location": "Pickup point",
+    "recipient": "Recipient",
+    "phone": "Phone",
+    "address": "Address"
   },
   "wizard": {
     "step1_label": "Your child",
@@ -772,7 +786,8 @@
     "gender_set_girl": "Set to: Girl 👧",
     "gender_rerender_hint": "re-render the files to update the book",
     "gender_failed": "Failed to change gender",
-    "toggle_gender_hint": "Click to switch the child's gender (boy/girl), then re-render the files"
+    "toggle_gender_hint": "Click to switch the child's gender (boy/girl), then re-render the files",
+    "actions": "Actions"
   },
   "title_page": {
     "presents": "Presented to",
