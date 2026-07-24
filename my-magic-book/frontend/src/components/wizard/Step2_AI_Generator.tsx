@@ -333,7 +333,9 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
         />
       )}
 
-      {/* Theme Selection: Core subject/plot that the AI will use to build the child's story */}
+      {/* Theme Selection — only in "ready story" mode. In AI mode the assistant
+          + Gemini shape the story, so the fixed theme grid is hidden. */}
+      {mode !== 'ai' && (
       <div>
         <label className="block font-arabic text-white/80 text-sm mb-3">{t('step2.theme_label')}</label>
         {themesLoading ? (
@@ -390,6 +392,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
           />
         )}
       </div>
+      )}
 
 
       {/* Language: The language in which the AI generator will write the text */}
