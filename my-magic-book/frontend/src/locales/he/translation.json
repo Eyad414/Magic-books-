@@ -789,7 +789,15 @@
     "toggle_gender_hint": "לחצו כדי להחליף את מגדר הילד/ה, ואז הפיקו מחדש את הקבצים",
     "actions": "פעולות",
     "bookpod_in_production": "בייצור",
-    "bookpod_pending": "ממתין לאישור"
+    "bookpod_pending": "ממתין לאישור",
+    "build_book": "בניית הספר לבדיקה",
+    "built_done": "נבנה ✅",
+    "building_short": "בונה…",
+    "confirm_rebuild_files": "הספר כבר נבנה. לבנות מחדש את קובצי ההדפסה לבדיקה? (חינם)",
+    "confirm_build_only": "לבנות את הספר לבדיקה (יצירת תמונות + הכנת קבצים) בלי לשלוח ל-BookPod? (כרוך בעלות יצירה ב-AI)",
+    "building_only": "בונה את הספר לבדיקה… (עשוי לקחת כמה דקות)",
+    "built_for_review": "הספר נבנה ✅ בדוק אותו ואז שלח ל-BookPod",
+    "build_failed": "בניית הספר נכשלה"
   },
   "title_page": {
     "presents": "מוגש ל",

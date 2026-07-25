@@ -789,7 +789,15 @@
     "toggle_gender_hint": "Click to switch the child's gender (boy/girl), then re-render the files",
     "actions": "Actions",
     "bookpod_in_production": "In production",
-    "bookpod_pending": "Awaiting send"
+    "bookpod_pending": "Awaiting send",
+    "build_book": "Build book for review",
+    "built_done": "Built ✅",
+    "building_short": "Building…",
+    "confirm_rebuild_files": "The book is already built. Re-render the print files for review? (free)",
+    "confirm_build_only": "Build the book for review (generate images + prepare files) without sending to BookPod? (incurs AI generation cost)",
+    "building_only": "Building the book for review… (may take a few minutes)",
+    "built_for_review": "Book built ✅ Review it, then send to BookPod",
+    "build_failed": "Failed to build the book"
   },
   "title_page": {
     "presents": "Presented to",
