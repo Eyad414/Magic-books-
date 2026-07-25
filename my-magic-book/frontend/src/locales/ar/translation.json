@@ -787,7 +787,9 @@
     "gender_rerender_hint": "أعِد تجهيز الملفات لتحديث الكتاب",
     "gender_failed": "فشل تغيير الجنس",
     "toggle_gender_hint": "اضغط لتبديل جنس الطفل (ولد/بنت)، ثم أعِد تجهيز الملفات",
-    "actions": "الإجراءات"
+    "actions": "الإجراءات",
+    "bookpod_in_production": "قيد الإنتاج",
+    "bookpod_pending": "بانتظار الإرسال"
   },
   "title_page": {
     "presents": "يُقدّم لـ",

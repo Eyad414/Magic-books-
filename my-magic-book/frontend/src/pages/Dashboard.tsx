@@ -8,6 +8,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { BookOpen, Package, Plus, Clock, CheckCircle, Sparkles, User as UserIcon, Lock, Settings, ShieldAlert, Heart, Trash2, AlertTriangle, X, Eye, MapPin, Phone, Palette } from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
 import Modal from '../components/common/Modal';
+import StatusBadge from '../components/common/StatusBadge';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { localizeName } from '../utils/translit';
@@ -313,14 +314,18 @@ export default function Dashboard() {
                       </div>
                       {/* Book build status (after payment) */}
                       {order.paymentStatus === 'paid' && order.illustrationsStatus && order.illustrationsStatus !== 'ready' && (
-                        <div className="self-start sm:self-center px-3 py-1 rounded-lg text-xs font-arabic font-bold bg-magic-500/20 text-magic-300 inline-flex items-center gap-1.5">
-                          {order.illustrationsStatus !== 'failed' && <span className="w-2.5 h-2.5 rounded-full border-2 border-magic-300 border-t-transparent animate-spin" />}
+                        <StatusBadge
+                          tone={order.illustrationsStatus === 'failed' ? 'red' : 'magic'}
+                          icon={order.illustrationsStatus === 'failed' ? undefined : Clock}
+                          spin={order.illustrationsStatus !== 'failed'}
+                          className="self-start sm:self-center"
+                        >
                           {order.illustrationsStatus === 'failed' ? t('dashboard.order_failed', 'مشكلة في الإنشاء') : t('dashboard.order_preparing', 'قيد التحضير...')}
-                        </div>
+                        </StatusBadge>
                       )}
-                      <div className={`self-start sm:self-center px-3 py-1 rounded-lg text-xs font-arabic font-bold ${order.paymentStatus === 'paid' ? 'bg-green-500/20 text-green-400' : 'bg-gold-500/20 text-gold-500'}`}>
+                      <StatusBadge tone={order.paymentStatus === 'paid' ? 'green' : 'gold'} className="self-start sm:self-center">
                         {order.paymentStatus === 'paid' ? t('dashboard.paid') : t('dashboard.pending')}
-                      </div>
+                      </StatusBadge>
                       {/* Order details — always available */}
                       <button
                         onClick={() => setDetailsOrder(order)}

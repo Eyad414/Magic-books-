@@ -787,7 +787,9 @@
     "gender_rerender_hint": "re-render the files to update the book",
     "gender_failed": "Failed to change gender",
     "toggle_gender_hint": "Click to switch the child's gender (boy/girl), then re-render the files",
-    "actions": "Actions"
+    "actions": "Actions",
+    "bookpod_in_production": "In production",
+    "bookpod_pending": "Awaiting send"
   },
   "title_page": {
     "presents": "Presented to",

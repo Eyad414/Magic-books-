@@ -7,6 +7,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail, User, Phone, Sparkles } from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
 import Modal from '../components/common/Modal';
+import ActionButton from '../components/common/ActionButton';
+import StatusBadge from '../components/common/StatusBadge';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { findStory } from '../data/stories';
@@ -578,12 +580,15 @@ export default function AdminDashboard() {
                               <div className="px-3 py-1 bg-gold-500/10 text-gold-500 rounded-lg text-xs font-bold font-mono">
                                 #{order._id.slice(-8).toUpperCase()}
                               </div>
-                              <div className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-lg ${
-                                order.paymentStatus === 'paid' ? 'bg-green-500/20 text-green-400' : 'bg-gold-500/20 text-gold-500'
-                              }`}>
-                                {order.paymentStatus === 'paid' ? <CheckCircle className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                              <StatusBadge tone={order.paymentStatus === 'paid' ? 'green' : 'gold'} icon={order.paymentStatus === 'paid' ? CheckCircle : Clock}>
                                 {order.paymentStatus === 'paid' ? t('admin.paid') : t('admin.pending_payment')}
-                              </div>
+                              </StatusBadge>
+                              {/* BookPod production status: sent (in production) vs not yet sent */}
+                              {order.bookpodStatus === 'submitted' ? (
+                                <StatusBadge tone="magic" icon={Package}>{t('admin.bookpod_in_production', 'قيد الإنتاج')}</StatusBadge>
+                              ) : (
+                                <StatusBadge tone="neutral" icon={Clock}>{t('admin.bookpod_pending', 'بانتظار الإرسال')}</StatusBadge>
+                              )}
                               {order.storyId?.bookPackage === 'pro' ? (
                                 <div className="flex items-center gap-1 text-xs font-black px-3 py-1 rounded-lg bg-gradient-to-l from-gold-400 to-amber-500 text-dark-900 shadow-lg shadow-gold-500/40">
                                   ✨ PRO
@@ -653,122 +658,83 @@ export default function AdminDashboard() {
                           <div className="pt-4 border-t border-white/5">
                             <div className="font-arabic text-white/30 text-[11px] font-bold uppercase tracking-wide mb-2.5">{t('admin.actions', 'الإجراءات')}</div>
                             <div className="flex flex-wrap items-center gap-2">
-                            <Link
-                              to={`/book/${order.storyId?._id}`}
-                              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-gold-500 text-dark-900 font-arabic font-bold text-sm hover:bg-gold-400 transition-all whitespace-nowrap shadow-lg shadow-gold-500/10"
-                            >
-                              <Eye className="w-4 h-4" />
+                            <ActionButton variant="gold" icon={Eye} to={`/book/${order.storyId?._id}`}>
                               {t('admin.view_story_review')}
-                            </Link>
+                            </ActionButton>
                             {/* While ANY of these actions runs for this order, all three lock so
                                 you can't press twice or trigger a conflicting action. The active
                                 one shows a clear "working" state (ring + brighter), not just dimmed. */}
                             {(() => { const orderBusy = buildOnlyId === order._id || buildingOrderId === order._id || rerenderingOrderId === order._id; const isBuilt = builtOrderIds.has(order._id); return (<>
                             {/* Build the book for review — generate + prepare files, WITHOUT sending to
-                                BookPod. Once built this session it locks as "تم البناء ✅" so it can't
-                                be re-clicked by accident. */}
-                            <button
+                                BookPod. Once built this session it locks as "تم البناء ✅". */}
+                            <ActionButton
+                              variant="emerald"
+                              active={buildOnlyId === order._id}
+                              spin={buildOnlyId === order._id}
+                              icon={buildOnlyId === order._id ? Clock : isBuilt ? CheckCircle : BookOpen}
                               onClick={() => handleBuildOnly(order)}
                               disabled={orderBusy || isBuilt}
-                              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg font-arabic font-bold text-sm transition-all border whitespace-nowrap ${
-                                buildOnlyId === order._id
-                                  ? 'bg-emerald-500/35 text-emerald-100 border-emerald-400 ring-2 ring-emerald-400/60 cursor-wait'
-                                  : isBuilt
-                                  ? 'bg-emerald-500/25 text-emerald-200 border-emerald-500/40 cursor-default'
-                                  : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25 disabled:opacity-40 disabled:cursor-not-allowed'
-                              }`}
+                              className={isBuilt && buildOnlyId !== order._id ? '!bg-emerald-500/25 !text-emerald-200 !border-emerald-500/40 !ring-0 cursor-default' : ''}
                             >
-                              {buildOnlyId === order._id ? (
-                                <><Clock className="w-4 h-4 animate-spin" /> {t('admin.building_short', 'جارٍ البناء...')}</>
-                              ) : isBuilt ? (
-                                <><CheckCircle className="w-4 h-4" /> {t('admin.built_done', 'تم البناء ✅')}</>
-                              ) : (
-                                <><BookOpen className="w-4 h-4" /> {t('admin.build_book', 'بناء الكتاب للمراجعة')}</>
-                              )}
-                            </button>
-                            <button
+                              {buildOnlyId === order._id ? t('admin.building_short', 'جارٍ البناء...') : isBuilt ? t('admin.built_done', 'تم البناء ✅') : t('admin.build_book', 'بناء الكتاب للمراجعة')}
+                            </ActionButton>
+                            <ActionButton
+                              variant="magic"
+                              active={buildingOrderId === order._id}
+                              spin={buildingOrderId === order._id}
+                              icon={buildingOrderId === order._id ? Clock : Package}
                               onClick={() => handleSendToBookPod(order)}
                               disabled={orderBusy}
-                              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg font-arabic font-bold text-sm transition-all border whitespace-nowrap ${
-                                buildingOrderId === order._id
-                                  ? 'bg-magic-500/40 text-magic-100 border-magic-400 ring-2 ring-magic-400/60 cursor-wait'
-                                  : 'bg-magic-500/20 text-magic-300 border-magic-500/30 hover:bg-magic-500/30 disabled:opacity-40 disabled:cursor-not-allowed'
-                              }`}
                             >
-                              {buildingOrderId === order._id ? (
-                                <><Clock className="w-4 h-4 animate-spin" /> {t('admin.sending', 'جارٍ الإرسال...')}</>
-                              ) : (
-                                <><Package className="w-4 h-4" /> {t('admin.send_to_bookpod', 'إرسال إلى BookPod')}</>
-                              )}
-                            </button>
+                              {buildingOrderId === order._id ? t('admin.sending', 'جارٍ الإرسال...') : t('admin.send_to_bookpod', 'إرسال إلى BookPod')}
+                            </ActionButton>
                             {/* Free re-render of print files from existing images */}
-                            <button
+                            <ActionButton
+                              variant="ghost"
+                              active={rerenderingOrderId === order._id}
+                              spin={rerenderingOrderId === order._id}
+                              icon={RefreshCw}
                               onClick={() => handleReRenderFiles(order)}
                               disabled={order.illustrationsStatus !== 'ready' || orderBusy}
-                              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg font-arabic font-bold text-sm transition-all border whitespace-nowrap ${
-                                rerenderingOrderId === order._id
-                                  ? 'bg-white/25 text-white border-white/40 ring-2 ring-white/40 cursor-wait'
-                                  : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed'
-                              }`}
                             >
-                              {rerenderingOrderId === order._id ? (
-                                <><RefreshCw className="w-4 h-4 animate-spin" /> {t('admin.rerendering_short', 'جارٍ التجهيز...')}</>
-                              ) : (
-                                <><RefreshCw className="w-4 h-4" /> {t('admin.rerender_files', 'إعادة تجهيز الملفات')}</>
-                              )}
-                            </button>
+                              {rerenderingOrderId === order._id ? t('admin.rerendering_short', 'جارٍ التجهيز...') : t('admin.rerender_files', 'إعادة تجهيز الملفات')}
+                            </ActionButton>
                             </>); })()}
                             {/* Admin-only: download the print-ready files */}
-                            <button
-                              onClick={() => handleSaveFolder(order)}
-                              disabled={!order.printInteriorUrl && !order.printCoverUrl}
-                              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 text-white/60 font-arabic font-bold text-sm hover:bg-white/10 transition-all border border-white/10 whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                              <Download className="w-4 h-4" />
+                            <ActionButton variant="ghost" icon={Download} onClick={() => handleSaveFolder(order)} disabled={!order.printInteriorUrl && !order.printCoverUrl}>
                               {t('admin.save_folder', 'حفظ الملفات')}
-                            </button>
+                            </ActionButton>
 
                             {/* PRO bundle: the coloring book — its own view / send / re-render / save */}
                             {order.storyId?.bookPackage === 'pro' && !!(order.storyId?.coloringImages?.length) && (
                               <div className="w-full mt-1 pt-3 border-t border-white/10 flex flex-wrap items-center gap-2">
                                 <div className="w-full font-arabic text-white/50 text-xs font-bold text-center lg:text-right">🖍️ {t('admin.coloring_book', 'كتاب التلوين')}</div>
-                                <Link
-                                  to={`/book/${order.storyId?._id}?view=coloring`}
-                                  className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-gold-500 text-dark-900 font-arabic font-bold text-sm hover:bg-gold-400 transition-all whitespace-nowrap shadow-lg shadow-gold-500/10"
-                                >
-                                  <Eye className="w-4 h-4" />
+                                <ActionButton variant="gold" icon={Eye} to={`/book/${order.storyId?._id}?view=coloring`}>
                                   {t('admin.view_coloring', 'عرض كتاب التلوين')}
-                                </Link>
-                                <button
+                                </ActionButton>
+                                <ActionButton
+                                  variant="magic"
+                                  active={coloringBusyId === order._id}
+                                  spin={coloringBusyId === order._id}
+                                  icon={coloringBusyId === order._id ? Clock : Package}
                                   onClick={() => handleSubmitColoring(order)}
                                   disabled={coloringBusyId === order._id}
-                                  className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-magic-500/20 text-magic-300 font-arabic font-bold text-sm hover:bg-magic-500/30 transition-all border border-magic-500/30 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                  {coloringBusyId === order._id ? (
-                                    <><Clock className="w-4 h-4 animate-spin" /> {t('admin.sending', 'جارٍ الإرسال...')}</>
-                                  ) : (
-                                    <><Package className="w-4 h-4" /> {t('admin.send_coloring', 'إرسال التلوين للطباعة')}</>
-                                  )}
-                                </button>
-                                <button
+                                  {coloringBusyId === order._id ? t('admin.sending', 'جارٍ الإرسال...') : t('admin.send_coloring', 'إرسال التلوين للطباعة')}
+                                </ActionButton>
+                                <ActionButton
+                                  variant="ghost"
+                                  active={coloringBusyId === order._id}
+                                  spin={coloringBusyId === order._id}
+                                  icon={RefreshCw}
                                   onClick={() => handleReRenderColoring(order)}
                                   disabled={coloringBusyId === order._id}
-                                  className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 text-white/60 font-arabic font-bold text-sm hover:bg-white/10 transition-all border border-white/10 whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
-                                  {coloringBusyId === order._id ? (
-                                    <><RefreshCw className="w-4 h-4 animate-spin" /> {t('admin.rerendering_short', 'جارٍ التجهيز...')}</>
-                                  ) : (
-                                    <><RefreshCw className="w-4 h-4" /> {t('admin.rerender_files', 'إعادة تجهيز الملفات')}</>
-                                  )}
-                                </button>
-                                <button
-                                  onClick={() => handleSaveFolder(order, 'coloring')}
-                                  disabled={!order.coloringPrintInteriorUrl && !order.coloringPrintCoverUrl}
-                                  className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 text-white/60 font-arabic font-bold text-sm hover:bg-white/10 transition-all border border-white/10 whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
-                                >
-                                  <Download className="w-4 h-4" />
+                                  {coloringBusyId === order._id ? t('admin.rerendering_short', 'جارٍ التجهيز...') : t('admin.rerender_files', 'إعادة تجهيز الملفات')}
+                                </ActionButton>
+                                <ActionButton variant="ghost" icon={Download} onClick={() => handleSaveFolder(order, 'coloring')} disabled={!order.coloringPrintInteriorUrl && !order.coloringPrintCoverUrl}>
                                   {t('admin.save_folder', 'حفظ الملفات')}
-                                </button>
+                                </ActionButton>
                               </div>
                             )}
                             </div>
