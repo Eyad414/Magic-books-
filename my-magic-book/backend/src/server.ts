@@ -16,6 +16,7 @@ import userRoutes from './routes/userRoutes';
 import publicRoutes from './routes/publicRoutes';
 import uploadRoutes from './routes/uploadRoutes';
 import { envFlag } from './utils/envFlag';
+import { SCENE_TEMPLATES } from './services/sceneTemplates';
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -66,6 +67,8 @@ app.get('/api/health', (_req, res) => {
       location: process.env.GCP_LOCATION || 'global',
       imageModel: process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image',
     },
+    // Which story scene-templates this build knows about (confirms deploys).
+    stories: Object.keys(SCENE_TEMPLATES),
   });
 });
 
