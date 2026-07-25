@@ -293,6 +293,35 @@ export const getSettings = async (req: Request, res: Response): Promise<void> =>
         settings.markModified('themes');
         await settings.save();
       }
+      // Pirate Treasure — premium theme (scene template + voweled/gendered text in
+      // code). Seeded unready; generate demo images in admin, then flip ready.
+      const pirTheme: any = settings.themes.find((t: any) => t.id === 'pirate_adventure');
+      if (!pirTheme) {
+        settings.themes.push({
+          id: 'pirate_adventure',
+          emoji: '🏴‍☠️',
+          label: 'مغامرة القراصنة والكنز',
+          desc: 'رحلة بحرية شيقة بحثاً عن الكنز',
+          ready: false,
+          pages: [
+            { text: "  ، {|} {{name}}    ،   ! {|}  {|}  {|} {|} .", imageSrc: "" },
+            { text: "{|} {{name}}      ، {|} ، {|}    {|} {|} .", imageSrc: "" },
+            { text: "      {{name}}،   ،     .", imageSrc: "" },
+            { text: "        . {|} {{name}}    {|}   .", imageSrc: "" },
+            { text: " ، {|} {{name}}         .", imageSrc: "" },
+            { text: "    ،  ،   {{name}}     .", imageSrc: "" },
+            { text: "{|} {{name}}   ، {|}        .", imageSrc: "" },
+            { text: "  ، {|} {{name}}      ، {|}: \"   \"", imageSrc: "" },
+            { text: "{|} {{name}}   {|}: \" !\"     .", imageSrc: "" },
+            { text: "، {|} {{name}}   ، {|} {|}     ، {|} {|} .", imageSrc: "" },
+            { text: "{|}  ، {|}  . {|} {{name}} :     !", imageSrc: "" },
+            { text: " ، {|} {{name}}    ، {|}   {|} {|} .", imageSrc: "" },
+            { text: "  ، {|} {{name}} {|}   {|} ، {|}  ، {|}  .", imageSrc: "" }
+          ]
+        });
+        settings.markModified('themes');
+        await settings.save();
+      }
     }
     res.json({ success: true, settings });
   } catch (error) {

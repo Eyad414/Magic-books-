@@ -275,6 +275,70 @@ export const SCENE_TEMPLATES: Record<string, SceneTemplate> = {
     coloringBackCoverScene:
       'waving goodbye with a big happy smile in front of the school, a couple of friends waving too, books, a backpack, colorful balloons and confetti, bright cheerful colors, open space at the bottom',
   },
+  // ── Pirate Treasure (مغامرة [NAME] وكنز القراصنة) — a brave little captain sails to a tropical
+  //    island to find hidden treasure, learning courage and kindness. Realistic
+  //    cinematic ocean/island scenes so the photoreal child fits naturally.
+  pirate_adventure: {
+    style: 'photoreal',
+    titleAr: "مغامرة [NAME] وكنز القراصنة",
+    pageTexts: [
+      "في صباح مشمس، وجد{|ت} [NAME] زجاجة قديمة على الشاطئ، وبداخلها خريطة كنز! ففرح{|ت} كثيرا وقرر{|ت} أن {يصبح|تصبح} {قبطانا|قبطانة} للقراصنة.",
+      "ركب{|ت} [NAME] سفينة خشبية صغيرة ذات شراع أبيض، ورفع{|ت} الراية، وأبحر{|ت} في البحر الأزرق وه{و|ي} {ي|ت}شعر بالشجاعة.",
+      "حط ببغاء ملون لطيف على كتف [NAME]، وأخذ يغرد بفرح، فأصبح رفيقا وفيا في الرحلة.",
+      "فجأة تجمعت الغيوم الداكنة وتمايلت السفينة بين الأمواج العالية. أمسك{|ت} [NAME] عجلة القيادة بقوة وقاد{|ت} بشجاعة عبر العاصفة.",
+      "هدأ البحر، ووصل{|ت} [NAME] إلى جزيرة خضراء غامضة ذات نخيل عال ورمال ذهبية.",
+      "قفز دلفين لطيف من الماء، وبأصوات ودودة، أشار إلى [NAME] نحو طريق خفي على الجزيرة.",
+      "تبع{|ت} [NAME] الخريطة عبر الغابة، وعبر{|ت} جسرا حبليا متمايلا فوق نهر متلألئ بكل شجاعة.",
+      "في نهاية الطريق، وجد{|ت} [NAME] كهفا مظلما تحرسه سلحفاة عجوز طيبة، سألت{ه|ها}: \"ما الأقوى من الذهب؟\"",
+      "فكر{|ت} [NAME] قليلا ثم أجاب{|ت}: \"القلب الطيب!\" فابتسمت السلحفاة وفتحت باب الكهف.",
+      "بالداخل، رأ{ى|ت} [NAME] صندوق كنز كبيرا، لكن{ه|ها} سمع{|ت} سلطعونا صغيرا عالقا تحت صخرة، فتوقف{|ت} ل{ي|ت}حرره أولا.",
+      "شكر{ه|ها} السلطعون ممتنا، وأرا{ه|ها} المفتاح الذهبي. فتح{|ت} [NAME] الصندوق: فتلألأ بالعملات الذهبية وتاج لامع!",
+      "على الشاطئ، احتفل{|ت} [NAME] مع الببغاء والدلفين والسلطعون، وتقاسم{|ت} الكنز معهم وه{و|ي} {ي|ت}ضحك بفرح.",
+      "ومع غروب الشمس، أبحر{|ت} [NAME] عائد{ا|ة} إلى البيت مرتدي{ا|ة} التاج، محتفظ{ا|ة} بعملة ذهبية، {ي|ت}حلم بالمغامرة القادمة.",
+    ],
+    coverScene:
+      "dressed in a cute little pirate captain outfit with a red bandana and a small toy sword, standing proudly at the wheel of a small wooden ship holding a treasure map; around the child a dreamy realistic ocean world: turquoise sea, a tropical treasure island, a colorful parrot, sparkling gold coins and a glowing golden sunset filling the frame",
+    portraitScene:
+      "with a warm natural smile looking at the camera, wearing a cute pirate captain hat and a red bandana, soft dreamy tropical beach and ocean bokeh background",
+    medalPages: [11],
+    pageScenes: [
+      "in casual summer clothes kneeling on a sunny sandy beach, holding an old glass bottle with a rolled-up treasure map inside, turquoise sea behind, excited delighted expression",
+      "dressed as a cute little pirate captain raising a white sail and a pirate flag on a small wooden ship, deep blue sea all around, brave proud smile",
+      "as a little pirate captain on the ship deck with a colorful friendly parrot perched on the shoulder, both looking happy, open blue ocean, warm sunlight",
+      "as a little pirate captain gripping the ship's wheel tightly, steering through big ocean waves under dramatic dark storm clouds, determined brave face, cinematic but child-friendly",
+      "as a little pirate captain stepping off the ship onto a beautiful tropical island with tall palm trees and golden sand, calm turquoise water, wonder on the face",
+      "as a little pirate captain crouching at the water's edge as a friendly smiling dolphin leaps from the sea and points the way, sparkling ocean, joyful",
+      "as a little pirate captain carefully crossing a wobbly rope bridge over a sparkling jungle river, holding a treasure map, lush green jungle, brave concentrated expression",
+      "as a little pirate captain standing at the mouth of a dark cave guarded by a big kind old sea turtle, faint glowing treasure hints inside, curious respectful expression, tropical jungle",
+      "as a little pirate captain smiling and answering the wise old turtle as the stone cave door glows and slowly opens, warm magical light, hopeful expression",
+      "as a little pirate captain inside a glittering treasure cave, kneeling to gently free a cute little crab trapped under a small rock, a big glowing treasure chest nearby, caring expression",
+      "as a little pirate captain joyfully opening a big treasure chest that glows with gold coins and a shiny crown, a grateful little crab beside, sparkling cave, delighted amazed face",
+      "as a little pirate captain celebrating on the sunny beach with a colorful parrot, a friendly dolphin in the water and a little crab, sharing shiny gold coins, laughing with pure joy",
+      "as a little pirate captain wearing a golden crown, sailing the small ship home across a calm sea at a beautiful golden sunset, holding one gold coin, peaceful happy dreamy smile",
+    ],
+    coloringCoverScene:
+      "as a cheerful little pirate captain with a big hat and a treasure map, standing proudly in the middle surrounded by a smiling parrot, a friendly dolphin, gold coins, a treasure chest, a little ship and a palm-tree island, a big festive joyful full composition that fills the cover, bright cheerful playful colors",
+    coloringScenes: [
+      "a happy little pirate captain waving with a big smile, holding a treasure map",
+      "standing proudly at the wheel of a cute little pirate ship",
+      "with a colorful parrot friend sitting on the shoulder, both smiling",
+      "sailing the little ship over friendly ocean waves",
+      "waving at a smiling dolphin jumping out of the water",
+      "stepping onto a tropical island with palm trees, with a big smile",
+      "following footprints on the sand while holding a treasure map",
+      "crossing a rope bridge over a river, having fun",
+      "meeting a big friendly smiling sea turtle at a cave",
+      "gently helping a cute little crab out from under a rock",
+      "opening a big treasure chest full of coins with a delighted smile",
+      "wearing a treasure crown and holding a gold coin, cheering",
+      "high-fiving the parrot and the crab in celebration",
+      "sitting on a treasure chest with the parrot, smiling",
+      "looking through a spyglass from the ship toward the island",
+      "sailing home at sunset with the crown, waving goodbye happily",
+    ],
+    coloringBackCoverScene:
+      "waving goodbye with a big happy smile from the little pirate ship, a smiling parrot and dolphin nearby, gold coins and a treasure chest, a palm-tree island in the distance, bright cheerful colors, open space at the bottom",
+  },
 };
 
 /** The face-anchoring clause shared by every prompt kind. */

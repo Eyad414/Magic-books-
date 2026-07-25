@@ -397,7 +397,9 @@
     "chat_thinking": "Thinking of the best story…",
     "chat_apply": "Pick this story: {name} ✨",
     "chat_applied": "Story selected! 🎉",
-    "chat_error": "Sorry, a small hiccup. Please try again."
+    "chat_error": "Sorry, a small hiccup. Please try again.",
+    "theme_pirate_adventure": "Pirates & Treasure",
+    "theme_pirate_adventure_desc": "A thrilling sea voyage to find hidden treasure"
   },
   "step3": {
     "title": "Customize Your Book",
@@ -974,6 +976,33 @@
       "moral": "Imagination is the strongest power in the world, and courage brings color and joy back to everything.",
       "conclusion": "You are a real hero, [NAME] — and your imagination is the key to every adventure! ✨",
       "dedication": "To [NAME], the child who holds a whole world of imagination in their hands."
+    },
+    "pirate_adventure": {
+      "title": "[NAME]'s Pirate Treasure Adventure",
+      "tagline": "A thrilling sea voyage in search of hidden treasure",
+      "moral": "The bravest treasure of all is a kind heart, and real adventures are better with friends.",
+      "conclusion": "You're a brave captain, [NAME], and your kind heart is your real treasure! 🏴‍☠️",
+      "dedication": "To [NAME], the little captain who sails toward their dreams with courage and kindness.",
+      "questions": [
+        "What is stronger than gold in the story?",
+        "How did [NAME] help the little crab?",
+        "If you found a treasure map, where would you sail?"
+      ],
+      "pages": {
+        "1": "One sunny morning, [NAME] found an old bottle on the beach with a treasure map inside! Bursting with excitement, [NAME] decided to become a pirate captain.",
+        "2": "[NAME] boarded a small wooden ship with a white sail, raised the flag, and set off across the deep blue sea, feeling brave and proud.",
+        "3": "A colorful, friendly parrot landed on [NAME]'s shoulder, chirping happily — a loyal companion for the whole journey.",
+        "4": "Suddenly dark clouds gathered and tall waves rocked the ship. [NAME] gripped the wheel tightly and steered bravely straight through the storm.",
+        "5": "The sea grew calm, and [NAME] reached a mysterious green island with tall palm trees and soft golden sand.",
+        "6": "A gentle dolphin leaped from the water and, with friendly squeaks, pointed [NAME] toward a hidden path across the island.",
+        "7": "[NAME] followed the map through the jungle and crossed a wobbly rope bridge over a sparkling river, brave the whole way.",
+        "8": "At the end of the path, [NAME] found a dark cave guarded by a kind old turtle, who asked a riddle: \"What is stronger than gold?\"",
+        "9": "[NAME] thought for a moment, then answered: \"A kind heart!\" The turtle smiled and opened the cave door.",
+        "10": "Inside, [NAME] spotted a huge treasure chest — but heard a little crab stuck under a rock, and stopped to free it first.",
+        "11": "Grateful, the crab showed [NAME] the golden key. [NAME] opened the chest, and it glowed with gold coins and a shiny crown!",
+        "12": "On the beach, [NAME] celebrated with the parrot, the dolphin, and the crab, sharing the treasure and laughing with joy.",
+        "13": "As the sun set, [NAME] sailed home wearing the crown and keeping one gold coin — already dreaming of the next great adventure."
+      }
     }
   },
   "order_success": {
