@@ -293,34 +293,49 @@ export const getSettings = async (req: Request, res: Response): Promise<void> =>
         settings.markModified('themes');
         await settings.save();
       }
-      // Pirate Treasure — premium theme (scene template + voweled/gendered text in
-      // code). Seeded unready; generate demo images in admin, then flip ready.
+      // Pirate Treasure — premium theme (scene template + voweled/gendered text
+      // in code). Heal an existing entry (attach the photoreal demo images +
+      // real text + mark ready) or seed it fresh.
+      const pirFolder = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
+      const pirCover = `${pirFolder}/generated/theme_pirate_adventure/page-00.png`;
+      const pirImages = Array.from({ length: 13 }, (_, i) => `${pirFolder}/generated/theme_pirate_adventure/page-${String(i + 1).padStart(2, '0')}.png`);
+      const pirPortrait = `${pirFolder}/generated/theme_pirate_adventure/page-99.png`;
+      const PIRATE_PAGES = [
+        { text: "فِي صَبَاحٍ مُشْمِسٍ، وَجَدَ{|تْ} {{name}} زُجَاجَةً قَدِيمَةً عَلَى الشَّاطِئِ، وَبِدَاخِلِهَا خَرِيطَةُ كَنْزٍ! فَفَرِحَ{|تْ} كَثِيراً وَقَرَّرَ{|تْ} أَنْ {يُصْبِحَ|تُصْبِحَ} {قُبْطَاناً|قُبْطَانَةً} لِلْقَرَاصِنَةِ.", imageSrc: "" },
+        { text: "رَكِبَ{|تْ} {{name}} سَفِينَةً خَشَبِيَّةً صَغِيرَةً ذَاتَ شِرَاعٍ أَبْيَضَ، وَرَفَعَ{|تْ} الرَّايَةَ، وَأَبْحَرَ{|تْ} فِي الْبَحْرِ الْأَزْرَقِ وَه{ُوَ|ِيَ} {يَ|تَ}شْعُرُ بِالشَّجَاعَةِ.", imageSrc: "" },
+        { text: "حَطَّ بَبْغَاءٌ مُلَوَّنٌ لَطِيفٌ عَلَى كَتِفِ {{name}}، وَأَخَذَ يُغَرِّدُ بِفَرَحٍ، فَأَصْبَحَ رَفِيقاً وَفِيّاً فِي الرِّحْلَةِ.", imageSrc: "" },
+        { text: "فَجْأَةً تَجَمَّعَتِ الْغُيُومُ الدَّاكِنَةُ وَتَمَايَلَتِ السَّفِينَةُ بَيْنَ الْأَمْوَاجِ الْعَالِيَةِ. أَمْسَكَ{|تْ} {{name}} عَجَلَةَ الْقِيَادَةِ بِقُوَّةٍ وَقَادَ{|تْ} بِشَجَاعَةٍ عَبْرَ الْعَاصِفَةِ.", imageSrc: "" },
+        { text: "هَدَأَ الْبَحْرُ، وَوَصَلَ{|تْ} {{name}} إِلَى جَزِيرَةٍ خَضْرَاءَ غَامِضَةٍ ذَاتِ نَخِيلٍ عَالٍ وَرِمَالٍ ذَهَبِيَّةٍ.", imageSrc: "" },
+        { text: "قَفَزَ دُلْفِينٌ لَطِيفٌ مِنَ الْمَاءِ، وَبِأَصْوَاتٍ وَدُودَةٍ، أَشَارَ إِلَى {{name}} نَحْوَ طَرِيقٍ خَفِيٍّ عَلَى الْجَزِيرَةِ.", imageSrc: "" },
+        { text: "تَبِعَ{|تْ} {{name}} الْخَرِيطَةَ عَبْرَ الْغَابَةِ، وَعَبَرَ{|تْ} جِسْراً حَبْلِيّاً مُتَمَايِلاً فَوْقَ نَهْرٍ مُتَلَأْلِئٍ بِكُلِّ شَجَاعَةٍ.", imageSrc: "" },
+        { text: "فِي نِهَايَةِ الطَّرِيقِ، وَجَدَ{|تْ} {{name}} كَهْفاً مُظْلِماً تَحْرُسُهُ سُلَحْفَاةٌ عَجُوزٌ طَيِّبَةٌ، سَأَلَتْ{هُ|هَا}: \"مَا الْأَقْوَى مِنَ الذَّهَبِ؟\"", imageSrc: "" },
+        { text: "فَكَّرَ{|تْ} {{name}} قَلِيلاً ثُمَّ أَجَابَ{|تْ}: \"الْقَلْبُ الطَّيِّبُ!\" فَابْتَسَمَتِ السُّلَحْفَاةُ وَفَتَحَتْ بَابَ الْكَهْفِ.", imageSrc: "" },
+        { text: "بِالدَّاخِلِ، رَأَ{ى|تْ} {{name}} صُنْدُوقَ كَنْزٍ كَبِيراً، لَكِنَّ{هُ|هَا} سَمِعَ{|تْ} سَلْطَعُوناً صَغِيراً عَالِقاً تَحْتَ صَخْرَةٍ، فَتَوَقَّفَ{|تْ} لِ{يُ|تُ}حَرِّرَهُ أَوَّلاً.", imageSrc: "" },
+        { text: "شَكَرَ{هُ|هَا} السَّلْطَعُونُ مُمْتَنّاً، وَأَرَا{هُ|هَا} الْمِفْتَاحَ الذَّهَبِيَّ. فَتَحَ{|تْ} {{name}} الصُّنْدُوقَ: فَتَلَأْلَأَ بِالْعُمْلَاتِ الذَّهَبِيَّةِ وَتَاجٍ لَامِعٍ!", imageSrc: "" },
+        { text: "عَلَى الشَّاطِئِ، اِحْتَفَلَ{|تْ} {{name}} مَعَ الْبَبْغَاءِ وَالدُّلْفِينِ وَالسَّلْطَعُونِ، وَتَقَاسَمَ{|تْ} الْكَنْزَ مَعَهُمْ وَه{ُوَ|ِيَ} {يَ|تَ}ضْحَكُ بِفَرَحٍ.", imageSrc: "" },
+        { text: "وَمَعَ غُرُوبِ الشَّمْسِ، أَبْحَرَ{|تْ} {{name}} عَائِد{ًا|َةً} إِلَى الْبَيْتِ مُرْتَدِي{ًا|َةً} التَّاجَ، مُحْتَفِظ{ًا|َةً} بِعُمْلَةٍ ذَهَبِيَّةٍ، {يَ|تَ}حْلُمُ بِالْمُغَامَرَةِ الْقَادِمَةِ.", imageSrc: "" }
+      ];
       const pirTheme: any = settings.themes.find((t: any) => t.id === 'pirate_adventure');
       if (!pirTheme) {
         settings.themes.push({
-          id: 'pirate_adventure',
-          emoji: '🏴‍☠️',
-          label: 'مغامرة القراصنة والكنز',
-          desc: 'رحلة بحرية شيقة بحثاً عن الكنز',
-          ready: false,
-          pages: [
-            { text: "  ، {|} {{name}}    ،   ! {|}  {|}  {|} {|} .", imageSrc: "" },
-            { text: "{|} {{name}}      ، {|} ، {|}    {|} {|} .", imageSrc: "" },
-            { text: "      {{name}}،   ،     .", imageSrc: "" },
-            { text: "        . {|} {{name}}    {|}   .", imageSrc: "" },
-            { text: " ، {|} {{name}}         .", imageSrc: "" },
-            { text: "    ،  ،   {{name}}     .", imageSrc: "" },
-            { text: "{|} {{name}}   ، {|}        .", imageSrc: "" },
-            { text: "  ، {|} {{name}}      ، {|}: \"   \"", imageSrc: "" },
-            { text: "{|} {{name}}   {|}: \" !\"     .", imageSrc: "" },
-            { text: "، {|} {{name}}   ، {|} {|}     ، {|} {|} .", imageSrc: "" },
-            { text: "{|}  ، {|}  . {|} {{name}} :     !", imageSrc: "" },
-            { text: " ، {|} {{name}}    ، {|}   {|} {|} .", imageSrc: "" },
-            { text: "  ، {|} {{name}} {|}   {|} ، {|}  ، {|}  .", imageSrc: "" }
-          ]
+          id: 'pirate_adventure', emoji: '🏴‍☠️',
+          label: 'مغامرة القراصنة والكنز', desc: 'رحلة بحرية شيقة بحثاً عن الكنز',
+          ready: true, generatedCover: pirCover, generatedImages: pirImages, generatedPortrait: pirPortrait,
+          pages: PIRATE_PAGES,
         });
         settings.markModified('themes');
         await settings.save();
+      } else {
+        const arabicLen = (pirTheme.pages?.[0]?.text || '').replace(/[^\u0621-\u064A]/g, '').length;
+        if (!pirTheme.ready || !Array.isArray(pirTheme.pages) || arabicLen < 5 || pirTheme.generatedCover !== pirCover) {
+          pirTheme.ready = true;
+          pirTheme.generatedCover = pirCover;
+          pirTheme.generatedImages = pirImages;
+          pirTheme.generatedPortrait = pirPortrait;
+          pirTheme.pages = PIRATE_PAGES;
+          settings.markModified('themes');
+          await settings.save();
+        }
       }
     }
     res.json({ success: true, settings });
