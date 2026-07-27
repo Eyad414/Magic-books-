@@ -173,16 +173,19 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
       setStoryId(newStoryId);
 
       const genRes = await storyApi.generate(newStoryId);
-      const text = genRes.story.generatedText || '';
+      const text = (genRes.story.generatedText || '').trim();
+      if (!text) throw new Error(t('step2.gen_empty', 'لم يُرجع الذكاء الاصطناعي نصاً'));
       setGeneratedText(text);
       setStoryConfig({ ...form, mode: 'ai', generatedText: text, storyId: newStoryId });
       toast.success(t('step2.gen_success'));
     } catch (err: any) {
-      // Use mock story if API not connected
+      // Real generation failed — fall back to a sample, but DON'T pretend it
+      // succeeded: surface the reason so a genuine outage is visible.
       const mockText = getMockPreview(progress.childDetails.childName || 'طفلك', form.theme);
       setGeneratedText(mockText);
       setStoryConfig({ ...form, mode: 'ai', generatedText: mockText });
-      toast.success(t('step2.gen_success'), { icon: '📖' });
+      const reason = err?.response?.data?.message || err?.message || '';
+      toast.error(t('step2.gen_fallback', 'تعذّر توليد القصة بالذكاء الاصطناعي الآن — عُرض نموذج مؤقت، حاول مرة أخرى.') + (reason ? ` (${reason})` : ''), { duration: 6000 });
     } finally {
       setIsGenerating(false);
     }

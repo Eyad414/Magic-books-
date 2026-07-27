@@ -1,6 +1,6 @@
 import { Storage } from '@google-cloud/storage';
 import { uploadBuffer, pdfFolderPath, StoredObject } from './StorageService';
-import { backendOrder, clientFor } from './genaiClient';
+import { backendOrder, clientFor, markBackendDepleted } from './genaiClient';
 
 interface GenerateOpts {
   pageNumber?: number;
@@ -44,6 +44,7 @@ async function generateContentRetrying(request: any): Promise<any> {
         const msg = String(err?.message ?? err ?? '');
         // Permanent for this backend (credits gone / auth) → jump to the other one now.
         const permanent = code === 401 || code === 403 || /depleted|credit|PERMISSION|unauthenticated|API key/i.test(msg);
+        if (/depleted|prepayment|billing|out of credit/i.test(msg)) markBackendDepleted(b);
         if (permanent && !isLastBackend) {
           console.warn(`[ImageGenerator] ${b} unavailable (${code}) — switching backend.`);
           break;

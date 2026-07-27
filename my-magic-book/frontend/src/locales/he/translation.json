@@ -399,7 +399,9 @@
     "chat_applied": "הסיפור נבחר! 🎉",
     "chat_error": "סליחה, תקלה קטנה. נסו שוב.",
     "theme_pirate_adventure": "פיראטים ואוצר",
-    "theme_pirate_adventure_desc": "מסע ימי מרתק בחיפוש אחר אוצר"
+    "theme_pirate_adventure_desc": "מסע ימי מרתק בחיפוש אחר אוצר",
+    "gen_fallback": "יצירת הסיפור ב-AI נכשלה כרגע — מוצג מדגם, נסו שוב.",
+    "gen_empty": "ה-AI לא החזיר טקסט"
   },
   "step3": {
     "title": "התאם אישית את הספר שלך",

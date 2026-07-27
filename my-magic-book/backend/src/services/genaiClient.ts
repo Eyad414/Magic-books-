@@ -42,10 +42,25 @@ export function genaiClient(): GoogleGenAI {
 
 export type Backend = 'vertex' | 'studio';
 
-/** Backends to try, PREFERRED first, filtered to those actually configured. */
+// Once a backend reports its credits are DEPLETED (AI Studio prepaid gone), stop
+// wasting a failed round-trip on it for the rest of this process — go straight to
+// the other backend. Only set for the unambiguous "depleted/credit" case so we
+// never wrongly disable a healthy backend over a transient blip.
+const deadBackends = new Set<Backend>();
+export function markBackendDepleted(b: Backend) {
+  deadBackends.add(b);
+  console.warn(`[genai] ${b} marked depleted — routing to the other backend for this process.`);
+}
+function isDepletedError(err: any): boolean {
+  return /depleted|prepayment|billing|out of credit/i.test(String(err?.message ?? err ?? ''));
+}
+
+/** Backends to try, PREFERRED first, filtered to configured & not-depleted ones. */
 export function backendOrder(): Backend[] {
   const order: Backend[] = usingVertex() ? ['vertex', 'studio'] : ['studio', 'vertex'];
-  return order.filter((b) => (b === 'vertex' ? hasVertex() : hasStudio()));
+  const usable = order.filter((b) => (b === 'vertex' ? hasVertex() : hasStudio()) && !deadBackends.has(b));
+  // Never return empty just because everything was marked dead — fall back to any configured backend.
+  return usable.length ? usable : order.filter((b) => (b === 'vertex' ? hasVertex() : hasStudio()));
 }
 
 export function clientFor(b: Backend): GoogleGenAI {
@@ -84,6 +99,7 @@ export async function generateResilient(
       return await clientFor(b).models.generateContent(buildRequest(b === 'vertex' ? models.vertex : models.studio));
     } catch (err: any) {
       lastErr = err;
+      if (isDepletedError(err)) markBackendDepleted(b);
       if (isLast || !isBackendUnavailable(err)) throw err;
       console.warn(`[genai] ${b} unavailable (${err?.status ?? err?.code}) — falling back to the other backend.`);
     }

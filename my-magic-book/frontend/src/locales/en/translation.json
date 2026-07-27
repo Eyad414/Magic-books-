@@ -399,7 +399,9 @@
     "chat_applied": "Story selected! 🎉",
     "chat_error": "Sorry, a small hiccup. Please try again.",
     "theme_pirate_adventure": "Pirates & Treasure",
-    "theme_pirate_adventure_desc": "A thrilling sea voyage to find hidden treasure"
+    "theme_pirate_adventure_desc": "A thrilling sea voyage to find hidden treasure",
+    "gen_fallback": "AI story generation failed for now — showing a sample. Please try again.",
+    "gen_empty": "The AI returned no text"
   },
   "step3": {
     "title": "Customize Your Book",

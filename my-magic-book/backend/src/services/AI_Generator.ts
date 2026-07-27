@@ -8,13 +8,14 @@ interface StoryGeneratorOptions {
   customThemeNote?: string;
 }
 
-// Word counts we ASK the model for. flash-lite is fast but reliably writes
-// ~65–70% of the requested count, so these are tuned upward to land near
-// 500 / 900 / 1300 ACTUAL words (measured: ask 1400 → ~913 words).
+// Word counts we ASK the model for. On Vertex flash-lite (~65 words/sec) the
+// generation time scales with output length, so keep these modest: a medium
+// story lands ~700–900 words in ~12–14s, which is a good length without the
+// wizard feeling stuck. (1400 took ~19s and risked timing out.)
 const STORY_LENGTH_MAP = {
-  short: 800,
-  medium: 1400,
-  long: 2000,
+  short: 500,
+  medium: 900,
+  long: 1300,
 };
 
 const THEME_LABELS_AR: Record<string, string> = {
