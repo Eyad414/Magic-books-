@@ -83,11 +83,14 @@ export const PRINT_TRIM_MM = 220;          // final cut size
 export const PRINT_BLEED_MM = 3;           // extra art past the cut on each side
 export const PRINT_PAGE_MM = PRINT_TRIM_MM + PRINT_BLEED_MM * 2; // 226 (interior pages)
 export const PRINT_SAFE_MM = PRINT_BLEED_MM + 5;                 // keep text inside this margin
-// Source AI illustrations are only ~864x1184px. Even 1100px kept the interior
-// render (13 images in one Chromium page) right at the 512MB host ceiling, so a
-// rapid second build OOM-crashed. 800px is essentially the source's native size
-// (no real detail lost) and drops the peak well under 512MB for reliable repeats.
-export const PRINT_PX = 800;
+// Source AI illustrations are ~864x1184px. Even 1100px kept the interior render
+// (13 images in one Chromium page) right at the 512MB host ceiling, so a rapid
+// second build OOM-crashed. 864px is the FULL native square: the cover-crop uses
+// every source pixel with ZERO upscaling (was 800 = a needless ~8% downscale),
+// and it stays in the same memory class as 800 — well under 512MB. Going higher
+// would only interpolate (no real detail) while re-approaching the OOM ceiling;
+// true higher resolution needs the AI-upscale path + more host memory.
+export const PRINT_PX = 864;
 
 // Log resident memory at a labelled point in the print build so an OOM kill's
 // last line pinpoints where it died.
@@ -153,7 +156,9 @@ export async function upscaleForPrint(
     const buffer = await pipe.png({ compressionLevel: 9 }).toBuffer();
     return { buffer, mime: 'image/png' };
   }
-  pipe = pipe.sharpen({ sigma: 0.8 });
+  // Gentle unsharp mask for perceived clarity on the glossy 170gsm stock — enough
+  // to crisp edges without haloing or altering the photo's actual content.
+  pipe = pipe.sharpen({ sigma: 1.0 });
   const buffer = await pipe.jpeg({ quality: 92, chromaSubsampling: '4:4:4' }).toBuffer();
   return { buffer, mime: 'image/jpeg' };
 }
