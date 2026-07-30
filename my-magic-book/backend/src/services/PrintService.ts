@@ -103,6 +103,11 @@ export const PRINT_PHOTO_PX = 2400;
 // Interior pages rendered per Chromium pass. Each hi-res photo decodes to ~23MB;
 // 3 pages (≤2 photos) keeps peak well under the 512MB host cap.
 const RENDER_BATCH_PAGES = 3;
+// How many illustrations to AI-upscale at once on a cold build. The upscale calls
+// are network-bound (~30s each) and hold little RAM, so parallelising them cuts a
+// first build from ~8 min to ~2. Kept modest to stay within Imagen's per-minute
+// quota (429s are waited out + retried in UpscaleService).
+const UPSCALE_CONCURRENCY = Number(process.env.GEMINI_UPSCALE_CONCURRENCY) || 4;
 
 // Log resident memory at a labelled point in the print build so an OOM kill's
 // last line pinpoints where it died.
@@ -202,6 +207,24 @@ async function hiResBuffer(objectPath: string): Promise<Buffer> {
     }
   }
   return upscaled;
+}
+
+/** Run `fn` over `items` with at most `limit` in flight, preserving input order. */
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let next = 0;
+  async function worker() {
+    while (next < items.length) {
+      const i = next++;
+      results[i] = await fn(items[i], i);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) || 1 }, worker));
+  return results;
 }
 
 // ─── shared styles + interior page fragments ─────────────────────────────────
@@ -635,12 +658,15 @@ export async function buildWraparoundCoverPdf(o: WraparoundInput): Promise<Wrapa
   // are line art → keep the native sharp path. Only 2 images render here, so the
   // single cover pass stays within the 512MB cap without batching.
   const photo = o.kind === 'story';
-  const front = photo
-    ? await upscaleForPrint(await hiResBuffer(o.frontPath), { px: PRINT_PHOTO_PX })
-    : await upscaleForPrint(await downloadObject(o.frontPath));
-  const back = photo
-    ? await upscaleForPrint(await hiResBuffer(o.backPath), { px: PRINT_PHOTO_PX })
-    : await upscaleForPrint(await downloadObject(o.backPath));
+  // Fetch/upscale front + back in parallel (network-bound), then crop sequentially.
+  const [frontSrc, backSrc] = await Promise.all(
+    photo
+      ? [hiResBuffer(o.frontPath), hiResBuffer(o.backPath)]
+      : [downloadObject(o.frontPath), downloadObject(o.backPath)],
+  );
+  const cropOpts = photo ? { px: PRINT_PHOTO_PX } : {};
+  const front = await upscaleForPrint(frontSrc, cropOpts);
+  const back = await upscaleForPrint(backSrc, cropOpts);
   // Real uploaded kid photo for the story back-cover circle (best-effort — skip
   // if missing/non-GCS, then the circle falls back to the AI portrait).
   let childPhotoSrc = '';
@@ -744,14 +770,17 @@ export interface StoryPrintInput {
 
 export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<PrintFiles> {
   logMem(`story build start (${input.imagePaths.length} images @ ${PRINT_PX}px)`);
-  // Load + AI-upscale one image at a time (NOT Promise.all) — holding 13 hi-res
-  // photos at once spikes RAM well past 512MB. hiResBuffer returns the Imagen x3
-  // (~300 DPI) version (cached in GCS); upscaleForPrint then crops it square.
-  const images: Array<{ buffer: Buffer; mime: string }> = [];
-  for (const p of input.imagePaths) {
-    images.push(await upscaleForPrint(await hiResBuffer(p), { px: PRINT_PHOTO_PX }));
-  }
+  // Phase 1 — AI-upscale all illustrations in parallel (network-bound, low RAM):
+  // hiResBuffer returns the Imagen x3 (~300 DPI) version, cached in GCS. Holding
+  // the ~13 upscaled JPEGs (~1MB each) is cheap; parallelising cuts a cold build
+  // from ~8 min to ~2.
+  const hiRes = await mapWithConcurrency(input.imagePaths, UPSCALE_CONCURRENCY, (p) => hiResBuffer(p));
   logMem('images upscaled');
+  // Phase 2 — crop each to the print square SEQUENTIALLY, so only one hi-res photo
+  // decodes in sharp (~23MB) at a time and peak RAM stays under the 512MB cap.
+  const images: Array<{ buffer: Buffer; mime: string }> = [];
+  for (const buf of hiRes) images.push(await upscaleForPrint(buf, { px: PRINT_PHOTO_PX }));
+  logMem('images cropped');
   // Dedication photo — best-effort (skip the page if it can't be fetched, e.g.
   // a non-GCS URL), so it never fails the whole build.
   let photoSrc = '';

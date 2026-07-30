@@ -15,6 +15,8 @@ const FACTOR = process.env.GEMINI_UPSCALE_FACTOR || 'x3';
 // ~$0.003 per upscaled image (15 images ≈ $0.05 per book) as of mid-2026.
 export const COST_PER_UPSCALE_USD = 0.003;
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 let _auth: GoogleAuth | null = null;
 let _token: { value: string; exp: number } | null = null;
 
@@ -57,33 +59,46 @@ export async function imagenUpscale(input: Buffer, factor: string = FACTOR): Pro
     },
   };
 
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 90_000);
-  try {
-    const token = await accessToken();
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: ctrl.signal,
-    });
-    const text = await res.text();
-    if (!res.ok) {
-      console.warn(`[UpscaleService] ${factor} HTTP ${res.status} — using native res. ${text.slice(0, 200)}`);
+  // Running several upscales in parallel can transiently exceed the model's
+  // per-minute quota → wait out a 429/503 and retry before giving up.
+  const RATE_WAITS_MS = [15_000, 30_000, 45_000];
+  for (let attempt = 0; ; attempt++) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 90_000);
+    try {
+      const token = await accessToken();
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: ctrl.signal,
+      });
+      const text = await res.text();
+      // 429 = quota; any 5xx = transient Imagen server error ("try again in a few
+      // minutes"). Both are worth waiting out before falling back to native res.
+      if ((res.status === 429 || res.status >= 500) && attempt < RATE_WAITS_MS.length) {
+        console.warn(`[UpscaleService] ${factor} transient ${res.status}; waiting ${RATE_WAITS_MS[attempt] / 1000}s then retry ${attempt + 1}/${RATE_WAITS_MS.length}`);
+        clearTimeout(timer);
+        await sleep(RATE_WAITS_MS[attempt]);
+        continue;
+      }
+      if (!res.ok) {
+        console.warn(`[UpscaleService] ${factor} HTTP ${res.status} — using native res. ${text.slice(0, 200)}`);
+        return input;
+      }
+      const json = JSON.parse(text);
+      const b64 = json?.predictions?.[0]?.bytesBase64Encoded;
+      if (!b64) {
+        const reason = json?.predictions?.[0]?.raiFilteredReason || 'no image in response';
+        console.warn(`[UpscaleService] ${factor} produced no image — using native res. ${String(reason).slice(0, 160)}`);
+        return input;
+      }
+      return Buffer.from(b64, 'base64');
+    } catch (e: any) {
+      console.warn(`[UpscaleService] ${factor} failed — using native res: ${e?.message || e}`);
       return input;
+    } finally {
+      clearTimeout(timer);
     }
-    const json = JSON.parse(text);
-    const b64 = json?.predictions?.[0]?.bytesBase64Encoded;
-    if (!b64) {
-      const reason = json?.predictions?.[0]?.raiFilteredReason || 'no image in response';
-      console.warn(`[UpscaleService] ${factor} produced no image — using native res. ${String(reason).slice(0, 160)}`);
-      return input;
-    }
-    return Buffer.from(b64, 'base64');
-  } catch (e: any) {
-    console.warn(`[UpscaleService] ${factor} failed — using native res: ${e?.message || e}`);
-    return input;
-  } finally {
-    clearTimeout(timer);
   }
 }
