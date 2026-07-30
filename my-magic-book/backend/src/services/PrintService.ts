@@ -4,7 +4,15 @@ import QRCode from 'qrcode';
 import fs from 'fs';
 import path from 'path';
 import { Storage } from '@google-cloud/storage';
+import { PDFDocument } from 'pdf-lib';
 import { uploadBuffer, pdfFolderPath } from './StorageService';
+import { imagenUpscale } from './UpscaleService';
+
+// The host is memory-constrained (512MB). Disable sharp's decoded-image cache and
+// cap its worker threads so upscaling 15 print-res photos doesn't retain buffers
+// or spike RAM across the batched interior render.
+sharp.cache(false);
+sharp.concurrency(1);
 
 // QR code for the website, generated LOCALLY (embedded data URI) so the print
 // render never waits on an external QR service — an external fetch could hang
@@ -83,14 +91,18 @@ export const PRINT_TRIM_MM = 220;          // final cut size
 export const PRINT_BLEED_MM = 3;           // extra art past the cut on each side
 export const PRINT_PAGE_MM = PRINT_TRIM_MM + PRINT_BLEED_MM * 2; // 226 (interior pages)
 export const PRINT_SAFE_MM = PRINT_BLEED_MM + 5;                 // keep text inside this margin
-// Source AI illustrations are ~864x1184px. Even 1100px kept the interior render
-// (13 images in one Chromium page) right at the 512MB host ceiling, so a rapid
-// second build OOM-crashed. 864px is the FULL native square: the cover-crop uses
-// every source pixel with ZERO upscaling (was 800 = a needless ~8% downscale),
-// and it stays in the same memory class as 800 — well under 512MB. Going higher
-// would only interpolate (no real detail) while re-approaching the OOM ceiling;
-// true higher resolution needs the AI-upscale path + more host memory.
+// Fallback/native size for non-photo assets (line art, the small back-cover kid
+// photo inset). Source AI illustrations are ~864x1184px; 864 is their full native
+// square with zero upscaling.
 export const PRINT_PX = 864;
+// Full-bleed STORY photo pages + the story cover are AI-upscaled (Imagen x3) to
+// ~2592px first, then embedded at this size → ~300 DPI on a 22cm page. The single
+// big Chromium render can't hold 13 of these in 512MB, so the interior is rendered
+// in small batches and merged (renderPagesBatched) to keep peak memory bounded.
+export const PRINT_PHOTO_PX = 2400;
+// Interior pages rendered per Chromium pass. Each hi-res photo decodes to ~23MB;
+// 3 pages (≤2 photos) keeps peak well under the 512MB host cap.
+const RENDER_BATCH_PAGES = 3;
 
 // Log resident memory at a labelled point in the print build so an OOM kill's
 // last line pinpoints where it died.
@@ -165,6 +177,31 @@ export async function upscaleForPrint(
 
 function dataUri(buffer: Buffer, mime: string): string {
   return `data:${mime};base64,${buffer.toString('base64')}`;
+}
+
+/**
+ * The AI-upscaled (Imagen x3, ~300 DPI) version of a stored illustration, cached
+ * in GCS next to the original as `<name>.x3.jpg` so each image is upscaled ONCE
+ * and reused across preview / print / BookPod builds. On any upscaler failure the
+ * original (native-res) buffer is returned and NOT cached, so a build never fails.
+ */
+async function hiResBuffer(objectPath: string): Promise<Buffer> {
+  const cachePath = objectPath.replace(/\.(png|jpe?g|webp)$/i, '') + '.x3.jpg';
+  try {
+    return await downloadObject(cachePath); // cache hit
+  } catch { /* not cached yet — upscale below */ }
+
+  const original = await downloadObject(objectPath);
+  const upscaled = await imagenUpscale(original);
+  if (upscaled !== original) {
+    // Only cache a genuine upscale (imagenUpscale returns the same buffer on failure).
+    try {
+      await uploadBuffer(upscaled, cachePath, 'image/jpeg');
+    } catch (e: any) {
+      console.warn('[PrintService] hi-res cache upload skipped:', e?.message || e);
+    }
+  }
+  return upscaled;
 }
 
 // ─── shared styles + interior page fragments ─────────────────────────────────
@@ -540,6 +577,39 @@ export async function renderPrintPdf(html: string, widthMm = PRINT_PAGE_MM, heig
   }
 }
 
+/** Merge several PDF buffers into one, preserving order. */
+async function mergePdfBuffers(buffers: Buffer[]): Promise<Buffer> {
+  if (buffers.length === 1) return buffers[0];
+  const out = await PDFDocument.create();
+  for (const b of buffers) {
+    const src = await PDFDocument.load(b);
+    const pages = await out.copyPages(src, src.getPageIndices());
+    for (const p of pages) out.addPage(p);
+  }
+  return Buffer.from(await out.save());
+}
+
+/**
+ * Render page-HTML strings to one square PDF, but in small batches so only a few
+ * hi-res photos are decoded in Chromium at once — keeping peak RAM under the
+ * 512MB host cap. Each batch is its own short-lived browser (renderPrintPdf kills
+ * it), then the batch PDFs are merged in order. This is what lets the print
+ * interior carry Imagen-upscaled ~300 DPI images on the free tier.
+ */
+async function renderPagesBatched(
+  pages: string[],
+  widthMm = PRINT_PAGE_MM,
+  heightMm = PRINT_PAGE_MM,
+  batchSize = RENDER_BATCH_PAGES,
+): Promise<Buffer> {
+  const pdfs: Buffer[] = [];
+  for (let i = 0; i < pages.length; i += batchSize) {
+    pdfs.push(await renderPrintPdf(squareDoc(pages.slice(i, i + batchSize)), widthMm, heightMm));
+    logMem(`interior batch ${pdfs.length} (${Math.min(i + batchSize, pages.length)}/${pages.length} pages)`);
+  }
+  return mergePdfBuffers(pdfs);
+}
+
 export interface WraparoundInput {
   title: string;
   childName: string;
@@ -561,8 +631,16 @@ export interface WraparoundResult {
 }
 
 export async function buildWraparoundCoverPdf(o: WraparoundInput): Promise<WraparoundResult> {
-  const front = await upscaleForPrint(await downloadObject(o.frontPath));
-  const back = await upscaleForPrint(await downloadObject(o.backPath));
+  // Story covers are full-bleed photos → AI-upscale to ~300 DPI. Coloring covers
+  // are line art → keep the native sharp path. Only 2 images render here, so the
+  // single cover pass stays within the 512MB cap without batching.
+  const photo = o.kind === 'story';
+  const front = photo
+    ? await upscaleForPrint(await hiResBuffer(o.frontPath), { px: PRINT_PHOTO_PX })
+    : await upscaleForPrint(await downloadObject(o.frontPath));
+  const back = photo
+    ? await upscaleForPrint(await hiResBuffer(o.backPath), { px: PRINT_PHOTO_PX })
+    : await upscaleForPrint(await downloadObject(o.backPath));
   // Real uploaded kid photo for the story back-cover circle (best-effort — skip
   // if missing/non-GCS, then the circle falls back to the AI portrait).
   let childPhotoSrc = '';
@@ -666,11 +744,12 @@ export interface StoryPrintInput {
 
 export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<PrintFiles> {
   logMem(`story build start (${input.imagePaths.length} images @ ${PRINT_PX}px)`);
-  // Load + upscale one image at a time (NOT Promise.all) — upscaling 13 print-res
-  // images in parallel spikes RAM well past 512MB and OOM-kills the host.
+  // Load + AI-upscale one image at a time (NOT Promise.all) — holding 13 hi-res
+  // photos at once spikes RAM well past 512MB. hiResBuffer returns the Imagen x3
+  // (~300 DPI) version (cached in GCS); upscaleForPrint then crops it square.
   const images: Array<{ buffer: Buffer; mime: string }> = [];
   for (const p of input.imagePaths) {
-    images.push(await upscaleForPrint(await downloadObject(p)));
+    images.push(await upscaleForPrint(await hiResBuffer(p), { px: PRINT_PHOTO_PX }));
   }
   logMem('images upscaled');
   // Dedication photo — best-effort (skip the page if it can't be fetched, e.g.
@@ -711,7 +790,7 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
   }
   interior.push(copyrightPageHtml(qrSrc));
   const padded = padToMultipleOf4(interior);
-  const interiorPdf = await renderPrintPdf(squareDoc(padded));
+  const interiorPdf = await renderPagesBatched(padded);
   logMem('interior PDF rendered');
 
   const cover = await buildWraparoundCoverPdf({

@@ -1,0 +1,89 @@
+import { GoogleAuth } from 'google-auth-library';
+
+// AI super-resolution for print. Gemini generates illustrations at ~864x1184
+// (~1MP), which is only ~100 DPI on a 22cm page. Vertex Imagen upscaling (x3)
+// reconstructs real detail to ~2592x3552 (~300 DPI) WITHOUT changing the picture
+// — same face, same scene, just sharper. Used only in the print pipeline.
+//
+// The subjects are children, so `personGeneration: allow_all` is required or the
+// result is safety-filtered out (default is adults-only).
+
+const MODEL = process.env.GEMINI_UPSCALE_MODEL || 'imagen-4.0-upscale-preview';
+// Imagen predict is a REGIONAL endpoint — 'global' (used for Gemini) is invalid.
+const REGION = process.env.GCP_UPSCALE_LOCATION || 'us-central1';
+const FACTOR = process.env.GEMINI_UPSCALE_FACTOR || 'x3';
+// ~$0.003 per upscaled image (15 images ≈ $0.05 per book) as of mid-2026.
+export const COST_PER_UPSCALE_USD = 0.003;
+
+let _auth: GoogleAuth | null = null;
+let _token: { value: string; exp: number } | null = null;
+
+async function accessToken(): Promise<string> {
+  if (_token && Date.now() < _token.exp) return _token.value;
+  if (!_auth) _auth = new GoogleAuth({ scopes: 'https://www.googleapis.com/auth/cloud-platform' });
+  const client = await _auth.getClient();
+  const t = await client.getAccessToken();
+  const value = typeof t === 'string' ? t : t?.token || '';
+  if (!value) throw new Error('could not obtain a Google access token for Imagen upscale');
+  // Access tokens live ~1h; refresh a little early.
+  _token = { value, exp: Date.now() + 45 * 60 * 1000 };
+  return value;
+}
+
+/** True when the upscaler is configured (project id present). */
+export function upscaleAvailable(): boolean {
+  return !!process.env.GCP_PROJECT_ID;
+}
+
+/**
+ * Upscale one image with Vertex Imagen. Returns a JPEG buffer, or — on ANY
+ * failure (not configured, safety-filtered, quota, network, timeout) — the
+ * ORIGINAL buffer, so a print build degrades to native-res rather than failing.
+ */
+export async function imagenUpscale(input: Buffer, factor: string = FACTOR): Promise<Buffer> {
+  const project = process.env.GCP_PROJECT_ID;
+  if (!project) return input;
+
+  const url =
+    `https://${REGION}-aiplatform.googleapis.com/v1/projects/${project}` +
+    `/locations/${REGION}/publishers/google/models/${MODEL}:predict`;
+  const body = {
+    instances: [{ prompt: '', image: { bytesBase64Encoded: input.toString('base64') } }],
+    parameters: {
+      mode: 'upscale',
+      upscaleConfig: { upscaleFactor: factor },
+      personGeneration: 'allow_all',
+      outputOptions: { mimeType: 'image/jpeg', compressionQuality: 92 },
+    },
+  };
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 90_000);
+  try {
+    const token = await accessToken();
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+    const text = await res.text();
+    if (!res.ok) {
+      console.warn(`[UpscaleService] ${factor} HTTP ${res.status} — using native res. ${text.slice(0, 200)}`);
+      return input;
+    }
+    const json = JSON.parse(text);
+    const b64 = json?.predictions?.[0]?.bytesBase64Encoded;
+    if (!b64) {
+      const reason = json?.predictions?.[0]?.raiFilteredReason || 'no image in response';
+      console.warn(`[UpscaleService] ${factor} produced no image — using native res. ${String(reason).slice(0, 160)}`);
+      return input;
+    }
+    return Buffer.from(b64, 'base64');
+  } catch (e: any) {
+    console.warn(`[UpscaleService] ${factor} failed — using native res: ${e?.message || e}`);
+    return input;
+  } finally {
+    clearTimeout(timer);
+  }
+}
