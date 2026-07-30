@@ -1,4 +1,5 @@
 import { GoogleAuth } from 'google-auth-library';
+import sharp from 'sharp';
 
 // AI super-resolution for print. Gemini generates illustrations at ~864x1184
 // (~1MP), which is only ~100 DPI on a 22cm page. Vertex Imagen upscaling (x3)
@@ -101,4 +102,38 @@ export async function imagenUpscale(input: Buffer, factor: string = FACTOR): Pro
       clearTimeout(timer);
     }
   }
+}
+
+// One-shot diagnostic (cached 5 min to cap cost): does THIS host's identity/token
+// actually reach the Imagen upscaler? Surfaces the raw HTTP status + error so a
+// silent native-fallback can be told apart from a working upscaler.
+let _probe: { at: number; result: Record<string, unknown> } | null = null;
+export async function upscaleProbe(): Promise<Record<string, unknown>> {
+  if (_probe && Date.now() - _probe.at < 5 * 60 * 1000) return { ..._probe.result, cached: true };
+  const project = process.env.GCP_PROJECT_ID;
+  const out: Record<string, unknown> = { model: MODEL, region: REGION, factor: FACTOR, hasProject: !!project };
+  const cache = () => { _probe = { at: Date.now(), result: out }; return out; };
+  if (!project) { out.error = 'GCP_PROJECT_ID missing'; return cache(); }
+  let token: string;
+  try {
+    token = await accessToken();
+    out.tokenOk = true;
+  } catch (e: any) { out.tokenOk = false; out.tokenError = String(e?.message || e).slice(0, 240); return cache(); }
+  try {
+    const img = await sharp({ create: { width: 512, height: 512, channels: 3, background: { r: 120, g: 80, b: 40 } } }).jpeg().toBuffer();
+    const url = `https://${REGION}-aiplatform.googleapis.com/v1/projects/${project}/locations/${REGION}/publishers/google/models/${MODEL}:predict`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        instances: [{ prompt: '', image: { bytesBase64Encoded: img.toString('base64') } }],
+        parameters: { mode: 'upscale', upscaleConfig: { upscaleFactor: 'x2' }, personGeneration: 'allow_all', outputOptions: { mimeType: 'image/jpeg' } },
+      }),
+    });
+    const text = await res.text();
+    out.httpStatus = res.status;
+    out.ok = res.ok && /bytesBase64Encoded/.test(text);
+    if (!out.ok) out.errorSnippet = text.slice(0, 500);
+  } catch (e: any) { out.callError = String(e?.message || e).slice(0, 240); }
+  return cache();
 }

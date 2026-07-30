@@ -17,6 +17,7 @@ import publicRoutes from './routes/publicRoutes';
 import uploadRoutes from './routes/uploadRoutes';
 import { envFlag } from './utils/envFlag';
 import { SCENE_TEMPLATES } from './services/sceneTemplates';
+import { upscaleProbe } from './services/UpscaleService';
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -48,11 +49,11 @@ app.use(express.urlencoded({ extended: true }));
 // Health check. Includes a small NON-SENSITIVE generation-config summary
 // (booleans + model ids, never keys) so we can tell from outside which AI
 // backend a deploy is actually using when generation silently falls back.
-app.get('/api/health', (_req, res) => {
+app.get('/api/health', async (req, res) => {
   const preferVertex = envFlag('GENAI_USE_VERTEX');
   const studioAvailable = !!process.env.GEMINI_API_KEY;
   const vertexAvailable = !!process.env.GCP_PROJECT_ID;
-  res.json({
+  const body: Record<string, unknown> = {
     status: 'OK',
     message: 'My Magic Book API is running ✨',
     timestamp: new Date().toISOString(),
@@ -69,7 +70,11 @@ app.get('/api/health', (_req, res) => {
     },
     // Which story scene-templates this build knows about (confirms deploys).
     stories: Object.keys(SCENE_TEMPLATES),
-  });
+  };
+  // Diagnostic: ?probe=upscale actually calls the Imagen upscaler once (cached 5
+  // min) so we can see the real HTTP status/error from this host's identity.
+  if (req.query.probe === 'upscale') body.upscale = await upscaleProbe();
+  res.json(body);
 });
 
 // API Routes
