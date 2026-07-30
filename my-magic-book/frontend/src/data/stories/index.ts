@@ -11,6 +11,7 @@ import { zooAdventure } from './story01_zoo';
 import { spaceAdventure } from './story02_space';
 import { schoolAdventure } from './story03_school';
 import { magicBookJourney } from './story04_magicbook';
+import { pirateTreasure } from './story06_pirate';
 
 // ── Future stories — uncomment as you add them ────────────────────────────────
 // import { oceanAdventure }    from './story03_ocean';
@@ -37,6 +38,7 @@ export const STORIES: StoryDefinition[] = [
   spaceAdventure,
   schoolAdventure,
   magicBookJourney,
+  pirateTreasure,
   // oceanAdventure,
   // forestAdventure,
   // desertAdventure,
