@@ -30,8 +30,10 @@ export function buildThemePreview(opts: {
   coverImage?: string;
   pageImages?: string[];
   i18n: any;
+  /** Admin full preview: show the WHOLE book readable, no blur, no lock page. */
+  full?: boolean;
 }): PreviewPage[] {
-  const { theme, language, childName = '', childGender, coverImage, pageImages = [], i18n } = opts;
+  const { theme, language, childName = '', childGender, coverImage, pageImages = [], i18n, full = false } = opts;
   const name = localizeName(
     childName || (language === 'ar' ? 'طفلك' : language === 'he' ? 'הילד' : 'your child'),
     language,
@@ -48,14 +50,14 @@ export function buildThemePreview(opts: {
     // No scripted story text for this theme — still show an illustrated teaser
     // from the sample images (first ~30% visible, the rest blurred).
     if (pageImages.length) {
-      const readable = Math.max(1, Math.ceil(pageImages.length * 0.3));
+      const readable = full ? pageImages.length : Math.max(1, Math.ceil(pageImages.length * 0.3));
       const imgPages: PreviewPage[] = pageImages.map((img, idx): PreviewPage => ({
         type: 'text', image: img, content: '', blur: idx >= readable,
       }));
       return [
         { type: 'cover', title: ft('step2.preview_generic_title', 'قصة سحرية'), image: coverImage },
         ...imgPages,
-        { type: 'lock', content: lockMsg },
+        ...(full ? [] : [{ type: 'lock', content: lockMsg } as PreviewPage]),
       ];
     }
     return [
@@ -67,14 +69,18 @@ export function buildThemePreview(opts: {
   // Like the real book: each story page is a TEXT page + its own IMAGE page
   // (separate sheets), not text overlaid on the photo.
   const allKeys = Object.keys(pagesObj).sort((a, b) => Number(a) - Number(b));
-  const readable = Math.max(1, Math.ceil(allKeys.length * 0.3));
+  const readable = full ? allKeys.length : Math.max(1, Math.ceil(allKeys.length * 0.3));
   const bodyPages: PreviewPage[] = [];
   allKeys.forEach((k, idx) => {
     const locked = idx >= readable;
     bodyPages.push({ type: 'text', content: personalize(pagesObj[k]), blur: locked });
     if (pageImages[idx]) bodyPages.push({ type: 'text', image: pageImages[idx], blur: locked });
   });
-  return [{ type: 'cover', title: personalize(titleRaw), image: coverImage }, ...bodyPages, { type: 'lock', content: lockMsg }];
+  return [
+    { type: 'cover', title: personalize(titleRaw), image: coverImage },
+    ...bodyPages,
+    ...(full ? [] : [{ type: 'lock', content: lockMsg } as PreviewPage]),
+  ];
 }
 
 interface Props {

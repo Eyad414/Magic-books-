@@ -6,6 +6,7 @@ import { publicApi } from '../../api/publicApi';
 import { toDisplayUrl } from '../../api/mediaUrl';
 import { localizeName } from '../../utils/translit';
 import FlipbookPreview, { buildThemePreview } from '../wizard/FlipbookPreview';
+import { useAdminFullPreview, AdminFullPreviewBadge } from '../common/AdminFullPreview';
 
 // Some themes reuse another theme's scripted story text (mirrors Stories page).
 const TEXT_THEME: Record<string, string> = { space_real: 'space' };
@@ -13,6 +14,7 @@ const textThemeFor = (id: string) => TEXT_THEME[id] || id;
 
 export default function BestSellers() {
   const { t, i18n } = useTranslation();
+  const fullPreview = useAdminFullPreview();
 
   // Live themes (for the real generated front-cover images).
   const [themes, setThemes] = useState<Record<string, any>>({});
@@ -51,9 +53,10 @@ export default function BestSellers() {
       coverImage: cover,
       pageImages: (theme?.generatedImages || []).map(toDisplayUrl),
       i18n,
+      full: fullPreview,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, themes, i18n.language]);
+  }, [selected, themes, i18n.language, fullPreview]);
 
   return (
     <>
@@ -181,6 +184,8 @@ export default function BestSellers() {
         </div>
       </div>
     )}
+
+    <AdminFullPreviewBadge />
     </>
   );
 }

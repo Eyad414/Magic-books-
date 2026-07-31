@@ -907,6 +907,30 @@ export default function AdminDashboard() {
               <div>
                 <h2 className="font-arabic font-bold text-xl text-white mb-6">{t('admin.stories_title')}</h2>
 
+                {/* ── Live full preview: open Home / Stories with the paywall lock
+                       removed (admin only) to read showcase books end-to-end. ── */}
+                <div className="mb-8 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Eye className="w-4 h-4 text-emerald-400" />
+                    <h3 className="font-arabic font-bold text-white text-sm">{t('admin.full_preview_title', 'معاينة حية كاملة (بدون قفل)')}</h3>
+                  </div>
+                  <p className="font-arabic text-white/50 text-xs mb-3">{t('admin.full_preview_help', 'افتح الموقع كما يراه الزائر، لكن اقرأ الكتب حتى النهاية بدون قفل. الزوّار يبقون مقفلين. أغلقها من الشارة في أسفل الصفحة.')}</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => window.open('/?preview=full', '_blank')}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-arabic text-xs transition-colors"
+                    >
+                      <Eye className="w-3.5 h-3.5" /> {t('admin.full_preview_open_home', 'الصفحة الرئيسية')}
+                    </button>
+                    <button
+                      onClick={() => window.open('/stories?preview=full', '_blank')}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-arabic text-xs transition-colors"
+                    >
+                      <Eye className="w-3.5 h-3.5" /> {t('admin.full_preview_open_stories', 'صفحة القصص')}
+                    </button>
+                  </div>
+                </div>
+
                 {/* ── Story books group (kept separate from coloring books) ── */}
                 <h3 className="font-arabic font-bold text-lg text-white mb-1">
                   📚 {t('admin.story_books_title', 'القصص')}

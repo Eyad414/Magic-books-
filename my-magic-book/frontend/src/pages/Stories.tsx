@@ -9,6 +9,7 @@ import { toDisplayUrl } from '../api/mediaUrl';
 import { localizeName } from '../utils/translit';
 import { detectGender, applyGenderTokens } from '../utils/gender';
 import { SHOWCASE_CARDS as CARDS, type ShowcaseCard as Card } from '../data/showcaseCards';
+import { useAdminFullPreview, AdminFullPreviewBadge } from '../components/common/AdminFullPreview';
 import toast from 'react-hot-toast';
 
 // Some themes reuse another theme's scripted story text (e.g. the realistic
@@ -26,6 +27,7 @@ export default function Stories() {
   const { t, i18n } = useTranslation();
   const { resetProgress } = useStoryProgress();
   const navigate = useNavigate();
+  const fullPreview = useAdminFullPreview();
 
   useEffect(() => {
     publicApi.getSettings()
@@ -86,9 +88,10 @@ export default function Stories() {
       coverImage: coverFor(selected),
       pageImages: imagesFor(selected),
       i18n,
+      full: fullPreview,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, i18n.language, themes]);
+  }, [selected, i18n.language, themes, fullPreview]);
 
   return (
     <div className="min-h-screen pt-24 pb-16 px-4 sm:px-6 lg:px-8">
@@ -101,13 +104,22 @@ export default function Stories() {
           <p className="font-arabic text-white/50 text-lg">{t('stories_page.description')}</p>
         </div>
 
-        {/* Preview Lock Banner */}
-        <div className="flex items-center gap-3 p-4 rounded-2xl bg-gold-500/10 border border-gold-500/30 mb-10">
-          <Lock className="w-5 h-5 text-gold-500 flex-shrink-0" />
-          <p className="font-arabic text-white/70 text-sm">
-            <strong className="text-gold-500">{t('stories_page.preview_system')}</strong> {t('stories_page.preview_desc')}
-          </p>
-        </div>
+        {/* Preview banner — full (admin) or the normal buy-to-read lock */}
+        {fullPreview ? (
+          <div className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 mb-10">
+            <Eye className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+            <p className="font-arabic text-white/70 text-sm">
+              <strong className="text-emerald-400">{t('admin.full_preview_active', 'معاينة كاملة (أدمن) — بدون قفل')}.</strong> {t('admin.full_preview_note', 'أنت ترى الكتب كاملة حتى النهاية. الزوّار يرون المعاينة المقفلة كالمعتاد.')}
+            </p>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 p-4 rounded-2xl bg-gold-500/10 border border-gold-500/30 mb-10">
+            <Lock className="w-5 h-5 text-gold-500 flex-shrink-0" />
+            <p className="font-arabic text-white/70 text-sm">
+              <strong className="text-gold-500">{t('stories_page.preview_system')}</strong> {t('stories_page.preview_desc')}
+            </p>
+          </div>
+        )}
 
         {/* Stories Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -146,12 +158,14 @@ export default function Stories() {
                     <div className="flex items-center gap-3">
                       <button onClick={() => setSelected(card)} className="flex items-center gap-1 pr-3 group cursor-pointer">
                         <Eye className="w-3.5 h-3.5 text-gold-500 group-hover:scale-125 transition-transform" />
-                        <span className="font-arabic text-gold-500 text-xs border-b border-transparent group-hover:border-gold-500 transition-colors">{t('stories_page.available_30')}</span>
+                        <span className="font-arabic text-gold-500 text-xs border-b border-transparent group-hover:border-gold-500 transition-colors">{fullPreview ? t('admin.read_full', 'اقرأ كامل') : t('stories_page.available_30')}</span>
                       </button>
-                      <div className="flex items-center gap-1 border-r border-white/10 pr-3">
-                        <Lock className="w-3.5 h-3.5 text-white/40" />
-                        <span className="font-arabic text-white/40 text-xs">{t('stories_page.locked_70')}</span>
-                      </div>
+                      {!fullPreview && (
+                        <div className="flex items-center gap-1 border-r border-white/10 pr-3">
+                          <Lock className="w-3.5 h-3.5 text-white/40" />
+                          <span className="font-arabic text-white/40 text-xs">{t('stories_page.locked_70')}</span>
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-1">
                       <BookOpen className="w-3.5 h-3.5 text-white/60" />
@@ -207,6 +221,8 @@ export default function Stories() {
           </div>
         </div>
       )}
+
+      <AdminFullPreviewBadge />
     </div>
   );
 }
