@@ -1,5 +1,5 @@
 import React from 'react';
-import starSvg from '../../assets/star-image-stroy 1.svg';
+import starSvg from '../../assets/star.webp';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 interface StarTextProps {

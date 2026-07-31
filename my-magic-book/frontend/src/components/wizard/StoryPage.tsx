@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStoryProgress } from '../../context/StoryProgressContext';
-import starImage from '../../assets/star-image-stroy 1.svg';
+import starImage from '../../assets/star.webp';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 // All three props are optional because StoryPage can also read them straight
