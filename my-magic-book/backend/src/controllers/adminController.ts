@@ -337,6 +337,35 @@ export const getSettings = async (req: Request, res: Response): Promise<void> =>
           await settings.save();
         }
       }
+
+      // Space (space_real) — the ready story had images but 0 stored pages, so the
+      // wizard's "ready story" mode showed "under preparation". Seed its text pages
+      // (same text as the code template) into the DB so the theme is self-contained.
+      const SPACE_PAGES = [
+        { text: "كان {{name}} يحلم دائماً بالنجوم. وفي ليلة هادئة، تحول سريره فجأة إلى مركبة فضائية متطورة مليئة بالأزرار اللامعة!", imageSrc: "" },
+        { text: "بكل حماس، ضغط {{name}} على الزر الأحمر الكبير، وانطلقت المركبة بسرعة البرق نحو السماء الزرقاء الداكنة.", imageSrc: "" },
+        { text: "فجأة، طار كل شيء في الغرفة! وبسبب انعدام الجاذبية، أصبح {{name}} يسبح في الهواء كأنه سمكة محاطة بالنجوم.", imageSrc: "" },
+        { text: "نظر {{name}} من النافذة الكبيرة، ورأى كوكب الأرض من بعيد يبدو مثل كرة زجاجية زرقاء جميلة وصغيرة جداً.", imageSrc: "" },
+        { text: "هبطت المركبة بهدوء على كوكب غريب مغطى بالرمال البنفسجية الناعمة، وكان كل شيء من حوله يلمع بيقظة.", imageSrc: "" },
+        { text: "من خلف إحدى الصخور، ظهر مخلوق فضائي صغير ولطيف، يملك عيوناً واسعة ولامعة، وبدأ يلوح لـ {{name}} بترحيب.", imageSrc: "" },
+        { text: "لم يتكلم المخلوق، لكنه رسم في الهواء بيديه صورة قلب كبير، فعرف {{name}} على الفور أنه يريد أن يكون صديقه.", imageSrc: "" },
+        { text: "أشار الصديق الفضائي بحزن إلى حفرة عميقة؛ لقد سقط فيها \"حجر الطاقة\" الذي يمنح كوكبه الحياة والنور.", imageSrc: "" },
+        { text: "بلا تردد، ربط {{name}} نفسه بحبل القفز السحري، ونزل إلى الحفرة المظلمة بكل شجاعة لاستعادة الحجر.", imageSrc: "" },
+        { text: "عندما أخرج {{name}} الحجر ووضعه في مكانه، أضاء الكوكب كله فجأة بأنوار زاهية تشبه الألعاب النارية الملونة.", imageSrc: "" },
+        { text: "تقديراً لشجاعته، قدم المخلوق الفضائي لـ {{name}} \"نجمة صغيرة\" تلمع في الظلام ليتذكره دائماً، ثم حان وقت الوداع.", imageSrc: "" },
+        { text: "عادت المركبة الفضائية لتنطلق بالبطل الصغير نحو الأرض، مارةً بسحب ملونة وناعمة تشبه غزل البنات.", imageSrc: "" },
+        { text: "استيقظ {{name}} في سريره، ونظر إلى يده ليجد \"النجمة الصغيرة\" لا تزال تلمع! فابتسم وهو يعلم أن الشجاعة تفتح لنا أسرار الكون.", imageSrc: "" },
+      ];
+      const spaceTheme: any = settings.themes.find((t: any) => t.id === 'space_real');
+      if (spaceTheme) {
+        const spArabicLen = (spaceTheme.pages?.[0]?.text || '').replace(/[^ء-ي]/g, '').length;
+        if (!Array.isArray(spaceTheme.pages) || spaceTheme.pages.length < 13 || spArabicLen < 5) {
+          spaceTheme.pages = SPACE_PAGES;
+          spaceTheme.ready = true;
+          settings.markModified('themes');
+          await settings.save();
+        }
+      }
     }
     res.json({ success: true, settings });
   } catch (error) {
