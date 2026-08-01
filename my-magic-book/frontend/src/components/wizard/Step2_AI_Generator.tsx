@@ -162,11 +162,19 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
     try {
       // First create the story record, then generate
       const childDetails = progress.childDetails;
+      // The AI writes a NEW story about the customer's SUBJECT: their typed idea if
+      // any, otherwise the chosen theme's real label (so a chosen "space" theme
+      // yields a space story — theme ids like "space_real" aren't in the backend
+      // label map, which would otherwise produce a generic story).
+      const chosenTheme = THEMES.find((th) => th.id === form.theme);
+      const subject = (form.customThemeNote || '').trim()
+        || (chosenTheme ? getThemeLabel(chosenTheme, t, i18n.language) : '');
       const createRes = await storyApi.create({
         ...childDetails,
         ...form,
         // Render the child's name in the book's language script (e.g. "Baha" -> "بهاء").
         childName: localizeName(childDetails.childName || '', form.language),
+        customThemeNote: subject || undefined,
         mode: 'ai',
       });
       const newStoryId = createRes.story._id;
@@ -195,7 +203,10 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
   // entry if one exists, otherwise the theme's own admin-authored pages from the
   // database. This is what makes every ready theme usable in template mode.
   const effectiveTemplate = useMemo<TemplatePage[] | null>(() => {
-    const hardcoded = STORY_TEMPLATES[form.theme];
+    // Style variants (e.g. "space_real") reuse the base theme's template text —
+    // otherwise the ready story shows "under preparation" (no template for that id).
+    const base = form.theme.replace(/_(real|photoreal|cartoon|pr|hd)$/, '');
+    const hardcoded = STORY_TEMPLATES[form.theme] || STORY_TEMPLATES[base];
     if (hardcoded && hardcoded.length > 0) return hardcoded;
     const dbPages = THEMES.find((th) => th.id === form.theme)?.pages;
     return dbPagesToTemplate(dbPages);
