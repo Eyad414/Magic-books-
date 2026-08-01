@@ -358,6 +358,7 @@ export const getPublicSettings = async (_req: Request, res: Response): Promise<v
       bookPackages: settings.bookPackages,
       themes: settings.themes.filter((t: any) => t.ready === true),
       homeStats: settings.homeStats || DEFAULT_HOME_STATS,
+      showcaseUnlocked: !!settings.showcaseUnlocked,
     };
     res.json({ success: true, settings: filtered });
   } catch (error) {
@@ -368,11 +369,11 @@ export const getPublicSettings = async (_req: Request, res: Response): Promise<v
 // @route PUT /api/admin/settings
 export const updateSettings = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { bookPackages, themes, homeStats } = req.body;
+    const { bookPackages, themes, homeStats, showcaseUnlocked } = req.body;
     let settings = await SiteSettings.findOne();
 
     if (!settings) {
-      settings = new SiteSettings({ bookPackages, themes, homeStats });
+      settings = new SiteSettings({ bookPackages, themes, homeStats, showcaseUnlocked });
     } else {
       if (bookPackages) {
         settings.bookPackages = bookPackages;
@@ -385,6 +386,9 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
       if (homeStats) {
         settings.homeStats = homeStats;
         settings.markModified('homeStats');
+      }
+      if (typeof showcaseUnlocked === 'boolean') {
+        settings.showcaseUnlocked = showcaseUnlocked;
       }
     }
     

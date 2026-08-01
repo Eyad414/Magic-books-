@@ -57,6 +57,9 @@ export interface ISiteSettings extends Document {
   bookPackages: IBookPackage[];
   themes: ITheme[];
   homeStats?: IHomeStats;
+  /** Admin promo switch: when true, customers can read the FULL showcase books
+   *  on Home/Stories (the 30% paywall lock is lifted for everyone). */
+  showcaseUnlocked?: boolean;
 }
 
 export const DEFAULT_HOME_STATS: IHomeStats = {
@@ -107,6 +110,7 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
       readyStories: { type: String, default: DEFAULT_HOME_STATS.readyStories },
       rating: { type: String, default: DEFAULT_HOME_STATS.rating },
     },
+    showcaseUnlocked: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

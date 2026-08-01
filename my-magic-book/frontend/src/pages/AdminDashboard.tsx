@@ -4,7 +4,7 @@ import { adminApi } from '../api/adminApi';
 import { uploadApi } from '../api/uploadApi';
 import { objectPathToUrl } from '../api/mediaUrl';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail, User, Phone, Sparkles } from 'lucide-react';
+import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail, User, Phone, Sparkles, Unlock, Lock } from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
 import Modal from '../components/common/Modal';
 import ActionButton from '../components/common/ActionButton';
@@ -516,6 +516,21 @@ export default function AdminDashboard() {
     }
   };
 
+  // Promo switch: unlock the FULL showcase books for ALL customers (lifts the
+  // 30% paywall on Home/Stories). Saves just the flag, optimistically.
+  const toggleCustomerUnlock = async () => {
+    const nv = !settings.showcaseUnlocked;
+    setSettings({ ...settings, showcaseUnlocked: nv });
+    try {
+      const res = await adminApi.updateSettings({ showcaseUnlocked: nv });
+      if (!res.success) throw new Error();
+      toast.success(nv ? t('admin.customer_unlock_on_toast', 'تم فتح القصص كاملة لجميع العملاء ✅') : t('admin.customer_unlock_off_toast', 'تم إعادة قفل القصص (٣٠٪ للمعاينة)'));
+    } catch {
+      setSettings({ ...settings, showcaseUnlocked: !nv });
+      toast.error(t('admin.save_settings_fail'));
+    }
+  };
+
   if (isLoading || !settings) return <div className="min-h-screen pt-24 text-center text-white/50">{t('admin.loading')}</div>;
 
   return (
@@ -929,6 +944,31 @@ export default function AdminDashboard() {
                       <Eye className="w-3.5 h-3.5" /> {t('admin.full_preview_open_stories', 'صفحة القصص')}
                     </button>
                   </div>
+                </div>
+
+                {/* Customer unlock — promo switch: lift the 30% lock for ALL customers */}
+                <div className={`mb-8 p-4 rounded-xl border ${settings.showcaseUnlocked ? 'bg-amber-500/10 border-amber-500/40' : 'bg-white/5 border-white/10'}`}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        {settings.showcaseUnlocked ? <Unlock className="w-4 h-4 text-amber-400" /> : <Lock className="w-4 h-4 text-white/50" />}
+                        <h3 className="font-arabic font-bold text-white text-sm">{t('admin.customer_unlock_title', 'فتح القصص كاملة للعملاء')}</h3>
+                      </div>
+                      <p className="font-arabic text-white/50 text-xs">{t('admin.customer_unlock_help', 'عند التفعيل، يستطيع جميع الزوّار قراءة الكتب حتى النهاية على الصفحة الرئيسية وصفحة القصص (يُلغى قفل الـ٣٠٪). أطفئه لإعادة القفل.')}</p>
+                    </div>
+                    <button
+                      onClick={toggleCustomerUnlock}
+                      role="switch"
+                      aria-checked={!!settings.showcaseUnlocked}
+                      aria-label={t('admin.customer_unlock_title', 'فتح القصص كاملة للعملاء')}
+                      className={`relative shrink-0 w-14 h-8 rounded-full transition-colors ${settings.showcaseUnlocked ? 'bg-amber-500' : 'bg-white/15'}`}
+                    >
+                      <span className={`absolute top-1 w-6 h-6 rounded-full bg-white transition-all ${settings.showcaseUnlocked ? 'left-7' : 'left-1'}`} />
+                    </button>
+                  </div>
+                  {settings.showcaseUnlocked && (
+                    <p className="font-arabic text-amber-300 text-xs mt-2">⚠️ {t('admin.customer_unlock_on_warn', 'القصص الآن مفتوحة بالكامل لكل العملاء بدون شراء.')}</p>
+                  )}
                 </div>
 
                 {/* ── Story books group (kept separate from coloring books) ── */}

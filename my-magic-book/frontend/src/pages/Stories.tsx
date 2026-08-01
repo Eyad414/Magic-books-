@@ -24,10 +24,14 @@ export default function Stories() {
   const [themes, setThemes] = useState<Record<string, any>>({});
   const [selected, setSelected] = useState<Card | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [showcaseUnlocked, setShowcaseUnlocked] = useState(false);
   const { t, i18n } = useTranslation();
   const { resetProgress } = useStoryProgress();
   const navigate = useNavigate();
   const fullPreview = useAdminFullPreview();
+  // Read the whole book with no lock if EITHER: admin full-preview, or the owner
+  // flipped the "unlock for all customers" switch in the dashboard.
+  const effectiveFull = fullPreview || showcaseUnlocked;
 
   useEffect(() => {
     publicApi.getSettings()
@@ -35,6 +39,7 @@ export default function Stories() {
         const map: Record<string, any> = {};
         for (const th of (res?.settings?.themes || [])) map[th.id] = th;
         setThemes(map);
+        setShowcaseUnlocked(!!res?.settings?.showcaseUnlocked);
       })
       .catch(() => {});
     const saved = localStorage.getItem('favorite_stories');
@@ -88,10 +93,10 @@ export default function Stories() {
       coverImage: coverFor(selected),
       pageImages: imagesFor(selected),
       i18n,
-      full: fullPreview,
+      full: effectiveFull,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, i18n.language, themes, fullPreview]);
+  }, [selected, i18n.language, themes, effectiveFull]);
 
   return (
     <div className="min-h-screen pt-24 pb-16 px-4 sm:px-6 lg:px-8">
@@ -112,7 +117,7 @@ export default function Stories() {
               <strong className="text-emerald-400">{t('admin.full_preview_active', 'معاينة كاملة (أدمن) — بدون قفل')}.</strong> {t('admin.full_preview_note', 'أنت ترى الكتب كاملة حتى النهاية. الزوّار يرون المعاينة المقفلة كالمعتاد.')}
             </p>
           </div>
-        ) : (
+        ) : showcaseUnlocked ? null : (
           <div className="flex items-center gap-3 p-4 rounded-2xl bg-gold-500/10 border border-gold-500/30 mb-10">
             <Lock className="w-5 h-5 text-gold-500 flex-shrink-0" />
             <p className="font-arabic text-white/70 text-sm">
@@ -158,9 +163,9 @@ export default function Stories() {
                     <div className="flex items-center gap-3">
                       <button onClick={() => setSelected(card)} className="flex items-center gap-1 pr-3 group cursor-pointer">
                         <Eye className="w-3.5 h-3.5 text-gold-500 group-hover:scale-125 transition-transform" />
-                        <span className="font-arabic text-gold-500 text-xs border-b border-transparent group-hover:border-gold-500 transition-colors">{fullPreview ? t('admin.read_full', 'اقرأ كامل') : t('stories_page.available_30')}</span>
+                        <span className="font-arabic text-gold-500 text-xs border-b border-transparent group-hover:border-gold-500 transition-colors">{effectiveFull ? t('admin.read_full', 'اقرأ كامل') : t('stories_page.available_30')}</span>
                       </button>
-                      {!fullPreview && (
+                      {!effectiveFull && (
                         <div className="flex items-center gap-1 border-r border-white/10 pr-3">
                           <Lock className="w-3.5 h-3.5 text-white/40" />
                           <span className="font-arabic text-white/40 text-xs">{t('stories_page.locked_70')}</span>

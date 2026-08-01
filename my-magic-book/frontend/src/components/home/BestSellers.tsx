@@ -20,24 +20,32 @@ export default function BestSellers() {
   const [themes, setThemes] = useState<Record<string, any>>({});
   // The story currently open in the preview modal (same UX as the Stories page).
   const [selected, setSelected] = useState<any>(null);
+  const [showcaseUnlocked, setShowcaseUnlocked] = useState(false);
   useEffect(() => {
     publicApi.getSettings()
       .then((res) => {
         const map: Record<string, any> = {};
         for (const th of (res?.settings?.themes || [])) map[th.id] = th;
         setThemes(map);
+        setShowcaseUnlocked(!!res?.settings?.showcaseUnlocked);
       })
       .catch(() => {});
   }, []);
+  // Full book with no lock if admin full-preview OR the owner's customer-unlock switch.
+  const effectiveFull = fullPreview || showcaseUnlocked;
 
   // The showcase stories. themeId points at a real demo theme so we can show its
   // generated cover; name is the demo child. Cards c/d are placeholders the
   // owner can swap for the newest themes.
+  // `localCover` = a small pre-optimized WebP thumbnail in /public/showcase/ so the
+  // card photo loads instantly from the CDN (the full 2.5MB cover behind the proxy
+  // was slow/unreliable — kids' photos appeared missing). The preview modal still
+  // uses the full-res cover.
   const bestSellers = [
-    { id: 1, themeId: 'zoo_adventure', name: 'Baha', emoji: '🦁', rating: 4.9, reviews: 128, tag: t('bestsellers.tag_best_seller'), colors: ['#33691e', '#558b2f'] },
-    { id: 2, themeId: 'space', name: 'Liam', emoji: '🚀', rating: 4.8, reviews: 94, tag: t('bestsellers.tag_new'), colors: ['#1a237e', '#311b92'], coverPath: 'magic-fanoose/generated/6a43cbf500c3ecaed9218b3c/page-00.png' },
-    { id: 3, themeId: 'school_coloring', name: 'Yosef', emoji: '🎒', rating: 5.0, reviews: 76, tag: t('bestsellers.tag_featured'), colors: ['#4a148c', '#6a1b9a'] },
-    { id: 4, themeId: 'space_coloring', name: 'Hamza', emoji: '🎨', rating: 4.7, reviews: 61, tag: '', colors: ['#006064', '#00838f'] },
+    { id: 1, themeId: 'zoo_adventure', name: 'Baha', emoji: '🦁', rating: 4.9, reviews: 128, tag: t('bestsellers.tag_best_seller'), colors: ['#33691e', '#558b2f'], localCover: '/showcase/baha.webp' },
+    { id: 2, themeId: 'space', name: 'Liam', emoji: '🚀', rating: 4.8, reviews: 94, tag: t('bestsellers.tag_new'), colors: ['#1a237e', '#311b92'], coverPath: 'magic-fanoose/generated/6a43cbf500c3ecaed9218b3c/page-00.png', localCover: '/showcase/liam.webp' },
+    { id: 3, themeId: 'school_coloring', name: 'Yosef', emoji: '🎒', rating: 5.0, reviews: 76, tag: t('bestsellers.tag_featured'), colors: ['#4a148c', '#6a1b9a'], localCover: '/showcase/yosef.webp' },
+    { id: 4, themeId: 'space_coloring', name: 'Hamza', emoji: '🎨', rating: 4.7, reviews: 61, tag: '', colors: ['#006064', '#00838f'], localCover: '/showcase/hamza.webp' },
   ];
 
   // Build the 30%-readable flipbook preview for the selected card (rest is locked).
@@ -53,10 +61,10 @@ export default function BestSellers() {
       coverImage: cover,
       pageImages: (theme?.generatedImages || []).map(toDisplayUrl),
       i18n,
-      full: fullPreview,
+      full: effectiveFull,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, themes, i18n.language, fullPreview]);
+  }, [selected, themes, i18n.language, effectiveFull]);
 
   return (
     <>
@@ -82,9 +90,11 @@ export default function BestSellers() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {bestSellers.map((book) => {
             const theme = themes[book.themeId];
-            // Prefer an explicit cover (a specific generated story) over the theme's cover.
-            const cover = (book as any).coverPath ? toDisplayUrl((book as any).coverPath)
-              : theme?.generatedCover ? toDisplayUrl(theme.generatedCover) : '';
+            // Fast local thumbnail first (instant from CDN); fall back to the full
+            // cover via the proxy only if a card has no local thumbnail.
+            const cover = (book as any).localCover
+              || ((book as any).coverPath ? toDisplayUrl((book as any).coverPath)
+                : theme?.generatedCover ? toDisplayUrl(theme.generatedCover) : '');
             const themeLabel = t(`step2.theme_${book.themeId}`, { defaultValue: theme?.label || '' });
             const desc = t(`step2.theme_${book.themeId}_desc`, { defaultValue: theme?.desc || '' });
             return (
