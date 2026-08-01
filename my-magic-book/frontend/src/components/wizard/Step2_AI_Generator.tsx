@@ -315,6 +315,25 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
         </div>
       </div>
 
+      {/* AI mode — the customer writes their OWN story idea and the AI builds a
+          brand-new story around it (customThemeNote drives generation). */}
+      {mode === 'ai' && (
+        <div className="mb-5">
+          <label className="block font-arabic text-white/80 text-sm mb-2">
+            ✍️ {t('step2.idea_label', 'اكتب فكرة القصة التي تريدها')}
+          </label>
+          <textarea
+            className="magic-input w-full min-h-[92px] resize-y"
+            placeholder={t('step2.idea_placeholder', 'مثال: مغامرة يكتشف فيها بطلنا كوكباً مليئاً بالديناصورات الودودة، ويتعلّم قيمة الشجاعة...')}
+            value={form.customThemeNote}
+            onChange={(e) => setForm({ ...form, customThemeNote: e.target.value })}
+          />
+          <p className="font-arabic text-white/40 text-xs mt-1.5">
+            {t('step2.idea_help', 'سيكتب الذكاء الاصطناعي قصة جديدة كاملة مبنية على فكرتك.')}
+          </p>
+        </div>
+      )}
+
       {/* AI helper — shown only for AI mode: chat that recommends a theme for
           this child. Hidden in "ready story" mode (the customer browses themes). */}
       {mode === 'ai' && !themesLoading && THEMES.length > 0 && (

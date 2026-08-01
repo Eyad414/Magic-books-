@@ -29,15 +29,19 @@ const THEME_LABELS_AR: Record<string, string> = {
   custom: 'موضوع خاص',
 };
 
-/** Builds the per-language prompt for the AI model. */
+/** Builds the per-language prompt for the AI model. When the customer wrote their
+ *  own idea (`customThemeNote`), the story is built AROUND that idea — it becomes
+ *  the central topic, not a side note. Otherwise the selected theme is the topic. */
 function buildPrompt(o: StoryGeneratorOptions): string {
   const { childName, childAge, childGender, theme, storyLength, language, customThemeNote } = o;
   const wordCount = STORY_LENGTH_MAP[storyLength];
+  const idea = (customThemeNote || '').trim();
   if (language === 'ar') {
     const pronoun = childGender === 'male' ? 'هو' : 'هي';
+    const topic = idea || THEME_LABELS_AR[theme] || 'مغامرة سحرية';
     return `اكتب قصة أطفال سحرية مخصصة لطفل اسمه ${childName}، عمره ${childAge} سنوات، وضميره ${pronoun}.
-موضوع القصة: ${THEME_LABELS_AR[theme] || customThemeNote || 'مغامرة سحرية'}.
-${customThemeNote ? `ملاحظة إضافية: ${customThemeNote}` : ''}
+موضوع القصة: ${topic}.
+${idea ? `مهم جداً: اكتب القصة حول فكرة العميل هذه بالتحديد: «${idea}». اجعل الأحداث والشخصيات والعالم مبنيّة مباشرةً على هذه الفكرة، مع بقاء ${childName} البطل الرئيسي.` : ''}
 اكتب القصة باللغة العربية الفصحى البسيطة المناسبة للأطفال.
 الطول المطلوب: حوالي ${wordCount} كلمة.
 اجعل القصة ممتعة، تعليمية، وتحتوي على ${childName} كبطل رئيسي.
@@ -45,15 +49,19 @@ ${customThemeNote ? `ملاحظة إضافية: ${customThemeNote}` : ''}
   }
   if (language === 'he') {
     const pronoun = childGender === 'male' ? 'הוא' : 'היא';
+    const topic = idea || theme;
     return `כתוב סיפור ילדים קסום ומותאם אישית לילד בשם ${childName}, בן ${childAge}, בלשון ${pronoun}.
-נושא הסיפור: ${theme}. ${customThemeNote ? `הערה: ${customThemeNote}` : ''}
+נושא הסיפור: ${topic}.
+${idea ? `חשוב מאוד: כתוב את הסיפור סביב הרעיון הזה של הלקוח: «${idea}». בנה את העלילה, הדמויות והעולם ישירות על הרעיון הזה, ו-${childName} הוא הגיבור הראשי.` : ''}
 כתוב בעברית פשוטה ומתאימה לגיל הילד.
 אורך רצוי: כ-${wordCount} מילים.
 ${childName} הוא הגיבור הראשי. התחל ישירות בטקסט הסיפור, ללא הקדמות.`;
   }
   const pronoun = childGender === 'male' ? 'he' : 'she';
+  const topic = idea || theme;
   return `Write a magical personalized children's story for a child named ${childName}, age ${childAge}, using ${pronoun} pronouns.
-Story theme: ${theme}. ${customThemeNote ? `Additional note: ${customThemeNote}` : ''}
+Story topic: ${topic}.
+${idea ? `VERY IMPORTANT: base the story specifically on the customer's idea: "${idea}". Build the plot, characters and world directly around this idea, with ${childName} as the main hero.` : ''}
 Write in simple, age-appropriate English. Target length: ~${wordCount} words.
 Make ${childName} the main hero. Start directly with the story text, no commentary.`;
 }
