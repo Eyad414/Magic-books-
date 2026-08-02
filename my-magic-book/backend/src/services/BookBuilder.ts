@@ -111,8 +111,10 @@ export async function buildBookForOrder(orderId: string, submitToBookPod = true)
       pageTexts = col.images.map(() => '');
       coverImageUrl = proxyUrl(col.cover);
       storyTitle = `${story.childName} — كتاب تلوين`;
-    } else if (template?.pageScenes && template?.pageTexts && template?.coverScene && template?.portraitScene) {
-      // PHOTOREAL story book — same story, this customer's face.
+    } else if (story.mode !== 'ai' && template?.pageScenes && template?.pageTexts && template?.coverScene && template?.portraitScene) {
+      // PHOTOREAL story book — the theme's FIXED (ready) story, this customer's face.
+      // AI-mode stories skip this (mode!=='ai' guard): they must use the customer's
+      // own generated text + illustrations derived from it, not the theme template.
       const cover = await generateIllustration(
         buildScenePrompt('cover', template.coverScene, story.childName, story.childGender),
         childPhoto, { storyId: sid, pageNumber: 0 }
@@ -312,7 +314,8 @@ function reconstructPrintOpts(story: any): PrintBuildOpts {
   if (isColoringBook) {
     pageTexts = images.map(() => '');
     storyTitle = `${story.childName} — كتاب تلوين`;
-  } else if (template?.pageTexts && template?.coverScene) {
+  } else if (story.mode !== 'ai' && template?.pageTexts && template?.coverScene) {
+    // Ready (template) story text. AI stories skip this and use their own text below.
     pageTexts = images.map((_: string, i: number) =>
       resolveTokens(loc?.pages?.[i] ?? template.pageTexts![i] ?? '', story.childName, story.childGender)
     );

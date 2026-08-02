@@ -3,12 +3,13 @@
 // Protected by AdminBookGuard — only eyadat720@gmail.com can access.
 // Customers see the normal public website; this page never appears for them.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import StoryBook from '../components/book/StoryBook';
 import ColoringBookView from '../components/book/ColoringBookView';
 import { localizeName } from '../utils/translit';
+import { splitStoryIntoPages } from '../utils/splitStory';
 import { adminApi } from '../api/adminApi';
 import { storyApi } from '../api/storyApi';
 import { useAuth } from '../context/AuthContext';
@@ -171,6 +172,14 @@ export default function StoryBookPage() {
     toDisplayUrl(generatedPortrait) ||
     toDisplayUrl('magic-fanoose/child-photos/d814d243-9300-489d-b275-29144c91ad19.jpeg');
 
+  // For a "write with AI" story, show the customer's OWN generated text (split into
+  // pages) instead of a theme template. Falls back to the theme's pages otherwise.
+  const effectivePages = useMemo(() => {
+    const aiText = (storyData?.mode === 'ai' ? storyData?.generatedText : '') || '';
+    if (aiText.trim()) return splitStoryIntoPages(aiText, 13).map((text: string) => ({ text, imageSrc: '' }));
+    return customPages;
+  }, [storyData, customPages]);
+
   return (
     <div className="min-h-screen bg-[#03060e] pt-20 pb-20 px-2 sm:px-4">
       <StoryBook
@@ -183,7 +192,7 @@ export default function StoryBookPage() {
         backCoverPhoto={toDisplayUrl(generatedPortrait) || childPhoto}
         audioUrl={storyData?.audioUrl || ''}
         showNameInput={!storyData}
-        customPages={customPages.length > 0 ? customPages : undefined}
+        customPages={effectivePages.length > 0 ? effectivePages : undefined}
         generatedImages={generatedImages.map(toDisplayUrl)}
         onGenerated={handleGenerated}
         /* Raw GCS paths for the server-side "Download print-ready PDF" build. */
