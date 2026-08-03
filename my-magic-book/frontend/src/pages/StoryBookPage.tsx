@@ -127,6 +127,15 @@ export default function StoryBookPage() {
     if (cover) setGeneratedCover(cover);
   };
 
+  // For a "write with AI" story, show the customer's OWN generated text (split into
+  // pages) instead of a theme template. Falls back to the theme's pages otherwise.
+  // MUST stay above every early return — hooks must run unconditionally each render.
+  const effectivePages = useMemo(() => {
+    const aiText = (storyData?.mode === 'ai' ? storyData?.generatedText : '') || '';
+    if (aiText.trim()) return splitStoryIntoPages(aiText, 13).map((text: string) => ({ text, imageSrc: '' }));
+    return customPages;
+  }, [storyData, customPages]);
+
   if (isLoading) return <div className="min-h-screen bg-[#03060e] flex items-center justify-center text-gold-500 font-arabic">جاري تحميل القصة...</div>;
 
   // Coloring books render as a coloring layout (cover + line-art pages + back),
@@ -171,14 +180,6 @@ export default function StoryBookPage() {
     toDisplayUrl(storyData?.childPhotoUrl) ||
     toDisplayUrl(generatedPortrait) ||
     toDisplayUrl('magic-fanoose/child-photos/d814d243-9300-489d-b275-29144c91ad19.jpeg');
-
-  // For a "write with AI" story, show the customer's OWN generated text (split into
-  // pages) instead of a theme template. Falls back to the theme's pages otherwise.
-  const effectivePages = useMemo(() => {
-    const aiText = (storyData?.mode === 'ai' ? storyData?.generatedText : '') || '';
-    if (aiText.trim()) return splitStoryIntoPages(aiText, 13).map((text: string) => ({ text, imageSrc: '' }));
-    return customPages;
-  }, [storyData, customPages]);
 
   return (
     <div className="min-h-screen bg-[#03060e] pt-20 pb-20 px-2 sm:px-4">
