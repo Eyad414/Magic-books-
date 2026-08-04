@@ -930,7 +930,7 @@ export default function AdminDashboard() {
                     <h3 className="font-arabic font-bold text-white text-sm">{t('admin.full_preview_title', 'معاينة حية كاملة (بدون قفل)')}</h3>
                   </div>
                   <p className="font-arabic text-white/50 text-xs mb-3">{t('admin.full_preview_help', 'افتح الموقع كما يراه الزائر، لكن اقرأ الكتب حتى النهاية بدون قفل. الزوّار يبقون مقفلين. أغلقها من الشارة في أسفل الصفحة.')}</p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 justify-end">
                     <button
                       onClick={() => window.open('/?preview=full', '_blank')}
                       className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-arabic text-xs transition-colors"
