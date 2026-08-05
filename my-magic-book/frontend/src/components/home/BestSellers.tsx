@@ -54,12 +54,19 @@ export default function BestSellers() {
     const theme = themes[selected.themeId];
     const cover = selected.coverPath ? toDisplayUrl(selected.coverPath)
       : theme?.generatedCover ? toDisplayUrl(theme.generatedCover) : '';
+    // If the card points at a SPECIFIC book (coverPath), pull its 13 page photos from
+    // the SAME folder (page-00 → page-01..13). Otherwise the theme has no images (e.g.
+    // Liam's themeId 'space' isn't a DB theme) and the preview would show blank pages.
+    const bookFolder = selected.coverPath ? selected.coverPath.replace(/page-\d+\.(png|jpe?g|webp)$/i, '') : '';
+    const pageImages = bookFolder
+      ? Array.from({ length: 13 }, (_, i) => toDisplayUrl(`${bookFolder}page-${String(i + 1).padStart(2, '0')}.png`))
+      : (theme?.generatedImages || []).map(toDisplayUrl);
     return buildThemePreview({
       theme: textThemeFor(selected.themeId),
       language: i18n.language as any,
       childName: selected.name,
       coverImage: cover,
-      pageImages: (theme?.generatedImages || []).map(toDisplayUrl),
+      pageImages,
       i18n,
       full: effectiveFull,
     });
