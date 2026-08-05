@@ -53,6 +53,11 @@ export default function Stories() {
     card.storyId
       ? storyImgs(card.storyId).map(toDisplayUrl)
       : (themes[card.themeId]?.generatedImages || []).map(toDisplayUrl);
+  // page-99 is the closing portrait the printed book puts on its back cover.
+  const portraitFor = (card: Card) =>
+    card.storyId
+      ? toDisplayUrl(`magic-fanoose/generated/${card.storyId}/page-99.png`)
+      : (themes[card.themeId]?.generatedPortrait ? toDisplayUrl(themes[card.themeId].generatedPortrait) : '');
 
   // Story title, e.g. "مغامرة لورا في حديقة الحيوانات" / "Lora's Adventure in the Zoo".
   const titleFor = (card: Card) => {
@@ -85,6 +90,7 @@ export default function Stories() {
       childName: selected.name,
       coverImage: coverFor(selected),
       pageImages: imagesFor(selected),
+      portraitImage: portraitFor(selected),
       i18n,
       full: true,
     });

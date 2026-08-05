@@ -463,7 +463,7 @@
   },
   "step4": {
     "err_pickup_location": "الرجاء اختيار نقطة الاستلام",
-    "jerusalem": "القدس — هوم مول",
+    "jerusalem": "القدس — مول الدار",
     "pickup_location_label": "نقطة الاستلام المتاحة",
     "pickup_location_placeholder": "اختر نقطة الاستلام من القائمة",
     "ramallah": "رام الله",
@@ -883,7 +883,8 @@
     "photo_alt": "صورة {{name}}",
     "congrats": "أحسنت يا {{name}}! 🌟",
     "completed_desc": "أتممت قراءة قصتك السحرية — استمر في المغامرة!",
-    "more_adventures": "✨ مغامرات أخرى تنتظرك"
+    "more_adventures": "✨ مغامرات أخرى تنتظرك",
+    "the_end": "النهاية"
   },
   "stories": {
     "zoo_adventure": {

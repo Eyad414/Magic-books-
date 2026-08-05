@@ -461,7 +461,7 @@
   },
   "step4": {
     "err_pickup_location": "Please choose a pickup point",
-    "jerusalem": "Jerusalem — Home Mall",
+    "jerusalem": "Jerusalem — Dar Mall",
     "pickup_location_label": "Available pickup point",
     "pickup_location_placeholder": "Choose a pickup point from the list",
     "ramallah": "Ramallah",
@@ -881,7 +881,8 @@
     "photo_alt": "Photo of {{name}}",
     "congrats": "Well done, {{name}}! 🌟",
     "completed_desc": "You have completed reading your magical story — keep on adventuring!",
-    "more_adventures": "✨ More Adventures Await You"
+    "more_adventures": "✨ More Adventures Await You",
+    "the_end": "The End"
   },
   "stories": {
     "zoo_adventure": {

@@ -7,13 +7,15 @@ import { localizeName } from '../../utils/translit';
 const PAGE_COLORS = ['#F2607A', '#7C5CE0', '#159B8A', '#2E7BD6', '#E17055', '#3FA34D'];
 
 export interface PreviewPage {
-  type: 'cover' | 'text' | 'lock';
+  type: 'cover' | 'text' | 'lock' | 'final' | 'back';
   title?: string;
   content?: string;
   /** Sample illustration (Baha) for this page, already a loadable URL. */
   image?: string;
   /** Blurred (locked) page — readable only after payment. */
   blur?: boolean;
+  /** Closing pages: the story's moral / a secondary line under the content. */
+  subtitle?: string;
 }
 
 /**
@@ -29,11 +31,13 @@ export function buildThemePreview(opts: {
   childGender?: 'male' | 'female';
   coverImage?: string;
   pageImages?: string[];
+  /** The book's closing portrait (page-99) — shown on the back cover. */
+  portraitImage?: string;
   i18n: any;
   /** Admin full preview: show the WHOLE book readable, no blur, no lock page. */
   full?: boolean;
 }): PreviewPage[] {
-  const { theme, language, childName = '', childGender, coverImage, pageImages = [], i18n, full = false } = opts;
+  const { theme, language, childName = '', childGender, coverImage, pageImages = [], portraitImage, i18n, full = false } = opts;
   const name = localizeName(
     childName || (language === 'ar' ? 'طفلك' : language === 'he' ? 'הילד' : 'your child'),
     language,
@@ -46,6 +50,29 @@ export function buildThemePreview(opts: {
   const titleRaw = ft(`stories.${theme}.title`, '') as string;
   const pagesObj = ft(`stories.${theme}.pages`, { returnObjects: true }) as Record<string, string> | string;
 
+  /**
+   * The pages the real printed book ends on — "the end" + the story's moral,
+   * then the back cover. Only appended to a FULL preview: a teaser that showed
+   * the ending would give away the payoff.
+   */
+  const closingPages = (): PreviewPage[] => {
+    const moral = personalize((ft(`stories.${theme}.moral`, '') as string) || '');
+    const conclusion = personalize((ft(`stories.${theme}.conclusion`, '') as string) || '');
+    return [
+      {
+        type: 'final',
+        title: ft('storybook.the_end', 'النهاية'),
+        content: conclusion,
+        subtitle: moral,
+      },
+      {
+        type: 'back',
+        title: personalize(titleRaw || ft('step2.preview_generic_title', 'قصة سحرية')),
+        image: portraitImage,
+      },
+    ];
+  };
+
   if (!titleRaw || typeof pagesObj !== 'object') {
     // No scripted story text for this theme — still show an illustrated teaser
     // from the sample images (first ~30% visible, the rest blurred).
@@ -57,7 +84,7 @@ export function buildThemePreview(opts: {
       return [
         { type: 'cover', title: ft('step2.preview_generic_title', 'قصة سحرية'), image: coverImage },
         ...imgPages,
-        ...(full ? [] : [{ type: 'lock', content: lockMsg } as PreviewPage]),
+        ...(full ? closingPages() : [{ type: 'lock', content: lockMsg } as PreviewPage]),
       ];
     }
     return [
@@ -79,7 +106,7 @@ export function buildThemePreview(opts: {
   return [
     { type: 'cover', title: personalize(titleRaw), image: coverImage },
     ...bodyPages,
-    ...(full ? [] : [{ type: 'lock', content: lockMsg } as PreviewPage]),
+    ...(full ? closingPages() : [{ type: 'lock', content: lockMsg } as PreviewPage]),
   ];
 }
 
@@ -182,6 +209,49 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                     <h3 className="font-arabic font-black text-white text-base leading-snug">{page.title}</h3>
                   </div>
                 )
+              ) : page.type === 'final' ? (
+                /* Closing page — "the end" + the story's conclusion and moral,
+                   mirroring FinalStoryPage in the real book. */
+                <div
+                  className="h-full w-full flex flex-col items-center justify-center text-center px-5"
+                  style={{ background: 'radial-gradient(ellipse at 50% 25%, #17294a 0%, #0a1426 70%, #050a15 100%)' }}
+                  dir={dir}
+                >
+                  <div className="text-2xl mb-1.5">🏮</div>
+                  <h3 className="font-arabic font-black text-gold-500 text-base mb-1.5">{page.title}</h3>
+                  <div className="w-10 h-px bg-gold-500/40 mb-2" />
+                  {page.content && (
+                    <p className="font-arabic text-white/85 text-[10px] leading-relaxed max-w-[88%]">{page.content}</p>
+                  )}
+                  {page.subtitle && (
+                    <p className="font-arabic text-gold-300/90 text-[10px] leading-relaxed max-w-[88%] mt-2 italic">
+                      ✨ {page.subtitle}
+                    </p>
+                  )}
+                </div>
+              ) : page.type === 'back' ? (
+                /* Back cover — branded closing sheet with the child's portrait. */
+                <div
+                  className="h-full w-full flex flex-col items-center justify-center text-center px-5 relative"
+                  style={{ background: 'linear-gradient(165deg, #0d1a2e 0%, #050a15 100%)' }}
+                  dir={dir}
+                >
+                  {page.image ? (
+                    <img
+                      src={page.image}
+                      alt=""
+                      className="w-20 h-20 rounded-full object-cover border-2 border-gold-500/70 shadow-lg mb-3"
+                      onError={hideOnError}
+                    />
+                  ) : (
+                    <img src="/logo.png?v=7" alt="" className="w-14 h-14 object-contain mb-3 drop-shadow-[0_0_12px_rgba(212,169,55,0.5)]" />
+                  )}
+                  <p className="font-arabic text-white/70 text-[10px] leading-snug max-w-[85%]">{page.title}</p>
+                  <div className="w-10 h-px bg-gold-500/40 my-2.5" />
+                  <img src="/logo.png?v=7" alt="" className="w-7 h-7 object-contain mb-1" />
+                  <span className="font-brand text-gold-500 text-[11px] tracking-wide">Magic Fanoos</span>
+                  <span className="font-arabic text-white/30 text-[9px] mt-0.5">magicfanoos.com</span>
+                </div>
               ) : page.type === 'lock' ? (
                 <div
                   className="h-full w-full flex flex-col items-center justify-center text-center px-5"

@@ -461,7 +461,7 @@
   },
   "step4": {
     "err_pickup_location": "אנא בחר נקודת איסוף",
-    "jerusalem": "ירושלים — הום מול",
+    "jerusalem": "ירושלים — מול א-דאר",
     "pickup_location_label": "נקודת איסוף זמינה",
     "pickup_location_placeholder": "בחר נקודת איסוף מהרשימה",
     "ramallah": "רמאללה",
@@ -881,7 +881,8 @@
     "photo_alt": "תמונה של {{name}}",
     "congrats": "כל הכבוד, {{name}}! 🌟",
     "completed_desc": "סיימת לקרוא את הסיפור הקסום שלך — המשך להרפתקאות הבאות!",
-    "more_adventures": "✨ הרפתקאות נוספות מחכות לך"
+    "more_adventures": "✨ הרפתקאות נוספות מחכות לך",
+    "the_end": "הסוף"
   },
   "stories": {
     "zoo_adventure": {

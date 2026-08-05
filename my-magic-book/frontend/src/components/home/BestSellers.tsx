@@ -57,12 +57,17 @@ export default function BestSellers() {
     const pageImages = bookFolder
       ? Array.from({ length: 13 }, (_, i) => toDisplayUrl(`${bookFolder}page-${String(i + 1).padStart(2, '0')}.png`))
       : (theme?.generatedImages || []).map(toDisplayUrl);
+    // page-99 is the closing portrait the printed book puts on its back cover.
+    const portraitImage = bookFolder
+      ? toDisplayUrl(`${bookFolder}page-99.png`)
+      : theme?.generatedPortrait ? toDisplayUrl(theme.generatedPortrait) : '';
     return buildThemePreview({
       theme: textThemeFor(selected.themeId),
       language: i18n.language as any,
       childName: selected.name,
       coverImage: cover,
       pageImages,
+      portraitImage,
       i18n,
       full: true,
     });
