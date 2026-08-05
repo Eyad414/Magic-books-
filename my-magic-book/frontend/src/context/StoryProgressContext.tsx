@@ -78,7 +78,21 @@ export const StoryProgressProvider = ({ children }: { children: ReactNode }) => 
   const [progress, setProgress] = useState<StoryProgress>(() => {
     try {
       const saved = localStorage.getItem('mmb_story_progress');
-      return saved ? JSON.parse(saved) : defaultProgress;
+      if (!saved) return defaultProgress;
+      const parsed = JSON.parse(saved) || {};
+      // Merge over the defaults instead of trusting the stored shape. Payloads
+      // written by older versions of the wizard can be missing a whole section
+      // (e.g. storyConfig), and reading `progress.storyConfig.theme` off such a
+      // payload throws — leaving the customer on a permanently blank /create
+      // page that only clearing site data would fix.
+      return {
+        ...defaultProgress,
+        ...parsed,
+        childDetails: { ...defaultProgress.childDetails, ...(parsed.childDetails || {}) },
+        storyConfig: { ...defaultProgress.storyConfig, ...(parsed.storyConfig || {}) },
+        bookCustomization: { ...defaultProgress.bookCustomization, ...(parsed.bookCustomization || {}) },
+        shippingAddress: { ...defaultProgress.shippingAddress, ...(parsed.shippingAddress || {}) },
+      };
     } catch {
       return defaultProgress;
     }

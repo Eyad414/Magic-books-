@@ -33,7 +33,14 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.DEFAULT_HOME_STATS = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
+exports.DEFAULT_HOME_STATS = {
+    storiesCreated: '+500',
+    happyFamilies: '+100',
+    readyStories: '+20',
+    rating: '5 ⭐',
+};
 const SiteSettingsSchema = new mongoose_1.Schema({
     bookPackages: [
         {
@@ -42,6 +49,7 @@ const SiteSettingsSchema = new mongoose_1.Schema({
             price: { type: Number, required: true },
             emoji: { type: String, required: true },
             desc: { type: String, required: true },
+            hidden: { type: Boolean, default: false },
         },
     ],
     themes: [
@@ -50,6 +58,8 @@ const SiteSettingsSchema = new mongoose_1.Schema({
             emoji: { type: String, required: true },
             label: { type: String, required: true },
             desc: { type: String, required: true },
+            titles: { type: mongoose_1.Schema.Types.Mixed, default: undefined },
+            descriptions: { type: mongoose_1.Schema.Types.Mixed, default: undefined },
             pages: { type: mongoose_1.Schema.Types.Mixed, default: [] },
             ready: { type: Boolean, default: false },
             generatedImages: { type: [String], default: undefined },
@@ -65,6 +75,14 @@ const SiteSettingsSchema = new mongoose_1.Schema({
             coloringBackCoverScene: { type: String, default: undefined },
         },
     ],
+    homeStats: {
+        storiesCreated: { type: String, default: exports.DEFAULT_HOME_STATS.storiesCreated },
+        happyFamilies: { type: String, default: exports.DEFAULT_HOME_STATS.happyFamilies },
+        readyStories: { type: String, default: exports.DEFAULT_HOME_STATS.readyStories },
+        rating: { type: String, default: exports.DEFAULT_HOME_STATS.rating },
+    },
+    allowSkipPhoto: { type: Boolean, default: false },
+    aiModeEnabled: { type: Boolean, default: false },
 }, { timestamps: true });
 exports.default = mongoose_1.default.model('SiteSettings', SiteSettingsSchema);
 //# sourceMappingURL=SiteSettings.js.map

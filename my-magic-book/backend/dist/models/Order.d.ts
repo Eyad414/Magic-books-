@@ -32,6 +32,9 @@ export interface IOrder extends Document {
     printInteriorPages?: number;
     bookpodJobId?: string;
     bookpodStatus?: string;
+    coloringPrintCoverUrl?: string;
+    coloringPrintInteriorUrl?: string;
+    coloringBookpodJobId?: string;
     trackingNumber?: string;
     notes?: string;
     createdAt: Date;

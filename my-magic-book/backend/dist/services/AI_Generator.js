@@ -34,10 +34,14 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateStoryWithAI = void 0;
+// Word counts we ASK the model for. On Vertex flash-lite (~65 words/sec) the
+// generation time scales with output length, so keep these modest: a medium
+// story lands ~700–900 words in ~12–14s, which is a good length without the
+// wizard feeling stuck. (1400 took ~19s and risked timing out.)
 const STORY_LENGTH_MAP = {
-    short: 300,
-    medium: 600,
-    long: 1000,
+    short: 500,
+    medium: 900,
+    long: 1300,
 };
 const THEME_LABELS_AR = {
     adventure: 'المغامرة والاستكشاف',
@@ -49,15 +53,19 @@ const THEME_LABELS_AR = {
     animals: 'الحيوانات المحبوبة',
     custom: 'موضوع خاص',
 };
-/** Builds the per-language prompt for the AI model. */
+/** Builds the per-language prompt for the AI model. When the customer wrote their
+ *  own idea (`customThemeNote`), the story is built AROUND that idea — it becomes
+ *  the central topic, not a side note. Otherwise the selected theme is the topic. */
 function buildPrompt(o) {
     const { childName, childAge, childGender, theme, storyLength, language, customThemeNote } = o;
     const wordCount = STORY_LENGTH_MAP[storyLength];
+    const idea = (customThemeNote || '').trim();
     if (language === 'ar') {
         const pronoun = childGender === 'male' ? 'هو' : 'هي';
+        const topic = idea || THEME_LABELS_AR[theme] || 'مغامرة سحرية';
         return `اكتب قصة أطفال سحرية مخصصة لطفل اسمه ${childName}، عمره ${childAge} سنوات، وضميره ${pronoun}.
-موضوع القصة: ${THEME_LABELS_AR[theme] || customThemeNote || 'مغامرة سحرية'}.
-${customThemeNote ? `ملاحظة إضافية: ${customThemeNote}` : ''}
+موضوع القصة: ${topic}.
+${idea ? `مهم جداً: اكتب القصة حول فكرة العميل هذه بالتحديد: «${idea}». اجعل الأحداث والشخصيات والعالم مبنيّة مباشرةً على هذه الفكرة، مع بقاء ${childName} البطل الرئيسي.` : ''}
 اكتب القصة باللغة العربية الفصحى البسيطة المناسبة للأطفال.
 الطول المطلوب: حوالي ${wordCount} كلمة.
 اجعل القصة ممتعة، تعليمية، وتحتوي على ${childName} كبطل رئيسي.
@@ -65,15 +73,19 @@ ${customThemeNote ? `ملاحظة إضافية: ${customThemeNote}` : ''}
     }
     if (language === 'he') {
         const pronoun = childGender === 'male' ? 'הוא' : 'היא';
+        const topic = idea || theme;
         return `כתוב סיפור ילדים קסום ומותאם אישית לילד בשם ${childName}, בן ${childAge}, בלשון ${pronoun}.
-נושא הסיפור: ${theme}. ${customThemeNote ? `הערה: ${customThemeNote}` : ''}
+נושא הסיפור: ${topic}.
+${idea ? `חשוב מאוד: כתוב את הסיפור סביב הרעיון הזה של הלקוח: «${idea}». בנה את העלילה, הדמויות והעולם ישירות על הרעיון הזה, ו-${childName} הוא הגיבור הראשי.` : ''}
 כתוב בעברית פשוטה ומתאימה לגיל הילד.
 אורך רצוי: כ-${wordCount} מילים.
 ${childName} הוא הגיבור הראשי. התחל ישירות בטקסט הסיפור, ללא הקדמות.`;
     }
     const pronoun = childGender === 'male' ? 'he' : 'she';
+    const topic = idea || theme;
     return `Write a magical personalized children's story for a child named ${childName}, age ${childAge}, using ${pronoun} pronouns.
-Story theme: ${theme}. ${customThemeNote ? `Additional note: ${customThemeNote}` : ''}
+Story topic: ${topic}.
+${idea ? `VERY IMPORTANT: base the story specifically on the customer's idea: "${idea}". Build the plot, characters and world directly around this idea, with ${childName} as the main hero.` : ''}
 Write in simple, age-appropriate English. Target length: ~${wordCount} words.
 Make ${childName} the main hero. Start directly with the story text, no commentary.`;
 }
@@ -87,15 +99,23 @@ Make ${childName} the main hero. Start directly with the story text, no commenta
 const generateStoryWithAI = async (options) => {
     const { childName, theme, language } = options;
     const prompt = buildPrompt(options);
-    // 1) Gemini (preferred — uses the existing GEMINI_API_KEY; text is ~free).
-    if (process.env.GEMINI_API_KEY) {
+    const wordCount = STORY_LENGTH_MAP[options.storyLength];
+    // 1) Gemini (preferred — text is ~free). Runs resiliently across AI Studio and
+    //    Vertex: the env-preferred backend (GENAI_USE_VERTEX) is tried first, the
+    //    other is the automatic fallback when it's out of credits/quota. Model ids
+    //    differ per backend (Vertex 500s on "-latest" aliases; AI Studio 404s on
+    //    2.5-*), so both are supplied. flash-lite is fast (no "thinking" tokens).
+    if (process.env.GEMINI_API_KEY || process.env.GCP_PROJECT_ID) {
         try {
-            const { GoogleGenAI } = await Promise.resolve().then(() => __importStar(require('@google/genai')));
-            const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-            const res = await ai.models.generateContent({
-                model: process.env.GEMINI_TEXT_MODEL || 'gemini-2.5-flash',
+            const { generateResilient } = await Promise.resolve().then(() => __importStar(require('./genaiClient')));
+            const override = process.env.GEMINI_TEXT_MODEL;
+            const res = await generateResilient({ studio: override || 'gemini-flash-lite-latest', vertex: override || 'gemini-2.5-flash-lite' }, (model) => ({
+                model,
                 contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            });
+                // Arabic is token-heavy (~2–3 tokens/word) — leave room so a long
+                // story never truncates.
+                config: { temperature: 0.9, maxOutputTokens: Math.min(8192, wordCount * 5 + 2000) },
+            }));
             const text = res.text ||
                 (res.candidates?.[0]?.content?.parts ?? [])
                     .map((p) => p.text)

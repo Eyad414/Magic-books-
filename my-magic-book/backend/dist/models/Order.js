@@ -74,6 +74,9 @@ const OrderSchema = new mongoose_1.Schema({
     printInteriorPages: { type: Number },
     bookpodJobId: { type: String },
     bookpodStatus: { type: String },
+    coloringPrintCoverUrl: { type: String },
+    coloringPrintInteriorUrl: { type: String },
+    coloringBookpodJobId: { type: String },
     trackingNumber: { type: String },
     notes: { type: String },
 }, { timestamps: true });

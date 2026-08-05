@@ -296,7 +296,7 @@
     "child_gender_label": "מין הילד",
     "gender_male": "בן",
     "gender_female": "בת",
-    "photo_label": "האם תרצה להוסיף תמונה של ילדך? (אופציונלי)",
+    "photo_label": "תמונת הילד שלך",
     "photo_yes": "כן, הוסף תמונה 📸",
     "photo_no": "לא, דלג",
     "err_photo": "אנא העלה תמונה כדי להמשיך",
@@ -306,7 +306,8 @@
     "preview_female": "✨ גיבורת הסיפור שלנו תהיה: ",
     "preview_male_suffix": " ילד אמיץ 👦",
     "preview_female_suffix": " ילדה מופלאה 👧",
-    "next_btn": "הבא — בחר נושא לסיפור 👦"
+    "next_btn": "הבא — בחר נושא לסיפור 👦",
+    "photo_label_optional": "האם תרצה להוסיף תמונה של ילדך? (אופציונלי)"
   },
   "step2": {
     "err_template_missing": "סיפור זה בהכנה — אנא בחר אחר או השתמש בבינה מלאכותית.",
@@ -404,7 +405,8 @@
     "theme_pirate_adventure": "פיראטים ואוצר",
     "theme_pirate_adventure_desc": "מסע ימי מרתק בחיפוש אחר אוצר",
     "gen_fallback": "יצירת הסיפור ב-AI נכשלה כרגע — מוצג מדגם, נסו שוב.",
-    "gen_empty": "ה-AI לא החזיר טקסט"
+    "gen_empty": "ה-AI לא החזיר טקסט",
+    "desc_template": "בחר את הסיפור שבו {name} יהיה הגיבור 🌟"
   },
   "step3": {
     "title": "התאם אישית את הספר שלך",
@@ -459,7 +461,7 @@
   },
   "step4": {
     "err_pickup_location": "אנא בחר נקודת איסוף",
-    "jerusalem": "ירושלים",
+    "jerusalem": "ירושלים — הום מול",
     "pickup_location_label": "נקודת איסוף זמינה",
     "pickup_location_placeholder": "בחר נקודת איסוף מהרשימה",
     "ramallah": "רמאללה",
@@ -801,7 +803,16 @@
     "confirm_build_only": "לבנות את הספר לבדיקה (יצירת תמונות + הכנת קבצים) בלי לשלוח ל-BookPod? (כרוך בעלות יצירה ב-AI)",
     "building_only": "בונה את הספר לבדיקה… (עשוי לקחת כמה דקות)",
     "built_for_review": "הספר נבנה ✅ בדוק אותו ואז שלח ל-BookPod",
-    "build_failed": "בניית הספר נכשלה"
+    "build_failed": "בניית הספר נכשלה",
+    "wizard_flags_title": "אפשרויות אשף היצירה",
+    "flag_skip_photo": "אפשר הזמנה ללא תמונת הילד",
+    "flag_skip_photo_help": "כבוי = התמונה חובה בשלב 1",
+    "flag_ai_mode": "הצג \"כתיבה עם AI\" בשלב 2",
+    "flag_ai_mode_help": "כבוי = הלקוח רואה רק סיפורים מוכנים",
+    "save_settings_ok": "נשמר",
+    "showcase_generated": "הספרים שיצרת",
+    "showcase_no_generated": "אין עדיין ספרים שנוצרו — צור סיפור והוא יופיע כאן.",
+    "showcase_demos": "ספרי הדגמה (תבניות)"
   },
   "title_page": {
     "presents": "מוגש ל",

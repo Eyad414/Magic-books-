@@ -1,4 +1,7 @@
 import { Request, Response } from 'express';
+export declare const listMessages: (_req: Request, res: Response) => Promise<void>;
+export declare const deleteMessage: (req: Request, res: Response) => Promise<void>;
+export declare const getCustomerByEmail: (req: Request, res: Response) => Promise<void>;
 export declare const getAllStories: (req: Request, res: Response) => Promise<void>;
 export declare const updateStory: (req: Request, res: Response) => Promise<void>;
 export declare const deleteStory: (req: Request, res: Response) => Promise<void>;
@@ -11,6 +14,8 @@ export declare const updateSettings: (req: Request, res: Response) => Promise<vo
 export declare const getAllOrders: (req: Request, res: Response) => Promise<void>;
 export declare const buildOrderBook: (req: Request, res: Response) => Promise<void>;
 export declare const reRenderOrderFiles: (req: Request, res: Response) => Promise<void>;
+export declare const reRenderOrderColoring: (req: Request, res: Response) => Promise<void>;
+export declare const submitOrderColoring: (req: Request, res: Response) => Promise<void>;
 export declare const printBook: (req: Request, res: Response) => Promise<void>;
 export declare const printBookSubmit: (req: Request, res: Response) => Promise<void>;
 export declare const generatePreviewIllustrations: (req: Request, res: Response) => Promise<void>;

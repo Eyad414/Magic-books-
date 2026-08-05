@@ -52,6 +52,9 @@ const StorySchema = new mongoose_1.Schema({
     generatedImages: { type: [String], default: undefined },
     generatedCover: { type: String, default: undefined },
     generatedPortrait: { type: String, default: undefined },
+    coloringImages: { type: [String], default: undefined },
+    coloringCover: { type: String, default: undefined },
+    coloringBackCover: { type: String, default: undefined },
     status: {
         type: String,
         enum: ['draft', 'generating', 'ready', 'ordered'],

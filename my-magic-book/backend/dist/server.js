@@ -19,6 +19,9 @@ const adminRoutes_1 = __importDefault(require("./routes/adminRoutes"));
 const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
 const publicRoutes_1 = __importDefault(require("./routes/publicRoutes"));
 const uploadRoutes_1 = __importDefault(require("./routes/uploadRoutes"));
+const envFlag_1 = require("./utils/envFlag");
+const sceneTemplates_1 = require("./services/sceneTemplates");
+const UpscaleService_1 = require("./services/UpscaleService");
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 5001;
 // Connect Database, then run the one-shot admin reset if RESET_ADMIN_PASSWORD is set
@@ -41,9 +44,36 @@ app.use((0, cors_1.default)({
 app.use('/api/orders/webhook', express_1.default.raw({ type: 'application/json' }));
 app.use(express_1.default.json({ limit: '10mb' }));
 app.use(express_1.default.urlencoded({ extended: true }));
-// Health check
-app.get('/api/health', (_req, res) => {
-    res.json({ status: 'OK', message: 'My Magic Book API is running ✨', timestamp: new Date().toISOString() });
+// Health check. Includes a small NON-SENSITIVE generation-config summary
+// (booleans + model ids, never keys) so we can tell from outside which AI
+// backend a deploy is actually using when generation silently falls back.
+app.get('/api/health', async (req, res) => {
+    const preferVertex = (0, envFlag_1.envFlag)('GENAI_USE_VERTEX');
+    const studioAvailable = !!process.env.GEMINI_API_KEY;
+    const vertexAvailable = !!process.env.GCP_PROJECT_ID;
+    const body = {
+        status: 'OK',
+        message: 'My Magic Book API is running ✨',
+        timestamp: new Date().toISOString(),
+        genai: {
+            // Generation tries the preferred backend, then automatically falls back to
+            // the other on a credits/quota/auth failure — so it works as long as ONE
+            // of these is available.
+            preferVertex,
+            order: preferVertex ? ['vertex', 'studio'] : ['studio', 'vertex'],
+            vertexAvailable,
+            studioAvailable,
+            location: process.env.GCP_LOCATION || 'global',
+            imageModel: process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image',
+        },
+        // Which story scene-templates this build knows about (confirms deploys).
+        stories: Object.keys(sceneTemplates_1.SCENE_TEMPLATES),
+    };
+    // Diagnostic: ?probe=upscale actually calls the Imagen upscaler once (cached 5
+    // min) so we can see the real HTTP status/error from this host's identity.
+    if (req.query.probe === 'upscale')
+        body.upscale = await (0, UpscaleService_1.upscaleProbe)();
+    res.json(body);
 });
 // API Routes
 app.use('/api/auth', authRoutes_1.default);

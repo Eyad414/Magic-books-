@@ -1,13 +1,47 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generatePhotorealPreview = exports.generateColoringPreview = exports.generatePreviewIllustrations = exports.printBookSubmit = exports.printBook = exports.reRenderOrderFiles = exports.buildOrderBook = exports.getAllOrders = exports.updateSettings = exports.getPublicSettings = exports.getSettings = exports.getTeam = exports.removeAdmin = exports.addAdmin = exports.deleteStory = exports.updateStory = exports.getAllStories = void 0;
+exports.generatePhotorealPreview = exports.generateColoringPreview = exports.generatePreviewIllustrations = exports.printBookSubmit = exports.printBook = exports.submitOrderColoring = exports.reRenderOrderColoring = exports.reRenderOrderFiles = exports.buildOrderBook = exports.getAllOrders = exports.updateSettings = exports.getPublicSettings = exports.getSettings = exports.getTeam = exports.removeAdmin = exports.addAdmin = exports.deleteStory = exports.updateStory = exports.getAllStories = exports.getCustomerByEmail = exports.deleteMessage = exports.listMessages = void 0;
 const User_1 = __importDefault(require("../models/User"));
 const Story_1 = __importDefault(require("../models/Story"));
 const Order_1 = __importDefault(require("../models/Order"));
-const SiteSettings_1 = __importDefault(require("../models/SiteSettings"));
+const SiteSettings_1 = __importStar(require("../models/SiteSettings"));
+const ContactMessage_1 = __importDefault(require("../models/ContactMessage"));
 const BookBuilder_1 = require("../services/BookBuilder");
 const ImageGenerator_1 = require("../services/ImageGenerator");
 const promptBuilder_1 = require("../services/promptBuilder");
@@ -24,6 +58,70 @@ function substituteName(s, name) {
         .replace(/\{\{\s*name\s*\}\}/gi, name)
         .replace(/\{\s*name\s*\}/gi, name);
 }
+// @route GET /api/admin/messages
+// @desc List customer contact-form messages (newest first) for the admin inbox
+const listMessages = async (_req, res) => {
+    try {
+        const messages = await ContactMessage_1.default.find().sort({ createdAt: -1 }).lean();
+        res.json({ success: true, messages });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+exports.listMessages = listMessages;
+// @route DELETE /api/admin/messages/:id
+// @desc Remove a contact message from the inbox
+const deleteMessage = async (req, res) => {
+    try {
+        await ContactMessage_1.default.findByIdAndDelete(req.params.id);
+        res.json({ success: true });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+exports.deleteMessage = deleteMessage;
+// @route GET /api/admin/customer?email=<email>
+// @desc  Full customer profile for a contact message: their account (if
+//        registered), their orders/books, their stories, and all their
+//        messages — so the admin can see everything about one person.
+const getCustomerByEmail = async (req, res) => {
+    try {
+        const email = String(req.query.email || '').toLowerCase().trim();
+        if (!email) {
+            res.status(400).json({ success: false, message: 'email required' });
+            return;
+        }
+        const user = await User_1.default.findOne({ email }).select('-passwordHash').lean();
+        const messages = await ContactMessage_1.default.find({ email }).sort({ createdAt: -1 }).lean();
+        let orders = [];
+        let storiesCount = 0;
+        if (user) {
+            orders = await Order_1.default.find({ userId: user._id })
+                .populate('storyId', 'childName theme bookPackage')
+                .sort({ createdAt: -1 })
+                .lean();
+            storiesCount = await Story_1.default.countDocuments({ userId: user._id });
+        }
+        res.json({
+            success: true,
+            customer: {
+                email,
+                user, // null if this sender never created an account
+                orders,
+                ordersCount: orders.length,
+                storiesCount,
+                messages,
+                messagesCount: messages.length,
+            },
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+exports.getCustomerByEmail = getCustomerByEmail;
 // @route GET /api/admin/stories
 // @desc Get all stories from all users
 const getAllStories = async (req, res) => {
@@ -185,6 +283,124 @@ const getSettings = async (req, res) => {
                 settings.markModified('themes');
                 await settings.save();
             }
+            // Auto-inject / repair the "magic_book" theme (story text lives in
+            // translation.json stories.magic_book; these pages drive image prompts).
+            // Its demo illustrations (Baha) are pre-generated in GCS.
+            const mbFolder = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
+            const mbCover = `${mbFolder}/generated/theme_magic_book/page-00.png`;
+            const mbImages = Array.from({ length: 13 }, (_, i) => `${mbFolder}/generated/theme_magic_book/page-${String(i + 1).padStart(2, '0')}.png`);
+            const mbTheme = settings.themes.find((t) => t.id === 'magic_book');
+            if (mbTheme && (!mbTheme.generatedImages || mbTheme.generatedImages.length === 0)) {
+                // Theme already exists but has no demo images yet — attach them.
+                mbTheme.generatedCover = mbCover;
+                mbTheme.generatedImages = mbImages;
+                mbTheme.generatedPortrait = mbCover;
+                mbTheme.ready = true;
+                settings.markModified('themes');
+                await settings.save();
+            }
+            if (!mbTheme) {
+                settings.themes.push({
+                    id: 'magic_book',
+                    emoji: '📖',
+                    label: 'رحلة الكتاب المسحور',
+                    desc: 'مغامرة سحرية داخل عالم الكتب لإعادة الألوان والسعادة',
+                    ready: true,
+                    generatedCover: mbCover,
+                    generatedImages: mbImages,
+                    generatedPortrait: mbCover,
+                    pages: [
+                        { text: "في غرفةٍ صغيرةٍ مليئةٍ بالألعاب، كان {{name}} يجلس وحيداً يقلّب صفحات كتابٍ قديمٍ وجده في الخزانة. وفجأةً بدأت الصفحات تلمع بضوءٍ ذهبيٍّ غريب!", imageSrc: "" },
+                        { text: "\"يا إلهي!\" صرخ {{name}}. سحب الضوءُ يده ببطء، وفي لمح البصر وجد نفسه يطير داخل دوّامةٍ من الألوان والكلمات الطائرة.", imageSrc: "" },
+                        { text: "سقط {{name}} بلطفٍ على أرضٍ مصنوعةٍ من الورق. كانت الأشجار هناك أقلام تلوينٍ ضخمة، والسماء مرسومةً بألوانٍ مائيةٍ زاهية.", imageSrc: "" },
+                        { text: "ظهر أرنبٌ صغيرٌ يرتدي نظارةً ويحمل ريشة رسم، وقال: \"أهلاً بك يا {{name}} في عالم القصص! نحن بانتظارك منذ زمن.\"", imageSrc: "" },
+                        { text: "أخبر الأرنبُ {{name}} أنّ \"لون السعادة\" قد اختفى من الكتاب، وأنّ العالم يتحوّل إلى الأبيض والأسود، ولا يعيده إلا شجاعة طفلٍ حقيقي.", imageSrc: "" },
+                        { text: "بدأ {{name}} رحلته ووصل إلى \"نهر الحبر الأزرق\"، لكنّ الجسر كان مكسوراً. ففكّر بذكاء، وأمسك قلم رصاصٍ عملاقاً ورسم جسراً قوياً عبر به بسلام.", imageSrc: "" },
+                        { text: "في الغابة المظلمة، التقى {{name}} بومةً حكيمة سألته: \"ما أقوى شيءٍ في العالم؟\" فأجاب: \"الخيال!\". ابتسمت البومة وأعطته مفتاحاً مضيئاً.", imageSrc: "" },
+                        { text: "وصل {{name}} إلى جبل الحكايات. كان الطريق وعراً، لكنه تذكّر كلمات والدته عن الصبر، فواصل التسلّق حتى بلغ القمة.", imageSrc: "" },
+                        { text: "في القمة وجد {{name}} صندوقاً قديماً مغلقاً. استخدم المفتاح المضيء، وحين فتحه انطلقت آلاف الفراشات الملوّنة تلوّن كلّ ما تلمسه.", imageSrc: "" },
+                        { text: "بدأت الأشجار تكتسي بالأخضر، والأزهار بالأحمر، وعاد \"لون السعادة\" إلى العالم بفضل شجاعة {{name}}.", imageSrc: "" },
+                        { text: "اجتمعت كلّ شخصيات الكتاب للاحتفال، ورقص الأرنب والبومة مع {{name}}، وشكروه لأنه أنقذ عالمهم من الاختفاء.", imageSrc: "" },
+                        { text: "قال الأرنب: \"حان وقت العودة يا بطل، لكن تذكّر أنّ هذا الكتاب بيتك الثاني، وخيالك هو مفتاح الدخول.\" ولوّح {{name}} مودّعاً بينما ظهرت الدوّامة الذهبية لتأخذه.", imageSrc: "" },
+                        { text: "فتح {{name}} عينيه ليجد نفسه في غرفته والكتاب في حضنه. لم يعد يلمع، لكنّ قلبه امتلأ بالحماس. ابتسم وأغلقه، وهو يعلم أنّ مغامرته القادمة تسكن دائماً بين صفحات كتابه السحري.", imageSrc: "" }
+                    ]
+                });
+                settings.markModified('themes');
+                await settings.save();
+            }
+            // Pirate Treasure — premium theme (scene template + voweled/gendered text
+            // in code). Heal an existing entry (attach the photoreal demo images +
+            // real text + mark ready) or seed it fresh.
+            const pirFolder = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
+            const pirCover = `${pirFolder}/generated/theme_pirate_adventure/page-00.png`;
+            const pirImages = Array.from({ length: 13 }, (_, i) => `${pirFolder}/generated/theme_pirate_adventure/page-${String(i + 1).padStart(2, '0')}.png`);
+            const pirPortrait = `${pirFolder}/generated/theme_pirate_adventure/page-99.png`;
+            const PIRATE_PAGES = [
+                { text: "فِي صَبَاحٍ مُشْمِسٍ، وَجَدَ{|تْ} {{name}} زُجَاجَةً قَدِيمَةً عَلَى الشَّاطِئِ، وَبِدَاخِلِهَا خَرِيطَةُ كَنْزٍ! فَفَرِحَ{|تْ} كَثِيراً وَقَرَّرَ{|تْ} أَنْ {يُصْبِحَ|تُصْبِحَ} {قُبْطَاناً|قُبْطَانَةً} لِلْقَرَاصِنَةِ.", imageSrc: "" },
+                { text: "رَكِبَ{|تْ} {{name}} سَفِينَةً خَشَبِيَّةً صَغِيرَةً ذَاتَ شِرَاعٍ أَبْيَضَ، وَرَفَعَ{|تْ} الرَّايَةَ، وَأَبْحَرَ{|تْ} فِي الْبَحْرِ الْأَزْرَقِ وَه{ُوَ|ِيَ} {يَ|تَ}شْعُرُ بِالشَّجَاعَةِ.", imageSrc: "" },
+                { text: "حَطَّ بَبْغَاءٌ مُلَوَّنٌ لَطِيفٌ عَلَى كَتِفِ {{name}}، وَأَخَذَ يُغَرِّدُ بِفَرَحٍ، فَأَصْبَحَ رَفِيقاً وَفِيّاً فِي الرِّحْلَةِ.", imageSrc: "" },
+                { text: "فَجْأَةً تَجَمَّعَتِ الْغُيُومُ الدَّاكِنَةُ وَتَمَايَلَتِ السَّفِينَةُ بَيْنَ الْأَمْوَاجِ الْعَالِيَةِ. أَمْسَكَ{|تْ} {{name}} عَجَلَةَ الْقِيَادَةِ بِقُوَّةٍ وَقَادَ{|تْ} بِشَجَاعَةٍ عَبْرَ الْعَاصِفَةِ.", imageSrc: "" },
+                { text: "هَدَأَ الْبَحْرُ، وَوَصَلَ{|تْ} {{name}} إِلَى جَزِيرَةٍ خَضْرَاءَ غَامِضَةٍ ذَاتِ نَخِيلٍ عَالٍ وَرِمَالٍ ذَهَبِيَّةٍ.", imageSrc: "" },
+                { text: "قَفَزَ دُلْفِينٌ لَطِيفٌ مِنَ الْمَاءِ، وَبِأَصْوَاتٍ وَدُودَةٍ، أَشَارَ إِلَى {{name}} نَحْوَ طَرِيقٍ خَفِيٍّ عَلَى الْجَزِيرَةِ.", imageSrc: "" },
+                { text: "تَبِعَ{|تْ} {{name}} الْخَرِيطَةَ عَبْرَ الْغَابَةِ، وَعَبَرَ{|تْ} جِسْراً حَبْلِيّاً مُتَمَايِلاً فَوْقَ نَهْرٍ مُتَلَأْلِئٍ بِكُلِّ شَجَاعَةٍ.", imageSrc: "" },
+                { text: "فِي نِهَايَةِ الطَّرِيقِ، وَجَدَ{|تْ} {{name}} كَهْفاً مُظْلِماً تَحْرُسُهُ سُلَحْفَاةٌ عَجُوزٌ طَيِّبَةٌ، سَأَلَتْ{هُ|هَا}: \"مَا الْأَقْوَى مِنَ الذَّهَبِ؟\"", imageSrc: "" },
+                { text: "فَكَّرَ{|تْ} {{name}} قَلِيلاً ثُمَّ أَجَابَ{|تْ}: \"الْقَلْبُ الطَّيِّبُ!\" فَابْتَسَمَتِ السُّلَحْفَاةُ وَفَتَحَتْ بَابَ الْكَهْفِ.", imageSrc: "" },
+                { text: "بِالدَّاخِلِ، رَأَ{ى|تْ} {{name}} صُنْدُوقَ كَنْزٍ كَبِيراً، لَكِنَّ{هُ|هَا} سَمِعَ{|تْ} سَلْطَعُوناً صَغِيراً عَالِقاً تَحْتَ صَخْرَةٍ، فَتَوَقَّفَ{|تْ} لِ{يُ|تُ}حَرِّرَهُ أَوَّلاً.", imageSrc: "" },
+                { text: "شَكَرَ{هُ|هَا} السَّلْطَعُونُ مُمْتَنّاً، وَأَرَا{هُ|هَا} الْمِفْتَاحَ الذَّهَبِيَّ. فَتَحَ{|تْ} {{name}} الصُّنْدُوقَ: فَتَلَأْلَأَ بِالْعُمْلَاتِ الذَّهَبِيَّةِ وَتَاجٍ لَامِعٍ!", imageSrc: "" },
+                { text: "عَلَى الشَّاطِئِ، اِحْتَفَلَ{|تْ} {{name}} مَعَ الْبَبْغَاءِ وَالدُّلْفِينِ وَالسَّلْطَعُونِ، وَتَقَاسَمَ{|تْ} الْكَنْزَ مَعَهُمْ وَه{ُوَ|ِيَ} {يَ|تَ}ضْحَكُ بِفَرَحٍ.", imageSrc: "" },
+                { text: "وَمَعَ غُرُوبِ الشَّمْسِ، أَبْحَرَ{|تْ} {{name}} عَائِد{ًا|َةً} إِلَى الْبَيْتِ مُرْتَدِي{ًا|َةً} التَّاجَ، مُحْتَفِظ{ًا|َةً} بِعُمْلَةٍ ذَهَبِيَّةٍ، {يَ|تَ}حْلُمُ بِالْمُغَامَرَةِ الْقَادِمَةِ.", imageSrc: "" }
+            ];
+            const pirTheme = settings.themes.find((t) => t.id === 'pirate_adventure');
+            if (!pirTheme) {
+                settings.themes.push({
+                    id: 'pirate_adventure', emoji: '🏴‍☠️',
+                    label: 'مغامرة القراصنة والكنز', desc: 'رحلة بحرية شيقة بحثاً عن الكنز',
+                    ready: true, generatedCover: pirCover, generatedImages: pirImages, generatedPortrait: pirPortrait,
+                    pages: PIRATE_PAGES,
+                });
+                settings.markModified('themes');
+                await settings.save();
+            }
+            else {
+                const arabicLen = (pirTheme.pages?.[0]?.text || '').replace(/[^\u0621-\u064A]/g, '').length;
+                if (!pirTheme.ready || !Array.isArray(pirTheme.pages) || arabicLen < 5 || pirTheme.generatedCover !== pirCover) {
+                    pirTheme.ready = true;
+                    pirTheme.generatedCover = pirCover;
+                    pirTheme.generatedImages = pirImages;
+                    pirTheme.generatedPortrait = pirPortrait;
+                    pirTheme.pages = PIRATE_PAGES;
+                    settings.markModified('themes');
+                    await settings.save();
+                }
+            }
+            // Space (space_real) — the ready story had images but 0 stored pages, so the
+            // wizard's "ready story" mode showed "under preparation". Seed its text pages
+            // (same text as the code template) into the DB so the theme is self-contained.
+            const SPACE_PAGES = [
+                { text: "كان {{name}} يحلم دائماً بالنجوم. وفي ليلة هادئة، تحول سريره فجأة إلى مركبة فضائية متطورة مليئة بالأزرار اللامعة!", imageSrc: "" },
+                { text: "بكل حماس، ضغط {{name}} على الزر الأحمر الكبير، وانطلقت المركبة بسرعة البرق نحو السماء الزرقاء الداكنة.", imageSrc: "" },
+                { text: "فجأة، طار كل شيء في الغرفة! وبسبب انعدام الجاذبية، أصبح {{name}} يسبح في الهواء كأنه سمكة محاطة بالنجوم.", imageSrc: "" },
+                { text: "نظر {{name}} من النافذة الكبيرة، ورأى كوكب الأرض من بعيد يبدو مثل كرة زجاجية زرقاء جميلة وصغيرة جداً.", imageSrc: "" },
+                { text: "هبطت المركبة بهدوء على كوكب غريب مغطى بالرمال البنفسجية الناعمة، وكان كل شيء من حوله يلمع بيقظة.", imageSrc: "" },
+                { text: "من خلف إحدى الصخور، ظهر مخلوق فضائي صغير ولطيف، يملك عيوناً واسعة ولامعة، وبدأ يلوح لـ {{name}} بترحيب.", imageSrc: "" },
+                { text: "لم يتكلم المخلوق، لكنه رسم في الهواء بيديه صورة قلب كبير، فعرف {{name}} على الفور أنه يريد أن يكون صديقه.", imageSrc: "" },
+                { text: "أشار الصديق الفضائي بحزن إلى حفرة عميقة؛ لقد سقط فيها \"حجر الطاقة\" الذي يمنح كوكبه الحياة والنور.", imageSrc: "" },
+                { text: "بلا تردد، ربط {{name}} نفسه بحبل القفز السحري، ونزل إلى الحفرة المظلمة بكل شجاعة لاستعادة الحجر.", imageSrc: "" },
+                { text: "عندما أخرج {{name}} الحجر ووضعه في مكانه، أضاء الكوكب كله فجأة بأنوار زاهية تشبه الألعاب النارية الملونة.", imageSrc: "" },
+                { text: "تقديراً لشجاعته، قدم المخلوق الفضائي لـ {{name}} \"نجمة صغيرة\" تلمع في الظلام ليتذكره دائماً، ثم حان وقت الوداع.", imageSrc: "" },
+                { text: "عادت المركبة الفضائية لتنطلق بالبطل الصغير نحو الأرض، مارةً بسحب ملونة وناعمة تشبه غزل البنات.", imageSrc: "" },
+                { text: "استيقظ {{name}} في سريره، ونظر إلى يده ليجد \"النجمة الصغيرة\" لا تزال تلمع! فابتسم وهو يعلم أن الشجاعة تفتح لنا أسرار الكون.", imageSrc: "" },
+            ];
+            const spaceTheme = settings.themes.find((t) => t.id === 'space_real');
+            if (spaceTheme) {
+                const spArabicLen = (spaceTheme.pages?.[0]?.text || '').replace(/[^ء-ي]/g, '').length;
+                if (!Array.isArray(spaceTheme.pages) || spaceTheme.pages.length < 13 || spArabicLen < 5) {
+                    spaceTheme.pages = SPACE_PAGES;
+                    spaceTheme.ready = true;
+                    settings.markModified('themes');
+                    await settings.save();
+                }
+            }
         }
         res.json({ success: true, settings });
     }
@@ -206,6 +422,9 @@ const getPublicSettings = async (_req, res) => {
         const filtered = {
             bookPackages: settings.bookPackages,
             themes: settings.themes.filter((t) => t.ready === true),
+            homeStats: settings.homeStats || SiteSettings_1.DEFAULT_HOME_STATS,
+            allowSkipPhoto: !!settings.allowSkipPhoto,
+            aiModeEnabled: !!settings.aiModeEnabled,
         };
         res.json({ success: true, settings: filtered });
     }
@@ -217,10 +436,10 @@ exports.getPublicSettings = getPublicSettings;
 // @route PUT /api/admin/settings
 const updateSettings = async (req, res) => {
     try {
-        const { bookPackages, themes } = req.body;
+        const { bookPackages, themes, homeStats, allowSkipPhoto, aiModeEnabled } = req.body;
         let settings = await SiteSettings_1.default.findOne();
         if (!settings) {
-            settings = new SiteSettings_1.default({ bookPackages, themes });
+            settings = new SiteSettings_1.default({ bookPackages, themes, homeStats, allowSkipPhoto, aiModeEnabled });
         }
         else {
             if (bookPackages) {
@@ -230,6 +449,16 @@ const updateSettings = async (req, res) => {
             if (themes) {
                 settings.themes = themes;
                 settings.markModified('themes');
+            }
+            if (homeStats) {
+                settings.homeStats = homeStats;
+                settings.markModified('homeStats');
+            }
+            if (typeof allowSkipPhoto === 'boolean') {
+                settings.allowSkipPhoto = allowSkipPhoto;
+            }
+            if (typeof aiModeEnabled === 'boolean') {
+                settings.aiModeEnabled = aiModeEnabled;
             }
         }
         await settings.save();
@@ -278,13 +507,24 @@ const buildOrderBook = async (req, res) => {
                 return;
             }
         }
+        // buildOnly = generate + prepare the print files but DON'T submit to BookPod,
+        // so the admin can review the book before the billable send.
+        const buildOnly = req.body?.buildOnly === true;
         // Run synchronously so the admin sees success/failure in the response.
         // If the book is ALREADY built (images generated), don't regenerate — just
-        // (re)submit the existing files to BookPod. Errors here are surfaced (not
-        // swallowed) so a failed submission is visible instead of a false success.
-        const updated = order.illustrationsStatus === 'ready'
-            ? await (0, BookBuilder_1.submitOrderToBookPod)(String(order._id))
-            : await (0, BookBuilder_1.buildBookForOrder)(String(order._id));
+        // (re)submit the existing files to BookPod (unless buildOnly). Errors here
+        // are surfaced (not swallowed) so a failure is visible, not a false success.
+        let updated;
+        if (order.illustrationsStatus === 'ready') {
+            // Already built: buildOnly rebuilds the print files (so a review reflects
+            // the current images) without submitting; otherwise (re)submit to BookPod.
+            updated = buildOnly
+                ? await (0, BookBuilder_1.reRenderPrintFilesForOrder)(String(order._id))
+                : await (0, BookBuilder_1.submitOrderToBookPod)(String(order._id));
+        }
+        else {
+            updated = await (0, BookBuilder_1.buildBookForOrder)(String(order._id), !buildOnly);
+        }
         res.json({ success: true, order: updated });
     }
     catch (err) {
@@ -313,6 +553,40 @@ const reRenderOrderFiles = async (req, res) => {
     }
 };
 exports.reRenderOrderFiles = reRenderOrderFiles;
+// @route POST /api/admin/orders/:id/coloring/rerender  — Pro: rebuild coloring print files (free)
+const reRenderOrderColoring = async (req, res) => {
+    try {
+        const order = await Order_1.default.findById(req.params.id);
+        if (!order) {
+            res.status(404).json({ success: false, message: 'order not found' });
+            return;
+        }
+        const updated = await (0, BookBuilder_1.reRenderColoringForOrder)(String(order._id));
+        res.json({ success: true, order: updated });
+    }
+    catch (err) {
+        console.error('reRenderOrderColoring failed:', err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+exports.reRenderOrderColoring = reRenderOrderColoring;
+// @route POST /api/admin/orders/:id/coloring/submit  — Pro: submit coloring book to BookPod
+const submitOrderColoring = async (req, res) => {
+    try {
+        const order = await Order_1.default.findById(req.params.id);
+        if (!order) {
+            res.status(404).json({ success: false, message: 'order not found' });
+            return;
+        }
+        const updated = await (0, BookBuilder_1.submitColoringForOrder)(String(order._id));
+        res.json({ success: true, order: updated });
+    }
+    catch (err) {
+        console.error('submitOrderColoring failed:', err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+exports.submitOrderColoring = submitOrderColoring;
 // @route POST /api/admin/print-book
 // @desc  Build a print-ready PDF (cover + interior) for a showcase/preview book
 //        from the admin book viewer's "Download" button. Not tied to a paid order

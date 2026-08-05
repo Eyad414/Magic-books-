@@ -24,6 +24,9 @@ export default function AdminDashboard() {
   const [team, setTeam] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
+  // Every story ever generated — powers the "ready books" tab.
+  const [allStories, setAllStories] = useState<any[]>([]);
+  const [storiesLoading, setStoriesLoading] = useState(false);
   const [settings, setSettings] = useState<any>(null);
   // Customer profile modal (opened from a message).
   const [customer, setCustomer] = useState<any>(null);
@@ -406,8 +409,21 @@ export default function AdminDashboard() {
       fetchSettings();
       fetchOrders();
       fetchMessages();
+      fetchAllStories();
     }
   }, [user]);
+
+  const fetchAllStories = async () => {
+    setStoriesLoading(true);
+    try {
+      const res = await adminApi.getAllStories();
+      if (res.success) setAllStories(res.stories || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setStoriesLoading(false);
+    }
+  };
 
   const fetchTeam = async () => {
     try {
@@ -516,6 +532,24 @@ export default function AdminDashboard() {
     }
   };
 
+  // A story counts as a real "ready book" once it has illustrations — that's
+  // what makes it openable/printable. Newest first (the API already sorts).
+  const generatedBooks = allStories.filter((s: any) => (s?.generatedImages?.length ?? 0) > 0 || s?.generatedCover);
+
+  // Wizard feature switch: flip it locally, persist just that one flag, and
+  // roll back if the save fails.
+  const saveFlag = async (key: 'allowSkipPhoto' | 'aiModeEnabled', value: boolean) => {
+    setSettings({ ...settings, [key]: value });
+    try {
+      const res = await adminApi.updateSettings({ [key]: value });
+      if (!res.success) throw new Error();
+      toast.success(t('admin.save_settings_ok', 'تم الحفظ'));
+    } catch {
+      setSettings({ ...settings, [key]: !value });
+      toast.error(t('admin.save_settings_fail'));
+    }
+  };
+
   if (isLoading || !settings) return <div className="min-h-screen pt-24 text-center text-white/50">{t('admin.loading')}</div>;
 
   return (
@@ -559,12 +593,12 @@ export default function AdminDashboard() {
           <div className="glass-card p-6 min-h-[500px]">
             {tab === 'orders' ? (
               <div>
-                <div className="flex items-center justify-between mb-8">
-                  <h2 className="font-arabic font-bold text-2xl text-white">{t('admin.orders_title')}</h2>
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="font-arabic font-bold text-xl text-white">{t('admin.orders_title')}</h2>
                   <MagicButton onClick={fetchOrders} size="sm" variant="outline">{t('admin.refresh_data')}</MagicButton>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {orders.length === 0 ? (
                     <div className="text-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10">
                       <Package className="w-12 h-12 text-white/20 mx-auto mb-4" />
@@ -572,12 +606,12 @@ export default function AdminDashboard() {
                     </div>
                   ) : (
                     orders.map((order) => (
-                      <div key={order._id} className="bg-dark-700/50 rounded-2xl border border-white/5 p-6 hover:border-gold-500/30 transition-all group">
-                        <div className="flex flex-col gap-5">
+                      <div key={order._id} className="bg-dark-700/50 rounded-2xl border border-white/5 p-3.5 hover:border-gold-500/30 transition-all group">
+                        <div className="flex flex-col gap-3">
                           {/* Order Info */}
                           <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-4">
-                              <div className="px-3 py-1 bg-gold-500/10 text-gold-500 rounded-lg text-xs font-bold font-mono">
+                            <div className="flex flex-wrap items-center gap-2 mb-2.5">
+                              <div className="px-2 py-0.5 bg-gold-500/10 text-gold-500 rounded-lg text-xs font-bold font-mono">
                                 #{order._id.slice(-8).toUpperCase()}
                               </div>
                               <StatusBadge tone={order.paymentStatus === 'paid' ? 'green' : 'gold'} icon={order.paymentStatus === 'paid' ? CheckCircle : Clock}>
@@ -590,11 +624,11 @@ export default function AdminDashboard() {
                                 <StatusBadge tone="neutral" icon={Clock}>{t('admin.bookpod_pending', 'بانتظار الإرسال')}</StatusBadge>
                               )}
                               {order.storyId?.bookPackage === 'pro' ? (
-                                <div className="flex items-center gap-1 text-xs font-black px-3 py-1 rounded-lg bg-gradient-to-l from-gold-400 to-amber-500 text-dark-900 shadow-lg shadow-gold-500/40">
+                                <div className="flex items-center gap-1 text-xs font-black px-2 py-0.5 rounded-lg bg-gradient-to-l from-gold-400 to-amber-500 text-dark-900 shadow-lg shadow-gold-500/40">
                                   ✨ PRO
                                 </div>
                               ) : order.storyId?.bookPackage ? (
-                                <div className="text-xs font-bold px-3 py-1 rounded-lg bg-white/10 text-white/70 font-arabic">
+                                <div className="text-xs font-bold px-2 py-0.5 rounded-lg bg-white/10 text-white/70 font-arabic">
                                   {t(`step3.pkg_${order.storyId.bookPackage}`, order.storyId.bookPackage) as string}
                                 </div>
                               ) : null}
@@ -603,9 +637,9 @@ export default function AdminDashboard() {
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                               {/* Customer */}
-                              <div className="rounded-xl bg-white/5 border border-white/10 p-4 space-y-2.5">
+                              <div className="rounded-xl bg-white/5 border border-white/10 p-2.5 space-y-1.5">
                                 <h4 className="font-arabic text-white/40 text-[11px] font-bold uppercase tracking-wide flex items-center gap-1.5">
                                   <Users className="w-3.5 h-3.5 text-gold-500/80" /> {t('admin.customer_info')}
                                 </h4>
@@ -624,7 +658,7 @@ export default function AdminDashboard() {
                                 )}
                               </div>
                               {/* Story */}
-                              <div className="rounded-xl bg-white/5 border border-white/10 p-4 space-y-2.5">
+                              <div className="rounded-xl bg-white/5 border border-white/10 p-2.5 space-y-1.5">
                                 <h4 className="font-arabic text-white/40 text-[11px] font-bold uppercase tracking-wide flex items-center gap-1.5">
                                   <BookOpen className="w-3.5 h-3.5 text-gold-500/80" /> {t('admin.story_details')}
                                 </h4>
@@ -655,9 +689,8 @@ export default function AdminDashboard() {
                           </div>
 
                           {/* Actions — grouped under a labelled divider (wraps on narrow screens) */}
-                          <div className="pt-4 border-t border-white/5">
-                            <div className="font-arabic text-white/30 text-[11px] font-bold uppercase tracking-wide mb-2.5">{t('admin.actions', 'الإجراءات')}</div>
-                            <div className="flex flex-wrap items-center gap-2">
+                          <div className="pt-2.5 border-t border-white/5">
+                            <div className="flex flex-wrap items-center gap-1.5">
                             <ActionButton variant="gold" icon={Eye} to={`/book/${order.storyId?._id}`}>
                               {t('admin.view_story_review')}
                             </ActionButton>
@@ -907,6 +940,26 @@ export default function AdminDashboard() {
               <div>
                 <h2 className="font-arabic font-bold text-xl text-white mb-6">{t('admin.stories_title')}</h2>
 
+                {/* ── Wizard switches: features hidden from customers until the
+                       owner turns them back on. Saved on click. ── */}
+                <div className="mb-8 p-3 rounded-xl bg-white/5 border border-white/10">
+                  <h3 className="font-arabic font-bold text-white text-sm mb-2">⚙️ {t('admin.wizard_flags_title', 'خيارات خطوات الإنشاء')}</h3>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <FlagSwitch
+                      on={!!settings.allowSkipPhoto}
+                      label={t('admin.flag_skip_photo', 'السماح بالطلب بدون صورة الطفل')}
+                      help={t('admin.flag_skip_photo_help', 'مطفأ = صورة الطفل إجبارية في الخطوة ١')}
+                      onToggle={() => saveFlag('allowSkipPhoto', !settings.allowSkipPhoto)}
+                    />
+                    <FlagSwitch
+                      on={!!settings.aiModeEnabled}
+                      label={t('admin.flag_ai_mode', 'إظهار «بالذكاء الاصطناعي» في الخطوة ٢')}
+                      help={t('admin.flag_ai_mode_help', 'مطفأ = العميل يرى القصص الجاهزة فقط')}
+                      onToggle={() => saveFlag('aiModeEnabled', !settings.aiModeEnabled)}
+                    />
+                  </div>
+                </div>
+
                 {/* ── Story books group (kept separate from coloring books) ── */}
                 <h3 className="font-arabic font-bold text-lg text-white mb-1">
                   📚 {t('admin.story_books_title', 'القصص')}
@@ -915,106 +968,102 @@ export default function AdminDashboard() {
                 <p className="font-arabic text-white/50 text-sm mb-6">{t('admin.story_books_desc', 'قصص كاملة بالنص والصور (٣٤ صفحة)')}</p>
                 <div className="space-y-4">
                   {settings.themes.map((theme: any, index: number) => theme.isColoring ? null : (
-                    <div key={theme.id} className="p-4 bg-white/5 rounded-xl border border-white/10 flex flex-col gap-3">
-                      {/* Single story name — no emoji, no per-language, no description */}
-                      <div>
-                        <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.story_name', 'اسم القصة')}</label>
-                        <input type="text" className="magic-input w-full sm:max-w-sm" value={theme.label || ''} onChange={(e) => {
+                    <div key={theme.id} className="px-3 py-2 bg-white/5 rounded-xl border border-white/10 flex flex-wrap items-center gap-1.5">
+                      {/* Name sits inline with the actions — one compact row per story */}
+                      <input
+                        type="text"
+                        className="magic-input flex-1 min-w-[140px] sm:max-w-[210px] !py-1.5 text-sm"
+                        title={t('admin.story_name', 'اسم القصة')}
+                        placeholder={t('admin.story_name', 'اسم القصة')}
+                        value={theme.label || ''}
+                        onChange={(e) => {
                           const newThemes = [...settings.themes];
                           newThemes[index].label = e.target.value;
                           setSettings({ ...settings, themes: newThemes });
-                        }} />
+                        }}
+                      />
+
+                      {/* Ready toggle — only `ready` themes appear in the customer wizard */}
+                      <label
+                        className={`flex items-center gap-1 px-2 py-1 rounded-lg font-arabic text-xs cursor-pointer transition-colors border ${
+                          theme.ready
+                            ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                            : 'bg-white/5 hover:bg-white/10 text-white/60 border-white/10'
+                        }`}
+                        title={t('admin.ready_help', 'فعّل هذا الخيار لإظهار القصة للعملاء في خطوات الإنشاء')}
+                      >
+                        <input
+                          type="checkbox"
+                          className="accent-emerald-500"
+                          checked={!!theme.ready}
+                          onChange={(e) => {
+                            const newThemes = [...settings.themes];
+                            newThemes[index].ready = e.target.checked;
+                            setSettings({ ...settings, themes: newThemes });
+                          }}
+                        />
+                        {theme.ready
+                          ? t('admin.ready_short', 'جاهزة')
+                          : t('admin.draft_short', 'مسودة')}
+                      </label>
+
+                      {/* View the book in each language */}
+                      <div className="flex items-center gap-0.5 px-1 py-0.5 rounded-lg bg-dark-800 border border-white/10">
+                        <Eye className="w-3.5 h-3.5 text-gold-500 shrink-0" />
+                        {[
+                          { lng: 'ar', label: 'ع', name: 'إياد' },
+                          { lng: 'en', label: 'EN', name: 'Ahmad' },
+                          { lng: 'he', label: 'עב', name: 'עדי' },
+                        ].map((o) => (
+                          <Link
+                            key={o.lng}
+                            to={`/book/${theme.id}?name=${encodeURIComponent(o.name)}&lng=${o.lng}`}
+                            target="_blank"
+                            className="px-1.5 py-0.5 rounded text-xs font-bold text-white/70 hover:text-gold-500 hover:bg-white/5 transition-colors"
+                          >
+                            {o.label}
+                          </Link>
+                        ))}
                       </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        {/* Ready toggle — only `ready` themes appear in the customer wizard */}
-                        <label
-                          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-arabic text-xs cursor-pointer transition-colors border ${
-                            theme.ready
-                              ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                              : 'bg-white/5 hover:bg-white/10 text-white/60 border-white/10'
-                          }`}
-                          title={t('admin.ready_help', 'فعّل هذا الخيار لإظهار القصة للعملاء في خطوات الإنشاء')}
-                        >
-                          <input
-                            type="checkbox"
-                            className="accent-emerald-500"
-                            checked={!!theme.ready}
-                            onChange={(e) => {
-                              const newThemes = [...settings.themes];
-                              newThemes[index].ready = e.target.checked;
-                              setSettings({ ...settings, themes: newThemes });
-                            }}
-                          />
-                          {theme.ready
-                            ? t('admin.ready_short', 'جاهزة')
-                            : t('admin.draft_short', 'مسودة')}
-                        </label>
 
-                        {/* View the book — one clean language toggle instead of
-                            several separate per-language buttons. */}
-                        <div className="flex items-center gap-1 p-1 bg-white/5 rounded-lg border border-white/10">
-                          <span className="flex items-center gap-1.5 text-white/70 font-arabic text-xs px-1">
-                            <Eye className="w-3.5 h-3.5 text-gold-500" />
-                          </span>
-                          <div className="flex items-center gap-1 p-0.5 rounded-lg bg-dark-800 border border-white/10">
-                            {[
-                              { lng: 'ar', label: 'عربي', name: 'إياد' },
-                              { lng: 'en', label: 'EN', name: 'Ahmad' },
-                              { lng: 'he', label: 'עברית', name: 'עדי' },
-                            ].map((o) => (
-                              <Link
-                                key={o.lng}
-                                to={`/book/${theme.id}?name=${encodeURIComponent(o.name)}&lng=${o.lng}`}
-                                target="_blank"
-                                className="px-1.5 py-0.5 rounded text-xs font-bold text-white/70 hover:text-gold-500 hover:bg-white/5 transition-colors"
-                              >
-                                {o.label}
-                              </Link>
-                            ))}
-                          </div>
-                        </div>
+                      <button
+                        onClick={() => openEditor(index)}
+                        className="flex items-center gap-1 px-2 py-1 bg-gold-500/20 hover:bg-gold-500/30 text-gold-500 rounded-lg font-arabic text-xs transition-colors border border-gold-500/30"
+                      >
+                        <BookOpen className="w-3.5 h-3.5" /> {t('admin.edit_short', 'تعديل')}
+                      </button>
 
-                        <button
-                          onClick={() => openEditor(index)}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gold-500/20 hover:bg-gold-500/30 text-gold-500 rounded-lg font-arabic text-xs transition-colors border border-gold-500/30"
-                        >
-                          <BookOpen className="w-3.5 h-3.5" /> {t('admin.edit_short', 'تعديل')}
-                        </button>
+                      {/* Generate AI photos */}
+                      <button
+                        onClick={() => handleGenerateTheme(theme.id, (theme.generatedImages?.length ?? 0) > 0)}
+                        disabled={generatingThemeId === theme.id}
+                        className="flex items-center gap-1 px-2 py-1 bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 rounded-lg font-arabic text-xs transition-colors border border-purple-500/30 disabled:opacity-50"
+                        title={t('admin.generate_ai_help', 'توليد صور الذكاء الاصطناعي لهذه القصة')}
+                      >
+                        {generatingThemeId === theme.id
+                          ? `⏳ ${t('admin.generating_short', 'جاري...')}`
+                          : (theme.generatedImages?.length ?? 0) > 0
+                            ? `✅ ${t('admin.regen_short', 'الصور')}`
+                            : `🎨 ${t('admin.regen_short', 'الصور')}`}
+                      </button>
 
-                        {/* Generate AI photos */}
-                        <button
-                          onClick={() => handleGenerateTheme(theme.id, (theme.generatedImages?.length ?? 0) > 0)}
-                          disabled={generatingThemeId === theme.id}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 rounded-lg font-arabic text-xs transition-colors border border-purple-500/30 disabled:opacity-50"
-                          title={t('admin.generate_ai_help', 'توليد صور الذكاء الاصطناعي لهذه القصة')}
-                        >
-                          {generatingThemeId === theme.id
-                            ? `⏳ ${t('admin.generating_short', 'جاري...')}`
-                            : (theme.generatedImages?.length ?? 0) > 0
-                              ? `✅ ${t('admin.regen_short', 'الصور')}`
-                              : `🎨 ${t('admin.regen_short', 'الصور')}`}
-                        </button>
+                      {/* Generate photoreal (face-swap) — Style B / Taletoons */}
+                      <button
+                        onClick={() => handleGeneratePhotoreal(theme.id)}
+                        disabled={generatingThemeId === theme.id}
+                        className="flex items-center gap-1 px-2 py-1 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 rounded-lg font-arabic text-xs transition-colors border border-emerald-500/30 disabled:opacity-50"
+                        title={t('admin.generate_photoreal_help', 'توليد قوالب واقعية وتبديل وجه الطفل (نمط Taletoons)')}
+                      >
+                        📸 {t('admin.faceswap_short', 'تبديل الوجه')}
+                      </button>
 
-                        {/* Generate photoreal (face-swap) — Style B / Taletoons */}
-                        <button
-                          onClick={() => handleGeneratePhotoreal(theme.id)}
-                          disabled={generatingThemeId === theme.id}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 rounded-lg font-arabic text-xs transition-colors border border-emerald-500/30 disabled:opacity-50"
-                          title={t('admin.generate_photoreal_help', 'توليد قوالب واقعية وتبديل وجه الطفل (نمط Taletoons)')}
-                        >
-                          {theme.previewStyle === 'photoreal'
-                            ? `📸 ${t('admin.faceswap_short', 'تبديل الوجه')}`
-                            : `📸 ${t('admin.faceswap_short', 'تبديل الوجه')}`}
-                        </button>
-
-                        <button 
-                          onClick={() => deleteTheme(index)}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg font-arabic text-xs transition-colors border border-red-500/30"
-                          title={t('admin.delete_theme', 'حذف الموضوع')}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> {t('admin.delete_short', 'حذف')}
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => deleteTheme(index)}
+                        className="flex items-center gap-1 px-2 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg font-arabic text-xs transition-colors border border-red-500/30"
+                        title={t('admin.delete_theme', 'حذف الموضوع')}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   ))}
                   <button onClick={() => {
@@ -1109,24 +1158,90 @@ export default function AdminDashboard() {
               </div>
             ) : tab === 'showcase' ? (
               <div>
-                <h3 className="font-arabic font-bold text-white text-lg mb-2">📚 {t('admin.tab_showcase', 'الكتب الجاهزة')}</h3>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-arabic font-bold text-white text-lg">📚 {t('admin.tab_showcase', 'الكتب الجاهزة')}</h3>
+                  <MagicButton onClick={fetchAllStories} size="sm" variant="outline">{t('admin.refresh_data')}</MagicButton>
+                </div>
                 <p className="font-arabic text-white/50 text-sm mb-5">{t('admin.showcase_desc', 'افتح أي كتاب لتنزيله (PDF) أو إرساله إلى BookPod للطباعة.')}</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+                {/* ── Books actually generated: every story with illustrations,
+                       newest first. New books show up here on their own. ── */}
+                <h4 className="font-arabic font-bold text-white text-sm mb-3">
+                  🖼️ {t('admin.showcase_generated', 'الكتب التي أنشأتها')}
+                  <span className="text-white/40 text-xs font-normal mr-2">({generatedBooks.length})</span>
+                </h4>
+                {storiesLoading ? (
+                  <p className="font-arabic text-white/40 text-sm py-6 text-center">{t('admin.loading')}</p>
+                ) : generatedBooks.length === 0 ? (
+                  <p className="font-arabic text-white/40 text-sm py-6 text-center bg-white/5 rounded-xl border border-dashed border-white/10">
+                    {t('admin.showcase_no_generated', 'لا توجد كتب مُنشأة بعد — أنشئ قصة وستظهر هنا.')}
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {generatedBooks.map((s: any) => {
+                      const cover = s.generatedCover || s.generatedImages?.[0];
+                      const isColoring = String(s.bookPackage || '').includes('coloring') || String(s.theme || '').includes('coloring');
+                      return (
+                        <div key={s._id} className="bg-dark-700/50 rounded-2xl border border-white/5 p-3 flex flex-col gap-2.5 hover:border-gold-500/30 transition-all">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            {cover ? (
+                              <img
+                                src={objectPathToUrl(cover)}
+                                alt=""
+                                loading="lazy"
+                                className="w-12 h-12 rounded-lg object-cover border border-white/10 shrink-0"
+                                onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = 'hidden'; }}
+                              />
+                            ) : (
+                              <span className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-xl shrink-0">📖</span>
+                            )}
+                            <div className="min-w-0">
+                              <h4 className="font-arabic font-bold text-white text-sm truncate">
+                                {localizeName(s.childName || '—', i18n.language)}
+                              </h4>
+                              <p className="font-arabic text-gold-500 text-xs truncate">
+                                {isColoring
+                                  ? t('admin.coloring_book', 'كتاب تلوين')
+                                  : (t(`step2.theme_${s.theme}`, { defaultValue: s.theme }) as string)}
+                              </p>
+                              <p className="font-arabic text-white/35 text-[11px]">
+                                {s.createdAt ? new Date(s.createdAt).toLocaleDateString(i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'he' ? 'he-IL' : 'en-US') : ''}
+                                {s.mode === 'ai' ? ' · AI' : ''}
+                              </p>
+                            </div>
+                          </div>
+                          <Link
+                            to={isColoring ? `/book/${s._id}?view=coloring` : `/book/${s._id}`}
+                            className="flex items-center justify-center gap-2 px-3 py-2 bg-gold-500 text-[#0a1628] rounded-xl font-arabic font-bold text-xs hover:bg-gold-400 transition"
+                          >
+                            🖨️ {t('admin.open_to_print', 'افتح للطباعة / BookPod')}
+                          </Link>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* ── Curated demo books (theme templates, not customer orders) ── */}
+                <h4 className="font-arabic font-bold text-white text-sm mt-8 mb-3">
+                  ⭐ {t('admin.showcase_demos', 'كتب العرض (القوالب)')}
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {SHOWCASE_CARDS.map((card) => {
                     const isColoring = card.themeId.includes('coloring');
                     const href = isColoring
                       ? `/coloring/${card.themeId}?name=${encodeURIComponent(card.name)}`
                       : `/book/${card.themeId}?name=${encodeURIComponent(card.name)}&lng=ar${card.storyId ? `&pin=${card.storyId}` : ''}`;
                     return (
-                      <div key={card.key} className="bg-dark-700/50 rounded-2xl border border-white/5 p-5 flex flex-col gap-3">
-                        <div className="flex items-center gap-3">
-                          <span className="text-4xl">{card.emoji}</span>
-                          <div>
-                            <h4 className="font-arabic font-bold text-white">{localizeName(card.name, i18n.language)}</h4>
-                            <p className="font-arabic text-gold-500 text-xs">{isColoring ? t('admin.coloring_book', 'كتاب تلوين') : t(`step2.theme_${card.themeId}`, card.themeId)}</p>
+                      <div key={card.key} className="bg-dark-700/50 rounded-2xl border border-white/5 p-3 flex flex-col gap-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-3xl">{card.emoji}</span>
+                          <div className="min-w-0">
+                            <h4 className="font-arabic font-bold text-white text-sm truncate">{localizeName(card.name, i18n.language)}</h4>
+                            <p className="font-arabic text-gold-500 text-xs truncate">{isColoring ? t('admin.coloring_book', 'كتاب تلوين') : t(`step2.theme_${card.themeId}`, card.themeId)}</p>
                           </div>
                         </div>
-                        <Link to={href} className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gold-500 text-[#0a1628] rounded-xl font-arabic font-bold text-sm hover:bg-gold-400 transition">
+                        <Link to={href} className="flex items-center justify-center gap-2 px-3 py-2 bg-gold-500/90 text-[#0a1628] rounded-xl font-arabic font-bold text-xs hover:bg-gold-400 transition">
                           🖨️ {t('admin.open_to_print', 'افتح للطباعة / BookPod')}
                         </Link>
                       </div>
@@ -1372,5 +1487,28 @@ export default function AdminDashboard() {
         </Modal>
       )}
     </div>
+  );
+}
+
+/** Compact on/off switch for a single owner-controlled wizard feature. */
+function FlagSwitch({ on, label, help, onToggle }: { on: boolean; label: string; help: string; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      onClick={onToggle}
+      className={`flex-1 flex items-start gap-2.5 text-right p-2.5 rounded-lg border transition-colors ${
+        on ? 'bg-emerald-500/10 border-emerald-500/40' : 'bg-white/5 border-white/10 hover:border-white/25'
+      }`}
+    >
+      <span className={`relative shrink-0 mt-0.5 w-9 h-5 rounded-full transition-colors ${on ? 'bg-emerald-500' : 'bg-white/20'}`}>
+        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${on ? 'left-[18px]' : 'left-0.5'}`} />
+      </span>
+      <span className="min-w-0">
+        <span className="block font-arabic text-white text-xs font-bold leading-snug">{label}</span>
+        <span className="block font-arabic text-white/45 text-[11px] mt-0.5 leading-snug">{help}</span>
+      </span>
+    </button>
   );
 }

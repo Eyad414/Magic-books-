@@ -25,6 +25,9 @@ export interface IStory extends Document {
     generatedImages?: string[];
     generatedCover?: string;
     generatedPortrait?: string;
+    coloringImages?: string[];
+    coloringCover?: string;
+    coloringBackCover?: string;
     status: StoryStatus;
     coverColor?: string;
     fontStyle?: string;

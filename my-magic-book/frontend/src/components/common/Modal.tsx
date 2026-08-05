@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 
 interface ModalProps {
@@ -17,9 +18,19 @@ interface ModalProps {
  * (click to close) and the corner close button; callers supply only content.
  */
 export default function Modal({ onClose, children, size = 'max-w-2xl', closeLabel = 'إغلاق' }: ModalProps) {
+  // Freeze the page behind the modal so it can't scroll under the backdrop.
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-4 overflow-y-auto animate-fade-in">
-      <div className="absolute inset-0 bg-dark-900/90 backdrop-blur-md" onClick={onClose} />
+      {/* `fixed`, not `absolute`: the wrapper scrolls (overflow-y-auto), so an
+          absolute backdrop scrolls away with the content and lets the page
+          behind — navbar, footer — show through on tall modals. */}
+      <div className="fixed inset-0 bg-dark-900/90 backdrop-blur-md" onClick={onClose} />
       <div className={`relative w-full ${size} my-8 bg-dark-800 border border-white/10 rounded-2xl shadow-2xl p-6`}>
         <button
           onClick={onClose}

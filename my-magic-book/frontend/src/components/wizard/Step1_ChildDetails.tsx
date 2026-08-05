@@ -5,6 +5,7 @@ import { User, Baby, ChevronLeft, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { localizeName } from '../../utils/translit';
 import { uploadApi } from '../../api/uploadApi';
+import { useSiteFlags } from '../../hooks/useSiteFlags';
 
 // Props Interface: Defines the properties this component expects to receive from its parent (CreateStory.tsx)
 interface Props { onNext: () => void; }
@@ -12,6 +13,8 @@ interface Props { onNext: () => void; }
 export default function Step1_ChildDetails({ onNext }: Props) { // To move to the next page in the steps
   const { progress, setChildDetails } = useStoryProgress(); // To save User Choices in the steps
   const { t, i18n } = useTranslation();
+  // The photo is required unless the owner re-enables "order without a photo".
+  const { allowSkipPhoto } = useSiteFlags();
 
   // Local State: Manages the form inputs specifically for this step before saving them globally
   const [form, setForm] = useState({
@@ -24,8 +27,10 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
   // Local State: Manages validation error strings for each input field
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Local State: Tracks if the user wants to add a photo
-  const [wantsPhoto, setWantsPhoto] = useState(!!progress.childDetails.childPhotoUrl);
+  // Local State: Tracks if the user wants to add a photo. Only meaningful when
+  // the owner allows skipping — otherwise the upload is always shown/required.
+  const [optedIntoPhoto, setOptedIntoPhoto] = useState(!!progress.childDetails.childPhotoUrl);
+  const wantsPhoto = allowSkipPhoto ? optedIntoPhoto : true;
 
   // Local State: holds the File picked by the user (null once it's been uploaded to GCS)
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -149,28 +154,34 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
 
       {/* Photo Upload: Conditional rendering based on user choice */}
       <div>
-        <label className="block font-arabic text-white/80 text-sm mb-3">{t('step1.photo_label')}</label>
-        <div className="flex gap-4 mb-4">
-          <button
-            type="button"
-            onClick={() => setWantsPhoto(true)}
-            className={`flex-1 py-2 rounded-xl border-2 transition-all font-arabic text-sm ${wantsPhoto ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-white/10 text-white/60 hover:border-white/30'}`}
-          >
-            {t('step1.photo_yes')}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setWantsPhoto(false);
-              setForm({ ...form, childPhotoUrl: '' });
-              setPendingFile(null);
-              setPreviewUrl('');
-            }}
-            className={`flex-1 py-2 rounded-xl border-2 transition-all font-arabic text-sm ${!wantsPhoto ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-white/10 text-white/60 hover:border-white/30'}`}
-          >
-            {t('step1.photo_no')}
-          </button>
-        </div>
+        <label className="block font-arabic text-white/80 text-sm mb-3">
+          {allowSkipPhoto ? t('step1.photo_label_optional') : t('step1.photo_label')}
+        </label>
+        {/* The yes/no choice only appears when the owner has re-enabled
+            "order without a photo" in the dashboard. */}
+        {allowSkipPhoto && (
+          <div className="flex gap-4 mb-4">
+            <button
+              type="button"
+              onClick={() => setOptedIntoPhoto(true)}
+              className={`flex-1 py-2 rounded-xl border-2 transition-all font-arabic text-sm ${wantsPhoto ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-white/10 text-white/60 hover:border-white/30'}`}
+            >
+              {t('step1.photo_yes')}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setOptedIntoPhoto(false);
+                setForm({ ...form, childPhotoUrl: '' });
+                setPendingFile(null);
+                setPreviewUrl('');
+              }}
+              className={`flex-1 py-2 rounded-xl border-2 transition-all font-arabic text-sm ${!wantsPhoto ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-white/10 text-white/60 hover:border-white/30'}`}
+            >
+              {t('step1.photo_no')}
+            </button>
+          </div>
+        )}
 
         {wantsPhoto && (
           <div className="border-2 border-dashed border-white/20 rounded-xl p-6 text-center hover:bg-white/5 hover:border-gold-500/30 transition-all cursor-pointer relative animate-fade-in">

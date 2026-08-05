@@ -3,9 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.COST_PER_IMAGE_USD = void 0;
 exports.imagesGeneratedSoFar = imagesGeneratedSoFar;
 exports.generateIllustration = generateIllustration;
-const genai_1 = require("@google/genai");
 const storage_1 = require("@google-cloud/storage");
 const StorageService_1 = require("./StorageService");
+const genaiClient_1 = require("./genaiClient");
 const MODEL = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image';
 // Gemini 2.5 Flash Image: each image is a flat 1290 output tokens at
 // $30 / 1M output tokens → ~$0.039 per generated image.
@@ -15,18 +15,56 @@ let _imagesGenerated = 0;
 function imagesGeneratedSoFar() {
     return _imagesGenerated;
 }
-// Lazy-init so missing key only fails when an actual generation is attempted.
-let _client = null;
-function client() {
-    if (_client)
-        return _client;
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey)
-        throw new Error('GEMINI_API_KEY missing — refusing to generate illustrations.');
-    _client = new genai_1.GoogleGenAI({ apiKey });
-    return _client;
-}
 const storage = new storage_1.Storage({ projectId: process.env.GCP_PROJECT_ID });
+// Runs the image call resiliently across both billing backends (same model id
+// works on Vertex and AI Studio). If the preferred backend is out of credits or
+// auth-blocked (e.g. AI Studio "prepayment credits are depleted"), switch to the
+// other. Within a backend, a TRANSIENT rate-limit (Vertex's low per-minute image
+// quota) is waited out and retried, since generation runs post-payment and a
+// slower, reliable pace is fine.
+async function generateContentRetrying(request) {
+    const order = (0, genaiClient_1.backendOrder)();
+    if (order.length === 0)
+        throw new Error('No GenAI backend configured for image generation.');
+    const WAITS_MS = [20000, 40000, 60000, 60000, 60000];
+    let lastErr;
+    for (let bi = 0; bi < order.length; bi++) {
+        const b = order[bi];
+        const isLastBackend = bi === order.length - 1;
+        for (let i = 0;; i++) {
+            try {
+                return await (0, genaiClient_1.clientFor)(b).models.generateContent(request);
+            }
+            catch (err) {
+                lastErr = err;
+                const code = err?.status ?? err?.code ?? err?.error?.code;
+                const msg = String(err?.message ?? err ?? '');
+                // Permanent for this backend (credits gone / auth) → jump to the other one now.
+                const permanent = code === 401 || code === 403 || /depleted|credit|PERMISSION|unauthenticated|API key/i.test(msg);
+                if (/depleted|prepayment|billing|out of credit/i.test(msg))
+                    (0, genaiClient_1.markBackendDepleted)(b);
+                if (permanent && !isLastBackend) {
+                    console.warn(`[ImageGenerator] ${b} unavailable (${code}) — switching backend.`);
+                    break;
+                }
+                // Transient rate-limit → wait out the window and retry the SAME backend.
+                const rateLimited = code === 429 || /RESOURCE_EXHAUSTED|exhausted|quota|rate limit/i.test(msg);
+                if (rateLimited && i < WAITS_MS.length) {
+                    console.warn(`[ImageGenerator] ${b} rate-limited; waiting ${WAITS_MS[i] / 1000}s then retry ${i + 1}/${WAITS_MS.length}`);
+                    await new Promise((r) => setTimeout(r, WAITS_MS[i]));
+                    continue;
+                }
+                // Exhausted this backend — try the next one if there is one.
+                if (!isLastBackend) {
+                    console.warn(`[ImageGenerator] ${b} failed (${code}) — switching backend.`);
+                    break;
+                }
+                throw err;
+            }
+        }
+    }
+    throw lastErr;
+}
 /**
  * Generates an illustration for a story page and persists it in GCS.
  * Calls Gemini 2.5 Flash Image with the per-page prompt and the customer's
@@ -44,7 +82,7 @@ async function generateIllustration(prompt, childPhotoUrl, opts = {}) {
     let lastDiag = '';
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
         const promptText = attempt === 1 ? prompt : `${prompt}\n\nOutput an IMAGE only. Do not reply with text.`;
-        const response = await client().models.generateContent({
+        const response = await generateContentRetrying({
             model: MODEL,
             contents: [
                 {

@@ -15,6 +15,7 @@ import ThemeChatHelper from './ThemeChatHelper';
 import { buildBook, type TemplatePage } from '../../data/stories/builder';
 import type { StoryMode } from '../../context/StoryProgressContext';
 import { buildThemePreview, type PreviewPage } from './FlipbookPreview';
+import { useSiteFlags } from '../../hooks/useSiteFlags';
 
 // Props Interface: Defines navigation callbacks passed from the parent wizard container
 interface Props { onNext: () => void; onPrev: () => void; }
@@ -59,6 +60,8 @@ interface ApiTheme {
 export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To move to the next page in the steps
   const { progress, setStoryConfig, setBookCustomization } = useStoryProgress(); // To save User Choices in the steps
   const { t, i18n } = useTranslation();
+  // "Write with AI" stays hidden until the owner turns it on in the dashboard.
+  const { aiModeEnabled } = useSiteFlags();
 
   // Themes come from the admin panel via /api/public/settings. The backend
   // already filters to ready===true so half-finished stories never appear.
@@ -111,6 +114,13 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
 
   // Local State: Tracks how the customer wants to author the story.
   const [mode, setMode] = useState<StoryMode>(progress.storyConfig.mode || 'template');
+
+  // AI mode is owner-gated. If it gets switched off while a half-finished order
+  // still carries mode:'ai' in saved progress, drop back to the ready story —
+  // otherwise the customer is stuck in a mode whose toggle is no longer shown.
+  useEffect(() => {
+    if (!aiModeEnabled && mode === 'ai') setMode('template');
+  }, [aiModeEnabled, mode]);
 
   // Local State: Stores the selected theme, language and any custom notes
   const [form, setForm] = useState({
@@ -292,39 +302,48 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
       <div className="text-center">
         <div className="text-5xl mb-3">✨</div>
         <h2 className="font-arabic font-bold text-white text-xl mb-1">{t('step2.title')}</h2>
-        <p className="font-arabic text-white/50 text-sm">{t('step2.desc').replace('{name}', localizeName(progress.childDetails.childName || '', i18n.language))}</p>
+        {/* Don't promise an AI-written story while AI mode is switched off —
+            in ready-story mode the text comes from our own written stories. */}
+        <p className="font-arabic text-white/50 text-sm">
+          {t(aiModeEnabled ? 'step2.desc' : 'step2.desc_template')
+            .replace('{name}', localizeName(progress.childDetails.childName || '', i18n.language))}
+        </p>
       </div>
 
-      {/* Mode Toggle: how the customer authors the story */}
-      <div>
-        <label className="block font-arabic text-white/80 text-sm mb-3">{t('step2.mode_label', 'كيف تريد إنشاء القصة؟')}</label>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            id="mode-template"
-            onClick={() => setMode('template')}
-            className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-              mode === 'template' ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-white/10 text-white/60 hover:border-white/30'
-            }`}
-          >
-            <BookOpen className="w-6 h-6" />
-            <span className="font-arabic font-bold text-sm">{t('step2.mode_template', 'قصة جاهزة')}</span>
-            <span className="font-arabic text-xs opacity-70 text-center">{t('step2.mode_template_desc', 'اختر من قصصنا المكتوبة بعناية')}</span>
-          </button>
-          <button
-            type="button"
-            id="mode-ai"
-            onClick={() => setMode('ai')}
-            className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-              mode === 'ai' ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-white/10 text-white/60 hover:border-white/30'
-            }`}
-          >
-            <Sparkles className="w-6 h-6" />
-            <span className="font-arabic font-bold text-sm">{t('step2.mode_ai', 'بالذكاء الاصطناعي')}</span>
-            <span className="font-arabic text-xs opacity-70 text-center">{t('step2.mode_ai_desc', 'الذكاء الاصطناعي يكتب قصة فريدة')}</span>
-          </button>
+      {/* Mode Toggle: how the customer authors the story. The whole choice is
+          hidden while the owner keeps AI mode switched off in the dashboard —
+          there is no decision to make when "ready story" is the only option. */}
+      {aiModeEnabled && (
+        <div>
+          <label className="block font-arabic text-white/80 text-sm mb-3">{t('step2.mode_label', 'كيف تريد إنشاء القصة؟')}</label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              id="mode-template"
+              onClick={() => setMode('template')}
+              className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                mode === 'template' ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-white/10 text-white/60 hover:border-white/30'
+              }`}
+            >
+              <BookOpen className="w-6 h-6" />
+              <span className="font-arabic font-bold text-sm">{t('step2.mode_template', 'قصة جاهزة')}</span>
+              <span className="font-arabic text-xs opacity-70 text-center">{t('step2.mode_template_desc', 'اختر من قصصنا المكتوبة بعناية')}</span>
+            </button>
+            <button
+              type="button"
+              id="mode-ai"
+              onClick={() => setMode('ai')}
+              className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                mode === 'ai' ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-white/10 text-white/60 hover:border-white/30'
+              }`}
+            >
+              <Sparkles className="w-6 h-6" />
+              <span className="font-arabic font-bold text-sm">{t('step2.mode_ai', 'بالذكاء الاصطناعي')}</span>
+              <span className="font-arabic text-xs opacity-70 text-center">{t('step2.mode_ai_desc', 'الذكاء الاصطناعي يكتب قصة فريدة')}</span>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* AI mode — the customer writes their OWN story idea and the AI builds a
           brand-new story around it (customThemeNote drives generation). */}
