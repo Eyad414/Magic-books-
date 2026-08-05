@@ -6,7 +6,6 @@ import { publicApi } from '../../api/publicApi';
 import { toDisplayUrl } from '../../api/mediaUrl';
 import { localizeName } from '../../utils/translit';
 import FlipbookPreview, { buildThemePreview } from '../wizard/FlipbookPreview';
-import { useAdminFullPreview, AdminFullPreviewBadge } from '../common/AdminFullPreview';
 
 // Some themes reuse another theme's scripted story text (mirrors Stories page).
 const TEXT_THEME: Record<string, string> = { space_real: 'space' };
@@ -14,25 +13,20 @@ const textThemeFor = (id: string) => TEXT_THEME[id] || id;
 
 export default function BestSellers() {
   const { t, i18n } = useTranslation();
-  const fullPreview = useAdminFullPreview();
 
   // Live themes (for the real generated front-cover images).
   const [themes, setThemes] = useState<Record<string, any>>({});
   // The story currently open in the preview modal (same UX as the Stories page).
   const [selected, setSelected] = useState<any>(null);
-  const [showcaseUnlocked, setShowcaseUnlocked] = useState(false);
   useEffect(() => {
     publicApi.getSettings()
       .then((res) => {
         const map: Record<string, any> = {};
         for (const th of (res?.settings?.themes || [])) map[th.id] = th;
         setThemes(map);
-        setShowcaseUnlocked(!!res?.settings?.showcaseUnlocked);
       })
       .catch(() => {});
   }, []);
-  // Full book with no lock if admin full-preview OR the owner's customer-unlock switch.
-  const effectiveFull = fullPreview || showcaseUnlocked;
 
   // The showcase stories. themeId points at a real demo theme so we can show its
   // generated cover; name is the demo child. Cards c/d are placeholders the
@@ -48,7 +42,9 @@ export default function BestSellers() {
     { id: 4, themeId: 'space_coloring', name: 'Hamza', emoji: '🎨', rating: 4.7, reviews: 61, tag: '', colors: ['#006064', '#00838f'], localCover: '/showcase/hamza.webp' },
   ];
 
-  // Build the 30%-readable flipbook preview for the selected card (rest is locked).
+  // Build the full illustrated flipbook preview for the selected showcase book —
+  // these are marketing sample stories, so we show them complete (every page,
+  // including the last). The customer still pays to generate their OWN book.
   const previewPages = useMemo(() => {
     if (!selected) return [];
     const theme = themes[selected.themeId];
@@ -68,10 +64,10 @@ export default function BestSellers() {
       coverImage: cover,
       pageImages,
       i18n,
-      full: effectiveFull,
+      full: true,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, themes, i18n.language, effectiveFull]);
+  }, [selected, themes, i18n.language]);
 
   return (
     <>
@@ -130,7 +126,7 @@ export default function BestSellers() {
                       {book.tag}
                     </div>
                   )}
-                  {/* Preview (eye) — opens the same 30%-readable flipbook as the Stories page */}
+                  {/* Preview (eye) — opens the full sample flipbook (same as the Stories page) */}
                   <button
                     type="button"
                     onClick={() => setSelected(book)}
@@ -173,7 +169,7 @@ export default function BestSellers() {
       </div>
     </section>
 
-    {/* Illustrated book preview modal — 30% readable, the rest locked (same as Stories) */}
+    {/* Illustrated book preview modal — the full sample story (same as Stories) */}
     {selected && (
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 lg:p-8 animate-fade-in text-center">
         <div className="absolute inset-0 bg-dark-900/90 backdrop-blur-md" onClick={() => setSelected(null)} />
@@ -201,8 +197,6 @@ export default function BestSellers() {
         </div>
       </div>
     )}
-
-    <AdminFullPreviewBadge />
     </>
   );
 }
