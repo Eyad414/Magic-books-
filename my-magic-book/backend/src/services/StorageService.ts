@@ -46,6 +46,22 @@ export async function getReadSignedUrl(objectPath: string): Promise<string> {
   return url;
 }
 
+/**
+ * Whether an object is already in the bucket. Used to skip paid work (a Gemini
+ * image costs real money) when the exact same artifact was generated before.
+ * Never throws — a lookup failure is reported as "not there", so the caller
+ * regenerates rather than serving a broken image.
+ */
+export async function objectExists(objectPath: string): Promise<boolean> {
+  try {
+    const [exists] = await bucket.file(objectPath).exists();
+    return exists;
+  } catch (err: any) {
+    console.warn(`[StorageService] exists() failed for ${objectPath}: ${err.message}`);
+    return false;
+  }
+}
+
 export async function uploadBuffer(
   buffer: Buffer,
   objectPath: string,

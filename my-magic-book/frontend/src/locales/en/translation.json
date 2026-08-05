@@ -1054,5 +1054,19 @@
     "trust_quality": "Premium printing",
     "desc": "Last step — enter your delivery details and complete your order.",
     "err_shipping": "Please complete your shipping details first"
+  },
+  "cover_preview": {
+    "title": "See your child on the cover",
+    "help": "We'll render the story cover with your child's face — this can take up to a minute.",
+    "cta": "Show my child's cover",
+    "again": "Generate a new cover",
+    "generating": "Creating the cover…",
+    "stage_1": "✨ Lighting the magic lantern…",
+    "stage_2": "🎨 Drawing your child's face…",
+    "stage_3": "🌟 Adding the final touches…",
+    "stage_4": "📖 Your cover is almost ready!",
+    "wait_note": "Please keep this page open — the artwork is being drawn.",
+    "remaining": "{n} free previews left",
+    "error": "Couldn't create the cover, please try again"
   }
 }

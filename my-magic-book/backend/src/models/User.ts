@@ -10,6 +10,11 @@ export interface IUser extends Document {
   phone?: string;
   location?: string;
   lastLoginAt?: Date;
+  /** Timestamps of free cover previews this account generated. Each one costs
+   *  real Gemini credit, so the quota counts the entries made since the user's
+   *  most recent PAID order (see coverPreviewController). Trimmed to the last
+   *  50 so the document can't grow without bound. */
+  coverPreviews?: Date[];
   createdAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
@@ -24,6 +29,7 @@ const UserSchema = new Schema<IUser>(
     phone: { type: String, trim: true },
     location: { type: String, trim: true },
     lastLoginAt: { type: Date },
+    coverPreviews: { type: [Date], default: undefined },
   },
   { timestamps: true }
 );

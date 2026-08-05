@@ -16,6 +16,8 @@ import { buildBook, type TemplatePage } from '../../data/stories/builder';
 import type { StoryMode } from '../../context/StoryProgressContext';
 import { buildThemePreview, type PreviewPage } from './FlipbookPreview';
 import { useSiteFlags } from '../../hooks/useSiteFlags';
+import CoverPreview from './CoverPreview';
+import { useAuth } from '../../context/AuthContext';
 
 // Props Interface: Defines navigation callbacks passed from the parent wizard container
 interface Props { onNext: () => void; onPrev: () => void; }
@@ -62,6 +64,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
   const { t, i18n } = useTranslation();
   // "Write with AI" stays hidden until the owner turns it on in the dashboard.
   const { aiModeEnabled } = useSiteFlags();
+  const { user } = useAuth();
 
   // Themes come from the admin panel via /api/public/settings. The backend
   // already filters to ready===true so half-finished stories never appear.
@@ -446,6 +449,16 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
       </div>
       )}
 
+      {/* Let the customer see their OWN child on the chosen cover before paying.
+          Needs a signed-in account (the free allowance is per account) and an
+          uploaded photo — there is no face to render without one. */}
+      <CoverPreview
+        childName={progress.childDetails.childName || ''}
+        childGender={progress.childDetails.childGender || 'male'}
+        childPhotoUrl={progress.childDetails.childPhotoUrl || ''}
+        theme={form.theme}
+        enabled={!!user && !!progress.childDetails.childPhotoUrl && form.theme !== 'custom'}
+      />
 
       {/* Language: The language in which the AI generator will write the text */}
       <div>

@@ -8,11 +8,15 @@ import {
   getMyStories,
   deleteMyStory,
 } from '../controllers/storyController';
+import { generateCoverPreview, getCoverPreviewQuota } from '../controllers/coverPreviewController';
 import { protect } from '../utils/authMiddleware';
 
 const router = Router();
 
 router.get('/my', protect, getMyStories);
+// Front-cover preview (costs a Gemini image) — must sit above '/:id/...'.
+router.get('/cover-preview/quota', protect, getCoverPreviewQuota);
+router.post('/cover-preview', protect, generateCoverPreview);
 router.post('/create', protect, createStory);
 router.post('/:id/generate', protect, generateStory);
 router.put('/:id/customize', protect, customizeStory);

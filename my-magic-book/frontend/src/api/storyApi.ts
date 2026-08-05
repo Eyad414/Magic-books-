@@ -25,4 +25,13 @@ export const storyApi = {
     const res = await api.delete(`/stories/${id}`);
     return res.data;
   },
+  /** Render just the front cover with this child's face (costs one AI image). */
+  coverPreview: async (data: { childName: string; childGender: string; childPhotoUrl: string; theme: string }) => {
+    const res = await api.post('/stories/cover-preview', data);
+    return res.data;
+  },
+  coverPreviewQuota: async () => {
+    const res = await api.get('/stories/cover-preview/quota');
+    return res.data;
+  },
 };
