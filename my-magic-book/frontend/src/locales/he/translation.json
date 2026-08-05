@@ -824,6 +824,7 @@
     "dedicated_to_you": "סיפור המוקדש לך בלבד"
   },
   "storybook": {
+    "ai_story_title": "הסיפור הקסום של [NAME]",
     "teaser_space": "בחלל",
     "teaser_school": "בבית הספר",
     "teaser_zoo": "בגן החיות",

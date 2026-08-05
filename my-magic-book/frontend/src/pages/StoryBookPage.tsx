@@ -193,6 +193,7 @@ export default function StoryBookPage() {
         backCoverPhoto={toDisplayUrl(generatedPortrait) || childPhoto}
         audioUrl={storyData?.audioUrl || ''}
         showNameInput={!storyData}
+        isAiStory={storyData?.mode === 'ai' && !!(storyData?.generatedText || '').trim()}
         customPages={effectivePages.length > 0 ? effectivePages : undefined}
         generatedImages={generatedImages.map(toDisplayUrl)}
         onGenerated={handleGenerated}

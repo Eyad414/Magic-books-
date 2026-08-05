@@ -824,6 +824,7 @@
     "dedicated_to_you": "A story dedicated to you alone"
   },
   "storybook": {
+    "ai_story_title": "[NAME]'s Magical Story",
     "teaser_space": "in space",
     "teaser_school": "at school",
     "teaser_zoo": "at the zoo",

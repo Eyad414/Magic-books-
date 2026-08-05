@@ -826,6 +826,7 @@
     "dedicated_to_you": "قصة مُهداة إليك وحدك"
   },
   "storybook": {
+    "ai_story_title": "قصة [NAME] السحرية",
     "teaser_space": "في الفضاء",
     "teaser_school": "في المدرسة",
     "teaser_zoo": "في حديقة الحيوانات",

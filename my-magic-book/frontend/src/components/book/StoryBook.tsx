@@ -48,6 +48,7 @@ interface StoryBookProps {
   backCoverPhoto?: string; // Generated portrait for the back cover (falls back to childPhoto)
   audioUrl?:     string;   // URL encoded into final-page QR
   showNameInput?: boolean; // Show the demo name input bar
+  isAiStory?:    boolean;  // A "write with AI" story — use a neutral title, not the theme's
   customPages?:  any[];    // Dynamically overridden story pages from database
   generatedImages?: string[];                                              // Browser-ready AI image URLs, one per body image page
   onGenerated?: (images: string[], portrait: string, cover?: string) => void; // Called after a successful generation
@@ -73,6 +74,7 @@ export default function StoryBook({
   backCoverPhoto = '',
   audioUrl,
   showNameInput  = true,
+  isAiStory      = false,
   customPages    = undefined,
   generatedImages = [],
   onGenerated,
@@ -147,7 +149,12 @@ export default function StoryBook({
   const translatedMoral = useMemo(() => t(`stories.${story.id}.moral`, story.moralAr), [story.id, story.moralAr, t]);
   const translatedConclusion = useMemo(() => t(`stories.${story.id}.conclusion`, story.conclusionAr), [story.id, story.conclusionAr, t]);
 
-  const storyTitle  = useMemo(() => personalize(translatedTitle,     childName, gender), [translatedTitle, childName, gender]);
+  // A "write with AI" story gets a NEUTRAL personalized title — not the theme's
+  // title (which would wrongly read e.g. "…in Space" for a custom idea).
+  const storyTitle  = useMemo(() => {
+    const raw = isAiStory ? (t('storybook.ai_story_title', 'قصة [NAME] السحرية') as string) : translatedTitle;
+    return personalize(raw, childName, gender);
+  }, [isAiStory, translatedTitle, childName, gender, t]);
   const dedication  = useMemo(() => personalize(translatedDedication, childName, gender), [translatedDedication, childName, gender]);
   const moral       = useMemo(() => personalize(translatedMoral,      childName, gender), [translatedMoral, childName, gender]);
   const conclusion  = useMemo(() => personalize(translatedConclusion, childName, gender), [translatedConclusion, childName, gender]);

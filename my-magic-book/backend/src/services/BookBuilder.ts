@@ -51,6 +51,12 @@ function localizedStory(theme: string, language: string): {
 
 const ILLUSTRATION_PAGES = 13; // matches the 13 image slots in the printed book
 
+/** Neutral personalized title for a "write with AI" story — never the theme name. */
+function aiStoryTitle(story: any): string {
+  const tmpl = loadLocale((story as any).language || 'ar')?.storybook?.ai_story_title || 'قصة [NAME] السحرية';
+  return resolveTokens(tmpl, story.childName, story.childGender);
+}
+
 /**
  * Builds the finished, illustrated book for a paid order.
  *
@@ -160,7 +166,7 @@ export async function buildBookForOrder(orderId: string, submitToBookPod = true)
       await story.save();
       imageUrls = paths.map(proxyUrl);
       coverImageUrl = story.coverImageUrl || imageUrls[0] || '';
-      storyTitle = `${story.childName} ${story.theme}`;
+      storyTitle = story.mode === 'ai' ? aiStoryTitle(story) : `${story.childName} ${story.theme}`;
     }
 
     // PRO bundle: also generate the line-art COLORING book as a second digital
@@ -325,7 +331,7 @@ function reconstructPrintOpts(story: any): PrintBuildOpts {
       ? extractPairsFromTemplate(story.templatePages, story.childName)
       : extractPairsFromAi(story);
     pageTexts = images.map((_: string, i: number) => pairs[i]?.text ?? '');
-    storyTitle = `${story.childName} ${story.theme}`;
+    storyTitle = story.mode === 'ai' ? aiStoryTitle(story) : `${story.childName} ${story.theme}`;
   }
 
   return {
