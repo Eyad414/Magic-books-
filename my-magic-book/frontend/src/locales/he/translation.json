@@ -812,7 +812,8 @@
     "save_settings_ok": "נשמר",
     "showcase_generated": "הספרים שיצרת",
     "showcase_no_generated": "אין עדיין ספרים שנוצרו — צור סיפור והוא יופיע כאן.",
-    "showcase_demos": "ספרי הדגמה (תבניות)"
+    "showcase_demos": "ספרי הדגמה (תבניות)",
+    "wizard_flags_help": "שלוט במה שהלקוח רואה בשלבי יצירת הסיפור."
   },
   "title_page": {
     "presents": "מוגש ל",

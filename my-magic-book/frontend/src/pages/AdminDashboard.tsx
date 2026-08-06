@@ -941,9 +941,16 @@ export default function AdminDashboard() {
                 <h2 className="font-arabic font-bold text-xl text-white mb-6">{t('admin.stories_title')}</h2>
 
                 {/* ── Wizard switches: features hidden from customers until the
-                       owner turns them back on. Saved on click. ── */}
-                <div className="mb-8 p-3 rounded-xl bg-white/5 border border-white/10">
-                  <h3 className="font-arabic font-bold text-white text-sm mb-2">⚙️ {t('admin.wizard_flags_title', 'خيارات خطوات الإنشاء')}</h3>
+                       owner turns them back on. Saved on click. Deliberately
+                       gold-bordered — the earlier white/5 card was invisible
+                       against the dark dashboard and got scrolled past. ── */}
+                <div className="mb-8 p-4 rounded-2xl bg-gold-500/[0.07] border-2 border-gold-500/40 shadow-[0_0_20px_rgba(212,169,55,0.10)]">
+                  <h3 className="font-arabic font-black text-gold-500 text-base mb-1 flex items-center gap-2">
+                    <Settings className="w-4 h-4" /> {t('admin.wizard_flags_title', 'خيارات خطوات الإنشاء')}
+                  </h3>
+                  <p className="font-arabic text-white/45 text-xs mb-3">
+                    {t('admin.wizard_flags_help', 'تحكّم بما يظهر للعميل في خطوات إنشاء القصة.')}
+                  </p>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <FlagSwitch
                       on={!!settings.allowSkipPhoto}

@@ -814,7 +814,8 @@
     "save_settings_ok": "تم الحفظ",
     "showcase_generated": "الكتب التي أنشأتها",
     "showcase_no_generated": "لا توجد كتب مُنشأة بعد — أنشئ قصة وستظهر هنا.",
-    "showcase_demos": "كتب العرض (القوالب)"
+    "showcase_demos": "كتب العرض (القوالب)",
+    "wizard_flags_help": "تحكّم بما يظهر للعميل في خطوات إنشاء القصة."
   },
   "title_page": {
     "presents": "يُقدّم لـ",

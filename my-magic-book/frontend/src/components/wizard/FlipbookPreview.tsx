@@ -1,10 +1,24 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import HTMLFlipBook from 'react-pageflip';
 import { resolveGender, applyGenderTokens } from '../../utils/gender';
 import { localizeName } from '../../utils/translit';
 
 // Rotating page background colors for the decorative text pages.
 const PAGE_COLORS = ['#F2607A', '#7C5CE0', '#159B8A', '#2E7BD6', '#E17055', '#3FA34D'];
+
+// "More adventures" teasers on the back cover — kept in sync with BackCover.tsx
+// so the preview advertises the same next stories as the printed book.
+const ALL_TEASERS = [
+  { id: 'space', emoji: '🚀', fallback: 'في الفضاء' },
+  { id: 'school', emoji: '🏫', fallback: 'في المدرسة' },
+  { id: 'zoo', emoji: '🦁', fallback: 'في حديقة الحيوانات' },
+  { id: 'ocean', emoji: '🌊', fallback: 'في أعماق المحيط' },
+  { id: 'dinosaurs', emoji: '🦖', fallback: 'في عالم الديناصورات' },
+  { id: 'world', emoji: '🌍', fallback: 'حول العالم' },
+  { id: 'superhero', emoji: '⚡', fallback: 'بطلاً خارقاً' },
+];
+const TEASER_EXCLUDE: Record<string, string> = { zoo_adventure: 'zoo', space: 'space', school_hero: 'school' };
 
 export interface PreviewPage {
   type: 'cover' | 'text' | 'lock' | 'final' | 'back';
@@ -14,8 +28,12 @@ export interface PreviewPage {
   image?: string;
   /** Blurred (locked) page — readable only after payment. */
   blur?: boolean;
-  /** Closing pages: the story's moral / a secondary line under the content. */
-  subtitle?: string;
+  /** Closing pages — the same fields the printed FinalStoryPage/BackCover use. */
+  moral?: string;
+  questions?: string[];
+  conclusion?: string;
+  childName?: string;
+  teasers?: { id: string; emoji: string; label: string }[];
 }
 
 /**
@@ -51,24 +69,48 @@ export function buildThemePreview(opts: {
   const pagesObj = ft(`stories.${theme}.pages`, { returnObjects: true }) as Record<string, string> | string;
 
   /**
-   * The pages the real printed book ends on — "the end" + the story's moral,
-   * then the back cover. Only appended to a FULL preview: a teaser that showed
-   * the ending would give away the payoff.
+   * The two sheets the printed book ends on, mirroring FinalStoryPage and
+   * BackCover so the preview matches the book the customer receives: the
+   * closing page carries the moral, the discussion QUESTIONS and the
+   * conclusion; the back cover carries the child's portrait and the "more
+   * adventures" teasers. Only appended to a FULL preview — a locked teaser
+   * must not give the ending away.
    */
   const closingPages = (): PreviewPage[] => {
-    const moral = personalize((ft(`stories.${theme}.moral`, '') as string) || '');
-    const conclusion = personalize((ft(`stories.${theme}.conclusion`, '') as string) || '');
+    // `questions` is a JSON array in ar but an object ({"0":…}) in en/he, so
+    // an Array.isArray test alone silently drops them in two of three locales.
+    const rawQuestions = ft(`stories.${theme}.questions`, { returnObjects: true });
+    const questionList: unknown[] = Array.isArray(rawQuestions)
+      ? rawQuestions
+      : rawQuestions && typeof rawQuestions === 'object'
+        ? Object.keys(rawQuestions as object)
+            .sort((a, b) => Number(a) - Number(b))
+            .map((k) => (rawQuestions as Record<string, unknown>)[k])
+        : [];
+    const questions = questionList.filter((q): q is string => typeof q === 'string').map(personalize);
+    // Never recommend the theme they just read (same rule as BackCover).
+    const teasers = ALL_TEASERS
+      .filter((tz) => tz.id !== (TEASER_EXCLUDE[theme] || ''))
+      .slice(0, 3)
+      .map((tz) => ({ id: tz.id, emoji: tz.emoji, label: ft(`storybook.teaser_${tz.id}`, tz.fallback) as string }));
+
     return [
       {
         type: 'final',
-        title: ft('storybook.the_end', 'النهاية'),
-        content: conclusion,
-        subtitle: moral,
+        title: personalize(titleRaw || ft('step2.preview_generic_title', 'قصة سحرية')),
+        content: ft('storybook.end_story', '✦ نهاية القصة ✦') as string,
+        moral: personalize((ft(`stories.${theme}.moral`, '') as string) || ''),
+        questions,
+        conclusion: personalize((ft(`stories.${theme}.conclusion`, '') as string) || ''),
+        childName: name,
       },
       {
         type: 'back',
-        title: personalize(titleRaw || ft('step2.preview_generic_title', 'قصة سحرية')),
+        title: ft('storybook.congrats', 'أحسنت يا {{name}}! 🌟', { name }) as string,
+        content: ft('storybook.completed_desc', 'أتممت قراءة قصتك السحرية — استمر في المغامرة!') as string,
         image: portraitImage,
+        childName: name,
+        teasers,
       },
     ];
   };
@@ -123,6 +165,8 @@ interface Props {
 // rest, then a lock page — the full story is revealed only after payment.
 export default function FlipbookPreview({ pages, text, language = 'ar' }: Props) {
   const dir = language === 'ar' || language === 'he' ? 'rtl' : 'ltr';
+  // The closing sheets reuse the printed book's own section headings.
+  const { t: ftLocal } = useTranslation();
   const lock =
     language === 'en' ? '🔒 The rest of the story unlocks after checkout'
     : language === 'he' ? '🔒 שאר הסיפור ייחשף לאחר התשלום'
@@ -164,6 +208,13 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
         .fbp-divider { width:44px; height:2px; margin:0 auto 8px; border-radius:999px; background: linear-gradient(90deg, transparent, #d4a937, transparent); }
         .fbp-text { font-family:'Noto Kufi Arabic','Inter',sans-serif; color:#3a2c10; font-weight:700; font-size:11px; line-height:1.7; text-align:center; position:relative; z-index:1; }
         .fbp-num { position:absolute; bottom:6px; left:8px; background: linear-gradient(135deg, #fff6da, #f3d98f); color:#6b4a00; font-size:8px; font-weight:800; padding:1px 6px; border-radius:999px; z-index:4; }
+        /* Closing sheet — compressed FinalStoryPage layout */
+        .fbp-cdiv { width:70%; height:1px; margin:5px auto; background:linear-gradient(90deg, transparent, rgba(212,169,55,0.55), transparent); flex:none; }
+        .fbp-cdiv--sm { width:45%; margin:4px auto; }
+        .fbp-chead { font-family:'Noto Kufi Arabic','Inter',sans-serif; color:#e3b94a; font-size:7.5px; font-weight:800; margin-bottom:2px; }
+        .fbp-cbody { font-family:'Noto Kufi Arabic','Inter',sans-serif; color:rgba(255,255,255,0.82); font-size:7px; line-height:1.55; }
+        .fbp-qlist { margin:0; padding-inline-start:11px; }
+        .fbp-qitem { font-family:'Noto Kufi Arabic','Inter',sans-serif; color:rgba(255,255,255,0.72); font-size:6.5px; line-height:1.5; margin-bottom:1.5px; }
         @keyframes fbp-tw { 0%,100%{opacity:0.35; transform:scale(0.8);} 50%{opacity:1; transform:scale(1.1);} }
       `}</style>
       <div className="relative shadow-2xl" style={{ width: '100%', maxWidth: '700px' }}>
@@ -210,47 +261,92 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                   </div>
                 )
               ) : page.type === 'final' ? (
-                /* Closing page — "the end" + the story's conclusion and moral,
-                   mirroring FinalStoryPage in the real book. */
+                /* Closing page — same sections as the printed FinalStoryPage:
+                   end label, title, moral, discussion questions, conclusion. */
                 <div
-                  className="h-full w-full flex flex-col items-center justify-center text-center px-5"
-                  style={{ background: 'radial-gradient(ellipse at 50% 25%, #17294a 0%, #0a1426 70%, #050a15 100%)' }}
+                  className="fbp-close h-full w-full flex flex-col px-3 py-3 overflow-hidden"
+                  style={{ background: 'radial-gradient(ellipse at 50% 20%, #17294a 0%, #0a1426 70%, #050a15 100%)' }}
                   dir={dir}
                 >
-                  <div className="text-2xl mb-1.5">🏮</div>
-                  <h3 className="font-arabic font-black text-gold-500 text-base mb-1.5">{page.title}</h3>
-                  <div className="w-10 h-px bg-gold-500/40 mb-2" />
-                  {page.content && (
-                    <p className="font-arabic text-white/85 text-[10px] leading-relaxed max-w-[88%]">{page.content}</p>
+                  <span className="font-arabic text-gold-500/90 text-[8px] tracking-wide">{page.content}</span>
+                  <h3 className="font-arabic font-black text-white text-[11px] leading-snug mt-0.5">{page.title}</h3>
+                  <div className="fbp-cdiv" />
+
+                  {page.moral && (
+                    <>
+                      <h4 className="fbp-chead">✦ {ftLocal('storybook.moral_title', 'العبر المستفادة من القصة')}</h4>
+                      <p className="fbp-cbody">{page.moral}</p>
+                    </>
                   )}
-                  {page.subtitle && (
-                    <p className="font-arabic text-gold-300/90 text-[10px] leading-relaxed max-w-[88%] mt-2 italic">
-                      ✨ {page.subtitle}
-                    </p>
+
+                  {!!page.questions?.length && (
+                    <>
+                      <div className="fbp-cdiv fbp-cdiv--sm" />
+                      <h4 className="fbp-chead">✦ {ftLocal('storybook.questions_title', 'أسئلة ممتعة للمناقشة مع طفلك:')}</h4>
+                      <ol className="fbp-qlist">
+                        {page.questions.slice(0, 3).map((q, qi) => (
+                          <li key={qi} className="fbp-qitem">{q}</li>
+                        ))}
+                      </ol>
+                    </>
                   )}
+
+                  {page.conclusion && (
+                    <>
+                      <div className="fbp-cdiv fbp-cdiv--sm" />
+                      <p className="fbp-cbody">{page.conclusion}</p>
+                    </>
+                  )}
+                  <p className="font-arabic text-gold-400 text-[8px] font-bold mt-auto pt-1">
+                    {ftLocal('storybook.well_done', '⭐ أحسنت يا {{name}}! ⭐', { name: page.childName })}
+                  </p>
                 </div>
               ) : page.type === 'back' ? (
-                /* Back cover — branded closing sheet with the child's portrait. */
+                /* Back cover — the printed BackCover in miniature: portrait,
+                   congratulations, the "more adventures" teasers, brand footer. */
                 <div
-                  className="h-full w-full flex flex-col items-center justify-center text-center px-5 relative"
-                  style={{ background: 'linear-gradient(165deg, #0d1a2e 0%, #050a15 100%)' }}
+                  className="h-full w-full flex flex-col items-center justify-center px-3 py-3 text-center overflow-hidden"
+                  style={{ background: 'linear-gradient(180deg, #0a1628 0%, #060d1a 60%, #03060e 100%)' }}
                   dir={dir}
                 >
-                  {page.image ? (
+                  <div className="relative mb-1.5">
                     <img
-                      src={page.image}
+                      src={page.image || '/logo.png?v=7'}
                       alt=""
-                      className="w-20 h-20 rounded-full object-cover border-2 border-gold-500/70 shadow-lg mb-3"
+                      className="w-16 h-16 rounded-full object-cover border-2 border-gold-500/70 shadow-[0_0_14px_rgba(212,169,55,0.45)]"
                       onError={hideOnError}
                     />
-                  ) : (
-                    <img src="/logo.png?v=7" alt="" className="w-14 h-14 object-contain mb-3 drop-shadow-[0_0_12px_rgba(212,169,55,0.5)]" />
+                    <span className="absolute -top-1 -right-1 text-gold-400 text-[8px]">✦</span>
+                    <span className="absolute -bottom-1 -left-1 text-gold-400 text-[8px]">✧</span>
+                  </div>
+                  <h3 className="font-arabic font-black text-gold-500 text-[10px] leading-snug">{page.title}</h3>
+                  <p className="font-arabic text-white/55 text-[8px] leading-snug mt-0.5 max-w-[92%]">{page.content}</p>
+
+                  {!!page.teasers?.length && (
+                    <>
+                      <div className="fbp-cdiv" />
+                      <h4 className="font-arabic text-gold-400/90 text-[8px] font-bold mb-1">
+                        {ftLocal('storybook.more_adventures', '✨ مغامرات أخرى تنتظرك')}
+                      </h4>
+                      <div className="grid grid-cols-3 gap-1 w-full px-1">
+                        {page.teasers.map((tz) => (
+                          <div key={tz.id} className="rounded-md bg-white/[0.06] border border-gold-500/20 p-1 flex flex-col items-center gap-0.5">
+                            <span className="text-[11px] leading-none">{tz.emoji}</span>
+                            <span className="font-arabic text-white/60 text-[6.5px] leading-tight">{page.childName} {tz.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
                   )}
-                  <p className="font-arabic text-white/70 text-[10px] leading-snug max-w-[85%]">{page.title}</p>
-                  <div className="w-10 h-px bg-gold-500/40 my-2.5" />
-                  <img src="/logo.png?v=7" alt="" className="w-7 h-7 object-contain mb-1" />
-                  <span className="font-brand text-gold-500 text-[11px] tracking-wide">Magic Fanoos</span>
-                  <span className="font-arabic text-white/30 text-[9px] mt-0.5">magicfanoos.com</span>
+
+                  <div className="fbp-cdiv" />
+                  <div className="flex items-center gap-1.5">
+                    <img src="/logo.png?v=7" alt="" className="w-5 h-5 object-contain" />
+                    <div className="flex flex-col items-start leading-none">
+                      <span className="font-brand text-gold-500 text-[9px] tracking-wide">Magic Fanoos</span>
+                      <span className="font-arabic text-white/30 text-[7px] mt-0.5">🌐 MagicFanoos.com</span>
+                    </div>
+                  </div>
                 </div>
               ) : page.type === 'lock' ? (
                 <div
