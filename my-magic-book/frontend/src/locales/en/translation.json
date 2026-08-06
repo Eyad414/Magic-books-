@@ -819,7 +819,8 @@
     "showcase_on": "Shown on the home page",
     "showcase_off": "Show on the home page",
     "showcase_added": "Book added to the home page ✅",
-    "showcase_removed": "Book removed from the home page"
+    "showcase_removed": "Book removed from the home page",
+    "paid_cash": "Paid — cash on delivery"
   },
   "title_page": {
     "presents": "Presented to",

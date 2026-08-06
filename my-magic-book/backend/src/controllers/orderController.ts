@@ -40,6 +40,7 @@ export const createCheckout = async (req: Request, res: Response): Promise<void>
       shippingAddress,
       totalPrice,
       currency: 'SAR',
+      paymentMethod: paymentMethod === 'cash' ? 'cash' : 'card',
       paymentStatus: 'pending',
     });
 

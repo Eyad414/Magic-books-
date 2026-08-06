@@ -442,17 +442,17 @@ export default function Step3_Checkout({ onPrev }: Props) {
         <span className="font-arabic font-bold text-sm">{t('step5.title')}</span>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* Story details + copies */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="p-4 rounded-xl bg-dark-700 border border-white/10 space-y-2">
-            <h3 className="font-arabic font-bold text-white text-sm mb-3 flex items-center gap-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="p-3 rounded-xl bg-dark-700 border border-white/10 space-y-1.5">
+            <h3 className="font-arabic font-bold text-white text-xs mb-2 flex items-center gap-1.5">
               <span>📖</span> {t('step5.story_details_title')}
             </h3>
 
             {/* Book-cover preview: the child's photo mocked up as a mini cover */}
-            <div className="flex items-center gap-3 mb-3 pb-3 border-b border-white/5">
-              <div className="relative w-16 h-20 rounded-lg overflow-hidden shrink-0 border border-gold-500/40 bg-dark-800 shadow-lg shadow-black/40">
+            <div className="flex items-center gap-2.5 mb-2 pb-2 border-b border-white/5">
+              <div className="relative w-12 h-16 rounded-lg overflow-hidden shrink-0 border border-gold-500/40 bg-dark-800 shadow-lg shadow-black/40">
                 {coverPhoto ? (
                   <img src={coverPhoto} alt="" className="w-full h-full object-cover" />
                 ) : (
@@ -469,7 +469,7 @@ export default function Step3_Checkout({ onPrev }: Props) {
                 </div>
               </div>
               <div className="min-w-0">
-                <p className="font-arabic font-black text-white text-sm leading-tight truncate">
+                <p className="font-arabic font-black text-white text-xs leading-tight truncate">
                   {(t('step5.cover_preview_hero', 'كتاب {name}') as string).replace('{name}', heroName || '')}
                 </p>
                 <p className="font-arabic text-gold-500/80 text-[11px] mt-0.5">
@@ -479,7 +479,7 @@ export default function Step3_Checkout({ onPrev }: Props) {
             </div>
 
             {/* Order review — all details in one compact wrapping row */}
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs pt-1">
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] pt-0.5">
               {[
                 { l: t('step5.story_hero'), v: heroName || '-' },
                 { l: t('step5.gender'), v: childDetails.childGender === 'female' ? t('step5.girl') : t('step5.boy') },
@@ -496,15 +496,15 @@ export default function Step3_Checkout({ onPrev }: Props) {
           </div>
 
           {/* Want another book? Create a separate story (its own order). */}
-          <div className="p-4 rounded-xl bg-dark-700 border border-white/10 flex flex-col items-center justify-center text-center gap-3">
-            <span className="text-3xl">📚</span>
-            <p className="font-arabic text-white/60 text-xs leading-relaxed max-w-[85%]">
+          <div className="p-3 rounded-xl bg-dark-700 border border-white/10 flex flex-col items-center justify-center text-center gap-2">
+            <span className="text-2xl">📚</span>
+            <p className="font-arabic text-white/60 text-[11px] leading-relaxed max-w-[90%]">
               {t('step3.another_story_hint', 'تريد كتاباً آخر بموضوع مختلف؟ أنشئ قصة جديدة بطلب منفصل.')}
             </p>
             <button
               type="button"
               onClick={handleCreateAnotherStory}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-magic-500/20 text-magic-300 border border-magic-500/30 font-arabic font-bold text-sm hover:bg-magic-500/30 transition-all"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-magic-500/20 text-magic-300 border border-magic-500/30 font-arabic font-bold text-xs hover:bg-magic-500/30 transition-all"
             >
               <Plus className="w-4 h-4" /> {t('step3.create_another_story', 'أنشئ قصة جديدة')}
             </button>
@@ -512,10 +512,10 @@ export default function Step3_Checkout({ onPrev }: Props) {
         </div>
 
         {/* Coupon + price summary */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 rounded-xl bg-dark-700 border border-white/10">
-            <h3 className="font-arabic font-bold text-white text-sm mb-3 flex items-center gap-2">
-              <Tag className="w-4 h-4 text-gold-500" /> {t('step3.coupon_placeholder', 'كود الخصم')}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="p-3 rounded-xl bg-dark-700 border border-white/10">
+            <h3 className="font-arabic font-bold text-white text-xs mb-2 flex items-center gap-1.5">
+              <Tag className="w-3.5 h-3.5 text-gold-500" /> {t('step3.coupon_placeholder', 'كود الخصم')}
             </h3>
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
@@ -542,8 +542,8 @@ export default function Step3_Checkout({ onPrev }: Props) {
             {couponApplied && <p className="text-green-400 text-xs font-arabic mt-2">{t('step3.coupon_success', 'تم تطبيق خصم {discount}%').replace('{discount}', String(discount))} ✨</p>}
           </div>
 
-          <div className="p-4 rounded-xl bg-gradient-to-l from-gold-500/20 to-gold-500/5 border border-gold-500/30 space-y-2">
-            <h3 className="font-arabic font-bold text-white text-sm mb-3">💰 {t('step5.price_summary_title')}</h3>
+          <div className="p-3 rounded-xl bg-gradient-to-l from-gold-500/20 to-gold-500/5 border border-gold-500/30 space-y-1.5">
+            <h3 className="font-arabic font-bold text-white text-xs mb-2">💰 {t('step5.price_summary_title')}</h3>
             <div className="flex items-start justify-between gap-4">
               <span className="font-arabic text-white/50 text-sm flex-shrink-0">{t(`step3.pkg_${selectedPkg.id}`) || selectedPkg.label}:</span>
               <div className="flex items-center gap-2">

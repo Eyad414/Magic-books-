@@ -28,6 +28,9 @@ export interface IOrder extends Document {
   totalPrice: number;
   currency: string;
   paymentStatus: PaymentStatus;
+  /** How the customer chose to pay. Cash/COD orders must not be shown as
+   *  "awaiting payment" — that wording is for card checkouts. */
+  paymentMethod?: 'cash' | 'card';
   stripeSessionId?: string;
   stripePaymentIntentId?: string;
   illustrationsStatus: IllustrationsStatus;
@@ -76,6 +79,7 @@ const OrderSchema = new Schema<IOrder>(
     shippingAddress: { type: ShippingAddressSchema, required: true },
     totalPrice: { type: Number, required: true },
     currency: { type: String, default: 'SAR' },
+    paymentMethod: { type: String, enum: ['cash', 'card'], default: 'card' },
     paymentStatus: {
       type: String,
       enum: ['pending', 'paid', 'failed', 'refunded'],

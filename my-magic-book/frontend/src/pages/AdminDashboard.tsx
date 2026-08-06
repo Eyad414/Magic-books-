@@ -584,6 +584,15 @@ export default function AdminDashboard() {
     }
   };
 
+  // Cash-on-delivery orders are confirmed orders, not unpaid ones. Showing
+  // "بانتظار الدفع" for them was wrong — that wording belongs to card checkouts
+  // that genuinely haven't completed.
+  const isSettled = (o: any) => o?.paymentStatus === 'paid' || o?.paymentMethod === 'cash';
+  const payLabel = (o: any) =>
+    o?.paymentStatus === 'paid' ? t('admin.paid')
+    : o?.paymentMethod === 'cash' ? t('admin.paid_cash', 'مدفوع نقداً عند الاستلام')
+    : t('admin.pending_payment');
+
   // A story counts as a real "ready book" once it has illustrations — that's
   // what makes it openable/printable. Newest first (the API already sorts).
   const generatedBooks = allStories.filter((s: any) => (s?.generatedImages?.length ?? 0) > 0 || s?.generatedCover);
@@ -666,8 +675,8 @@ export default function AdminDashboard() {
                               <div className="px-2 py-0.5 bg-gold-500/10 text-gold-500 rounded-lg text-xs font-bold font-mono">
                                 #{order._id.slice(-8).toUpperCase()}
                               </div>
-                              <StatusBadge tone={order.paymentStatus === 'paid' ? 'green' : 'gold'} icon={order.paymentStatus === 'paid' ? CheckCircle : Clock}>
-                                {order.paymentStatus === 'paid' ? t('admin.paid') : t('admin.pending_payment')}
+                              <StatusBadge tone={isSettled(order) ? 'green' : 'gold'} icon={isSettled(order) ? CheckCircle : Clock}>
+                                {payLabel(order)}
                               </StatusBadge>
                               {/* BookPod production status: sent (in production) vs not yet sent */}
                               {order.bookpodStatus === 'submitted' ? (
@@ -940,44 +949,63 @@ export default function AdminDashboard() {
             ) : tab === 'pricing' ? (
               <div>
                 <h2 className="font-arabic font-bold text-xl text-white mb-6">{t('admin.pricing_title')}</h2>
-                <div className="space-y-4">
+                <div className="space-y-2">
                   {settings.bookPackages.map((pkg: any, index: number) => (
-                    <div key={pkg.id} className="p-4 bg-white/5 rounded-xl border border-white/10 grid grid-cols-1 sm:grid-cols-4 gap-4 items-center">
-                      <div className="sm:col-span-1">
-                        <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.name')}</label>
-                        <input type="text" className="magic-input w-full" value={getLocalizedPkgLabel(pkg)} onChange={(e) => {
+                    /* One compact row per package — name, price, description and
+                       the visibility pill inline, matching Stories & Themes. */
+                    <div key={pkg.id} className="px-3 py-2 bg-white/5 rounded-xl border border-white/10 flex flex-wrap items-center gap-1.5">
+                      <input
+                        type="text"
+                        className="magic-input flex-1 min-w-[110px] sm:max-w-[150px] !py-1.5 text-sm"
+                        title={t('admin.name')}
+                        placeholder={t('admin.name')}
+                        value={getLocalizedPkgLabel(pkg)}
+                        onChange={(e) => {
                           const newPkgs = [...settings.bookPackages];
                           newPkgs[index].label = e.target.value;
-                          setSettings({...settings, bookPackages: newPkgs});
-                        }} />
-                      </div>
-                      <div className="sm:col-span-1">
-                        <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.price_sar')}</label>
-                        <input type="number" className="magic-input w-full" value={pkg.price} onChange={(e) => {
+                          setSettings({ ...settings, bookPackages: newPkgs });
+                        }}
+                      />
+                      <input
+                        type="number"
+                        className="magic-input w-[86px] !py-1.5 text-sm text-center"
+                        title={t('admin.price_sar')}
+                        value={pkg.price}
+                        onChange={(e) => {
                           const newPkgs = [...settings.bookPackages];
                           newPkgs[index].price = Number(e.target.value);
-                          setSettings({...settings, bookPackages: newPkgs});
-                        }} />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.description')}</label>
-                        <input type="text" className="magic-input w-full" value={getLocalizedPkgDesc(pkg)} onChange={(e) => {
+                          setSettings({ ...settings, bookPackages: newPkgs });
+                        }}
+                      />
+                      <input
+                        type="text"
+                        className="magic-input flex-[2] min-w-[150px] !py-1.5 text-sm"
+                        title={t('admin.description')}
+                        placeholder={t('admin.description')}
+                        value={getLocalizedPkgDesc(pkg)}
+                        onChange={(e) => {
                           const newPkgs = [...settings.bookPackages];
                           newPkgs[index].desc = e.target.value;
-                          setSettings({...settings, bookPackages: newPkgs});
-                        }} />
-                      </div>
+                          setSettings({ ...settings, bookPackages: newPkgs });
+                        }}
+                      />
                       {/* Hide this package from customers (Step 2 & 3) */}
-                      <div className="sm:col-span-4">
-                        <label className={`flex items-center gap-2 font-arabic text-sm cursor-pointer w-fit px-3 py-1.5 rounded-lg border transition-colors ${pkg.hidden ? 'bg-white/5 text-white/50 border-white/10' : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'}`}>
-                          <input type="checkbox" className="accent-emerald-500" checked={!pkg.hidden} onChange={(e) => {
+                      <label
+                        className={`flex items-center gap-1 px-2 py-1 rounded-lg font-arabic text-xs cursor-pointer border transition-colors ${pkg.hidden ? 'bg-white/5 text-white/50 border-white/10' : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'}`}
+                        title={pkg.hidden ? t('admin.pkg_hidden', 'مخفية عن العملاء (اضغط للإظهار)') : t('admin.pkg_visible', 'ظاهرة للعملاء (اضغط للإخفاء)')}
+                      >
+                        <input
+                          type="checkbox"
+                          className="accent-emerald-500"
+                          checked={!pkg.hidden}
+                          onChange={(e) => {
                             const newPkgs = [...settings.bookPackages];
                             newPkgs[index].hidden = !e.target.checked;
                             setSettings({ ...settings, bookPackages: newPkgs });
-                          }} />
-                          {pkg.hidden ? t('admin.pkg_hidden', 'مخفية عن العملاء (اضغط للإظهار)') : t('admin.pkg_visible', 'ظاهرة للعملاء (اضغط للإخفاء)')}
-                        </label>
-                      </div>
+                          }}
+                        />
+                        {pkg.hidden ? t('admin.pkg_hidden_short', 'مخفية') : t('admin.pkg_visible_short', 'ظاهرة')}
+                      </label>
                     </div>
                   ))}
 
@@ -1555,8 +1583,8 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
-                            <span className={`text-xs font-bold px-2 py-1 rounded-lg ${o.paymentStatus === 'paid' ? 'bg-green-500/20 text-green-400' : 'bg-gold-500/20 text-gold-500'}`}>
-                              {o.paymentStatus === 'paid' ? t('admin.paid') : t('admin.pending_payment')}
+                            <span className={`text-xs font-bold px-2 py-1 rounded-lg ${isSettled(o) ? 'bg-green-500/20 text-green-400' : 'bg-gold-500/20 text-gold-500'}`}>
+                              {payLabel(o)}
                             </span>
                             <span className="font-arabic text-white/60 text-xs whitespace-nowrap">{o.totalPrice} {o.currency}</span>
                           </div>
