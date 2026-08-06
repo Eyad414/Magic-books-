@@ -2,8 +2,10 @@ import { Request, Response } from 'express';
 import Order from '../models/Order';
 import ContactMessage from '../models/ContactMessage';
 import { generateIllustration } from '../services/ImageGenerator';
-import { objectExists, pdfFolderPath, getReadSignedUrl } from '../services/StorageService';
+import { getReadSignedUrl } from '../services/StorageService';
 import { getSceneTemplate, buildScenePrompt, resolveGender } from '../services/sceneTemplates';
+import { coverPreviewSlug, findPreviewCover, baseTheme } from '../services/coverPreviewKey';
+import { localizeName } from '../utils/translit';
 
 /**
  * How many cover previews an account may generate before it has bought
@@ -12,9 +14,6 @@ import { getSceneTemplate, buildScenePrompt, resolveGender } from '../services/s
  * orders is marked paid.
  */
 export const FREE_COVER_PREVIEWS = 5;
-
-/** Only these keep their own scene template; suffixed variants share the base. */
-const baseTheme = (themeId: string) => themeId.replace(/_(real|photoreal|cartoon|pr|hd)$/, '');
 
 /**
  * POST /api/stories/cover-preview
@@ -26,7 +25,7 @@ const baseTheme = (themeId: string) => themeId.replace(/_(real|photoreal|cartoon
 export const generateCoverPreview = async (req: Request, res: Response): Promise<void> => {
   try {
     const user = (req as any).user;
-    const { childName, childGender, childPhotoUrl, theme } = req.body || {};
+    const { childName, childGender, childPhotoUrl, theme, language } = req.body || {};
 
     if (!childPhotoUrl || !String(childPhotoUrl).trim()) {
       res.status(400).json({ success: false, message: 'يجب رفع صورة الطفل أولاً' });
@@ -43,25 +42,33 @@ export const generateCoverPreview = async (req: Request, res: Response): Promise
       return;
     }
 
-    // The same child + same theme always maps to the same object, so re-opening
-    // a cover the customer already generated is free and instant. Gemini picks
-    // the format, so check BOTH extensions generateIllustration can write —
-    // missing the cache here would silently re-charge for an identical image.
-    const slug = `${String(user._id)}-${baseTheme(theme)}`;
-    const folder = `generated/preview-${slug}`;
-    for (const ext of ['png', 'jpg']) {
-      const candidate = pdfFolderPath(folder, `page-00.${ext}`);
-      if (await objectExists(candidate)) {
-        res.json({
-          success: true,
-          cached: true,
-          objectPath: candidate,
-          signedUrl: await getReadSignedUrl(candidate).catch(() => ''),
-          used: countUsedSince(user, await lastPaidAt(user._id)),
-          limit: FREE_COVER_PREVIEWS,
-        });
-        return;
-      }
+    // Build the prompt EXACTLY as BookBuilder will for the paid book, so the
+    // approved cover can be reused verbatim. BookBuilder renders the name in the
+    // book's language first (`localizeName`), so skipping that here would change
+    // one word of the prompt and silently defeat the reuse for every name that
+    // gets transliterated.
+    // Localize FIRST, then resolve gender from that name — BookBuilder does it in
+    // this order, and resolveGender matches against a name list, so resolving
+    // from the raw name could disagree once the name changes script.
+    const bookName = localizeName(childName || '', language || 'ar');
+    const gender = resolveGender(bookName, childGender === 'female' ? 'female' : 'male');
+    const prompt = buildScenePrompt('cover', template.coverScene, bookName, gender);
+
+    // Keyed by the exact inputs (see coverPreviewKey), so re-opening a cover the
+    // customer already generated is free and instant — while a changed photo or
+    // gender correctly produces a NEW cover instead of the previous child's.
+    const slug = coverPreviewSlug(String(user._id), theme, prompt, childPhotoUrl);
+    const existing = await findPreviewCover(slug);
+    if (existing) {
+      res.json({
+        success: true,
+        cached: true,
+        objectPath: existing.path,
+        signedUrl: await getReadSignedUrl(existing.path).catch(() => ''),
+        used: countUsedSince(user, await lastPaidAt(user._id)),
+        limit: FREE_COVER_PREVIEWS,
+      });
+      return;
     }
 
     // ── Quota: count only the previews made since the last paid order ──
@@ -83,11 +90,8 @@ export const generateCoverPreview = async (req: Request, res: Response): Promise
       return;
     }
 
-    const gender = resolveGender(childName, childGender === 'female' ? 'female' : 'male');
-    const prompt = buildScenePrompt('cover', template.coverScene, childName || '', gender);
-
     const stored = await generateIllustration(prompt, childPhotoUrl, {
-      storyId: `preview-${slug}`,
+      storyId: slug,
       pageNumber: 0,
     });
 

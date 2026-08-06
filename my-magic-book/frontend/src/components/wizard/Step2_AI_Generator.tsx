@@ -457,6 +457,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
         childGender={progress.childDetails.childGender || 'male'}
         childPhotoUrl={progress.childDetails.childPhotoUrl || ''}
         theme={form.theme}
+        language={form.language}
         enabled={!!user && !!progress.childDetails.childPhotoUrl && form.theme !== 'custom'}
       />
 

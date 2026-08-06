@@ -3,9 +3,10 @@ import Story from '../models/Story';
 import { generateIllustration } from './ImageGenerator';
 import { buildBookHtml, BookData } from './HtmlTemplateBuilder';
 import { generateBookPdf } from './PdfGenerator';
-import { uploadBuffer, pdfFolderPath } from './StorageService';
+import { uploadBuffer, pdfFolderPath, copyObject } from './StorageService';
 import { splitStoryIntoPages, buildIllustrationPrompt } from './promptBuilder';
-import { getSceneTemplate, buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, resolveTokens, COLORING_PAGES } from './sceneTemplates';
+import { getSceneTemplate, buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, resolveTokens, resolveGender, COLORING_PAGES } from './sceneTemplates';
+import { coverPreviewSlug, findPreviewCover } from './coverPreviewKey';
 import { printAndSubmitForOrder, printAndSubmitColoringForOrder, buildColoringPrintForOrder, buildPrintFilesForStory, PrintBuildOpts } from './PrintOrchestrator';
 import { isBookPodConfigured } from './BookPodService';
 import { localizeName } from '../utils/translit';
@@ -50,6 +51,43 @@ function localizedStory(theme: string, language: string): {
 }
 
 const ILLUSTRATION_PAGES = 13; // matches the 13 image slots in the printed book
+
+/**
+ * Returns the object path for this book's front cover.
+ *
+ * Prefers the cover the customer already approved in step 2: the preview slug
+ * hashes the exact generation inputs, so a hit proves the stored image was made
+ * from this same prompt and photo. Without this the book shipped a freshly
+ * generated cover — the same prompt, but image models aren't deterministic, so
+ * the printed cover was visibly NOT the one the customer said yes to.
+ *
+ * Reuse is best-effort: any miss or error falls through to generating, so the
+ * worst case is exactly the previous behaviour.
+ */
+async function reuseApprovedCover(
+  story: any,
+  coverPrompt: string,
+  childPhoto: string,
+  sid: string
+): Promise<string> {
+  try {
+    const userId = String(story.userId?._id || story.userId || '');
+    if (userId && childPhoto) {
+      const slug = coverPreviewSlug(userId, story.theme, coverPrompt, childPhoto);
+      const approved = await findPreviewCover(slug);
+      if (approved) {
+        const dest = pdfFolderPath(`generated/${sid}`, `page-00.${approved.ext}`);
+        await copyObject(approved.path, dest);
+        console.log(`[BookBuilder] reusing the cover ${story.childName} approved (${approved.path})`);
+        return dest;
+      }
+    }
+  } catch (err: any) {
+    console.warn(`[BookBuilder] cover reuse skipped, generating instead: ${err.message}`);
+  }
+  const cover = await generateIllustration(coverPrompt, childPhoto, { storyId: sid, pageNumber: 0 });
+  return cover.objectPath;
+}
 
 /** Neutral personalized title for a "write with AI" story — never the theme name. */
 function aiStoryTitle(story: any): string {
@@ -121,33 +159,38 @@ export async function buildBookForOrder(orderId: string, submitToBookPod = true)
       // PHOTOREAL story book — the theme's FIXED (ready) story, this customer's face.
       // AI-mode stories skip this (mode!=='ai' guard): they must use the customer's
       // own generated text + illustrations derived from it, not the theme template.
-      const cover = await generateIllustration(
-        buildScenePrompt('cover', template.coverScene, story.childName, story.childGender),
-        childPhoto, { storyId: sid, pageNumber: 0 }
-      );
+      // The ARTWORK must use the same corrected gender as the text below, which
+      // goes through resolveTokens: the wizard defaults childGender to 'male',
+      // so a girl whose order was never toggled was getting "she" in the story
+      // and a boy in every illustration.
+      const artGender = resolveGender(story.childName, story.childGender);
+
+      const coverPrompt = buildScenePrompt('cover', template.coverScene, story.childName, artGender);
+      const coverPath = await reuseApprovedCover(story, coverPrompt, childPhoto, sid);
+
       const objectPaths: string[] = [];
       pageTexts = [];
       const loc = localizedStory(story.theme, (story as any).language || 'ar');
       for (let i = 0; i < ILLUSTRATION_PAGES; i++) {
         const medal = (template.medalPages || []).includes(i + 1);
         const img = await generateIllustration(
-          buildScenePrompt('page', template.pageScenes[i], story.childName, story.childGender, { medal }),
+          buildScenePrompt('page', template.pageScenes[i], story.childName, artGender, { medal }),
           childPhoto, { storyId: sid, pageNumber: i + 1 }
         );
         objectPaths.push(img.objectPath);
         pageTexts.push(resolveTokens(loc?.pages?.[i] ?? template.pageTexts[i], story.childName, story.childGender));
       }
       const portrait = await generateIllustration(
-        buildScenePrompt('portrait', template.portraitScene, story.childName, story.childGender),
+        buildScenePrompt('portrait', template.portraitScene, story.childName, artGender),
         childPhoto, { storyId: sid, pageNumber: 99 }
       );
-      story.generatedCover = cover.objectPath;
+      story.generatedCover = coverPath;
       story.generatedImages = objectPaths;
       story.generatedPortrait = portrait.objectPath;
       await story.save();
 
       imageUrls = objectPaths.map(proxyUrl);
-      coverImageUrl = proxyUrl(cover.objectPath);
+      coverImageUrl = proxyUrl(coverPath);
       storyTitle = resolveTokens(loc?.title || template.titleAr || `${story.childName}`, story.childName, story.childGender);
     } else {
       // Fallback for themes without a scene template (handwritten / AI mode).

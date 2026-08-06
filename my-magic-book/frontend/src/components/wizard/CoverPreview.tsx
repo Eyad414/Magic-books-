@@ -11,6 +11,8 @@ interface Props {
   childGender: string;
   childPhotoUrl: string;
   theme: string;
+  /** The book's language — the cover prompt renders the name in it. */
+  language: string;
   /** Signed-in customers only — generating costs an AI image. */
   enabled: boolean;
 }
@@ -23,7 +25,7 @@ const EXPECTED_MS = 22000;
  * face before checkout. Generation is behind an explicit button: each press
  * costs a Gemini image, so browsing themes must never trigger one.
  */
-export default function CoverPreview({ childName, childGender, childPhotoUrl, theme, enabled }: Props) {
+export default function CoverPreview({ childName, childGender, childPhotoUrl, theme, language, enabled }: Props) {
   const { t, i18n } = useTranslation();
   const [busy, setBusy] = useState(false);
   const [pct, setPct] = useState(0);
@@ -34,7 +36,7 @@ export default function CoverPreview({ childName, childGender, childPhotoUrl, th
   const timer = useRef<number | undefined>(undefined);
 
   // A fresh theme means the shown cover no longer matches the selection.
-  useEffect(() => { setCover(''); setError(''); }, [theme]);
+  useEffect(() => { setCover(''); setError(''); }, [theme, language]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -68,7 +70,7 @@ export default function CoverPreview({ childName, childGender, childPhotoUrl, th
     if (busy) return;
     setError(''); setBlocked(false); setBusy(true); startBar();
     try {
-      const res = await storyApi.coverPreview({ childName, childGender, childPhotoUrl, theme });
+      const res = await storyApi.coverPreview({ childName, childGender, childPhotoUrl, theme, language });
       setCover(res.objectPath ? toDisplayUrl(res.objectPath) : res.signedUrl || '');
       if (typeof res.used === 'number') setQuota({ used: res.used, limit: res.limit });
       finishBar();
