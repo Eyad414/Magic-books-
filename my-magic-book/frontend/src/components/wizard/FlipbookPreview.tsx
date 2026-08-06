@@ -208,13 +208,21 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
         .fbp-divider { width:44px; height:2px; margin:0 auto 8px; border-radius:999px; background: linear-gradient(90deg, transparent, #d4a937, transparent); }
         .fbp-text { font-family:'Noto Kufi Arabic','Inter',sans-serif; color:#3a2c10; font-weight:700; font-size:11px; line-height:1.7; text-align:center; position:relative; z-index:1; }
         .fbp-num { position:absolute; bottom:6px; left:8px; background: linear-gradient(135deg, #fff6da, #f3d98f); color:#6b4a00; font-size:8px; font-weight:800; padding:1px 6px; border-radius:999px; z-index:4; }
-        /* Closing sheet — compressed FinalStoryPage layout */
-        .fbp-cdiv { width:70%; height:1px; margin:5px auto; background:linear-gradient(90deg, transparent, rgba(212,169,55,0.55), transparent); flex:none; }
-        .fbp-cdiv--sm { width:45%; margin:4px auto; }
-        .fbp-chead { font-family:'Noto Kufi Arabic','Inter',sans-serif; color:#e3b94a; font-size:7.5px; font-weight:800; margin-bottom:2px; }
-        .fbp-cbody { font-family:'Noto Kufi Arabic','Inter',sans-serif; color:rgba(255,255,255,0.82); font-size:7px; line-height:1.55; }
-        .fbp-qlist { margin:0; padding-inline-start:11px; }
-        .fbp-qitem { font-family:'Noto Kufi Arabic','Inter',sans-serif; color:rgba(255,255,255,0.72); font-size:6.5px; line-height:1.5; margin-bottom:1.5px; }
+        /* Closing sheet — FinalStoryPage compressed to a preview sheet */
+        .fbp-close { font-family:'Noto Kufi Arabic','Inter',sans-serif; }
+        .fbp-clabel { color:rgba(212,169,55,0.7); font-size:6.5px; letter-spacing:0.15em; font-weight:700; }
+        .fbp-ctitle { font-size:11px; font-weight:900; margin:1px 0 0; line-height:1.35;
+          background:linear-gradient(135deg,#fff 30%,#D4A937 70%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+        .fbp-cdiv { width:100%; height:1px; background:linear-gradient(90deg, transparent, rgba(212,169,55,0.35), transparent); flex:none; }
+        .fbp-cdiv--sm { width:60%; margin:0 auto; }
+        .fbp-chead { color:#D4A937; font-size:7.5px; font-weight:800; margin:0 0 3px; }
+        .fbp-cmoral { color:rgba(255,255,255,0.82); font-size:7px; line-height:1.6; font-weight:500;
+          background:rgba(212,169,55,0.06); border-inline-start:2px solid #D4A937; padding:3px 5px; border-radius:0 5px 5px 0; margin:0; }
+        .fbp-cbody { color:rgba(255,255,255,0.85); font-size:7px; line-height:1.6; font-weight:600; margin:0 0 2px; }
+        .fbp-cstar { color:#D4A937; font-size:8px; font-weight:900; margin:0; }
+        .fbp-qlist { margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:2px; }
+        .fbp-qitem { color:rgba(255,255,255,0.75); font-size:6.5px; line-height:1.55; padding-inline-start:8px; position:relative; }
+        .fbp-qitem::before { content:"◆"; position:absolute; inset-inline-start:0; color:#D4A937; font-size:4.5px; top:3px; }
         @keyframes fbp-tw { 0%,100%{opacity:0.35; transform:scale(0.8);} 50%{opacity:1; transform:scale(1.1);} }
       `}</style>
       <div className="relative shadow-2xl" style={{ width: '100%', maxWidth: '700px' }}>
@@ -264,42 +272,44 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                 /* Closing page — same sections as the printed FinalStoryPage:
                    end label, title, moral, discussion questions, conclusion. */
                 <div
-                  className="fbp-close h-full w-full flex flex-col px-3 py-3 overflow-hidden"
-                  style={{ background: 'radial-gradient(ellipse at 50% 20%, #17294a 0%, #0a1426 70%, #050a15 100%)' }}
+                  className="fbp-close h-full w-full flex flex-col justify-center gap-1.5 px-3.5 py-3 overflow-hidden"
+                  style={{ background: 'linear-gradient(160deg, #0a1628 0%, #111840 60%, #0d0f1a 100%)' }}
                   dir={dir}
                 >
-                  <span className="font-arabic text-gold-500/90 text-[8px] tracking-wide">{page.content}</span>
-                  <h3 className="font-arabic font-black text-white text-[11px] leading-snug mt-0.5">{page.title}</h3>
+                  <div className="text-center">
+                    <span className="fbp-clabel">{page.content}</span>
+                    <h3 className="fbp-ctitle">{page.title}</h3>
+                  </div>
                   <div className="fbp-cdiv" />
 
                   {page.moral && (
-                    <>
+                    <div>
                       <h4 className="fbp-chead">✦ {ftLocal('storybook.moral_title', 'العبر المستفادة من القصة')}</h4>
-                      <p className="fbp-cbody">{page.moral}</p>
-                    </>
+                      <p className="fbp-cmoral">{page.moral}</p>
+                    </div>
                   )}
 
                   {!!page.questions?.length && (
                     <>
                       <div className="fbp-cdiv fbp-cdiv--sm" />
-                      <h4 className="fbp-chead">✦ {ftLocal('storybook.questions_title', 'أسئلة ممتعة للمناقشة مع طفلك:')}</h4>
-                      <ol className="fbp-qlist">
-                        {page.questions.slice(0, 3).map((q, qi) => (
-                          <li key={qi} className="fbp-qitem">{q}</li>
-                        ))}
-                      </ol>
+                      <div>
+                        <h4 className="fbp-chead">✦ {ftLocal('storybook.questions_title', 'أسئلة ممتعة للمناقشة مع طفلك:')}</h4>
+                        <ul className="fbp-qlist">
+                          {page.questions.slice(0, 3).map((q, qi) => (
+                            <li key={qi} className="fbp-qitem">{q}</li>
+                          ))}
+                        </ul>
+                      </div>
                     </>
                   )}
 
-                  {page.conclusion && (
-                    <>
-                      <div className="fbp-cdiv fbp-cdiv--sm" />
-                      <p className="fbp-cbody">{page.conclusion}</p>
-                    </>
-                  )}
-                  <p className="font-arabic text-gold-400 text-[8px] font-bold mt-auto pt-1">
-                    {ftLocal('storybook.well_done', '⭐ أحسنت يا {{name}}! ⭐', { name: page.childName })}
-                  </p>
+                  <div className="fbp-cdiv fbp-cdiv--sm" />
+                  <div className="text-center">
+                    {page.conclusion && <p className="fbp-cbody">{page.conclusion}</p>}
+                    <p className="fbp-cstar">
+                      {ftLocal('storybook.well_done', '⭐ أحسنت يا {{name}}! ⭐', { name: page.childName })}
+                    </p>
+                  </div>
                 </div>
               ) : page.type === 'back' ? (
                 /* Back cover — the printed BackCover in miniature: portrait,
