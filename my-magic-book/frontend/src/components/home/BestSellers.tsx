@@ -18,6 +18,9 @@ export default function BestSellers() {
   const [themes, setThemes] = useState<Record<string, any>>({});
   // The story currently open in the preview modal (same UX as the Stories page).
   const [selected, setSelected] = useState<any>(null);
+  // Real books the owner published from the dashboard. When any exist they
+  // replace the curated mock-ups, so visitors browse an ACTUAL generated book.
+  const [realBooks, setRealBooks] = useState<any[]>([]);
   useEffect(() => {
     publicApi.getSettings()
       .then((res) => {
@@ -25,6 +28,9 @@ export default function BestSellers() {
         for (const th of (res?.settings?.themes || [])) map[th.id] = th;
         setThemes(map);
       })
+      .catch(() => {});
+    publicApi.getShowcaseBooks()
+      .then((res) => setRealBooks(res?.books || []))
       .catch(() => {});
   }, []);
 
@@ -42,11 +48,43 @@ export default function BestSellers() {
     { id: 4, themeId: 'space_coloring', name: 'Hamza', emoji: '🎨', rating: 4.7, reviews: 61, tag: '', colors: ['#006064', '#00838f'], localCover: '/showcase/hamza.webp' },
   ];
 
+  // Once the owner publishes real books from the dashboard they take over the
+  // section, keeping the same card styling but pointing at an ACTUAL generated
+  // book (its own cover, pages and closing portrait).
+  const cards = realBooks.length
+    ? realBooks.slice(0, 4).map((b, i) => ({
+        ...bestSellers[i % bestSellers.length],
+        id: b.id,
+        themeId: b.theme,
+        name: b.childName,
+        localCover: undefined,
+        coverPath: undefined,
+        book: b,
+      }))
+    : bestSellers;
+
   // Build the full illustrated flipbook preview for the selected showcase book —
-  // these are marketing sample stories, so we show them complete (every page,
-  // including the last). The customer still pays to generate their OWN book.
+  // these are sample stories, so we show them complete (every page, including
+  // the last). The customer still pays to generate their OWN book.
   const previewPages = useMemo(() => {
     if (!selected) return [];
+    const book = (selected as any).book;
+
+    // A published real book carries its own artwork — use it verbatim.
+    if (book) {
+      return buildThemePreview({
+        theme: textThemeFor(book.theme),
+        language: i18n.language as any,
+        childName: book.childName,
+        childGender: book.childGender,
+        coverImage: book.cover ? toDisplayUrl(book.cover) : '',
+        pageImages: (book.images || []).map(toDisplayUrl),
+        portraitImage: book.portrait ? toDisplayUrl(book.portrait) : '',
+        i18n,
+        full: true,
+      });
+    }
+
     const theme = themes[selected.themeId];
     const cover = selected.coverPath ? toDisplayUrl(selected.coverPath)
       : theme?.generatedCover ? toDisplayUrl(theme.generatedCover) : '';
@@ -96,13 +134,15 @@ export default function BestSellers() {
 
         {/* Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {bestSellers.map((book) => {
+          {cards.map((book) => {
             const theme = themes[book.themeId];
-            // Fast local thumbnail first (instant from CDN); fall back to the full
-            // cover via the proxy only if a card has no local thumbnail.
-            const cover = (book as any).localCover
-              || ((book as any).coverPath ? toDisplayUrl((book as any).coverPath)
-                : theme?.generatedCover ? toDisplayUrl(theme.generatedCover) : '');
+            // A published real book shows its own cover; otherwise the fast local
+            // thumbnail (instant from CDN), falling back to the proxied cover.
+            const cover = (book as any).book?.cover
+              ? toDisplayUrl((book as any).book.cover)
+              : (book as any).localCover
+                || ((book as any).coverPath ? toDisplayUrl((book as any).coverPath)
+                  : theme?.generatedCover ? toDisplayUrl(theme.generatedCover) : '');
             const themeLabel = t(`step2.theme_${book.themeId}`, { defaultValue: theme?.label || '' });
             const desc = t(`step2.theme_${book.themeId}_desc`, { defaultValue: theme?.desc || '' });
             return (

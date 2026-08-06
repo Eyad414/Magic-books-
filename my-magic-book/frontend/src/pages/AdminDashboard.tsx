@@ -27,6 +27,7 @@ export default function AdminDashboard() {
   // Every story ever generated — powers the "ready books" tab.
   const [allStories, setAllStories] = useState<any[]>([]);
   const [storiesLoading, setStoriesLoading] = useState(false);
+  const [showcaseBusyId, setShowcaseBusyId] = useState<string | null>(null);
   const [settings, setSettings] = useState<any>(null);
   // Customer profile modal (opened from a message).
   const [customer, setCustomer] = useState<any>(null);
@@ -529,6 +530,26 @@ export default function AdminDashboard() {
       }
     } catch (err: any) {
       toast.error(t('admin.save_settings_fail'));
+    }
+  };
+
+  // Publish/unpublish a real book on the public home page. Optimistic, rolled
+  // back if the save fails.
+  const toggleShowcase = async (story: any) => {
+    const next = !story.showcase;
+    setShowcaseBusyId(story._id);
+    setAllStories((prev) => prev.map((s) => (s._id === story._id ? { ...s, showcase: next } : s)));
+    try {
+      const res = await adminApi.updateStory(story._id, { showcase: next });
+      if (!res.success) throw new Error();
+      toast.success(next
+        ? t('admin.showcase_added', 'تمت إضافة الكتاب للصفحة الرئيسية ✅')
+        : t('admin.showcase_removed', 'تمت إزالة الكتاب من الصفحة الرئيسية'));
+    } catch {
+      setAllStories((prev) => prev.map((s) => (s._id === story._id ? { ...s, showcase: !next } : s)));
+      toast.error(t('admin.save_settings_fail'));
+    } finally {
+      setShowcaseBusyId(null);
     }
   };
 
@@ -1223,6 +1244,24 @@ export default function AdminDashboard() {
                           >
                             🖨️ {t('admin.open_to_print', 'افتح للطباعة / BookPod')}
                           </Link>
+                          {/* Publish this REAL book on the public home page. */}
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={!!s.showcase}
+                            onClick={() => toggleShowcase(s)}
+                            disabled={showcaseBusyId === s._id}
+                            className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg font-arabic text-xs border transition-colors disabled:opacity-50 ${
+                              s.showcase
+                                ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                                : 'bg-white/5 border-white/10 text-white/55 hover:border-white/25'
+                            }`}
+                          >
+                            {s.showcase ? '🏠 ' : '🏠 '}
+                            {s.showcase
+                              ? t('admin.showcase_on', 'ظاهر في الصفحة الرئيسية')
+                              : t('admin.showcase_off', 'أظهره في الصفحة الرئيسية')}
+                          </button>
                         </div>
                       );
                     })}

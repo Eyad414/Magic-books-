@@ -813,7 +813,11 @@
     "showcase_generated": "Books you've created",
     "showcase_no_generated": "No generated books yet — create a story and it will show up here.",
     "showcase_demos": "Demo books (templates)",
-    "wizard_flags_help": "Control what customers see in the story creation steps."
+    "wizard_flags_help": "Control what customers see in the story creation steps.",
+    "showcase_on": "Shown on the home page",
+    "showcase_off": "Show on the home page",
+    "showcase_added": "Book added to the home page ✅",
+    "showcase_removed": "Book removed from the home page"
   },
   "title_page": {
     "presents": "Presented to",

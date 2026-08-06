@@ -813,7 +813,11 @@
     "showcase_generated": "הספרים שיצרת",
     "showcase_no_generated": "אין עדיין ספרים שנוצרו — צור סיפור והוא יופיע כאן.",
     "showcase_demos": "ספרי הדגמה (תבניות)",
-    "wizard_flags_help": "שלוט במה שהלקוח רואה בשלבי יצירת הסיפור."
+    "wizard_flags_help": "שלוט במה שהלקוח רואה בשלבי יצירת הסיפור.",
+    "showcase_on": "מוצג בעמוד הבית",
+    "showcase_off": "הצג בעמוד הבית",
+    "showcase_added": "הספר נוסף לעמוד הבית ✅",
+    "showcase_removed": "הספר הוסר מעמוד הבית"
   },
   "title_page": {
     "presents": "מוגש ל",
