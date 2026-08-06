@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { localizeName } from '../utils/translit';
 import { SHOWCASE_CARDS } from '../data/showcaseCards';
+import { loadFavorites } from '../utils/favorites';
 
 // What each book package unlocks for the customer. Pro = everything.
 const PACKAGE_INCLUDES: Record<string, string[]> = {
@@ -77,10 +78,11 @@ export default function Dashboard() {
         .catch(() => {})
         .finally(() => setIsFetching(false));
       
-      const saved = localStorage.getItem('favorite_stories');
-      if (saved) setFavoriteIds(JSON.parse(saved));
+      // Scoped to THIS account — a fresh account must never inherit the
+      // favourites of whoever used the browser before.
+      setFavoriteIds(loadFavorites(user?.id));
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user?.id]);
 
   const handleStartStory = (e: React.MouseEvent) => {
     e.preventDefault();

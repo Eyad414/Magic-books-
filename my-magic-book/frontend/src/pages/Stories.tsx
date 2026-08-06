@@ -9,6 +9,8 @@ import { toDisplayUrl } from '../api/mediaUrl';
 import { localizeName } from '../utils/translit';
 import { detectGender, applyGenderTokens } from '../utils/gender';
 import { SHOWCASE_CARDS as CARDS, type ShowcaseCard as Card } from '../data/showcaseCards';
+import { loadFavorites, saveFavorites } from '../utils/favorites';
+import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 // Some themes reuse another theme's scripted story text (e.g. the realistic
@@ -26,6 +28,8 @@ export default function Stories() {
   const { t, i18n } = useTranslation();
   const { resetProgress } = useStoryProgress();
   const navigate = useNavigate();
+  // Favourites are per-account (guest bucket when logged out).
+  const { user } = useAuth();
 
   useEffect(() => {
     publicApi.getSettings()
@@ -35,9 +39,8 @@ export default function Stories() {
         setThemes(map);
       })
       .catch(() => {});
-    const saved = localStorage.getItem('favorite_stories');
-    if (saved) { try { setFavorites(JSON.parse(saved)); } catch { /* ignore */ } }
-  }, []);
+    setFavorites(loadFavorites(user?.id));
+  }, [user?.id]);
 
   const ft = useMemo(() => i18n.getFixedT(i18n.language), [i18n.language]);
   const nameL = (card: Card) => localizeName(card.name, i18n.language);
@@ -72,7 +75,7 @@ export default function Stories() {
     const isFav = favorites.includes(key);
     const next = isFav ? favorites.filter((f) => f !== key) : [...favorites, key];
     setFavorites(next);
-    localStorage.setItem('favorite_stories', JSON.stringify(next));
+    saveFavorites(user?.id, next);
     toast.success(isFav ? t('stories_page.remove_from_favorites') : t('stories_page.add_to_favorites'));
   };
 
