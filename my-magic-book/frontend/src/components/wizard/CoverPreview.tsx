@@ -3,6 +3,8 @@ import { Sparkles, Lock, ImageIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { storyApi } from '../../api/storyApi';
 import { toDisplayUrl } from '../../api/mediaUrl';
+import { resolveGender, applyGenderTokens } from '../../utils/gender';
+import { localizeName } from '../../utils/translit';
 
 interface Props {
   childName: string;
@@ -22,7 +24,7 @@ const EXPECTED_MS = 22000;
  * costs a Gemini image, so browsing themes must never trigger one.
  */
 export default function CoverPreview({ childName, childGender, childPhotoUrl, theme, enabled }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [busy, setBusy] = useState(false);
   const [pct, setPct] = useState(0);
   const [cover, setCover] = useState('');
@@ -85,6 +87,13 @@ export default function CoverPreview({ childName, childGender, childPhotoUrl, th
 
   if (!enabled) return null;
 
+  // The exact title the printed cover carries: the theme's story title with the
+  // child's name and gender tokens resolved.
+  const displayName = localizeName(childName || '', i18n.language);
+  const gender = resolveGender(childName, childGender === 'female' ? 'female' : 'male');
+  const rawTitle = (t(`stories.${theme.replace(/_(real|photoreal|cartoon|pr|hd)$/, '')}.title`, '') as string) || '';
+  const storyTitle = applyGenderTokens(rawTitle.replace(/\[NAME\]/gi, displayName), gender);
+
   const remaining = quota ? Math.max(0, quota.limit - quota.used) : null;
   const stage =
     pct < 30 ? t('cover_preview.stage_1', '✨ نحضّر الفانوس السحري…')
@@ -93,44 +102,84 @@ export default function CoverPreview({ childName, childGender, childPhotoUrl, th
     : t('cover_preview.stage_4', '📖 غلافك جاهز تقريباً!');
 
   return (
-    <div className="rounded-2xl border border-gold-500/25 bg-gold-500/[0.04] p-4">
-      <div className="flex items-start gap-2 mb-1">
-        <ImageIcon className="w-4 h-4 text-gold-500 mt-0.5 shrink-0" />
-        <div>
-          <h4 className="font-arabic font-bold text-white text-sm">
-            {t('cover_preview.title', 'شاهد طفلك على الغلاف')}
-          </h4>
-          <p className="font-arabic text-white/45 text-xs mt-0.5">
-            {t('cover_preview.help', 'سننشئ غلاف القصة بوجه طفلك — قد يستغرق حتى دقيقة.')}
-          </p>
-        </div>
+    <div className="rounded-2xl border border-gold-500/25 bg-gold-500/[0.04] p-4 text-center">
+      <div className="flex flex-col items-center gap-1">
+        <h4 className="font-arabic font-bold text-white text-sm flex items-center gap-1.5">
+          <ImageIcon className="w-4 h-4 text-gold-500" />
+          {t('cover_preview.title', 'شاهد طفلك على الغلاف')}
+        </h4>
+        <p className="font-arabic text-white/45 text-xs max-w-sm">
+          {t('cover_preview.help', 'سننشئ غلاف القصة بوجه طفلك — قد يستغرق حتى دقيقة.')}
+        </p>
       </div>
 
       {cover && (
-        <div className="my-3 flex justify-center">
-          <img
-            src={cover}
-            alt={t('cover_preview.title', 'شاهد طفلك على الغلاف')}
-            className="w-48 rounded-xl border-2 border-gold-500/40 shadow-gold-glow"
-          />
+        /* Rendered exactly like the printed FrontCover: a square, full-bleed
+           illustration with a readability scrim, the story title and the brand
+           line — so what the customer sees here IS the cover they receive. */
+        <div className="my-4 flex justify-center">
+          <div
+            className="relative w-full max-w-[260px] aspect-square rounded-2xl overflow-hidden shadow-[0_18px_50px_rgba(0,0,0,0.55)] border border-gold-500/25"
+            style={{ background: '#0a1426' }}
+            dir={i18n.dir()}
+          >
+            <img src={cover} alt={storyTitle} className="absolute inset-0 w-full h-full object-cover" />
+            <div
+              className="absolute inset-0"
+              style={{ background: 'linear-gradient(to top, rgba(5,10,21,0.94) 0%, rgba(5,10,21,0.10) 46%, rgba(5,10,21,0.42) 100%)' }}
+            />
+            <div className="absolute inset-x-0 bottom-0 px-3.5 pb-3 text-center">
+              {storyTitle && (
+                <h3 className="font-arabic font-black text-white text-[13px] leading-snug drop-shadow-lg mb-2 line-clamp-2">
+                  {storyTitle}
+                </h3>
+              )}
+              <div className="flex items-center justify-center gap-1.5">
+                <img src="/logo.png?v=7" alt="" className="w-5 h-5 object-contain" />
+                <div className="flex flex-col items-start leading-none">
+                  <span className="font-brand text-gold-500 text-[10px] tracking-wide">Magic Fanoos</span>
+                  <span className="font-arabic text-white/45 text-[7px] mt-0.5">
+                    {t('storybook.cover_brand_tag', 'قصة بتصميم شخصي من Magic Fanoos')}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
       {busy && (
-        <div className="my-3" role="status" aria-live="polite">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="font-arabic text-gold-400 text-xs font-bold">{stage}</span>
-            <span className="font-mono text-gold-500 text-xs font-bold">{pct}%</span>
+        <div className="my-4 flex flex-col items-center" role="status" aria-live="polite">
+          {/* Placeholder in the SAME square as the finished cover, so the panel
+              doesn't jump when the image arrives. */}
+          {!cover && (
+            <div className="cp-skeleton relative w-full max-w-[260px] aspect-square rounded-2xl overflow-hidden border border-gold-500/25 mb-3 flex items-center justify-center">
+              <span className="text-3xl animate-pulse">🏮</span>
+            </div>
+          )}
+          <div className="w-full max-w-[260px]">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="font-arabic text-gold-400 text-xs font-bold">{stage}</span>
+              <span className="font-mono text-gold-500 text-xs font-bold">{pct}%</span>
+            </div>
+            <div className="h-2.5 w-full rounded-full bg-white/10 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-l from-gold-400 via-amber-300 to-gold-500 transition-[width] duration-150"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <p className="font-arabic text-white/35 text-[11px] mt-1.5">
+              {t('cover_preview.wait_note', 'لا تغلق الصفحة — الرسم قيد التنفيذ.')}
+            </p>
           </div>
-          <div className="h-2.5 w-full rounded-full bg-white/10 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-gradient-to-l from-gold-400 via-amber-300 to-gold-500 transition-[width] duration-150"
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-          <p className="font-arabic text-white/35 text-[11px] mt-1.5">
-            {t('cover_preview.wait_note', 'لا تغلق الصفحة — الرسم قيد التنفيذ.')}
-          </p>
+          <style>{`
+            .cp-skeleton {
+              background: linear-gradient(110deg, #0c1830 25%, #16264a 42%, #0c1830 60%);
+              background-size: 260% 100%;
+              animation: cp-shimmer 1.5s linear infinite;
+            }
+            @keyframes cp-shimmer { from { background-position: 180% 0; } to { background-position: -80% 0; } }
+          `}</style>
         </div>
       )}
 
@@ -145,7 +194,7 @@ export default function CoverPreview({ childName, childGender, childPhotoUrl, th
           type="button"
           onClick={generate}
           disabled={busy}
-          className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gold-500/15 border border-gold-500/40 text-gold-400 font-arabic font-bold text-sm hover:bg-gold-500/25 transition-all disabled:opacity-50 disabled:cursor-wait"
+          className="mt-3 mx-auto w-full max-w-[260px] flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gold-500/15 border border-gold-500/40 text-gold-400 font-arabic font-bold text-sm hover:bg-gold-500/25 transition-all disabled:opacity-50 disabled:cursor-wait"
         >
           <Sparkles className="w-4 h-4" />
           {busy
