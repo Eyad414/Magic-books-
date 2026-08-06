@@ -4,7 +4,7 @@
 // Customers see the normal public website; this page never appears for them.
 
 import { useEffect, useState, useMemo } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import StoryBook from '../components/book/StoryBook';
 import ColoringBookView from '../components/book/ColoringBookView';
@@ -29,11 +29,12 @@ export default function StoryBookPage() {
   const [storyData, setStoryData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const [customPages, setCustomPages] = useState<any[]>([]);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [generatedPortrait, setGeneratedPortrait] = useState<string>('');
   const [generatedCover, setGeneratedCover] = useState<string>('');
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const lngParam = searchParams.get('lng');
 
@@ -137,6 +138,31 @@ export default function StoryBookPage() {
   }, [storyData, customPages]);
 
   if (isLoading) return <div className="min-h-screen bg-[#03060e] flex items-center justify-center text-gold-500 font-arabic">جاري تحميل القصة...</div>;
+
+  // Print-only order: the customer bought a physical book, not web access. The
+  // backend already withholds the pages, so this explains why rather than
+  // rendering an empty book. (E-book and Pro unlock it; earlier orders keep it.)
+  if (storyData && storyData.webReadable === false && !isAdmin) {
+    return (
+      <div className="min-h-screen bg-[#03060e] flex items-center justify-center px-4">
+        <div className="max-w-md w-full text-center glass-card p-8 rounded-2xl border border-gold-500/25">
+          <div className="text-5xl mb-3">📦</div>
+          <h1 className="font-arabic font-black text-white text-xl mb-2">
+            {t('storybook.print_only_title', 'كتابك في الطريق إليك!')}
+          </h1>
+          <p className="font-arabic text-white/60 text-sm leading-relaxed mb-5">
+            {t('storybook.print_only_desc', 'طلبك هو النسخة المطبوعة، وسيصلك إلى باب منزلك. لقراءة القصة على الموقع أيضاً، أضف النسخة الإلكترونية.')}
+          </p>
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gold-500 text-dark-900 font-arabic font-bold text-sm hover:bg-gold-400 transition-all"
+          >
+            {t('storybook.back_to_orders', 'العودة إلى طلباتي')}
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // Coloring books render as a coloring layout (cover + line-art pages + back),
   // not as the 34-page story book. This covers a coloring-package order AND a

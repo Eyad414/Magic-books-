@@ -108,23 +108,71 @@ export const getStoryPreview = async (req: Request, res: Response): Promise<void
 // @route GET /api/stories/:id/full — requires paid order
 export const getFullStory = async (req: Request, res: Response): Promise<void> => {
   try {
-    const story = await Story.findById(req.params.id);
+    const user = (req as any).user;
+    const story = await Story.findById(req.params.id).lean();
     if (!story) {
       res.status(404).json({ success: false, message: 'القصة غير موجودة' });
       return;
     }
-    res.json({ success: true, story });
+
+    // This route only checked that SOMEONE was logged in, so any account could
+    // read any other customer's story by id — including their child's photo URL
+    // and every generated page. Ownership is now required (admins excepted).
+    const owns = String((story as any).userId) === String(user._id);
+    if (!owns && user.role !== 'admin') {
+      res.status(404).json({ success: false, message: 'القصة غير موجودة' });
+      return;
+    }
+
+    // Same web-reading rule as /stories/my — otherwise this is a way around it.
+    if (!owns || canReadOnline(story) || user.role === 'admin') {
+      res.json({ success: true, story: { ...story, webReadable: true } });
+      return;
+    }
+    const { generatedImages, generatedText, templatePages, ...rest } = story as any;
+    res.json({ success: true, story: { ...rest, webReadable: false } });
   } catch (error) {
     res.status(500).json({ success: false, message: 'فشل في جلب القصة' });
   }
 };
 
 // @route GET /api/stories/my
+/**
+ * Packages that include reading the book on the website. Everything else is a
+ * PRINTED product — the customer receives the physical book, not web access.
+ * 'pro' bundles everything, so it unlocks too.
+ */
+const WEB_READABLE_PACKAGES = ['ebook', 'pro'];
+
+/**
+ * Orders placed before web reading was gated keep their access. Customers who
+ * have been reading their book online must not lose it because the rule changed
+ * after they bought.
+ */
+const WEB_READING_GATED_FROM = new Date('2026-08-07T00:00:00.000Z');
+
+function canReadOnline(story: any): boolean {
+  if (WEB_READABLE_PACKAGES.includes(String(story.bookPackage || ''))) return true;
+  const created = story.createdAt ? new Date(story.createdAt) : null;
+  return !!created && created < WEB_READING_GATED_FROM;
+}
+
+// @route GET /api/stories/my
 export const getMyStories = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).user._id;
-    const stories = await Story.find({ userId }).sort({ createdAt: -1 });
-    res.json({ success: true, stories });
+    const stories = await Story.find({ userId }).sort({ createdAt: -1 }).lean();
+
+    // Strip the readable content for print-only orders. Gating in the UI alone
+    // would be cosmetic — the pages would still be sitting in this response.
+    // The cover stays so the dashboard can show the book they bought.
+    const safe = stories.map((s: any) => {
+      if (canReadOnline(s)) return { ...s, webReadable: true };
+      const { generatedImages, generatedText, templatePages, ...rest } = s;
+      return { ...rest, webReadable: false };
+    });
+
+    res.json({ success: true, stories: safe });
   } catch (error) {
     res.status(500).json({ success: false, message: 'فشل في جلب القصص' });
   }

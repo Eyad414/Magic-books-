@@ -890,7 +890,10 @@
     "congrats": "Well done, {{name}}! 🌟",
     "completed_desc": "You have completed reading your magical story — keep on adventuring!",
     "more_adventures": "✨ More Adventures Await You",
-    "the_end": "The End"
+    "the_end": "The End",
+    "print_only_title": "Your book is on its way!",
+    "print_only_desc": "You ordered the printed book and it will arrive at your door. To read the story on the website too, add the e-book.",
+    "back_to_orders": "Back to my orders"
   },
   "stories": {
     "zoo_adventure": {
