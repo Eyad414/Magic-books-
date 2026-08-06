@@ -406,7 +406,9 @@
     "theme_pirate_adventure_desc": "A thrilling sea voyage to find hidden treasure",
     "gen_fallback": "AI story generation failed for now — showing a sample. Please try again.",
     "gen_empty": "The AI returned no text",
-    "desc_template": "Pick the story that will star {name} 🌟"
+    "desc_template": "Pick the story that will star {name} 🌟",
+    "preview_story_title": "[NAME]'s Story",
+    "preview_coloring_title": "[NAME]'s Coloring Book"
   },
   "step3": {
     "title": "Customize Your Book",

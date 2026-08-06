@@ -53,6 +53,20 @@ function localizedStory(theme: string, language: string): {
 const ILLUSTRATION_PAGES = 13; // matches the 13 image slots in the printed book
 
 /**
+ * Publish build progress so the dashboard can show a real bar instead of an
+ * open-ended spinner. Best-effort: a failed progress write must never abort a
+ * build that is otherwise fine, so errors are swallowed.
+ */
+async function reportProgress(orderId: string, percent: number, stage: string): Promise<void> {
+  try {
+    await Order.findByIdAndUpdate(orderId, {
+      buildProgress: Math.max(0, Math.min(100, Math.round(percent))),
+      buildStage: stage,
+    });
+  } catch { /* progress is cosmetic */ }
+}
+
+/**
  * Returns the object path for this book's front cover.
  *
  * Prefers the cover the customer already approved in step 2: the preview slug
@@ -123,6 +137,8 @@ export async function buildBookForOrder(orderId: string, submitToBookPod = true)
 
   order.illustrationsStatus = 'generating';
   order.illustrationsError = undefined;
+  order.buildProgress = 0;
+  order.buildStage = 'بدء التجهيز';
   await order.save();
 
   try {
@@ -166,6 +182,7 @@ export async function buildBookForOrder(orderId: string, submitToBookPod = true)
       const artGender = resolveGender(story.childName, story.childGender);
 
       const coverPrompt = buildScenePrompt('cover', template.coverScene, story.childName, artGender);
+      await reportProgress(String(order._id), 2, 'الغلاف الأمامي');
       const coverPath = await reuseApprovedCover(story, coverPrompt, childPhoto, sid);
 
       const objectPaths: string[] = [];
@@ -179,7 +196,13 @@ export async function buildBookForOrder(orderId: string, submitToBookPod = true)
         );
         objectPaths.push(img.objectPath);
         pageTexts.push(resolveTokens(loc?.pages?.[i] ?? template.pageTexts[i], story.childName, story.childGender));
+        await reportProgress(
+          String(order._id),
+          5 + ((i + 1) / ILLUSTRATION_PAGES) * 70,
+          `الصفحة ${i + 1} من ${ILLUSTRATION_PAGES}`,
+        );
       }
+      await reportProgress(String(order._id), 78, 'الصورة الختامية');
       const portrait = await generateIllustration(
         buildScenePrompt('portrait', template.portraitScene, story.childName, artGender),
         childPhoto, { storyId: sid, pageNumber: 99 }
@@ -241,6 +264,7 @@ export async function buildBookForOrder(orderId: string, submitToBookPod = true)
     };
 
     // Step 3: render the PDF and upload to GCS.
+    await reportProgress(orderId, 82, 'تجهيز ملف الكتاب (PDF)');
     const html = buildBookHtml(bookData);
     const pdfBuffer = await generateBookPdf(html);
     const objectPath = pdfFolderPath('orders', `${orderId}.pdf`);
@@ -248,6 +272,8 @@ export async function buildBookForOrder(orderId: string, submitToBookPod = true)
 
     order.illustrationsStatus = 'ready';
     order.bookPdfUrl = stored.gcsUri;
+    order.buildProgress = 90;
+    order.buildStage = 'تجهيز ملفات الطباعة';
     await order.save();
 
     // Sync the Story too so the user's library shows the finished book.
@@ -283,11 +309,13 @@ export async function buildBookForOrder(orderId: string, submitToBookPod = true)
       console.warn(`[BookBuilder] print/BookPod step skipped: ${printErr.message}`);
     }
 
+    await reportProgress(orderId, 100, 'اكتمل');
     return order;
   } catch (err: any) {
     console.error(`[BookBuilder] order ${orderId} failed:`, err);
     order.illustrationsStatus = 'failed';
     order.illustrationsError = err.message?.slice(0, 500) || 'unknown error';
+    order.buildStage = 'فشل';
     await order.save();
     throw err;
   }

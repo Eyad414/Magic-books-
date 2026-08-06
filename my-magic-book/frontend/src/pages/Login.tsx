@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import MagicButton from '../components/common/MagicButton';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
@@ -12,7 +12,11 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
+  // RequireAuth stores where the visitor was headed (e.g. /create), so send
+  // them back there after login instead of dumping them on the dashboard.
+  const from = (location.state as any)?.from as string | undefined;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +24,7 @@ export default function Login() {
     try {
       await login(form.email, form.password);
       toast.success(t('auth.login_success'));
-      navigate('/dashboard');
+      navigate(from || '/dashboard');
     } catch (err: any) {
       toast.error(err?.response?.data?.message || t('auth.login_error'));
     } finally {

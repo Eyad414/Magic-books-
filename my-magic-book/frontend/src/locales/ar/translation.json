@@ -408,7 +408,9 @@
     "theme_pirate_adventure_desc": "رحلة بحرية شيقة بحثاً عن الكنز",
     "gen_fallback": "تعذّر توليد القصة بالذكاء الاصطناعي الآن — عُرض نموذج مؤقت، حاول مرة أخرى.",
     "gen_empty": "لم يُرجع الذكاء الاصطناعي نصاً",
-    "desc_template": "اختر القصة التي ستحمل اسم {name} 🌟"
+    "desc_template": "اختر القصة التي ستحمل اسم {name} 🌟",
+    "preview_story_title": "قصة [NAME]",
+    "preview_coloring_title": "كتاب تلوين [NAME]"
   },
   "step3": {
     "title": "خصّص كتابك",

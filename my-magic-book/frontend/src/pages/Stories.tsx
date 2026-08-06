@@ -72,10 +72,17 @@ export default function Stories() {
   const themeLabelFor = (card: Card) => t(`step2.theme_${card.themeId}`, { defaultValue: themes[card.themeId]?.label || card.themeId });
 
   const toggleFavorite = (key: string) => {
+    // Favourites live on the account, so a signed-out visitor has nowhere to
+    // save them — send them to log in rather than pretending it worked.
+    if (!user?.id) {
+      toast(t('stories_page.login_to_favorite', 'سجّل الدخول لحفظ قصصك المفضلة ❤️'));
+      navigate('/login');
+      return;
+    }
     const isFav = favorites.includes(key);
     const next = isFav ? favorites.filter((f) => f !== key) : [...favorites, key];
     setFavorites(next);
-    saveFavorites(user?.id, next);
+    saveFavorites(user.id, next);
     toast.success(isFav ? t('stories_page.remove_from_favorites') : t('stories_page.add_to_favorites'));
   };
 

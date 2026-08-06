@@ -471,23 +471,64 @@ export const buildOrderBook = async (req: Request, res: Response): Promise<void>
     // buildOnly = generate + prepare the print files but DON'T submit to BookPod,
     // so the admin can review the book before the billable send.
     const buildOnly = req.body?.buildOnly === true;
-    // Run synchronously so the admin sees success/failure in the response.
-    // If the book is ALREADY built (images generated), don't regenerate — just
-    // (re)submit the existing files to BookPod (unless buildOnly). Errors here
-    // are surfaced (not swallowed) so a failure is visible, not a false success.
-    let updated: Awaited<ReturnType<typeof buildBookForOrder>>;
-    if (order.illustrationsStatus === 'ready') {
-      // Already built: buildOnly rebuilds the print files (so a review reflects
-      // the current images) without submitting; otherwise (re)submit to BookPod.
-      updated = buildOnly
-        ? await reRenderPrintFilesForOrder(String(order._id))
-        : await submitOrderToBookPod(String(order._id));
-    } else {
-      updated = await buildBookForOrder(String(order._id), !buildOnly);
-    }
-    res.json({ success: true, order: updated });
+    const id = String(order._id);
+
+    // A full build is 15 AI images plus a PDF render — minutes of work. It used
+    // to be awaited on this request, so the connection was dropped long before
+    // it finished: the browser saw net::ERR_FAILED and reported it as a CORS
+    // error (a killed request carries no Access-Control-Allow-Origin header),
+    // even though the build was often still running server-side.
+    //
+    // Now we ACK immediately and run in the background; the dashboard polls
+    // /orders/:id/build-status and shows real progress. Failures are recorded
+    // on the order (illustrationsStatus='failed' + illustrationsError) rather
+    // than being lost with the dropped connection.
+    const run = async () => {
+      if (order.illustrationsStatus === 'ready') {
+        // Already built: buildOnly rebuilds the print files (so a review reflects
+        // the current images) without submitting; otherwise (re)submit to BookPod.
+        return buildOnly ? reRenderPrintFilesForOrder(id) : submitOrderToBookPod(id);
+      }
+      return buildBookForOrder(id, !buildOnly);
+    };
+
+    run().catch(async (err: any) => {
+      console.error(`buildOrderBook failed for ${id}:`, err);
+      try {
+        await Order.findByIdAndUpdate(id, {
+          illustrationsStatus: 'failed',
+          illustrationsError: err.message?.slice(0, 500) || 'unknown error',
+          buildStage: 'فشل',
+        });
+      } catch { /* already logged */ }
+    });
+
+    res.status(202).json({ success: true, started: true, orderId: id });
   } catch (err: any) {
     console.error('buildOrderBook failed:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @route GET /api/admin/orders/:id/build-status
+// @desc  Lightweight poll target for the dashboard's build progress bar.
+export const getOrderBuildStatus = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const order = await Order.findById(req.params.id)
+      .select('illustrationsStatus illustrationsError buildProgress buildStage bookpodStatus');
+    if (!order) {
+      res.status(404).json({ success: false, message: 'order not found' });
+      return;
+    }
+    res.json({
+      success: true,
+      status: order.illustrationsStatus,
+      progress: order.buildProgress ?? 0,
+      stage: order.buildStage || '',
+      error: order.illustrationsError || '',
+      bookpodStatus: order.bookpodStatus || '',
+    });
+  } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
   }
 };

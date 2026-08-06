@@ -28,6 +28,8 @@ export default function AdminDashboard() {
   const [allStories, setAllStories] = useState<any[]>([]);
   const [storiesLoading, setStoriesLoading] = useState(false);
   const [showcaseBusyId, setShowcaseBusyId] = useState<string | null>(null);
+  // Live build progress per order id, driven by polling the background build.
+  const [buildProgress, setBuildProgress] = useState<Record<string, { pct: number; stage: string }>>({});
   const [settings, setSettings] = useState<any>(null);
   // Customer profile modal (opened from a message).
   const [customer, setCustomer] = useState<any>(null);
@@ -59,6 +61,41 @@ export default function AdminDashboard() {
 
   // Admin: build the book + print files and send to BookPod. Generates ~15
   // images (costs money), so confirm first. markPaid fulfils cash/COD orders.
+  /**
+   * Follow a background build to completion. The build no longer runs inside the
+   * HTTP request (it was being killed mid-flight and surfacing as a CORS error),
+   * so we poll its status and drive the progress bar from it.
+   */
+  const pollBuild = (orderId: string, toastId: string, successMsg: string): Promise<void> =>
+    new Promise((resolve) => {
+      const started = Date.now();
+      const handle: { id: number | undefined } = { id: undefined };
+      const stop = () => {
+        if (handle.id) window.clearTimeout(handle.id);
+        setBuildProgress((prev) => { const next = { ...prev }; delete next[orderId]; return next; });
+      };
+      const tick = async () => {
+        try {
+          const s = await adminApi.buildStatus(orderId);
+          setBuildProgress((prev) => ({ ...prev, [orderId]: { pct: s.progress || 0, stage: s.stage || '' } }));
+          if (s.status === 'ready') {
+            toast.success(successMsg, { id: toastId });
+            stop(); await fetchOrders(); resolve(); return;
+          }
+          if (s.status === 'failed') {
+            toast.error(s.error || t('admin.build_failed', 'فشل بناء الكتاب'), { id: toastId });
+            stop(); await fetchOrders(); resolve(); return;
+          }
+        } catch { /* transient network blip — keep polling */ }
+        if (Date.now() - started > 20 * 60 * 1000) {
+          toast.error(t('admin.build_timeout', 'انتهت مهلة المتابعة — حدّث الصفحة لمعرفة الحالة'), { id: toastId });
+          stop(); resolve(); return;
+        }
+        handle.id = window.setTimeout(tick, 3000);
+      };
+      handle.id = window.setTimeout(tick, 1200);
+    });
+
   const handleSendToBookPod = async (order: any) => {
     if (buildingOrderId) return;
     const already = order.illustrationsStatus === 'ready';
@@ -71,14 +108,8 @@ export default function AdminDashboard() {
     try {
       const res = await adminApi.buildOrder(order._id, { markPaid: true });
       if (res.success) {
-        const jobId = res.order?.bookpodJobId;
-        toast.success(
-          jobId
-            ? `${t('admin.sent_to_bookpod_ok', 'تم الإرسال إلى BookPod للطباعة ✅')} (#${jobId})`
-            : t('admin.sent_to_print', 'تم بناء الكتاب وتجهيزه للطباعة ✅'),
-          { id: toastId }
-        );
-        setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...res.order, storyId: o.storyId } : o)));
+        setBuildProgress((prev) => ({ ...prev, [order._id]: { pct: 0, stage: '' } }));
+        await pollBuild(order._id, toastId, t('admin.sent_to_print', 'تم بناء الكتاب وتجهيزه للطباعة ✅'));
       } else {
         toast.error(res.message || t('admin.send_failed', 'فشل الإرسال للطباعة'), { id: toastId });
       }
@@ -103,9 +134,9 @@ export default function AdminDashboard() {
     try {
       const res = await adminApi.buildOrder(order._id, { markPaid: true, buildOnly: true });
       if (res.success) {
-        toast.success(t('admin.built_for_review', 'تم بناء الكتاب ✅ راجعه ثم أرسله إلى BookPod'), { id: toastId });
+        setBuildProgress((prev) => ({ ...prev, [order._id]: { pct: 0, stage: '' } }));
+        await pollBuild(order._id, toastId, t('admin.built_for_review', 'تم بناء الكتاب ✅ راجعه ثم أرسله إلى BookPod'));
         setBuiltOrderIds((prev) => new Set(prev).add(order._id));
-        setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...res.order, storyId: o.storyId } : o)));
       } else {
         toast.error(res.message || t('admin.build_failed', 'فشل بناء الكتاب'), { id: toastId });
       }
@@ -708,6 +739,27 @@ export default function AdminDashboard() {
                               </div>
                             </div>
                           </div>
+
+                          {/* Live build progress — real percentage from the
+                              background build, not an open-ended spinner. */}
+                          {buildProgress[order._id] && (
+                            <div className="rounded-xl bg-purple-500/10 border border-purple-500/30 px-3 py-2" role="status" aria-live="polite">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="font-arabic text-purple-200 text-xs font-bold">
+                                  🎨 {buildProgress[order._id].stage || t('admin.building_book', 'جاري بناء الكتاب…')}
+                                </span>
+                                <span className="font-mono text-purple-200 text-xs font-bold">
+                                  {buildProgress[order._id].pct}%
+                                </span>
+                              </div>
+                              <div className="h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                                <div
+                                  className="h-full rounded-full bg-gradient-to-l from-purple-400 via-fuchsia-300 to-purple-500 transition-[width] duration-500"
+                                  style={{ width: `${buildProgress[order._id].pct}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
 
                           {/* Actions — grouped under a labelled divider (wraps on narrow screens) */}
                           <div className="pt-2.5 border-t border-white/5">

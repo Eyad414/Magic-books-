@@ -32,6 +32,10 @@ export interface IOrder extends Document {
   stripePaymentIntentId?: string;
   illustrationsStatus: IllustrationsStatus;
   illustrationsError?: string;
+  /** 0-100 while a book is building, so the dashboard can show a real bar. */
+  buildProgress?: number;
+  /** Human label for the current step, e.g. "الصفحة ٤ من ١٣". */
+  buildStage?: string;
   bookPdfUrl?: string;
   // Print-ready files for BookPod (wraparound cover + interior) and job tracking.
   printCoverUrl?: string;
@@ -85,6 +89,8 @@ const OrderSchema = new Schema<IOrder>(
       default: 'pending',
     },
     illustrationsError: { type: String },
+    buildProgress: { type: Number, default: 0 },
+    buildStage: { type: String },
     bookPdfUrl: { type: String },
     printCoverUrl: { type: String },
     printInteriorUrl: { type: String },

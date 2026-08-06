@@ -53,12 +53,18 @@ export const adminApi = {
   },
   // Build the book + print files for an order and (when BookPod is configured)
   // submit the print job. markPaid lets an admin fulfil a cash/COD order.
-  // Long-running: generates ~15 images, ~3 min.
+  // Returns 202 immediately — the build (~15 images, ~3 min) runs in the
+  // background; poll buildStatus for progress.
   buildOrder: async (id: string, opts?: { markPaid?: boolean; buildOnly?: boolean }) => {
     const response = await axiosInstance.post(`/admin/orders/${id}/build`, {
       markPaid: opts?.markPaid ?? false,
       buildOnly: opts?.buildOnly ?? false,
     });
+    return response.data;
+  },
+  /** Progress of a background build: {status, progress, stage, error}. */
+  buildStatus: async (id: string) => {
+    const response = await axiosInstance.get(`/admin/orders/${id}/build-status`);
     return response.data;
   },
   // Rebuild ONLY the print-ready PDFs from an order's already-generated images.

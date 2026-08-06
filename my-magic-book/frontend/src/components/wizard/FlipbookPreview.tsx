@@ -69,6 +69,18 @@ export function buildThemePreview(opts: {
   const pagesObj = ft(`stories.${theme}.pages`, { returnObjects: true }) as Record<string, string> | string;
 
   /**
+   * Title for a theme with no scripted story of its own (the coloring books).
+   * It used to fall back to a generic "قصة سحرية", so Hamza's and Yosef's covers
+   * carried no name at all — the whole point is the child seeing themselves.
+   */
+  const fallbackTitle = personalize(
+    theme.includes('coloring')
+      ? (ft('step2.preview_coloring_title', 'كتاب تلوين [NAME]') as string)
+      : (ft('step2.preview_story_title', 'قصة [NAME]') as string),
+  );
+  const bookTitle = personalize(titleRaw) || fallbackTitle;
+
+  /**
    * The two sheets the printed book ends on, mirroring FinalStoryPage and
    * BackCover so the preview matches the book the customer receives: the
    * closing page carries the moral, the discussion QUESTIONS and the
@@ -97,7 +109,7 @@ export function buildThemePreview(opts: {
     return [
       {
         type: 'final',
-        title: personalize(titleRaw || ft('step2.preview_generic_title', 'قصة سحرية')),
+        title: bookTitle,
         content: ft('storybook.end_story', '✦ نهاية القصة ✦') as string,
         moral: personalize((ft(`stories.${theme}.moral`, '') as string) || ''),
         questions,
@@ -124,13 +136,13 @@ export function buildThemePreview(opts: {
         type: 'text', image: img, content: '', blur: idx >= readable,
       }));
       return [
-        { type: 'cover', title: ft('step2.preview_generic_title', 'قصة سحرية'), image: coverImage },
+        { type: 'cover', title: fallbackTitle, image: coverImage },
         ...imgPages,
         ...(full ? closingPages() : [{ type: 'lock', content: lockMsg } as PreviewPage]),
       ];
     }
     return [
-      { type: 'cover', title: ft('step2.preview_generic_title', 'قصة سحرية'), image: coverImage },
+      { type: 'cover', title: fallbackTitle, image: coverImage },
       { type: 'lock', content: lockMsg },
     ];
   }
@@ -146,7 +158,7 @@ export function buildThemePreview(opts: {
     if (pageImages[idx]) bodyPages.push({ type: 'text', image: pageImages[idx], blur: locked });
   });
   return [
-    { type: 'cover', title: personalize(titleRaw), image: coverImage },
+    { type: 'cover', title: bookTitle, image: coverImage },
     ...bodyPages,
     ...(full ? closingPages() : [{ type: 'lock', content: lockMsg } as PreviewPage]),
   ];

@@ -6,25 +6,27 @@
 // gets its own bucket, and logged-out browsing has a separate guest bucket.
 
 const LEGACY_KEY = 'favorite_stories';
+const GUEST_KEY = 'favorite_stories:guest';
 
-const keyFor = (userId?: string) => `favorite_stories:${userId || 'guest'}`;
+const keyFor = (userId: string) => `favorite_stories:${userId}`;
 
 /**
- * One-time cleanup of the old shared key. Its contents belong to "whoever was
- * using this browser", so they move to the guest bucket — never into an
- * account, which is exactly the leak this replaces.
+ * Drop the pre-account keys. Favourites belong to an account, so anything
+ * stored before sign-in has no owner we can trust: the old shared key leaked
+ * between accounts, and the guest bucket it was migrated into made a
+ * logged-OUT visitor see hearts they never clicked.
  */
-function migrateLegacy(): void {
+function dropOwnerlessKeys(): void {
   try {
-    const legacy = localStorage.getItem(LEGACY_KEY);
-    if (legacy === null) return;
-    if (localStorage.getItem(keyFor()) === null) localStorage.setItem(keyFor(), legacy);
     localStorage.removeItem(LEGACY_KEY);
+    localStorage.removeItem(GUEST_KEY);
   } catch { /* private mode / quota — favourites are a nicety, never fatal */ }
 }
 
+/** Favourites for an account. Signed-out visitors have none, by design. */
 export function loadFavorites(userId?: string): string[] {
-  migrateLegacy();
+  dropOwnerlessKeys();
+  if (!userId) return [];
   try {
     const raw = localStorage.getItem(keyFor(userId));
     const parsed = raw ? JSON.parse(raw) : [];
@@ -35,6 +37,7 @@ export function loadFavorites(userId?: string): string[] {
 }
 
 export function saveFavorites(userId: string | undefined, keys: string[]): void {
+  if (!userId) return; // nothing to save against — the caller asks them to sign in
   try {
     localStorage.setItem(keyFor(userId), JSON.stringify(keys));
   } catch { /* ignore */ }

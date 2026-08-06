@@ -406,7 +406,9 @@
     "theme_pirate_adventure_desc": "מסע ימי מרתק בחיפוש אחר אוצר",
     "gen_fallback": "יצירת הסיפור ב-AI נכשלה כרגע — מוצג מדגם, נסו שוב.",
     "gen_empty": "ה-AI לא החזיר טקסט",
-    "desc_template": "בחר את הסיפור שבו {name} יהיה הגיבור 🌟"
+    "desc_template": "בחר את הסיפור שבו {name} יהיה הגיבור 🌟",
+    "preview_story_title": "הסיפור של [NAME]",
+    "preview_coloring_title": "חוברת הצביעה של [NAME]"
   },
   "step3": {
     "title": "התאם אישית את הספר שלך",

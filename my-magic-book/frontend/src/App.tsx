@@ -60,7 +60,10 @@ export default function App() {
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
           <Route path="stories" element={<Stories />} />
-          <Route path="create" element={<CreateStory />} />
+          {/* Creating a story needs an account: the wizard uploads the child's
+              photo and the cover preview quota is per-account. RequireAuth
+              remembers the destination, so login lands them back here. */}
+          <Route path="create" element={<RequireAuth><CreateStory /></RequireAuth>} />
           <Route path="about" element={<AboutUs />} />
           <Route path="contact" element={<ContactUs />} />
           <Route path="policy" element={<Policy />} />
