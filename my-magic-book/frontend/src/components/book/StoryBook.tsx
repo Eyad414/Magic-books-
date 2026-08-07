@@ -147,6 +147,26 @@ export default function StoryBook({
   const translatedTitle = useMemo(() => t(`stories.${story.id}.title`, story.titleAr), [story.id, story.titleAr, t]);
   const translatedDedication = useMemo(() => t(`stories.${story.id}.dedication`, story.dedicationAr), [story.id, story.dedicationAr, t]);
   const translatedMoral = useMemo(() => t(`stories.${story.id}.moral`, story.moralAr), [story.id, story.moralAr, t]);
+
+  /**
+   * The story's 13 page texts, in order.
+   *
+   * The locale files use TWO key schemes: zoo/space/school_hero/toy_city are
+   * keyed by sheet number (1,3,5…25) while magic_book/pirate/dinosaur are keyed
+   * 1…13. Looking a page up by its key therefore only ever worked for one group
+   * — the other rendered 1,3,5,7,9,11,13 then fell off the end, dropping pages
+   * 2/4/6 and repeating others. Sorting the keys and taking them positionally
+   * is scheme-agnostic, and is exactly what the PRINTED book already does
+   * (BookBuilder.localizedStory), so screen and print finally agree.
+   */
+  const localizedPages = useMemo(() => {
+    const obj = t(`stories.${story.id}.pages`, { returnObjects: true }) as unknown;
+    if (!obj || typeof obj !== 'object') return [] as string[];
+    return Object.keys(obj as object)
+      .sort((a, b) => Number(a) - Number(b))
+      .map((k) => (obj as Record<string, string>)[k])
+      .filter((x): x is string => typeof x === 'string');
+  }, [story.id, t]);
   const translatedConclusion = useMemo(() => t(`stories.${story.id}.conclusion`, story.conclusionAr), [story.id, story.conclusionAr, t]);
 
   // A "write with AI" story gets a NEUTRAL personalized title — not the theme's
@@ -494,12 +514,13 @@ export default function StoryBook({
             // Track image pages so AI-generated illustrations override the
             // static template placeholders (1st image page -> generatedImages[0]).
             let imageIdx = -1;
+            // …and text pages separately, so each one takes the localized page
+            // at its own position (see localizedPages above).
+            let textIdx = -1;
             return story.pages.map((page) => {
               if (page.type === 'text' && page.text) {
-                // Check if a localized translation exists for this page number
-                const pageKey = `stories.${story.id}.pages.${page.pageNumber}`;
-                const translatedPage = t(pageKey);
-                const activeText = translatedPage && translatedPage !== pageKey ? translatedPage : page.text;
+                textIdx += 1;
+                const activeText = localizedPages[textIdx] ?? page.text;
 
                 return (
                   <StoryTextPage
