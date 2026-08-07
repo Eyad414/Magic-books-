@@ -312,12 +312,26 @@ export const getSettings = async (req: Request, res: Response): Promise<void> =>
         { text: "أَغْمَضَ{|تْ} [NAME] عَيْنَيْ{هِ|هَا} وَتَمَنَّ{ى|تْ} الْعَوْدَةَ إِلَى الْمَنْزِلِ، فَبَدَأَتْ أَشْجَارُ الْغَابَةِ تَتَلَاشَى بِبُطْءٍ وَصَوْتُ الدِّينَاصُورِ يُوَدِّعُ{هُ|هَا} بِلُطْفٍ.", imageSrc: "" },
         { text: "فَتَحَ{|تْ} [NAME] عَيْنَيْ{هِ|هَا} لِ{يَجِدَ|تَجِدَ} نَفْسَ{هُ|هَا} فِي حَدِيقَةِ الْمَنْزِلِ وَمَعَ{هُ|هَا} الْحَجَرُ الْمَنْقُوشُ، وَه{ُوَ|ِيَ} {يَعْلَمُ|تَعْلَمُ} أَنَّ الِاسْتِكْشَافَ وَالشَّجَاعَةَ {يَجْعَلَانِهِ|يَجْعَلَانِهَا} {يَخُوضُ|تَخُوضُ} أَجْمَلَ الْمُغَامَرَاتِ.", imageSrc: "" },
       ];
-      if (!settings.themes.find((t: any) => t.id === 'dinosaur_adventure')) {
+      const dinoFolder = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
+      const dinoBase = `${dinoFolder}/generated/theme_dinosaur_adventure`;
+      const dinoArt = {
+        generatedCover: `${dinoBase}/page-00.png`,
+        generatedImages: Array.from({ length: 13 }, (_, i) => `${dinoBase}/page-${String(i + 1).padStart(2, '0')}.png`),
+        generatedPortrait: `${dinoBase}/page-99.png`,
+      };
+      const dinoTheme: any = settings.themes.find((t: any) => t.id === 'dinosaur_adventure');
+      if (!dinoTheme) {
         settings.themes.push({
           id: 'dinosaur_adventure', emoji: '🦕',
           label: 'مغامرة مع الديناصورات', desc: 'رحلة عجيبة إلى عالم ما قبل التاريخ',
-          ready: false, pages: DINO_PAGES,
+          ready: false, pages: DINO_PAGES, ...dinoArt,
         });
+        settings.markModified('themes');
+        await settings.save();
+      } else if (!dinoTheme.generatedCover) {
+        // Attach the demo artwork once, without touching `ready` — publishing
+        // the story to customers stays the owner's decision.
+        Object.assign(dinoTheme, dinoArt);
         settings.markModified('themes');
         await settings.save();
       }
