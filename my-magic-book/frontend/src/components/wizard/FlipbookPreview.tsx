@@ -21,7 +21,7 @@ const ALL_TEASERS = [
 const TEASER_EXCLUDE: Record<string, string> = { zoo_adventure: 'zoo', space: 'space', school_hero: 'school' };
 
 export interface PreviewPage {
-  type: 'cover' | 'text' | 'lock' | 'final' | 'back' | 'title' | 'dedication' | 'fanoos' | 'policy';
+  type: 'cover' | 'text' | 'lock' | 'final' | 'back' | 'title' | 'dedication' | 'policy';
   title?: string;
   content?: string;
   /** Sample illustration (Baha) for this page, already a loadable URL. */
@@ -82,8 +82,9 @@ export function buildThemePreview(opts: {
 
   /**
    * The sheets the printed book OPENS with, before the story starts: the inside
-   * title page, the dedication, and the "فانوس البداية" logo separator. The
-   * preview used to jump straight from the cover into page 1.
+   * title page and the dedication. The printed book also has a lantern logo
+   * separator on each side of the story, but it reads as filler at preview
+   * size, so the preview skips both.
    */
   const openingPages = (): PreviewPage[] => {
     const dedication = personalize((ft(`stories.${theme}.dedication`, '') as string) || '');
@@ -93,14 +94,13 @@ export function buildThemePreview(opts: {
       ...(dedication
         ? [{ type: 'dedication', content: dedication, image: portraitImage, childName: name } as PreviewPage]
         : []),
-      { type: 'fanoos', title: ft('storybook.fanoos_start', 'فانوس البداية') as string },
     ];
   };
 
   /**
-   * The sheets the printed book ENDS on, mirroring the closing lantern,
-   * FinalStoryPage, CopyrightPage and BackCover. Only appended to a FULL
-   * preview — a locked teaser must not give the ending away.
+   * The sheets the printed book ENDS on, mirroring FinalStoryPage,
+   * CopyrightPage and BackCover. Only appended to a FULL preview — a locked
+   * teaser must not give the ending away.
    */
   const closingPages = (): PreviewPage[] => {
     // `questions` is a JSON array in ar but an object ({"0":…}) in en/he, so
@@ -121,7 +121,6 @@ export function buildThemePreview(opts: {
       .map((tz) => ({ id: tz.id, emoji: tz.emoji, label: ft(`storybook.teaser_${tz.id}`, tz.fallback) as string }));
 
     return [
-      { type: 'fanoos', title: ft('storybook.fanoos_end', 'فانوس النهاية') as string },
       {
         type: 'final',
         title: bookTitle,
@@ -335,20 +334,6 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                     />
                   )}
                   <p className="font-arabic text-white/85 text-[8px] leading-relaxed max-w-[86%]">{page.content}</p>
-                </div>
-              ) : page.type === 'fanoos' ? (
-                /* Lantern separator — the logo sheet between cover and story. */
-                <div
-                  className="h-full w-full flex items-center justify-center p-5"
-                  style={{ background: 'radial-gradient(ellipse at center, #1a2440 0%, #0a1020 100%)' }}
-                  dir={dir}
-                  aria-label={page.title}
-                >
-                  <img
-                    src="/logo.png?v=7"
-                    alt="Magic Fanoos"
-                    className="max-w-[86%] max-h-[86%] object-contain rounded-xl drop-shadow-[0_10px_28px_rgba(0,0,0,0.55)]"
-                  />
                 </div>
               ) : page.type === 'policy' ? (
                 /* Copyright / policy sheet — the printed CopyrightPage in brief. */
