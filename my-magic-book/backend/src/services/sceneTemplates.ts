@@ -104,10 +104,10 @@ export const SCENE_TEMPLATES: Record<string, SceneTemplate> = {
     pageScenes: [
       'crouching in a sunny home garden, holding a large glowing stone shaped like a huge egg that shimmers with golden light, wide-eyed with wonder',
       'standing amazed in a lush prehistoric jungle, colossal trees far taller than skyscrapers, giant ferns and mist, warm shafts of light',
-      'meeting an enormous friendly T-Rex wearing a green scarf, the dinosaur squinting sadly and searching the ground for something',
+      'ONE single child alone in the frame (exactly one boy, no other people), looking up at an enormous friendly T-Rex wearing a green scarf who squints sadly and searches the mossy ground for his lost round glasses, prehistoric jungle',
       'standing between a big friendly T-Rex on one side and a colorful flying pterodactyl on the other, hand on chin, thinking hard about which to choose',
       'riding bravely on the back of the friendly green-scarfed T-Rex, walking through the prehistoric forest, arms up with joy',
-      'at the edge of a bright blue lake, using a long branch and a sturdy rope to reach a pair of glasses stuck high in a giant banana tree',
+      'ONE single child alone in the frame, deep in the prehistoric jungle beside a bright blue lagoon ringed by giant ferns and towering primeval trees, wearing the SAME denim shirt and cap as the other pages, reaching up with a long branch and a sturdy rope toward a pair of round glasses clearly stuck high in a giant banana tree',
       'joyfully handing the glasses to the delighted T-Rex who now wears them and beams with a huge happy smile',
       'exploring a torch-lit secret cave, walls covered with ancient dinosaur cave paintings and curious symbols, a spotted dinosaur egg tucked among the rocks',
       'sitting with friendly dinosaurs at a fruit feast, holding a giant strawberry the size of a watermelon with both hands, laughing',
