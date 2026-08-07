@@ -21,7 +21,7 @@ const ALL_TEASERS = [
 const TEASER_EXCLUDE: Record<string, string> = { zoo_adventure: 'zoo', space: 'space', school_hero: 'school' };
 
 export interface PreviewPage {
-  type: 'cover' | 'text' | 'lock' | 'final' | 'back';
+  type: 'cover' | 'text' | 'lock' | 'final' | 'back' | 'title' | 'dedication' | 'fanoos' | 'policy';
   title?: string;
   content?: string;
   /** Sample illustration (Baha) for this page, already a loadable URL. */
@@ -81,12 +81,26 @@ export function buildThemePreview(opts: {
   const bookTitle = personalize(titleRaw) || fallbackTitle;
 
   /**
-   * The two sheets the printed book ends on, mirroring FinalStoryPage and
-   * BackCover so the preview matches the book the customer receives: the
-   * closing page carries the moral, the discussion QUESTIONS and the
-   * conclusion; the back cover carries the child's portrait and the "more
-   * adventures" teasers. Only appended to a FULL preview — a locked teaser
-   * must not give the ending away.
+   * The sheets the printed book OPENS with, before the story starts: the inside
+   * title page, the dedication, and the "فانوس البداية" logo separator. The
+   * preview used to jump straight from the cover into page 1.
+   */
+  const openingPages = (): PreviewPage[] => {
+    const dedication = personalize((ft(`stories.${theme}.dedication`, '') as string) || '');
+    return [
+      { type: 'title', title: bookTitle, childName: name },
+      // Coloring books have no dedication text — skip rather than show an empty sheet.
+      ...(dedication
+        ? [{ type: 'dedication', content: dedication, image: portraitImage, childName: name } as PreviewPage]
+        : []),
+      { type: 'fanoos', title: ft('storybook.fanoos_start', 'فانوس البداية') as string },
+    ];
+  };
+
+  /**
+   * The sheets the printed book ENDS on, mirroring the closing lantern,
+   * FinalStoryPage, CopyrightPage and BackCover. Only appended to a FULL
+   * preview — a locked teaser must not give the ending away.
    */
   const closingPages = (): PreviewPage[] => {
     // `questions` is a JSON array in ar but an object ({"0":…}) in en/he, so
@@ -107,6 +121,7 @@ export function buildThemePreview(opts: {
       .map((tz) => ({ id: tz.id, emoji: tz.emoji, label: ft(`storybook.teaser_${tz.id}`, tz.fallback) as string }));
 
     return [
+      { type: 'fanoos', title: ft('storybook.fanoos_end', 'فانوس النهاية') as string },
       {
         type: 'final',
         title: bookTitle,
@@ -116,6 +131,7 @@ export function buildThemePreview(opts: {
         conclusion: personalize((ft(`stories.${theme}.conclusion`, '') as string) || ''),
         childName: name,
       },
+      { type: 'policy' },
       {
         type: 'back',
         title: ft('storybook.congrats', 'أحسنت يا {{name}}! 🌟', { name }) as string,
@@ -137,6 +153,7 @@ export function buildThemePreview(opts: {
       }));
       return [
         { type: 'cover', title: fallbackTitle, image: coverImage },
+        ...(full ? openingPages() : []),
         ...imgPages,
         ...(full ? closingPages() : [{ type: 'lock', content: lockMsg } as PreviewPage]),
       ];
@@ -159,6 +176,7 @@ export function buildThemePreview(opts: {
   });
   return [
     { type: 'cover', title: bookTitle, image: coverImage },
+    ...(full ? openingPages() : []),
     ...bodyPages,
     ...(full ? closingPages() : [{ type: 'lock', content: lockMsg } as PreviewPage]),
   ];
@@ -280,6 +298,82 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                     <h3 className="font-arabic font-black text-white text-base leading-snug">{page.title}</h3>
                   </div>
                 )
+              ) : page.type === 'title' ? (
+                /* Inside title page — logo, brand, "presents [NAME]", title. */
+                <div
+                  className="h-full w-full flex flex-col items-center justify-center text-center px-5 relative overflow-hidden"
+                  style={{ background: 'radial-gradient(ellipse at 50% 30%, #17294a 0%, #0a1426 68%, #050a15 100%)' }}
+                  dir={dir}
+                >
+                  <span className="fbp-spark" style={{ top: '14%', left: '16%' }}>✦</span>
+                  <span className="fbp-spark" style={{ top: '76%', right: '14%', animationDelay: '1.2s' }}>✦</span>
+                  <img src="/logo.png?v=7" alt="" className="w-11 h-11 object-contain mb-1 drop-shadow-[0_0_12px_rgba(212,169,55,0.5)]" />
+                  <span className="font-brand text-gold-500 text-[11px] tracking-wide">Magic Fanoos</span>
+                  <div className="fbp-cdiv my-2" />
+                  <p className="font-arabic text-gold-400/85 text-[8px] mb-1">
+                    ✦ {ftLocal('title_page.presents', 'يُقدّم لـ')} {page.childName} ✦
+                  </p>
+                  <h3 className="font-arabic font-black text-white text-[12px] leading-snug max-w-[88%]">{page.title}</h3>
+                </div>
+              ) : page.type === 'dedication' ? (
+                /* Dedication — the child's photo in a gold frame + the message. */
+                <div
+                  className="h-full w-full flex flex-col items-center justify-center text-center px-5 relative"
+                  style={{ background: 'radial-gradient(ellipse at 50% 25%, #1a2440 0%, #0a1020 100%)' }}
+                  dir={dir}
+                >
+                  <span className="fbp-corner" style={{ top: '8px', left: '9px' }}>✦</span>
+                  <span className="fbp-corner" style={{ top: '8px', right: '9px' }}>✦</span>
+                  <span className="fbp-corner" style={{ bottom: '8px', left: '9px' }}>✦</span>
+                  <span className="fbp-corner" style={{ bottom: '8px', right: '9px' }}>✦</span>
+                  {page.image && (
+                    <img
+                      src={page.image}
+                      alt=""
+                      className="w-16 h-16 rounded-full object-cover border-2 border-gold-500/70 shadow-[0_0_14px_rgba(212,169,55,0.4)] mb-2.5"
+                      onError={hideOnError}
+                    />
+                  )}
+                  <p className="font-arabic text-white/85 text-[8px] leading-relaxed max-w-[86%]">{page.content}</p>
+                </div>
+              ) : page.type === 'fanoos' ? (
+                /* Lantern separator — the logo sheet between cover and story. */
+                <div
+                  className="h-full w-full flex items-center justify-center p-5"
+                  style={{ background: 'radial-gradient(ellipse at center, #1a2440 0%, #0a1020 100%)' }}
+                  dir={dir}
+                  aria-label={page.title}
+                >
+                  <img
+                    src="/logo.png?v=7"
+                    alt="Magic Fanoos"
+                    className="max-w-[86%] max-h-[86%] object-contain rounded-xl drop-shadow-[0_10px_28px_rgba(0,0,0,0.55)]"
+                  />
+                </div>
+              ) : page.type === 'policy' ? (
+                /* Copyright / policy sheet — the printed CopyrightPage in brief. */
+                <div
+                  className="h-full w-full flex flex-col items-center justify-center text-center px-4 gap-1"
+                  style={{ background: 'linear-gradient(165deg, #0a1628 0%, #050a15 100%)' }}
+                  dir={dir}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <img src="/logo.png?v=7" alt="" className="w-6 h-6 object-contain" />
+                    <span className="font-brand text-gold-500 text-[10px] tracking-wide">Magic Fanoos</span>
+                  </div>
+                  <div className="fbp-cdiv" />
+                  <p className="font-arabic text-gold-300/80 text-[7px]">✦ MagicFanoos.com</p>
+                  <p className="font-arabic text-gold-300/80 text-[7px]">✦ magicfanoose@gmail.com</p>
+                  <div className="fbp-cdiv fbp-cdiv--sm" />
+                  <p className="font-arabic text-white/60 text-[6.5px] leading-relaxed max-w-[92%]">
+                    <strong className="text-white/80">{ftLocal('storybook.policy_content', 'سياسة المحتوى')}:</strong>{' '}
+                    {ftLocal('storybook.policy_content_text', 'القصة والصور مخصّصة لطفلك للاستخدام العائلي فقط، ولا يجوز إعادة بيعها أو توزيعها تجاريًا.')}
+                  </p>
+                  <p className="font-arabic text-white/60 text-[6.5px] leading-relaxed max-w-[92%] mt-1">
+                    <strong className="text-white/80">{ftLocal('storybook.policy_printing', 'سياسة الطباعة')}:</strong>{' '}
+                    {ftLocal('storybook.policy_printing_text', '')}
+                  </p>
+                </div>
               ) : page.type === 'final' ? (
                 /* Closing page — same sections as the printed FinalStoryPage:
                    end label, title, moral, discussion questions, conclusion. */
