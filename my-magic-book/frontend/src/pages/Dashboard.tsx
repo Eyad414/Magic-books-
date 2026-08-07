@@ -460,7 +460,11 @@ export default function Dashboard() {
             const sh = o.shippingAddress || {};
             const paid = o.paymentStatus === 'paid';
             const themeLabel = story?.theme ? (t(`step2.theme_${story.theme}`, { defaultValue: story.theme }) as string) : '—';
-            const pkgLabel = o.bookPackage ? (t(`step3.pkg_${o.bookPackage}`, { defaultValue: o.bookPackage }) as string) : '—';
+            // The package is chosen in the wizard and saved on the STORY, not the
+            // order — reading it off the order always gave undefined, so this row
+            // showed a dash. Keep the order fallback in case it moves later.
+            const pkgId = story?.bookPackage || o.bookPackage;
+            const pkgLabel = pkgId ? (t(`step3.pkg_${pkgId}`, { defaultValue: pkgId }) as string) : '—';
             const Row = ({ icon: Icon, label, value }: { icon: any; label: string; value?: string }) => (
               <div className="flex items-start gap-3 py-2.5 border-b border-white/5 last:border-0">
                 <Icon className="w-4 h-4 text-gold-500 mt-0.5 shrink-0" />

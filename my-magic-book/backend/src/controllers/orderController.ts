@@ -161,7 +161,9 @@ export const getMyOrders = async (req: Request, res: Response): Promise<void> =>
   try {
     const userId = (req as any).user._id;
     const orders = await Order.find({ userId })
-      .populate('storyId', 'childName theme coverImageUrl status')
+      // bookPackage lives on the Story, and the order-details view shows it —
+      // without it here the customer's "الباقة" row rendered as a dash.
+      .populate('storyId', 'childName theme coverImageUrl status bookPackage')
       .sort({ createdAt: -1 });
     res.json({ success: true, orders });
   } catch (error) {
