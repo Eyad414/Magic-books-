@@ -13,6 +13,7 @@ import { schoolAdventure } from './story03_school';
 import { magicBookJourney } from './story04_magicbook';
 import { toyCityAdventure } from './story05_toycity';
 import { pirateTreasure } from './story06_pirate';
+import { dinosaurAdventure } from './story07_dinosaur';
 
 // ── Future stories — uncomment as you add them ────────────────────────────────
 // import { oceanAdventure }    from './story03_ocean';
@@ -41,6 +42,7 @@ export const STORIES: StoryDefinition[] = [
   magicBookJourney,
   toyCityAdventure,
   pirateTreasure,
+  dinosaurAdventure,
   // oceanAdventure,
   // forestAdventure,
   // desertAdventure,
@@ -69,7 +71,17 @@ export function findStory(id: string): StoryDefinition | undefined {
   const direct = STORIES.find((s) => s.id === id);
   if (direct) return direct;
   const base = id.replace(/_(real|photoreal|cartoon|pr|hd)$/, '');
-  return STORIES.find((s) => s.id === base);
+  const fallback = STORIES.find((s) => s.id === base);
+  // A miss is silent in production — the viewer falls back to STORIES[0] and
+  // quietly shows the ZOO title and text under another story's cover. Shout in
+  // dev so a newly added theme without a definition here is caught immediately.
+  if (!fallback && import.meta.env.DEV) {
+    console.warn(
+      `[stories] no StoryDefinition for "${id}" — the viewer will fall back to "${STORIES[0].id}" ` +
+      `and show its title/text. Add src/data/stories/storyNN_${id}.ts and register it in index.ts.`,
+    );
+  }
+  return fallback;
 }
 
 export type { StoryDefinition };
