@@ -81,6 +81,45 @@ export function resolveTokens(text: string, childName: string, childGender: 'mal
 /** Themes that have a hand-tuned scene template. Keyed by theme id. */
 export const SCENE_TEMPLATES: Record<string, SceneTemplate> = {
   // ── Zoo (مغامرة في حديقة الحيوانات) — scenes match the live locale text order.
+  // ── Dinosaurs (مغامرة مع الديناصورات) — friendly prehistoric adventure with
+  //    a decision page (4) and a seek-and-find page (8).
+  dinosaur_adventure: {
+    style: 'photoreal',
+    titleAr: 'مُغَامَرَةُ [NAME] مَعَ الدِّينَاصُورَاتِ',
+    pageTexts: [
+      'بَيْنَمَا كَانَ{|تْ} [NAME] {يَلْعَبُ|تَلْعَبُ} فِي الْحَدِيقَةِ، عَثَرَ{|تْ} عَلَى حَجَرٍ يَلْمَعُ يُشْبِهُ بَيْضَةً ضَخْمَةً. وَبِمُجَرَّدِ أَنْ لَمَسَ{هُ|تْهُ}، اهْتَزَّتِ الْأَرْضُ وَاخْتَفَتِ الْحَدِيقَةُ!',
+      'وَجَدَ{|تْ} [NAME] نَفْسَ{هُ|هَا} وَسْطَ غَابَةِ مَا قَبْلَ التَّارِيخِ، أَشْجَارُهَا أَطْوَلُ مِنْ نَاطِحَاتِ السَّحَابِ، وَسَمِعَ{|تْ} خُطُوَاتٍ ضَخْمَةً تَهُزُّ الْمَكَانَ.',
+      'ظَهَرَ دِينَاصُورُ (تِي رِيكْس) ضَخْمٌ! لَكِنَّهُ لَمْ يَكُنْ مُخِيفاً، بَلْ كَانَ يَرْتَدِي وِشَاحاً أَخْضَرَ وَيَبْحَثُ عَنْ نَظَّارَتِهِ الْمَفْقُودَةِ بِحُزْنٍ.',
+      'قَالَ تْرِيكْس: "أَنَا لَا أَرَى جَيِّداً بِدُونِ نَظَّارَتِي!" نَظَرَ{|تْ} [NAME] حَوْلَ{هُ|هَا} وَتَسَاءَلَ{|تْ}: "يَا بَطَل{|ةَ}! هَلْ نَرْكَبُ عَلَى ظَهْرِ تْرِيكْس لِنَبْحَثَ مِنَ الْأَرْضِ، أَمْ نَطْلُبُ مُسَاعَدَةَ الدِّينَاصُورِ الطَّائِرِ بْتِيرُودَاكْتِيل لِنَبْحَثَ مِنَ السَّمَاءِ؟"',
+      'قَفَزَ{|تْ} [NAME] عَلَى ظَهْرِ تْرِيكْس بِكُلِّ شَجَاعَةٍ، وَبَدَأُوا يَمْشُونَ وَسْطَ الْغَابَةِ لِاسْتِكْشَافِ الْأَمَاكِنِ الْعَالِيَةِ بِفَضْلِ نَظَرِهِ الْقَوِيِّ.',
+      'وَصَلُوا إِلَى بُحَيْرَةٍ زَرْقَاءَ، وَرَأَ{ى|تْ} [NAME] النَّظَّارَةَ عَالِقَةً فَوْقَ شَجَرَةِ مَوْزٍ عِمْلَاقَةٍ. اِسْتَخْدَمَ{|تْ} غُصْناً طَوِيلاً وَحَبْلاً مَتِيناً وَسَحَبَ{هَا|تْهَا} بِذَكَاءٍ.',
+      'اِرْتَدَى الدِّينَاصُورُ نَظَّارَتَهُ وَصَرَخَ فَرَحاً: "شُكْراً يَا [NAME]! الْآنَ أَسْتَطِيعُ رُؤْيَةَ أَصْدِقَائِي الصِّغَارِ وَالْأَلْوَانَ مِنْ جَدِيدٍ!"',
+      'أَخَذَ تْرِيكْس صَدِيقَ{هُ|تَهُ} إِلَى كَهْفٍ سِرِّيٍّ مَلِيءٍ بِالرُّسُومَاتِ الْقَدِيمَةِ وَالرُّمُوزِ الْعَجِيبَةِ. يَا بَطَل{|ةَ}! هَلْ {يُمْكِنُكَ|يُمْكِنُكِ} الْعُثُورُ عَلَى بَيْضَةِ الدِّينَاصُورِ الْمُنَقَّطَةِ الْمُخْتَبِئَةِ بَيْنَ الصُّخُورِ؟',
+      'اِحْتِفَالاً بِذَكَاءِ [NAME]، قَطَفَتْ {لَهُ|لَهَا} الدِّينَاصُورَاتُ أَكْبَرَ حَبَّةِ فَرَاوِلَةٍ فِي الْعَالَمِ، كَانَتْ بِحَجْمِ الْبِطِّيخَةِ وَلَذِيذَةً جِدّاً!',
+      'نَظَرَ{|تْ} [NAME] إِلَى الْجَبَلِ الْبَعِيدِ وَرَأَ{ى|تْ} بُرْكَاناً عَجِيباً يَخْرُجُ مِنْهُ فَقَاعَاتُ صَابُونٍ مُلَوَّنَةٌ بَدَلاً مِنَ الْحُمَمِ، فَضَحِكَ{|تْ} كَثِيراً عَلَى الْمَنْظَرِ.',
+      'أَعْطَى تْرِيكْس [NAME] حَجَراً صَغِيراً مَنْقُوشاً عَلَيْهِ صُورَةُ قَلْبٍ، لِ{يَتَذَكَّرَ|تَتَذَكَّرَ} دَائِماً أَنَّ{هُ|هَا} بَطَل{ٌ|ةٌ} حَقِيقِي{ٌّ|َّةٌ} وَصَدِيق{ٌ|َةٌ} لِلدِّينَاصُورَاتِ.',
+      'أَغْمَضَ{|تْ} [NAME] عَيْنَيْ{هِ|هَا} وَتَمَنَّ{ى|تْ} الْعَوْدَةَ إِلَى الْمَنْزِلِ، فَبَدَأَتْ أَشْجَارُ الْغَابَةِ تَتَلَاشَى بِبُطْءٍ وَصَوْتُ الدِّينَاصُورِ يُوَدِّعُ{هُ|هَا} بِلُطْفٍ.',
+      'فَتَحَ{|تْ} [NAME] عَيْنَيْ{هِ|هَا} لِ{يَجِدَ|تَجِدَ} نَفْسَ{هُ|هَا} فِي حَدِيقَةِ الْمَنْزِلِ وَمَعَ{هُ|هَا} الْحَجَرُ الْمَنْقُوشُ، وَه{ُوَ|ِيَ} {يَعْلَمُ|تَعْلَمُ} أَنَّ الِاسْتِكْشَافَ وَالشَّجَاعَةَ {يَجْعَلَانِهِ|يَجْعَلَانِهَا} {يَخُوضُ|تَخُوضُ} أَجْمَلَ الْمُغَامَرَاتِ.',
+    ],
+    pageScenes: [
+      'crouching in a sunny home garden, holding a large glowing stone shaped like a huge egg that shimmers with golden light, wide-eyed with wonder',
+      'standing amazed in a lush prehistoric jungle, colossal trees far taller than skyscrapers, giant ferns and mist, warm shafts of light',
+      'meeting an enormous friendly T-Rex wearing a green scarf, the dinosaur squinting sadly and searching the ground for something',
+      'standing between a big friendly T-Rex on one side and a colorful flying pterodactyl on the other, hand on chin, thinking hard about which to choose',
+      'riding bravely on the back of the friendly green-scarfed T-Rex, walking through the prehistoric forest, arms up with joy',
+      'at the edge of a bright blue lake, using a long branch and a sturdy rope to reach a pair of glasses stuck high in a giant banana tree',
+      'joyfully handing the glasses to the delighted T-Rex who now wears them and beams with a huge happy smile',
+      'exploring a torch-lit secret cave, walls covered with ancient dinosaur cave paintings and curious symbols, a spotted dinosaur egg tucked among the rocks',
+      'sitting with friendly dinosaurs at a fruit feast, holding a giant strawberry the size of a watermelon with both hands, laughing',
+      'pointing at a distant volcano that puffs colorful soap bubbles instead of lava into the sky, laughing with delight',
+      'receiving a small carved stone with a heart on it from the friendly T-Rex, warm golden sunset light, tender moment',
+      'eyes closed making a wish, the prehistoric forest softly glowing and fading around, the T-Rex waving goodbye gently',
+      'back in the sunny home garden holding the small carved heart stone, smiling proudly, dinosaur-shaped clouds in the sky',
+    ],
+    coverScene: 'standing proudly in a lush prehistoric jungle with friendly colorful dinosaurs behind, a big smiling T-Rex wearing a green scarf and round glasses leaning in, giant ferns and golden adventure light',
+    portraitScene: 'in the prehistoric jungle holding the small carved heart stone, friendly dinosaur silhouettes softly blurred behind',
+    medalPages: [11],
+  },
   zoo_adventure: {
     style: 'photoreal',
     titleAr: 'مغامرة [NAME] في حديقة الحيوانات',

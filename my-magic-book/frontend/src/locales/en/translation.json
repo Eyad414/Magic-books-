@@ -408,7 +408,9 @@
     "gen_empty": "The AI returned no text",
     "desc_template": "Pick the story that will star {name} 🌟",
     "preview_story_title": "[NAME]'s Story",
-    "preview_coloring_title": "[NAME]'s Coloring Book"
+    "preview_coloring_title": "[NAME]'s Coloring Book",
+    "theme_dinosaur_adventure": "Dinosaur Adventure",
+    "theme_dinosaur_adventure_desc": "A wondrous journey into the world before history"
   },
   "step3": {
     "title": "Customize Your Book",
@@ -1028,6 +1030,33 @@
         "11": "Grateful, the crab showed [NAME] the golden key. [NAME] opened the chest, and it glowed with gold coins and a shiny crown!",
         "12": "On the beach, [NAME] celebrated with the parrot, the dolphin, and the crab, sharing the treasure and laughing with joy.",
         "13": "As the sun set, [NAME] sailed home wearing the crown and keeping one gold coin — already dreaming of the next great adventure."
+      }
+    },
+    "dinosaur_adventure": {
+      "title": "[NAME]'s Dinosaur Adventure",
+      "tagline": "A wondrous journey into the world before history",
+      "moral": "Courage and curiosity open the door to the greatest adventures, and helping others builds the finest friendships.",
+      "conclusion": "Well done, [NAME]! You helped a friend and discovered a whole world. 🦕✨",
+      "dedication": "To [NAME], who is never afraid of the unknown and loves to discover — this adventure is yours.",
+      "questions": [
+        "Which dinosaur did you like most in the story?",
+        "If you were the hero, would you search from the ground or from the sky?",
+        "How can we help a friend who has lost something they love?"
+      ],
+      "pages": {
+        "1": "While [NAME] was playing in the garden, {he|she} found a shining stone shaped like a huge egg. The moment {he|she} touched it, the ground shook and the garden vanished!",
+        "2": "[NAME] was standing in a prehistoric forest with trees taller than skyscrapers, and heard enormous footsteps shaking the ground.",
+        "3": "A giant T-Rex appeared! But he wasn't scary at all — he wore a green scarf and was sadly searching for his lost glasses.",
+        "4": "\"I can't see well without my glasses!\" said Trex. [NAME] looked around and wondered: \"Hero! Shall we ride on Trex's back and search from the ground, or ask the flying Pterodactyl to help us search from the sky?\"",
+        "5": "[NAME] climbed bravely onto Trex's back, and together they walked through the forest, exploring the high places thanks to his strong eyesight.",
+        "6": "They reached a blue lake, and [NAME] spotted the glasses stuck high in a giant banana tree. Using a long branch and a strong rope, {he|she} cleverly pulled them down.",
+        "7": "The dinosaur put on his glasses and cheered: \"Thank you, [NAME]! Now I can see my little friends and all the colors again!\"",
+        "8": "Trex took {his|her} friend to a secret cave full of ancient drawings and curious symbols. Hero! Can you find the spotted dinosaur egg hidden among the rocks?",
+        "9": "To celebrate how clever [NAME] was, the dinosaurs picked the biggest strawberry in the world — as big as a watermelon and wonderfully sweet!",
+        "10": "[NAME] looked at the faraway mountain and saw a strange volcano bubbling out colorful soap bubbles instead of lava, and laughed and laughed.",
+        "11": "Trex gave [NAME] a small stone carved with a heart, so {he|she} would always remember that {he|she} is a true hero and a friend of the dinosaurs.",
+        "12": "[NAME] closed {his|her} eyes and wished to go home, and slowly the forest trees faded away while the dinosaur gently said goodbye.",
+        "13": "[NAME] opened {his|her} eyes back in the garden at home, the carved stone still in {his|her} hand, knowing that curiosity and courage lead to the most beautiful adventures."
       }
     }
   },
