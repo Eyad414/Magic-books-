@@ -18,7 +18,7 @@ const ALL_TEASERS = [
   { id: 'world', emoji: '🌍', fallback: 'حول العالم' },
   { id: 'superhero', emoji: '⚡', fallback: 'بطلاً خارقاً' },
 ];
-const TEASER_EXCLUDE: Record<string, string> = { zoo_adventure: 'zoo', space: 'space', school_hero: 'school' };
+const TEASER_EXCLUDE: Record<string, string> = { zoo_adventure: 'zoo', space: 'space', school_hero: 'school', ocean_adventure: 'ocean', dinosaur_adventure: 'dinosaurs' };
 
 export interface PreviewPage {
   type: 'cover' | 'text' | 'lock' | 'final' | 'back' | 'title' | 'dedication' | 'policy';

@@ -83,6 +83,44 @@ export const SCENE_TEMPLATES: Record<string, SceneTemplate> = {
   // ── Zoo (مغامرة في حديقة الحيوانات) — scenes match the live locale text order.
   // ── Dinosaurs (مغامرة مع الديناصورات) — friendly prehistoric adventure with
   //    a decision page (4) and a seek-and-find page (8).
+  // ── Ocean (مغامرة في أعماق المحيط) — advertised on every printed back
+  //    cover as "في أعماق المحيط"; decision page (4), seek-and-find page (8).
+  ocean_adventure: {
+    style: 'photoreal',
+    titleAr: 'مُغَامَرَةُ [NAME] فِي أَعْمَاقِ الْمُحِيطِ',
+    pageTexts: [
+      'كَانَ{|تْ} [NAME] {يَلْعَبُ|تَلْعَبُ} عَلَى الشَّاطِئِ، فَوَجَدَ{|تْ} صَدَفَةً كَبِيرَةً تَلْمَعُ. وَضَعَ{هَا|تْهَا} عَلَى أُذُنِ{هِ|هَا}... فَسَمِعَ{|تْ} أُغْنِيَةً جَمِيلَةً، وَسَحَبَتْ{هُ|هَا} مَوْجَةٌ لَطِيفَةٌ إِلَى الْمَاءِ!',
+      'فَتَحَ{|تْ} [NAME] عَيْنَيْ{هِ|هَا} تَحْتَ الْمَاءِ، وَه{ُوَ|ِيَ} {يَتَنَفَّسُ|تَتَنَفَّسُ} {وَيَتَكَلَّمُ|وَتَتَكَلَّمُ}! حَوْلَ{هُ|هَا} أَسْمَاكٌ مُلَوَّنَةٌ وَمَرْجَانٌ يُضِيءُ مِثْلَ الْمَصَابِيحِ.',
+      'اِقْتَرَبَ حُوتٌ أَزْرَقُ ضَخْمٌ اسْمُهُ فُقَاعَة. لَكِنَّهُ لَطِيفٌ وَلَيْسَ مُخِيفاً. قَالَ بِحُزْنٍ: "ضَاعَتْ أُغْنِيَتِي، وَلَا أَسْتَطِيعُ أَنْ أُنَادِيَ عَائِلَتِي!"',
+      'قَالَ فُقَاعَة: "أُغْنِيَتِي فِي مَكَانٍ مَا فِي الْمُحِيطِ!" فَكَّرَ{|تْ} [NAME] وَقَالَ{|تْ}: "يَا بَطَل{|ةَ}! هَلْ نَبْحَثُ فِي الْوَادِي الْعَمِيقِ الْمُظْلِمِ، أَمْ نَرْكَبُ التَّيَّارَ السَّرِيعَ إِلَى حَدِيقَةِ الْمَرْجَانِ؟"',
+      'رَكِبَ{|تْ} [NAME] عَلَى ظَهْرِ فُقَاعَة بِشَجَاعَةٍ، وَسَبَحَا مَعاً بَيْنَ الْأَسْمَاكِ، وَالْفَقَاقِيعُ تَتَرَاقَصُ حَوْلَهُمَا.',
+      'وَصَلَا إِلَى حَدِيقَةِ الْمَرْجَانِ، فَرَأَ{ى|تْ} [NAME] الصَّدَفَةَ الذَّهَبِيَّةَ دَاخِلَ مَغَارَةٍ ضَيِّقَةٍ. دَخَلَ{|تْ} بِهُدُوءٍ وَأَخْرَجَ{هَا|تْهَا} بِذَكَاءٍ.',
+      'فَتَحَ فُقَاعَة فَمَهُ وَغَنَّى! رَجَعَتْ أُغْنِيَتُهُ، فَصَاحَ بِفَرَحٍ: "شُكْراً يَا [NAME]! الْآنَ تَسْمَعُنِي عَائِلَتِي!"',
+      'أَخَذَ فُقَاعَة صَدِيقَ{هُ|تَهُ} إِلَى مَغَارَةٍ مَلِيئَةٍ بِالْمَرْجَانِ الْمُلَوَّنِ وَاللَّآلِئِ. يَا بَطَل{|ةَ}! هَلْ {تَجِدُ|تَجِدِينَ} حِصَانَ الْبَحْرِ الصَّغِيرَ الْمُخْتَبِئَ بَيْنَ الْمَرْجَانِ؟',
+      'فَرِحَتِ الْأَسْمَاكُ بِذَكَاءِ [NAME]، وَرَقَصَتْ حَوْلَ{هُ|هَا}، وَقَدَّمَتْ {لَهُ|لَهَا} أَكْبَرَ لُؤْلُؤَةٍ فِي الْبَحْرِ!',
+      'نَظَرَ{|تْ} [NAME] إِلَى الْأَعْلَى، فَرَأَ{ى|تْ} سَلَاحِفَ كَبِيرَةً تَسْبَحُ بِبُطْءٍ بَيْنَ أَشِعَّةِ الشَّمْسِ، وَقَنَادِيلَ بَحْرٍ تُضِيءُ مِثْلَ النُّجُومِ.',
+      'أَعْطَى فُقَاعَة [NAME] صَدَفَةً صَغِيرَةً تُغَنِّي، لِ{يَتَذَكَّرَ|تَتَذَكَّرَ} دَائِماً أَنَّ{هُ|هَا} بَطَل{ٌ|ةٌ} وَصَدِيق{ٌ|َةٌ} لِلْبَحْرِ.',
+      'أَغْمَضَ{|تْ} [NAME] عَيْنَيْ{هِ|هَا} وَتَمَنَّ{ى|تْ} الْعَوْدَةَ إِلَى الشَّاطِئِ. اِرْتَفَعَ{|تْ} بِبُطْءٍ مَعَ الْفَقَاقِيعِ، وَفُقَاعَة {يُوَدِّعُهُ|يُوَدِّعُهَا} بِأُغْنِيَةٍ جَمِيلَةٍ.',
+      'فَتَحَ{|تْ} [NAME] عَيْنَيْ{هِ|هَا} عَلَى الشَّاطِئِ، وَالصَّدَفَةُ الصَّغِيرَةُ فِي يَدِ{هِ|هَا}. {عَرَفَ|عَرَفَتْ} أَنَّ مُسَاعَدَةَ الْأَصْدِقَاءِ تَصْنَعُ أَجْمَلَ الْمُغَامَرَاتِ!',
+    ],
+    pageScenes: [
+      'crouching on a sunny sandy beach holding a large shimmering spiral seashell up to their ear, eyes wide with wonder, gentle turquoise waves rolling in behind',
+      'underwater surrounded by colorful tropical fish and glowing coral that shines like lanterns, hair floating gently, delighted amazed face, shafts of sunlight through clear blue water',
+      'face to face with an enormous friendly blue whale with kind sad eyes, the child small beside the whale\'s huge head, deep blue water and drifting bubbles',
+      'floating underwater with a hand on the chin deciding, on one side a dark deep ocean trench, on the other a bright colorful coral garden swept by a current, the friendly blue whale waiting close by',
+      'riding happily on the back of the giant friendly blue whale, swimming through schools of colorful fish, sparkling bubbles dancing all around',
+      'reaching carefully into a narrow coral cave to lift out a glowing golden shell, bright coral garden all around in clear turquoise water',
+      'joyfully watching the big blue whale sing with his mouth open, glowing rings of sound rippling through the water, happy fish gathering around',
+      'exploring a secret underwater grotto filled with colorful coral and shining pearls, a tiny seahorse tucked among the coral branches',
+      'surrounded by dancing colorful fish, holding an enormous shining pearl with both hands, laughing with delight',
+      'looking up through clear blue water at giant sea turtles gliding slowly through sunbeams, glowing jellyfish drifting like stars',
+      'receiving a small glowing singing seashell from the friendly blue whale, warm light in the deep blue water, tender moment',
+      'eyes gently closed making a wish, rising slowly through a column of sparkling bubbles toward the bright surface, the whale waving below',
+      'back on the sunny beach holding the small seashell, smiling proudly, gentle waves and a golden sunset behind',
+    ],
+    coverScene: 'underwater in a bright turquoise ocean, a huge friendly smiling blue whale rising behind them, colorful tropical fish and glowing coral all around, sunbeams streaming down from the surface, joyful adventurous expression',
+    portraitScene: 'underwater holding the small glowing seashell, colorful coral softly blurred behind, warm sunbeams through clear blue water',
+  },
   dinosaur_adventure: {
     style: 'photoreal',
     titleAr: 'مُغَامَرَةُ [NAME] مَعَ الدِّينَاصُورَاتِ',

@@ -20,7 +20,7 @@ const ALL_TEASERS = [
   { id: 'superhero', emoji: '⚡', fallback: 'بطلاً خارقاً' },
 ];
 // Map the current story to the teaser id to drop, so we never recommend the same theme.
-const EXCLUDE: Record<string, string> = { zoo_adventure: 'zoo', space: 'space', school_hero: 'school' };
+const EXCLUDE: Record<string, string> = { zoo_adventure: 'zoo', space: 'space', school_hero: 'school', ocean_adventure: 'ocean', dinosaur_adventure: 'dinosaurs' };
 
 export default function BackCover({ childName, childPhoto, currentStoryId }: BackCoverProps) {
   const { t, i18n } = useTranslation();

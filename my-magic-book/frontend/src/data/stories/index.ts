@@ -14,9 +14,9 @@ import { magicBookJourney } from './story04_magicbook';
 import { toyCityAdventure } from './story05_toycity';
 import { pirateTreasure } from './story06_pirate';
 import { dinosaurAdventure } from './story07_dinosaur';
+import { oceanAdventure } from './story08_ocean';
 
 // ── Future stories — uncomment as you add them ────────────────────────────────
-// import { oceanAdventure }    from './story03_ocean';
 // import { forestAdventure }   from './story04_forest';
 // import { desertAdventure }   from './story05_desert';
 // import { mountainAdventure } from './story06_mountain';
@@ -43,7 +43,7 @@ export const STORIES: StoryDefinition[] = [
   toyCityAdventure,
   pirateTreasure,
   dinosaurAdventure,
-  // oceanAdventure,
+  oceanAdventure,
   // forestAdventure,
   // desertAdventure,
   // mountainAdventure,

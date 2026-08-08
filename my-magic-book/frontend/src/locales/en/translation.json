@@ -410,7 +410,9 @@
     "preview_story_title": "[NAME]'s Story",
     "preview_coloring_title": "[NAME]'s Coloring Book",
     "theme_dinosaur_adventure": "Dinosaur Adventure",
-    "theme_dinosaur_adventure_desc": "A wondrous journey into the world before history"
+    "theme_dinosaur_adventure_desc": "A wondrous journey into the world before history",
+    "theme_ocean_adventure": "Deep Ocean Adventure",
+    "theme_ocean_adventure_desc": "A magical journey into the world beneath the sea"
   },
   "step3": {
     "title": "Customize Your Book",
@@ -1057,6 +1059,33 @@
         "11": "Trex gave [NAME] a little stone with a heart on it, to always remember that {he|she} is a hero and a friend of the dinosaurs.",
         "12": "[NAME] closed {his|her} eyes and wished to go home. The trees slowly disappeared, and Trex waved goodbye kindly.",
         "13": "[NAME] opened {his|her} eyes in the home garden, with the little stone in {his|her} hand. {He|She} knew that being brave leads to the best adventures!"
+      }
+    },
+    "ocean_adventure": {
+      "title": "[NAME]'s Deep Ocean Adventure",
+      "tagline": "A magical journey into the world beneath the sea",
+      "moral": "Helping a friend works wonders, and the sea is full of life for us to protect.",
+      "conclusion": "Well done, [NAME]! You gave your friend his song back and discovered a whole world. 🐋✨",
+      "dedication": "To [NAME], who loves the sea and dreams of adventures — this story is yours.",
+      "questions": [
+        "Which sea animal did you like most in the story?",
+        "If you were the hero, would you search the deep valley or the coral garden?",
+        "How can we protect the sea and the friends who live in it?"
+      ],
+      "pages": {
+        "1": "[NAME] was playing on the beach and found a big shiny seashell. {He|She} held it to {his|her} ear… and heard a beautiful song, and a gentle wave pulled {him|her} into the water!",
+        "2": "[NAME] opened {his|her} eyes under the water — and {he|she} could breathe and talk! All around were colorful fish and coral glowing like lanterns.",
+        "3": "A huge blue whale came close. His name was Bubble! But he was kind, not scary. He said sadly: \"I lost my song, and I can't call my family!\"",
+        "4": "\"My song is somewhere in the ocean!\" said Bubble. [NAME] thought and said: \"Hero! Shall we search the deep dark valley, or ride the fast current to the coral garden?\"",
+        "5": "[NAME] climbed bravely onto Bubble's back, and they swam together among the fish, with bubbles dancing all around them.",
+        "6": "They reached the coral garden, and [NAME] saw a golden shell inside a narrow cave. {He|She} went in quietly and cleverly brought it out.",
+        "7": "Bubble opened his mouth and sang! His song came back, and he cried happily: \"Thank you, [NAME]! Now my family can hear me!\"",
+        "8": "Bubble took {his|her} friend to a cave full of colorful coral and shining pearls. Hero! Can you find the little seahorse hiding in the coral?",
+        "9": "The fish were so happy with how clever [NAME] was. They danced around {him|her} and gave {him|her} the biggest pearl in the sea!",
+        "10": "[NAME] looked up and saw big sea turtles gliding slowly through the sunbeams, and jellyfish glowing like stars.",
+        "11": "Bubble gave [NAME] a little singing seashell, to always remember that {he|she} is a hero and a friend of the sea.",
+        "12": "[NAME] closed {his|her} eyes and wished to go back to the beach. {He|She} floated up slowly with the bubbles, while Bubble said goodbye with a beautiful song.",
+        "13": "[NAME] opened {his|her} eyes on the beach, with the little shell in {his|her} hand. {He|She} knew that helping friends makes the best adventures!"
       }
     }
   },
