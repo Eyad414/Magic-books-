@@ -1,0 +1,55 @@
+name: CI
+
+# Both branches are deployed: Vercel builds the frontend from main and Render
+# builds the backend from it, so a broken push reaches customers directly.
+on:
+  push:
+    branches: [main, feature/ai-book-pipeline]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  backend:
+    name: Backend — typecheck + tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: my-magic-book/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: my-magic-book/backend/package-lock.json
+      # `npm run build` also downloads Chrome for Puppeteer, which CI does not
+      # need — typecheck covers the same compile step in a fraction of the time.
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  frontend:
+    name: Frontend — build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: my-magic-book/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: my-magic-book/frontend/package-lock.json
+      - run: npm ci
+      # `tsc -b && vite build` — the same command Vercel runs, so a red build
+      # here is a deploy that would have failed anyway.
+      - run: npm run build
