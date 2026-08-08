@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { adminApi } from '../api/adminApi';
 import { uploadApi } from '../api/uploadApi';
@@ -593,9 +593,107 @@ export default function AdminDashboard() {
     : o?.paymentMethod === 'cash' ? t('admin.paid_cash', 'مدفوع نقداً عند الاستلام')
     : t('admin.pending_payment');
 
-  // A story counts as a real "ready book" once it has illustrations — that's
-  // what makes it openable/printable. Newest first (the API already sorts).
-  const generatedBooks = allStories.filter((s: any) => (s?.generatedImages?.length ?? 0) > 0 || s?.generatedCover);
+  const [printingBookKey, setPrintingBookKey] = useState<string | null>(null);
+
+  /**
+   * Every book in one list: the real stories customers/we generated, plus the
+   * curated theme demos. They used to be two separate sections with different
+   * shapes, so nothing could act on "all books" uniformly.
+   */
+  const allBooks = useMemo(() => {
+    const themeById: Record<string, any> = {};
+    for (const th of (settings?.themes || [])) themeById[th.id] = th;
+    const label = (id: string) => t(`step2.theme_${id}`, { defaultValue: themeById[id]?.label || id }) as string;
+    const dateOf = (d?: string) => d ? new Date(d).toLocaleDateString(
+      i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'he' ? 'he-IL' : 'en-US') : '';
+
+    // Real generated stories (a customer order, or one we built).
+    const real = allStories
+      .filter((s: any) => (s?.generatedImages?.length ?? 0) > 0 || s?.generatedCover)
+      .map((s: any) => ({
+        key: `story-${s._id}`,
+        storyId: s._id,
+        showcase: !!s.showcase,
+        childName: s.childName,
+        childGender: s.childGender,
+        theme: s.theme,
+        themeLabel: String(s.bookPackage || '').includes('coloring') || String(s.theme || '').includes('coloring')
+          ? t('admin.coloring_book', 'كتاب تلوين') : label(s.theme),
+        cover: s.generatedCover || s.generatedImages?.[0],
+        back: s.generatedPortrait,
+        images: s.generatedImages || [],
+        childPhoto: s.childPhotoUrl,
+        mode: s.mode,
+        date: dateOf(s.createdAt),
+        isDemo: false,
+        isColoring: String(s.bookPackage || '').includes('coloring'),
+        viewHref: String(s.bookPackage || '').includes('coloring') ? `/book/${s._id}?view=coloring` : `/book/${s._id}`,
+      }));
+
+    // Curated theme demos — their artwork lives on the theme, not a Story doc.
+    const demos = SHOWCASE_CARDS.map((c) => {
+      const th = themeById[c.themeId] || {};
+      const isColoring = c.themeId.includes('coloring');
+      const base = c.storyId && c.storyId.startsWith('theme_') ? null : c.storyId;
+      const folder = base ? `magic-fanoose/generated/${base}` : null;
+      return {
+        key: `demo-${c.key}`,
+        childName: c.name,
+        theme: c.themeId,
+        themeLabel: isColoring ? t('admin.coloring_book', 'كتاب تلوين') : label(c.themeId),
+        cover: folder ? `${folder}/page-00.png` : th.generatedCover,
+        back: folder ? `${folder}/page-99.png` : th.generatedPortrait,
+        images: folder
+          ? Array.from({ length: 13 }, (_, i) => `${folder}/page-${String(i + 1).padStart(2, '0')}.png`)
+          : (th.generatedImages || []),
+        emoji: c.emoji,
+        date: '',
+        isDemo: true,
+        isColoring,
+        viewHref: isColoring
+          ? `/coloring/${c.themeId}?name=${encodeURIComponent(c.name)}`
+          : `/book/${c.themeId}?name=${encodeURIComponent(c.name)}&lng=ar${c.storyId ? `&pin=${c.storyId}` : ''}`,
+      };
+    });
+
+    return [...real, ...demos].map((b) => ({
+      ...b,
+      // The print build needs a cover, a back and at least one page.
+      canPrint: !!b.cover && !!b.back && (b.images?.length ?? 0) > 0,
+    }));
+  }, [allStories, settings, t, i18n.language]);
+
+  /** Build this book's print-ready PDFs and open them. Never submits to BookPod. */
+  const handlePrintBook = async (b: any) => {
+    if (printingBookKey) return;
+    setPrintingBookKey(b.key);
+    const toastId = toast.loading(t('admin.book_printing_toast', '📄 جاري تجهيز ملف الطباعة... (قد يستغرق دقيقة)'));
+    try {
+      const res = await adminApi.buildPreviewPrint({
+        theme: b.theme,
+        childName: b.childName || 'الطفل',
+        childGender: b.childGender,
+        language: i18n.language,
+        coverPath: b.cover,
+        backPath: b.back,
+        imagePaths: b.images,
+        childPhotoPath: b.childPhoto,
+        isColoring: b.isColoring,
+      });
+      if (res?.success && res.interiorPath) {
+        toast.success(t('admin.book_print_ok', 'تم تجهيز ملف الطباعة ✅'), { id: toastId });
+        for (const p of [res.interiorPath, res.coverPath].filter(Boolean)) {
+          window.open(objectPathToUrl(p), '_blank');
+        }
+      } else {
+        toast.error(res?.message || t('admin.book_print_fail', 'فشل تجهيز ملف الطباعة'), { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || t('admin.book_print_fail', 'فشل تجهيز ملف الطباعة'), { id: toastId });
+    } finally {
+      setPrintingBookKey(null);
+    }
+  };
 
   // Wizard feature switch: flip it locally, persist just that one flag, and
   // roll back if the save fails.
@@ -1270,110 +1368,84 @@ export default function AdminDashboard() {
                   <h3 className="font-arabic font-bold text-white text-lg">📚 {t('admin.tab_showcase', 'الكتب الجاهزة')}</h3>
                   <MagicButton onClick={fetchAllStories} size="sm" variant="outline">{t('admin.refresh_data')}</MagicButton>
                 </div>
-                <p className="font-arabic text-white/50 text-sm mb-5">{t('admin.showcase_desc', 'افتح أي كتاب لتنزيله (PDF) أو إرساله إلى BookPod للطباعة.')}</p>
+                <p className="font-arabic text-white/50 text-sm mb-5">
+                  {t('admin.showcase_desc_v2', 'كل الكتب التي أنشأتها — اعرض الكتاب أو جهّز ملف الطباعة.')}
+                </p>
 
-                {/* ── Books actually generated: every story with illustrations,
-                       newest first. New books show up here on their own. ── */}
-                <h4 className="font-arabic font-bold text-white text-sm mb-3">
-                  🖼️ {t('admin.showcase_generated', 'الكتب التي أنشأتها')}
-                  <span className="text-white/40 text-xs font-normal mr-2">({generatedBooks.length})</span>
-                </h4>
                 {storiesLoading ? (
                   <p className="font-arabic text-white/40 text-sm py-6 text-center">{t('admin.loading')}</p>
-                ) : generatedBooks.length === 0 ? (
+                ) : allBooks.length === 0 ? (
                   <p className="font-arabic text-white/40 text-sm py-6 text-center bg-white/5 rounded-xl border border-dashed border-white/10">
                     {t('admin.showcase_no_generated', 'لا توجد كتب مُنشأة بعد — أنشئ قصة وستظهر هنا.')}
                   </p>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {generatedBooks.map((s: any) => {
-                      const cover = s.generatedCover || s.generatedImages?.[0];
-                      const isColoring = String(s.bookPackage || '').includes('coloring') || String(s.theme || '').includes('coloring');
-                      return (
-                        <div key={s._id} className="bg-dark-700/50 rounded-2xl border border-white/5 p-3 flex flex-col gap-2.5 hover:border-gold-500/30 transition-all">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            {cover ? (
-                              <img
-                                src={objectPathToUrl(cover)}
-                                alt=""
-                                loading="lazy"
-                                className="w-12 h-12 rounded-lg object-cover border border-white/10 shrink-0"
-                                onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = 'hidden'; }}
-                              />
-                            ) : (
-                              <span className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-xl shrink-0">📖</span>
-                            )}
-                            <div className="min-w-0">
-                              <h4 className="font-arabic font-bold text-white text-sm truncate">
-                                {localizeName(s.childName || '—', i18n.language)}
-                              </h4>
-                              <p className="font-arabic text-gold-500 text-xs truncate">
-                                {isColoring
-                                  ? t('admin.coloring_book', 'كتاب تلوين')
-                                  : (t(`step2.theme_${s.theme}`, { defaultValue: s.theme }) as string)}
-                              </p>
-                              <p className="font-arabic text-white/35 text-[11px]">
-                                {s.createdAt ? new Date(s.createdAt).toLocaleDateString(i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'he' ? 'he-IL' : 'en-US') : ''}
-                                {s.mode === 'ai' ? ' · AI' : ''}
-                              </p>
-                            </div>
+                    {allBooks.map((b: any) => (
+                      <div key={b.key} className="bg-dark-700/50 rounded-2xl border border-white/5 p-3 flex flex-col gap-2.5 hover:border-gold-500/30 transition-all">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {b.cover ? (
+                            <img
+                              src={objectPathToUrl(b.cover)}
+                              alt=""
+                              loading="lazy"
+                              className="w-12 h-12 rounded-lg object-cover border border-white/10 shrink-0"
+                              onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = 'hidden'; }}
+                            />
+                          ) : (
+                            <span className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-xl shrink-0">{b.emoji || '📖'}</span>
+                          )}
+                          <div className="min-w-0">
+                            <h4 className="font-arabic font-bold text-white text-sm truncate">{localizeName(b.childName || '—', i18n.language)}</h4>
+                            <p className="font-arabic text-gold-500 text-xs truncate">{b.themeLabel}</p>
+                            <p className="font-arabic text-white/35 text-[11px]">
+                              {b.isDemo ? t('admin.book_demo', 'كتاب عرض') : t('admin.book_customer', 'كتاب عميل')}
+                              {b.date ? ` · ${b.date}` : ''}{b.mode === 'ai' ? ' · AI' : ''}
+                            </p>
                           </div>
-                          <Link
-                            to={isColoring ? `/book/${s._id}?view=coloring` : `/book/${s._id}`}
-                            className="flex items-center justify-center gap-2 px-3 py-2 bg-gold-500 text-[#0a1628] rounded-xl font-arabic font-bold text-xs hover:bg-gold-400 transition"
-                          >
-                            🖨️ {t('admin.open_to_print', 'افتح للطباعة / BookPod')}
-                          </Link>
-                          {/* Publish this REAL book on the public home page. */}
+                        </div>
+
+                        {!b.isDemo && (
                           <button
                             type="button"
                             role="switch"
-                            aria-checked={!!s.showcase}
-                            onClick={() => toggleShowcase(s)}
-                            disabled={showcaseBusyId === s._id}
-                            className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg font-arabic text-xs border transition-colors disabled:opacity-50 ${
-                              s.showcase
+                            aria-checked={!!b.showcase}
+                            onClick={() => toggleShowcase({ _id: b.storyId, showcase: b.showcase })}
+                            disabled={showcaseBusyId === b.storyId}
+                            className={`flex items-center justify-center gap-1.5 px-2 py-1 rounded-lg font-arabic text-[11px] border transition-colors disabled:opacity-50 ${
+                              b.showcase
                                 ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
                                 : 'bg-white/5 border-white/10 text-white/55 hover:border-white/25'
                             }`}
                           >
-                            {s.showcase ? '🏠 ' : '🏠 '}
-                            {s.showcase
+                            🏠 {b.showcase
                               ? t('admin.showcase_on', 'ظاهر في الصفحة الرئيسية')
                               : t('admin.showcase_off', 'أظهره في الصفحة الرئيسية')}
                           </button>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <Link
+                            to={b.viewHref}
+                            className="flex items-center justify-center gap-1.5 px-2 py-2 bg-white/5 hover:bg-white/10 text-white/80 border border-white/15 rounded-xl font-arabic font-bold text-xs transition"
+                          >
+                            <Eye className="w-3.5 h-3.5" /> {t('admin.book_show', 'عرض')}
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => handlePrintBook(b)}
+                            disabled={printingBookKey === b.key || !b.canPrint}
+                            title={b.canPrint ? t('admin.book_print_help', 'تجهيز ملف الطباعة (PDF) وفتحه') : t('admin.book_print_missing', 'ينقص هذا الكتاب صور — لا يمكن تجهيز الطباعة')}
+                            className="flex items-center justify-center gap-1.5 px-2 py-2 bg-gold-500 text-[#0a1628] rounded-xl font-arabic font-bold text-xs hover:bg-gold-400 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            {printingBookKey === b.key
+                              ? `⏳ ${t('admin.book_printing', 'جاري...')}`
+                              : <>🖨️ {t('admin.book_print', 'طباعة')}</>}
+                          </button>
                         </div>
-                      );
-                    })}
+                      </div>
+                    ))}
                   </div>
                 )}
-
-                {/* ── Curated demo books (theme templates, not customer orders) ── */}
-                <h4 className="font-arabic font-bold text-white text-sm mt-8 mb-3">
-                  ⭐ {t('admin.showcase_demos', 'كتب العرض (القوالب)')}
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {SHOWCASE_CARDS.map((card) => {
-                    const isColoring = card.themeId.includes('coloring');
-                    const href = isColoring
-                      ? `/coloring/${card.themeId}?name=${encodeURIComponent(card.name)}`
-                      : `/book/${card.themeId}?name=${encodeURIComponent(card.name)}&lng=ar${card.storyId ? `&pin=${card.storyId}` : ''}`;
-                    return (
-                      <div key={card.key} className="bg-dark-700/50 rounded-2xl border border-white/5 p-3 flex flex-col gap-2.5">
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-3xl">{card.emoji}</span>
-                          <div className="min-w-0">
-                            <h4 className="font-arabic font-bold text-white text-sm truncate">{localizeName(card.name, i18n.language)}</h4>
-                            <p className="font-arabic text-gold-500 text-xs truncate">{isColoring ? t('admin.coloring_book', 'كتاب تلوين') : t(`step2.theme_${card.themeId}`, card.themeId)}</p>
-                          </div>
-                        </div>
-                        <Link to={href} className="flex items-center justify-center gap-2 px-3 py-2 bg-gold-500/90 text-[#0a1628] rounded-xl font-arabic font-bold text-xs hover:bg-gold-400 transition">
-                          🖨️ {t('admin.open_to_print', 'افتح للطباعة / BookPod')}
-                        </Link>
-                      </div>
-                    );
-                  })}
-                </div>
               </div>
             ) : null}
           </div>

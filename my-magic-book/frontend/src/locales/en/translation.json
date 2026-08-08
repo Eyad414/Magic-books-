@@ -824,7 +824,18 @@
     "showcase_off": "Show on the home page",
     "showcase_added": "Book added to the home page ✅",
     "showcase_removed": "Book removed from the home page",
-    "paid_cash": "Paid — cash on delivery"
+    "paid_cash": "Paid — cash on delivery",
+    "showcase_desc_v2": "Every book you've created — view it or build the print files.",
+    "book_show": "View",
+    "book_print": "Print",
+    "book_printing": "Working…",
+    "book_print_help": "Build the print-ready PDF and open it",
+    "book_print_missing": "This book is missing images — print can't be prepared",
+    "book_printing_toast": "📄 Preparing the print files… (may take a minute)",
+    "book_print_ok": "Print files ready ✅",
+    "book_print_fail": "Couldn't prepare the print files",
+    "book_demo": "Demo book",
+    "book_customer": "Customer book"
   },
   "title_page": {
     "presents": "Presented to",

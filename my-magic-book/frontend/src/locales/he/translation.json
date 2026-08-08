@@ -824,7 +824,18 @@
     "showcase_off": "הצג בעמוד הבית",
     "showcase_added": "הספר נוסף לעמוד הבית ✅",
     "showcase_removed": "הספר הוסר מעמוד הבית",
-    "paid_cash": "שולם — מזומן במסירה"
+    "paid_cash": "שולם — מזומן במסירה",
+    "showcase_desc_v2": "כל הספרים שיצרת — הצג את הספר או הכן את קובצי ההדפסה.",
+    "book_show": "הצג",
+    "book_print": "הדפסה",
+    "book_printing": "עובד…",
+    "book_print_help": "הכנת קובץ ההדפסה (PDF) ופתיחתו",
+    "book_print_missing": "חסרות תמונות לספר הזה — לא ניתן להכין הדפסה",
+    "book_printing_toast": "📄 מכינים את קובצי ההדפסה… (עשוי לקחת דקה)",
+    "book_print_ok": "קובצי ההדפסה מוכנים ✅",
+    "book_print_fail": "הכנת קובצי ההדפסה נכשלה",
+    "book_demo": "ספר הדגמה",
+    "book_customer": "ספר לקוח"
   },
   "title_page": {
     "presents": "מוגש ל",
