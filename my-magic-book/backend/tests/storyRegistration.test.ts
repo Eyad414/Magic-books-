@@ -13,15 +13,6 @@ const FRONTEND = path.resolve(__dirname, '../../frontend/src');
 const STORY_PAGES = 13;
 const LOCALES = ['ar', 'en', 'he'] as const;
 
-/**
- * KNOWN GAP — `toy_city` is a showcase-only story. It has a frontend story file
- * and full ar/en/he text, so it reads correctly in every language, but it has no
- * backend scene template, which means it cannot be generated for a customer. The
- * API does not offer it as an orderable theme, so nothing is broken today.
- * Delete this once the story gets a scene template, or when the card is retired.
- */
-const NO_BACKEND_TEMPLATE = ['toy_city'];
-
 const storyThemes = Object.entries(SCENE_TEMPLATES)
   .filter(([, tpl]) => !!tpl.pageTexts)
   .map(([id]) => id);
@@ -78,7 +69,7 @@ describe('story registration', () => {
 
   it('has no frontend story without a backend scene template', () => {
     const templated = Object.keys(SCENE_TEMPLATES);
-    const orphans = registered.filter((id) => !templated.includes(id) && !NO_BACKEND_TEMPLATE.includes(id));
+    const orphans = registered.filter((id) => !templated.includes(id));
     expect(orphans, `frontend stories with no backend template: ${orphans.join(', ')}`).toEqual([]);
   });
 });
