@@ -39,13 +39,49 @@ export function upscaleAvailable(): boolean {
 }
 
 /**
+ * Per-build tally, so a print run can report whether the illustrations were
+ * really AI-upscaled or quietly fell back to native res. Before this existed a
+ * totally dead upscaler still produced a "success" build with no visible signal.
+ */
+export type UpscaleStats = { upscaled: number; nativeRes: number; reason: string | null };
+let _stats: UpscaleStats = { upscaled: 0, nativeRes: 0, reason: null };
+
+/**
+ * A 403/404 means the model or project is misconfigured — that will not fix
+ * itself mid-build, so remember it and skip the remaining calls instead of
+ * paying a round trip (and printing an identical warning) for every image.
+ */
+let _permanentFailure: string | null = null;
+
+export function resetUpscaleStats(): void {
+  _stats = { upscaled: 0, nativeRes: 0, reason: null };
+  _permanentFailure = null;
+}
+
+export function getUpscaleStats(): UpscaleStats {
+  return { ..._stats };
+}
+
+function noteFallback(reason: string): void {
+  _stats.nativeRes += 1;
+  if (!_stats.reason) _stats.reason = reason;
+}
+
+/**
  * Upscale one image with Vertex Imagen. Returns a JPEG buffer, or — on ANY
  * failure (not configured, safety-filtered, quota, network, timeout) — the
  * ORIGINAL buffer, so a print build degrades to native-res rather than failing.
  */
 export async function imagenUpscale(input: Buffer, factor: string = FACTOR): Promise<Buffer> {
   const project = process.env.GCP_PROJECT_ID;
-  if (!project) return input;
+  if (!project) {
+    noteFallback('GCP_PROJECT_ID not set');
+    return input;
+  }
+  if (_permanentFailure) {
+    noteFallback(_permanentFailure);
+    return input;
+  }
 
   const url =
     `https://${REGION}-aiplatform.googleapis.com/v1/projects/${project}` +
@@ -84,7 +120,14 @@ export async function imagenUpscale(input: Buffer, factor: string = FACTOR): Pro
         continue;
       }
       if (!res.ok) {
-        console.warn(`[UpscaleService] ${factor} HTTP ${res.status} — using native res. ${text.slice(0, 200)}`);
+        const reason = `HTTP ${res.status} (${MODEL} @ ${REGION})`;
+        if (res.status === 403 || res.status === 404) {
+          _permanentFailure = reason;
+          console.warn(`[UpscaleService] ${factor} ${reason} — Vertex unreachable for this project; skipping upscale for the rest of this build. ${text.slice(0, 200)}`);
+        } else {
+          console.warn(`[UpscaleService] ${factor} ${reason} — using native res. ${text.slice(0, 200)}`);
+        }
+        noteFallback(reason);
         return input;
       }
       const json = JSON.parse(text);
@@ -92,11 +135,14 @@ export async function imagenUpscale(input: Buffer, factor: string = FACTOR): Pro
       if (!b64) {
         const reason = json?.predictions?.[0]?.raiFilteredReason || 'no image in response';
         console.warn(`[UpscaleService] ${factor} produced no image — using native res. ${String(reason).slice(0, 160)}`);
+        noteFallback(String(reason).slice(0, 80));
         return input;
       }
+      _stats.upscaled += 1;
       return Buffer.from(b64, 'base64');
     } catch (e: any) {
       console.warn(`[UpscaleService] ${factor} failed — using native res: ${e?.message || e}`);
+      noteFallback(String(e?.message || e).slice(0, 80));
       return input;
     } finally {
       clearTimeout(timer);

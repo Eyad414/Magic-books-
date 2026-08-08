@@ -6,7 +6,7 @@ import path from 'path';
 import { Storage } from '@google-cloud/storage';
 import { PDFDocument } from 'pdf-lib';
 import { uploadBuffer, pdfFolderPath } from './StorageService';
-import { imagenUpscale } from './UpscaleService';
+import { imagenUpscale, resetUpscaleStats, getUpscaleStats } from './UpscaleService';
 
 // The host is memory-constrained (512MB). Disable sharp's decoded-image cache and
 // cap its worker threads so upscaling 15 print-res photos doesn't retain buffers
@@ -190,10 +190,35 @@ function dataUri(buffer: Buffer, mime: string): string {
  * and reused across preview / print / BookPod builds. On any upscaler failure the
  * original (native-res) buffer is returned and NOT cached, so a build never fails.
  */
+// Images already upscaled on an earlier build come straight from GCS and never
+// hit Imagen, so they are counted separately from this run's live attempts.
+let _upscaleCacheHits = 0;
+
+/**
+ * One line saying whether the illustrations were genuinely AI-upscaled or fell
+ * back to native resolution. `upscaleForPrint` still resizes everything to
+ * PRINT_PHOTO_PX with Lanczos3, so a fallback build is ~277 DPI and prints
+ * fine — it is softer, not undersized. Worth surfacing, not worth failing on.
+ */
+function logUpscaleSummary(): void {
+  const { upscaled, nativeRes, reason } = getUpscaleStats();
+  const done = upscaled + _upscaleCacheHits;
+  if (!nativeRes) {
+    console.log(`[Print] upscale OK — ${done} image(s) at x3 (${_upscaleCacheHits} cached).`);
+    return;
+  }
+  console.warn(
+    `[Print] UPSCALE DEGRADED — ${nativeRes} of ${done + nativeRes} image(s) fell back to native ` +
+    `resolution (Lanczos-enlarged to ${PRINT_PHOTO_PX}px, ~277 DPI instead of ~310). Reason: ${reason}`
+  );
+}
+
 async function hiResBuffer(objectPath: string): Promise<Buffer> {
   const cachePath = objectPath.replace(/\.(png|jpe?g|webp)$/i, '') + '.x3.jpg';
   try {
-    return await downloadObject(cachePath); // cache hit
+    const cached = await downloadObject(cachePath); // cache hit
+    _upscaleCacheHits += 1;
+    return cached;
   } catch { /* not cached yet — upscale below */ }
 
   const original = await downloadObject(objectPath);
@@ -774,7 +799,10 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
   // hiResBuffer returns the Imagen x3 (~300 DPI) version, cached in GCS. Holding
   // the ~13 upscaled JPEGs (~1MB each) is cheap; parallelising cuts a cold build
   // from ~8 min to ~2.
+  resetUpscaleStats();
+  _upscaleCacheHits = 0;
   const hiRes = await mapWithConcurrency(input.imagePaths, UPSCALE_CONCURRENCY, (p) => hiResBuffer(p));
+  logUpscaleSummary();
   logMem('images upscaled');
   // Phase 2 — crop each to the print square SEQUENTIALLY, so only one hi-res photo
   // decodes in sharp (~23MB) at a time and peak RAM stays under the 512MB cap.
