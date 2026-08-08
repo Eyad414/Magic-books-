@@ -358,6 +358,8 @@
     "theme_ocean": "Ocean",
     "theme_ocean_desc": "Magical underwater world",
     "theme_school_hero": "School Hero",
+    "theme_toy_city": "Magical Toy City",
+    "theme_toy_city_desc": "An adventure inside a magical toy city full of robots and building bricks",
     "theme_school_hero_desc": "Helping others and spreading kindness and colors at school",
     "theme_forest": "Forest",
     "theme_forest_desc": "Talking animals and secrets",
@@ -992,6 +994,33 @@
         "21": "At the end of the school day, everyone clapped warmly, and the principal presented [NAME] with the 'Little Hero' medal for their courage and kindness.",
         "23": "[NAME] ran home excited, proudly telling their mother how school is not just lessons, but a place for adventure and helping others.",
         "25": "[NAME] placed the shiny medal next to the bed and closed their eyes, excited and waiting for a brand new school adventure."
+      }
+    },
+    "toy_city": {
+      "title": "[NAME] and the Hidden Secret of Toy City",
+      "tagline": "Every toy hides a little magic inside",
+      "moral": "When you care for your toys and love them truly, they give back a magic that never runs out.",
+      "conclusion": "Great job, [NAME]! You are now the faithful guardian of your toys, and Tiki's friend forever! 🤖✨",
+      "questions": [
+        "How did [NAME] help Tiki the robot work again?",
+        "What did we learn about taking care of our toys?",
+        "If you visited magical Toy City, which adventure would you choose first, and why?"
+      ],
+      "dedication": "To [NAME], who fills our lives with joy and wonder every day — this story is just for you.",
+      "pages": {
+        "1": "While [NAME] was tidying the bedroom, a little race car lit up with golden light and opened a magic door that pulled [NAME] straight into Toy City!",
+        "3": "[NAME] landed gently on a street made of fast racing tracks, where every house was built from colorful building bricks.",
+        "5": "[NAME] met a small robot named Tiki, who had stopped moving. “I need the Battery of Smiles to work again!” Tiki said in a weak little voice.",
+        "7": "Tiki pointed to two paths: “Champion, shall we ride the speedy teddy-bear train, or climb the tall tower of bricks? Choose your path wisely, [NAME]!”",
+        "9": "[NAME] decided to climb the tower of bricks. When it started to wobble, the paper airplanes rushed over and held on tight, so the climb to the top was brave and safe.",
+        "11": "At the very top [NAME] found the battery — but it was switched off. Remembering Tiki's words, [NAME] gave it a big honest smile, and suddenly the battery lit up in every color!",
+        "13": "[NAME] ran back and handed the battery to Tiki. The robot leaped for joy, dancing and thanking such a clever friend.",
+        "15": "Tiki gave [NAME] a tour inside the wonderful toy factory, where ideas turn into real toys. Can you find the little silver key hidden among the machines?",
+        "17": "[NAME] found a cloth doll, broken and sad, and used clever engineering hands to mend her quietly and kindly.",
+        "19": "The doll smiled and gave [NAME] the golden Toy Key, which grants the power to care for every toy, always.",
+        "21": "To celebrate [NAME], the city held a fantastic race — and our hero was the very first driver of a flying car in the sky!",
+        "23": "Tiki waved goodbye and said: “When you miss us, [NAME], just hug your toys tight, and we will meet again in your dreams!”",
+        "25": "[NAME] opened both eyes back in the bedroom, still holding the Toy Key. From that day on every toy was cared for well — because each one has a soul and a magic all its own."
       }
     },
     "magic_book": {

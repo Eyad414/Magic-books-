@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import { SCENE_TEMPLATES } from '../src/services/sceneTemplates';
+import { SCENE_TEMPLATES, resolveTokens } from '../src/services/sceneTemplates';
 
 /**
  * Adding a story means registering it in FOUR places. Miss the frontend
@@ -14,14 +14,13 @@ const STORY_PAGES = 13;
 const LOCALES = ['ar', 'en', 'he'] as const;
 
 /**
- * KNOWN GAP — `toy_city` is a half-registered showcase story: it has a frontend
- * story file and Arabic text, but no backend scene template and no en/he
- * translation. It is demo-only (the API does not offer it as an orderable
- * theme), so the cost is that the `lora-toycity` showcase card reads broken for
- * English and Hebrew visitors. Exempted narrowly so the rest of the suite can
- * gate CI; delete this list once the story is finished or retired.
+ * KNOWN GAP — `toy_city` is a showcase-only story. It has a frontend story file
+ * and full ar/en/he text, so it reads correctly in every language, but it has no
+ * backend scene template, which means it cannot be generated for a customer. The
+ * API does not offer it as an orderable theme, so nothing is broken today.
+ * Delete this once the story gets a scene template, or when the card is retired.
  */
-const KNOWN_INCOMPLETE = ['toy_city'];
+const NO_BACKEND_TEMPLATE = ['toy_city'];
 
 const storyThemes = Object.entries(SCENE_TEMPLATES)
   .filter(([, tpl]) => !!tpl.pageTexts)
@@ -79,9 +78,46 @@ describe('story registration', () => {
 
   it('has no frontend story without a backend scene template', () => {
     const templated = Object.keys(SCENE_TEMPLATES);
-    const orphans = registered.filter((id) => !templated.includes(id) && !KNOWN_INCOMPLETE.includes(id));
+    const orphans = registered.filter((id) => !templated.includes(id) && !NO_BACKEND_TEMPLATE.includes(id));
     expect(orphans, `frontend stories with no backend template: ${orphans.join(', ')}`).toEqual([]);
   });
+});
+
+describe('locale story text', () => {
+  // Story text is hand-written per language and carries [NAME] and {masc|fem}
+  // tokens. A dropped brace renders the raw token to the child, so check that
+  // every localized string survives the same resolver the book uses.
+  const textsOf = (story: any): string[] => {
+    const qs = Array.isArray(story.questions) ? story.questions : Object.values(story.questions ?? {});
+    const pages = Array.isArray(story.pages) ? story.pages : Object.values(story.pages ?? {});
+    return [story.title, story.tagline, story.moral, story.conclusion, story.dedication, ...qs, ...pages]
+      .filter((s): s is string => typeof s === 'string');
+  };
+
+  for (const lng of LOCALES) {
+    const stories = locale(lng).stories ?? {};
+    describe.each(Object.keys(stories))(`${lng} — %s`, (id) => {
+      it('resolves every token for a girl and for a boy', () => {
+        for (const raw of textsOf(stories[id])) {
+          for (const [name, gender] of [['سارة', 'female'], ['أحمد', 'male']] as const) {
+            const out = resolveTokens(raw, name, gender);
+            expect(out, `unresolved [NAME] in ${lng}/${id}: ${raw.slice(0, 60)}`).not.toMatch(/\[NAME\]/i);
+            expect(out, `unresolved {m|f} in ${lng}/${id}: ${raw.slice(0, 60)}`).not.toMatch(/\{[^|{}]*\|[^|{}]*\}/);
+          }
+        }
+      });
+
+      // An unpaired brace is the classic hand-translation slip: it never renders
+      // as a token, so it reaches the page verbatim.
+      it('has balanced braces', () => {
+        for (const raw of textsOf(stories[id])) {
+          const opens = (raw.match(/\{/g) || []).length;
+          const closes = (raw.match(/\}/g) || []).length;
+          expect(opens, `unbalanced braces in ${lng}/${id}: ${raw.slice(0, 60)}`).toBe(closes);
+        }
+      });
+    });
+  }
 });
 
 describe('locale parity', () => {
@@ -91,8 +127,7 @@ describe('locale parity', () => {
     return Object.entries(obj).flatMap(([k, v]) => leaves(v, prefix ? `${prefix}.${k}` : k));
   }
 
-  const exempt = (key: string) => KNOWN_INCOMPLETE.some((id) => key.includes(id));
-  const base = [...new Set(leaves(locale('ar')))].filter((k) => !exempt(k));
+  const base = [...new Set(leaves(locale('ar')))];
 
   it.each(['en', 'he'])('%s has every key Arabic has', (lng) => {
     const have = new Set(leaves(locale(lng)));
