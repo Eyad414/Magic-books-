@@ -52,6 +52,11 @@ const FEMALE_NAMES = new Set(
     'tala', 'celine', 'maysam', 'rahaf', 'judy', 'renad', 'lamar', 'dana',
     'joury', 'shahd', 'razan', 'lina', 'maya', 'mayar', 'sama', 'yara', 'layan',
     'rawan', 'haya', 'sidra', 'kadi',
+    // Added after real girls named Julia and Lora would have rendered as boys —
+    // masculine story text AND masculine illustrations, since the wizard
+    // defaults childGender to 'male'.
+    'جوليا', 'چوليا', 'لورا', 'لارا', 'ليا', 'ملاك', 'رغد', 'أسيل', 'اسيل', 'تيا',
+    'julia', 'juliya', 'lora', 'laura', 'lara', 'lea', 'leah', 'raghad', 'aseel', 'tia',
   ].map((n) => n.toLowerCase())
 );
 
@@ -138,23 +143,22 @@ export const SCENE_TEMPLATES: Record<string, SceneTemplate> = {
       'أَغْمَضَ{|تْ} [NAME] عَيْنَيْ{هِ|هَا} وَتَمَنَّ{ى|تْ} الْعَوْدَةَ إِلَى الْمَنْزِلِ، فَبَدَأَتْ أَشْجَارُ الْغَابَةِ تَتَلَاشَى بِبُطْءٍ وَصَوْتُ الدِّينَاصُورِ يُوَدِّعُ{هُ|هَا} بِلُطْفٍ.',
       'فَتَحَ{|تْ} [NAME] عَيْنَيْ{هِ|هَا} لِ{يَجِدَ|تَجِدَ} نَفْسَ{هُ|هَا} فِي حَدِيقَةِ الْمَنْزِلِ وَمَعَ{هُ|هَا} الْحَجَرُ الْمَنْقُوشُ، وَه{ُوَ|ِيَ} {يَعْلَمُ|تَعْلَمُ} أَنَّ الِاسْتِكْشَافَ وَالشَّجَاعَةَ {يَجْعَلَانِهِ|يَجْعَلَانِهَا} {يَخُوضُ|تَخُوضُ} أَجْمَلَ الْمُغَامَرَاتِ.',
     ],
-    pageScenes: [
-      'crouching in a sunny home garden, holding a large glowing stone shaped like a huge egg that shimmers with golden light, wide-eyed with wonder',
-      'standing amazed in a lush prehistoric jungle, colossal trees far taller than skyscrapers, giant ferns and mist, warm shafts of light',
-      'ONE single child alone in the frame (exactly one boy, no other people), looking up at an enormous friendly T-Rex wearing a green scarf who squints sadly and searches the mossy ground for his lost round glasses, prehistoric jungle',
-      'standing between a big friendly T-Rex on one side and a colorful flying pterodactyl on the other, hand on chin, thinking hard about which to choose',
-      'riding bravely on the back of the friendly green-scarfed T-Rex, walking through the prehistoric forest, arms up with joy',
-      'ONE single child alone in the frame, deep in the prehistoric jungle beside a bright blue lagoon ringed by giant ferns and towering primeval trees, wearing the SAME denim shirt and cap as the other pages, reaching up with a long branch and a sturdy rope toward a pair of round glasses clearly stuck high in a giant banana tree',
-      'joyfully handing the glasses to the delighted T-Rex who now wears them and beams with a huge happy smile',
-      'exploring a torch-lit secret cave, walls covered with ancient dinosaur cave paintings and curious symbols, a spotted dinosaur egg tucked among the rocks',
-      'sitting with friendly dinosaurs at a fruit feast, holding a giant strawberry the size of a watermelon with both hands, laughing',
-      'pointing at a distant volcano that puffs colorful soap bubbles instead of lava into the sky, laughing with delight',
-      'receiving a small carved stone with a heart on it from the friendly T-Rex, warm golden sunset light, tender moment',
-      'eyes closed making a wish, the prehistoric forest softly glowing and fading around, the T-Rex waving goodbye gently',
-      'back in the sunny home garden holding the small carved heart stone, smiling proudly, dinosaur-shaped clouds in the sky',
+    pageScenes: [      'crouching in a sunny home garden, holding a large glowing stone shaped like a huge egg that shimmers with golden light, wide-eyed with wonder, wearing a little khaki explorer outfit with a dark cap — the SAME outfit on every page, never the clothes from the reference photo',
+      'standing amazed in a lush prehistoric jungle, colossal trees far taller than skyscrapers, giant ferns and mist, warm shafts of light, wearing a little khaki explorer outfit with a dark cap — the SAME outfit on every page, never the clothes from the reference photo',
+      'ONE single child alone in the frame (exactly one boy, no other people), looking up at an enormous friendly T-Rex wearing a green scarf who squints sadly and searches the mossy ground for his lost round glasses, prehistoric jungle, wearing a little khaki explorer outfit with a dark cap — the SAME outfit on every page, never the clothes from the reference photo',
+      'standing between a big friendly T-Rex on one side and a colorful flying pterodactyl on the other, hand on chin, thinking hard about which to choose, wearing a little khaki explorer outfit with a dark cap — the SAME outfit on every page, never the clothes from the reference photo',
+      'riding bravely on the back of the friendly green-scarfed T-Rex, walking through the prehistoric forest, arms up with joy, wearing a little khaki explorer outfit with a dark cap — the SAME outfit on every page, never the clothes from the reference photo',
+      'ONE single child alone in the frame, deep in the prehistoric jungle beside a bright blue lagoon ringed by giant ferns and towering primeval trees, wearing the SAME denim shirt and cap as the other pages, reaching up with a long branch and a sturdy rope toward a pair of round glasses clearly stuck high in a giant banana tree, wearing a little khaki explorer outfit with a dark cap — the SAME outfit on every page, never the clothes from the reference photo',
+      'joyfully handing the glasses to the delighted T-Rex who now wears them and beams with a huge happy smile, wearing a little khaki explorer outfit with a dark cap — the SAME outfit on every page, never the clothes from the reference photo',
+      'exploring a torch-lit secret cave, walls covered with ancient dinosaur cave paintings and curious symbols, a spotted dinosaur egg tucked among the rocks, wearing a little khaki explorer outfit with a dark cap — the SAME outfit on every page, never the clothes from the reference photo',
+      'sitting with friendly dinosaurs at a fruit feast, holding a giant strawberry the size of a watermelon with both hands, laughing, wearing a little khaki explorer outfit with a dark cap — the SAME outfit on every page, never the clothes from the reference photo',
+      'pointing at a distant volcano that puffs colorful soap bubbles instead of lava into the sky, laughing with delight, wearing a little khaki explorer outfit with a dark cap — the SAME outfit on every page, never the clothes from the reference photo',
+      'receiving a small carved stone with a heart on it from the friendly T-Rex, warm golden sunset light, tender moment, wearing a little khaki explorer outfit with a dark cap — the SAME outfit on every page, never the clothes from the reference photo',
+      'eyes closed making a wish, the prehistoric forest softly glowing and fading around, the T-Rex waving goodbye gently, wearing a little khaki explorer outfit with a dark cap — the SAME outfit on every page, never the clothes from the reference photo',
+      'back in the sunny home garden holding the small carved heart stone, smiling proudly, dinosaur-shaped clouds in the sky, wearing a little khaki explorer outfit with a dark cap — the SAME outfit on every page, never the clothes from the reference photo',
     ],
-    coverScene: 'standing proudly in a lush prehistoric jungle with friendly colorful dinosaurs behind, a big smiling T-Rex wearing a green scarf and round glasses leaning in, giant ferns and golden adventure light',
-    portraitScene: 'in the prehistoric jungle holding the small carved heart stone, friendly dinosaur silhouettes softly blurred behind',
+    coverScene: 'the child close to camera, face large, clearly visible and warmly lit, smiling with excitement, wearing a little khaki explorer outfit with a dark cap — the SAME outfit on every page, never the clothes from the reference photo; behind them a huge friendly T-Rex in a green scarf and round glasses leans down with a gentle smile, small colorful dinosaurs among giant ferns, pterodactyls in a golden sky, sunbeams and drifting pollen. the child is lit by the same warm light as the scene and blends naturally into it, real skin tones, soft contact shadows, never a flat cut-out pasted on top',
+    portraitScene: 'in the prehistoric jungle holding the small carved heart stone, friendly dinosaur silhouettes softly blurred behind, wearing a little khaki explorer outfit with a dark cap — the SAME outfit on every page, never the clothes from the reference photo',
   },
   zoo_adventure: {
     style: 'photoreal',

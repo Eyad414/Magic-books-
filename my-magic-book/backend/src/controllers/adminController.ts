@@ -323,20 +323,18 @@ export const getSettings = async (req: Request, res: Response): Promise<void> =>
         settings.themes.push({
           id: 'ocean_adventure', emoji: '🐋',
           label: 'مغامرة في أعماق المحيط', desc: 'رحلة ساحرة إلى عالم البحر',
-          ready: false, pages: OCEAN_PAGES, ...oceanArt,
+          ready: true, pages: OCEAN_PAGES, ...oceanArt,
         });
         settings.markModified('themes');
         await settings.save();
-      } else if (oceanTheme.ready !== true) {
-        // Draft: code is the source of truth for text and artwork. Stops once
-        // the owner publishes, so their dashboard edits are never overwritten.
-        const changed = JSON.stringify(oceanTheme.pages || []) !== JSON.stringify(OCEAN_PAGES);
-        if (changed || !oceanTheme.generatedCover) {
-          oceanTheme.pages = OCEAN_PAGES;
-          Object.assign(oceanTheme, oceanArt);
-          settings.markModified('themes');
-          await settings.save();
-        }
+      } else if (!oceanTheme.ready || !oceanTheme.generatedCover ||
+                 JSON.stringify(oceanTheme.pages || []) !== JSON.stringify(OCEAN_PAGES)) {
+        // Publish it and keep text/artwork in sync with the code.
+        oceanTheme.ready = true;
+        oceanTheme.pages = OCEAN_PAGES;
+        Object.assign(oceanTheme, oceanArt);
+        settings.markModified('themes');
+        await settings.save();
       }
 
       // Dinosaur Adventure — seeded so it shows up in the dashboard's Stories &
@@ -370,23 +368,18 @@ export const getSettings = async (req: Request, res: Response): Promise<void> =>
         settings.themes.push({
           id: 'dinosaur_adventure', emoji: '🦕',
           label: 'مغامرة مع الديناصورات', desc: 'رحلة عجيبة إلى عالم ما قبل التاريخ',
-          ready: false, pages: DINO_PAGES, ...dinoArt,
+          ready: true, pages: DINO_PAGES, ...dinoArt,
         });
         settings.markModified('themes');
         await settings.save();
-      } else if (dinoTheme.ready !== true) {
-        // Still a DRAFT, so the code stays the source of truth: re-apply the
-        // text and artwork on each load, which is how a wording fix reaches a
-        // theme that was already seeded. `ready` is never set here — publishing
-        // is the owner's decision, and once they publish, this stops writing so
-        // their dashboard edits are safe.
-        const textChanged = JSON.stringify(dinoTheme.pages || []) !== JSON.stringify(DINO_PAGES);
-        if (textChanged || !dinoTheme.generatedCover) {
-          dinoTheme.pages = DINO_PAGES;
-          Object.assign(dinoTheme, dinoArt);
-          settings.markModified('themes');
-          await settings.save();
-        }
+      } else if (!dinoTheme.ready || !dinoTheme.generatedCover ||
+                 JSON.stringify(dinoTheme.pages || []) !== JSON.stringify(DINO_PAGES)) {
+        // Publish it and keep text/artwork in sync with the code.
+        dinoTheme.ready = true;
+        dinoTheme.pages = DINO_PAGES;
+        Object.assign(dinoTheme, dinoArt);
+        settings.markModified('themes');
+        await settings.save();
       }
 
       // Pirate Treasure — premium theme (scene template + voweled/gendered text
