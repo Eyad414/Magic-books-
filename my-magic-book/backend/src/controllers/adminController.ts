@@ -311,20 +311,32 @@ export const getSettings = async (req: Request, res: Response): Promise<void> =>
         { text: "أَغْمَضَ{|تْ} [NAME] عَيْنَيْ{هِ|هَا} وَتَمَنَّ{ى|تْ} الْعَوْدَةَ إِلَى الشَّاطِئِ. اِرْتَفَعَ{|تْ} بِبُطْءٍ مَعَ الْفَقَاقِيعِ، وَفُقَاعَة {يُوَدِّعُهُ|يُوَدِّعُهَا} بِأُغْنِيَةٍ جَمِيلَةٍ.", imageSrc: "" },
         { text: "فَتَحَ{|تْ} [NAME] عَيْنَيْ{هِ|هَا} عَلَى الشَّاطِئِ، وَالصَّدَفَةُ الصَّغِيرَةُ فِي يَدِ{هِ|هَا}. {عَرَفَ|عَرَفَتْ} أَنَّ مُسَاعَدَةَ الْأَصْدِقَاءِ تَصْنَعُ أَجْمَلَ الْمُغَامَرَاتِ!", imageSrc: "" },
       ];
+      const oceanFolder = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
+      const oceanBase = `${oceanFolder}/generated/theme_ocean_adventure`;
+      const oceanArt = {
+        generatedCover: `${oceanBase}/page-00.png`,
+        generatedImages: Array.from({ length: 13 }, (_, i) => `${oceanBase}/page-${String(i + 1).padStart(2, '0')}.png`),
+        generatedPortrait: `${oceanBase}/page-99.png`,
+      };
       const oceanTheme: any = settings.themes.find((t: any) => t.id === 'ocean_adventure');
       if (!oceanTheme) {
         settings.themes.push({
           id: 'ocean_adventure', emoji: '🐋',
           label: 'مغامرة في أعماق المحيط', desc: 'رحلة ساحرة إلى عالم البحر',
-          ready: false, pages: OCEAN_PAGES,
+          ready: false, pages: OCEAN_PAGES, ...oceanArt,
         });
         settings.markModified('themes');
         await settings.save();
-      } else if (oceanTheme.ready !== true &&
-                 JSON.stringify(oceanTheme.pages || []) !== JSON.stringify(OCEAN_PAGES)) {
-        oceanTheme.pages = OCEAN_PAGES;
-        settings.markModified('themes');
-        await settings.save();
+      } else if (oceanTheme.ready !== true) {
+        // Draft: code is the source of truth for text and artwork. Stops once
+        // the owner publishes, so their dashboard edits are never overwritten.
+        const changed = JSON.stringify(oceanTheme.pages || []) !== JSON.stringify(OCEAN_PAGES);
+        if (changed || !oceanTheme.generatedCover) {
+          oceanTheme.pages = OCEAN_PAGES;
+          Object.assign(oceanTheme, oceanArt);
+          settings.markModified('themes');
+          await settings.save();
+        }
       }
 
       // Dinosaur Adventure — seeded so it shows up in the dashboard's Stories &
