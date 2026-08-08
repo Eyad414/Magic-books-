@@ -18,6 +18,9 @@ import toast from 'react-hot-toast';
 const TEXT_THEME: Record<string, string> = { space_real: 'space' };
 const textThemeFor = (id: string) => TEXT_THEME[id] || id;
 
+/** Real children whose demo books are admin-only, never shown publicly. */
+const PRIVATE_DEMO_CHILDREN = new Set(['Lora', 'Sara', 'Julia']);
+
 const storyImgs = (id: string) =>
   Array.from({ length: 13 }, (_, i) => `magic-fanoose/generated/${id}/page-${String(i + 1).padStart(2, '0')}.png`);
 
@@ -120,8 +123,10 @@ export default function Stories() {
 
         {/* Stories Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Lora's book is a personal/real child — kept only in the admin dash, not public. */}
-          {CARDS.filter((c) => c.name !== 'Lora').map((card, idx) => {
+          {/* Books made from a real child's own photo stay in the admin dash and
+              off the public site. Add a name here when a new demo uses a real
+              family photo rather than a stock/demo face. */}
+          {CARDS.filter((c) => !PRIVATE_DEMO_CHILDREN.has(c.name)).map((card, idx) => {
             const cover = coverFor(card);
             const rating = [5.0, 4.9, 4.8][idx % 3];
             const isFav = favorites.includes(card.key);

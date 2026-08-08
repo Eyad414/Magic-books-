@@ -22,4 +22,10 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   { key: 'lora-coloring',   themeId: 'zoo_coloring',    name: 'Lora',  emoji: '🖍️' },
   { key: 'ahmad-coloring',  themeId: 'space_coloring',  name: 'Ahmad', emoji: '🖍️' },
   { key: 'yosef-coloring',  themeId: 'school_coloring', name: 'Yosef', emoji: '🖍️' },
+  // Themes that already had demo artwork in storage but no card, so nothing
+  // listed them: the two new stories plus pirate and school.
+  { key: 'sara-dinosaur',   themeId: 'dinosaur_adventure', name: 'Sara',  emoji: '🦕' },
+  { key: 'julia-ocean',     themeId: 'ocean_adventure',    name: 'Julia', emoji: '🐋' },
+  { key: 'baha-pirate',     themeId: 'pirate_adventure',   name: 'Baha',  emoji: '🏴‍☠️' },
+  { key: 'baha-school',     themeId: 'school_hero',        name: 'Baha',  emoji: '🏫' },
 ];
