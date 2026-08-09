@@ -59,4 +59,5 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   { key: 'julia-ocean',     themeId: 'ocean_adventure',    name: 'Julia', emoji: '🐋' },
   { key: 'baha-pirate',     themeId: 'pirate_adventure',   name: 'Baha',  emoji: '🏴‍☠️' },
   { key: 'baha-school',     themeId: 'school_hero',        name: 'Baha',  emoji: '🏫' },
+  { key: 'sara-world',      themeId: 'world_adventure',    name: 'Sara',  emoji: '🌍' },
 ];
