@@ -149,7 +149,18 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
       return DEFAULT_PACKAGES
         .map((defaultPkg) => {
           const livePkg = liveSettings.bookPackages.find((p: any) => p.id === defaultPkg.id);
-          return livePkg ? { ...defaultPkg, price: livePkg.price, hidden: livePkg.hidden } : defaultPkg;
+          if (!livePkg) return defaultPkg;
+          // Keep the "was" price only when it is genuinely higher than the
+          // live one. The default carries originalPrice: 140 while the admin
+          // has raised pro to 170, which rendered a struck-through 140 next to
+          // 170 — a discount advertised off a LOWER price.
+          const was = (defaultPkg as any).originalPrice;
+          return {
+            ...defaultPkg,
+            price: livePkg.price,
+            hidden: livePkg.hidden,
+            originalPrice: was && was > livePkg.price ? was : undefined,
+          };
         })
         .filter((pkg) => !(pkg as any).hidden); // admin-hidden packages don't show
     }
@@ -246,6 +257,15 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
       return;
     }
 
+    // Restored progress can land here with step 1 never completed. Catch it
+    // before the API does, so the customer gets a route back instead of a raw
+    // database validation error in English.
+    if (!String(progress.childDetails?.childName || '').trim()) {
+      toast.error(t('step2.err_no_child_name', 'ينقص اسم الطفل — ارجع إلى الخطوة الأولى وأكمل بيانات طفلك.'));
+      onPrev();
+      return;
+    }
+
     let nextStoryId = storyId;
     if (mode === 'template') {
       // Only create the DB row if we haven't already (e.g. user returns to step 2).
@@ -263,7 +283,10 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
           nextStoryId = createRes.story._id;
           setStoryId(nextStoryId);
         } catch (err: any) {
-          toast.error(err?.response?.data?.message || err.message || 'فشل في حفظ القصة');
+          // Server messages here are Mongoose validation strings in English —
+          // fine for the console, not for a customer on an Arabic page.
+          console.error('[Step2] story create failed:', err?.response?.data?.message || err?.message || err);
+          toast.error(t('step2.err_save_failed', 'تعذّر حفظ القصة — تأكد من اكتمال بيانات طفلك ثم حاول مرة أخرى.'));
           setIsGenerating(false);
           return;
         }

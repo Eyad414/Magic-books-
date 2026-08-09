@@ -126,7 +126,18 @@ export default function Step3_Checkout({ onPrev }: Props) {
       return DEFAULT_PACKAGES
         .map(defaultPkg => {
           const livePkg = liveSettings.bookPackages.find((p: any) => p.id === defaultPkg.id);
-          return livePkg ? { ...defaultPkg, price: livePkg.price, hidden: livePkg.hidden } : defaultPkg;
+          if (!livePkg) return defaultPkg;
+          // Keep the "was" price only when it is genuinely higher than the
+          // live one. The default carries originalPrice: 140 while the admin
+          // has raised pro to 170, which rendered a struck-through 140 next to
+          // 170 — a discount advertised off a LOWER price.
+          const was = (defaultPkg as any).originalPrice;
+          return {
+            ...defaultPkg,
+            price: livePkg.price,
+            hidden: livePkg.hidden,
+            originalPrice: was && was > livePkg.price ? was : undefined,
+          };
         })
         .filter((pkg) => !(pkg as any).hidden); // admin-hidden packages don't show
     }

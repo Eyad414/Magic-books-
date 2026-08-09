@@ -85,7 +85,7 @@ export const StoryProgressProvider = ({ children }: { children: ReactNode }) => 
       // (e.g. storyConfig), and reading `progress.storyConfig.theme` off such a
       // payload throws — leaving the customer on a permanently blank /create
       // page that only clearing site data would fix.
-      return {
+      const merged = {
         ...defaultProgress,
         ...parsed,
         childDetails: { ...defaultProgress.childDetails, ...(parsed.childDetails || {}) },
@@ -93,6 +93,14 @@ export const StoryProgressProvider = ({ children }: { children: ReactNode }) => 
         bookCustomization: { ...defaultProgress.bookCustomization, ...(parsed.bookCustomization || {}) },
         shippingAddress: { ...defaultProgress.shippingAddress, ...(parsed.shippingAddress || {}) },
       };
+      // A stored step past 1 without the child's name is a dead end: the wizard
+      // renders step 2, "next" posts a story the API rejects for the missing
+      // name, and nothing on screen says to go back. Send them to step 1, which
+      // is the only place that field can be filled in.
+      if ((merged.currentStep ?? 1) > 1 && !String(merged.childDetails?.childName || '').trim()) {
+        merged.currentStep = 1;
+      }
+      return merged;
     } catch {
       return defaultProgress;
     }
