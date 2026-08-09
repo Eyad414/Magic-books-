@@ -1142,6 +1142,33 @@
         "12": "[NAME] closed {his|her} eyes and wished to go back to the beach. {He|She} floated up slowly with the bubbles, while Bubble said goodbye with a beautiful song.",
         "13": "[NAME] opened {his|her} eyes on the beach, with the little shell in {his|her} hand. {He|She} knew that helping friends makes the best adventures!"
       }
+    },
+    "world_adventure": {
+      "title": "[NAME]'s Adventure Around the World",
+      "tagline": "A magical trip around the world in a single day",
+      "moral": "An open mind and a loving heart turn the whole world into a home full of friends.",
+      "conclusion": "Wonderful, [NAME]! You travelled all the way around the world and came home carrying the friendship of every child in it. 🌍✨",
+      "questions": [
+        "Which country in the story did you like best, and why?",
+        "If you were the hero, would you ride the balloon or head into the Amazon?",
+        "What word would you most like to learn in a new language?"
+      ],
+      "dedication": "To [NAME], who dreams of travelling and loves meeting new people — this story is just for you.",
+      "pages": {
+        "1": "While [NAME] was spinning an old globe in the bedroom, the map of the world lit up with bright golden light and opened a magic doorway that pulled [NAME] away to the very first stop!",
+        "2": "[NAME] landed high on the Great Wall of China, green mountains rolling away on every side, welcomed by children flying a long, colorful paper dragon kite.",
+        "3": "With one magical touch [NAME] arrived on the golden sand in front of the great pyramids of Giza, and met a friendly camel named Mishmish.",
+        "4": "Mishmish pointed down two paths: “Champion! Shall we ride the colorful hot-air balloon over the Eiffel Tower in Paris, or dive into the green Amazon rainforest?” Choose your way wisely, [NAME]!",
+        "5": "[NAME] chose the colorful balloon, floating high above Paris and looking down on the soaring Eiffel Tower as it glinted in the sunshine.",
+        "6": "The balloon set down gently in the thick Amazon rainforest, where [NAME] met bright parrots and butterflies as big as the palm of a hand, walking along the path together.",
+        "7": "The weather turned suddenly, bitterly cold, and [NAME] arrived at the Arctic in a warm coat, playing with polar bears under a sky of green and violet lights.",
+        "8": "[NAME] reached a sunny beach in Japan lined with pink sakura trees. Champion! Can you find the little golden compass hidden among the shells on the sand?",
+        "9": "In every country [NAME] visited, there was a new word to learn: “thank you”, “hello”, and “I love you” — and the discovery that every child in the world understands a smile.",
+        "10": "[NAME] gathered treasures into a bag: a bright feather from the Amazon, a small stone from the pyramids, and a sakura blossom from Japan, to remember this great journey.",
+        "11": "For all the beauty of every country in the world, [NAME] began to miss home and family, and remembered that the loveliest place of all is the place you come from.",
+        "12": "[NAME] closed both eyes and the globe turned slowly, carrying the journey gently back to that quiet bedroom.",
+        "13": "[NAME] opened both eyes and looked at the map of the world on the wall, knowing that an open mind and a loving heart make you a friend to every child on earth."
+      }
     }
   },
   "order_success": {
