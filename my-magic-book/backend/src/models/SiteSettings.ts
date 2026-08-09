@@ -25,6 +25,14 @@ export interface ITheme {
   pages?: any[];
   /** Admin-controlled gate: only `ready` themes are shown in the customer wizard. */
   ready: boolean;
+  /**
+   * Stories that belong together as a numbered set ("الجزء ١/٢"). `series` is
+   * the shared key, `seriesPart` the order within it. A series with only one
+   * ready part shows no badge — a lone "part 1" reads like a mistake.
+   */
+  series?: string;
+  seriesName?: string;
+  seriesPart?: number;
   /** Cached Nano-Banana preview images (GCS object paths), one per body image page. */
   generatedImages?: string[];
   /** Cached Nano-Banana back-cover portrait (GCS object path). */

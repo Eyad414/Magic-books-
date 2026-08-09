@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { localizeName } from '../../utils/translit';
 import { getThemeLabel, getThemeDesc } from '../../utils/themeLabel';
+import { seriesBadge, seriesCounts } from '../../utils/series';
 import { STORY_TEMPLATES } from '../../data/stories/templates';
 import ThemeChatHelper from './ThemeChatHelper';
 import { buildBook, type TemplatePage } from '../../data/stories/builder';
@@ -53,6 +54,9 @@ interface ApiTheme {
    *  "ready story" mode for themes without a hardcoded STORY_TEMPLATES entry. */
   pages?: any[];
   ready?: boolean;
+  series?: string;
+  seriesName?: string;
+  seriesPart?: number;
   // Sample illustrations (generated with the demo child "Baha") so the preview
   // can show what a finished book looks like.
   generatedCover?: string;
@@ -93,6 +97,9 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
             titles: dbTheme.titles,
             descriptions: dbTheme.descriptions,
             pages: dbTheme.pages,
+            series: dbTheme.series,
+            seriesName: dbTheme.seriesName,
+            seriesPart: dbTheme.seriesPart,
             generatedCover: dbTheme.generatedCover,
             generatedImages: dbTheme.generatedImages,
           };
@@ -179,6 +186,8 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
   // Local State: Controls whether all themes are visible or just the initial set
   const [showAllThemes, setShowAllThemes] = useState(false);
   const visibleThemes = showAllThemes ? THEMES : THEMES.slice(0, INITIAL_THEME_COUNT);
+  // Parts of a series are labelled so a customer knows to start at part 1.
+  const serieses = useMemo(() => seriesCounts(THEMES), [THEMES]);
 
   // Function: Creates the story in the database and triggers the AI text generation via backend API
   const generateStory = async () => {
@@ -442,6 +451,11 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
               <span className={`font-arabic font-bold text-xs ${form.theme === theme.id ? 'text-gold-500' : 'text-white/70'}`}>
                 {getThemeLabel(theme, t, i18n.language)} {theme.emoji}
               </span>
+              {seriesBadge(theme, serieses, i18n.language) && (
+                <span className="font-arabic text-[10px] px-1.5 py-0.5 rounded-full bg-gold-500/15 border border-gold-500/30 text-gold-400/90">
+                  {seriesBadge(theme, serieses, i18n.language)}
+                </span>
+              )}
             </button>
           ))}
         </div>

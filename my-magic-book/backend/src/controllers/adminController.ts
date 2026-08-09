@@ -324,14 +324,18 @@ export const getSettings = async (req: Request, res: Response): Promise<void> =>
           id: 'ocean_adventure', emoji: '🐋',
           label: 'مغامرة في أعماق المحيط', desc: 'رحلة ساحرة إلى عالم البحر',
           ready: true, pages: OCEAN_PAGES, ...oceanArt,
+          series: 'sea', seriesName: 'سلسلة البحر', seriesPart: 1,
         });
         settings.markModified('themes');
         await settings.save();
-      } else if (!oceanTheme.ready || !oceanTheme.generatedCover ||
+      } else if (!oceanTheme.ready || !oceanTheme.generatedCover || oceanTheme.series !== 'sea' ||
                  JSON.stringify(oceanTheme.pages || []) !== JSON.stringify(OCEAN_PAGES)) {
         // Publish it and keep text/artwork in sync with the code.
         oceanTheme.ready = true;
         oceanTheme.pages = OCEAN_PAGES;
+        oceanTheme.series = 'sea';
+        oceanTheme.seriesName = 'سلسلة البحر';
+        oceanTheme.seriesPart = 1;
         Object.assign(oceanTheme, oceanArt);
         settings.markModified('themes');
         await settings.save();
