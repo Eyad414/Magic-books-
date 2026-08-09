@@ -12,6 +12,31 @@ export interface ShowcaseCard {
   emoji: string; // shown in the dashboard favorites card
 }
 
+/** Per-card publish flags, stored in SiteSettings.demoCards keyed by card key. */
+export type DemoVisibility = Record<string, { home?: boolean; stories?: boolean }>;
+
+/**
+ * Demo books built from a REAL child's photo. They stay off the public site
+ * unless the owner deliberately publishes them from the dashboard.
+ */
+export const PRIVATE_DEMO_CHILDREN = new Set(['Lora', 'Sara', 'Julia']);
+
+/**
+ * Whether a demo card is actually on the public Stories page right now. The
+ * default differs by card, so the dashboard summary and the Stories page have
+ * to share this rule or they will disagree: a real child's book needs an
+ * explicit tick, every other demo shows unless it was unticked.
+ */
+export function demoOnStoriesPage(card: ShowcaseCard, vis: DemoVisibility): boolean {
+  const flag = vis[card.key]?.stories;
+  return PRIVATE_DEMO_CHILDREN.has(card.name) ? flag === true : flag !== false;
+}
+
+/** Demo cards only reach the home page when explicitly ticked. */
+export function demoOnHomePage(card: ShowcaseCard, vis: DemoVisibility): boolean {
+  return vis[card.key]?.home === true;
+}
+
 export const SHOWCASE_CARDS: ShowcaseCard[] = [
   { key: 'liam-space',      themeId: 'space',           name: 'Liam',  storyId: '6a43cbf500c3ecaed9218b3c', emoji: '🚀' },
   { key: 'baha-space',      themeId: 'space_real',      name: 'Baha',  emoji: '🌌' },

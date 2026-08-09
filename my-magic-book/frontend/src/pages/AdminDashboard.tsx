@@ -12,7 +12,7 @@ import StatusBadge from '../components/common/StatusBadge';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { findStory } from '../data/stories';
-import { SHOWCASE_CARDS } from '../data/showcaseCards';
+import { SHOWCASE_CARDS, demoOnHomePage, demoOnStoriesPage, type DemoVisibility } from '../data/showcaseCards';
 import { localizeName } from '../utils/translit';
 
 export default function AdminDashboard() {
@@ -652,7 +652,7 @@ export default function AdminDashboard() {
         viewHref: String(s.bookPackage || '').includes('coloring') ? `/book/${s._id}?view=coloring` : `/book/${s._id}`,
       }));
 
-    const vis: Record<string, { home?: boolean; stories?: boolean }> = settings?.demoCards || {};
+    const vis: DemoVisibility = settings?.demoCards || {};
 
     // Curated theme demos — their artwork lives on the theme, not a Story doc.
     const demos = SHOWCASE_CARDS.map((c) => {
@@ -675,9 +675,11 @@ export default function AdminDashboard() {
         isDemo: true,
         demoKey: c.key,
         // Demo cards have no Story doc, so their visibility lives in settings.
-        // Books made from a real child's photo stay hidden until ticked.
-        showcase: !!vis[c.key]?.home,
-        showcaseStories: !!vis[c.key]?.stories,
+        // These are the EFFECTIVE states — an unticked demo is still live on the
+        // Stories page by default, so the button must reflect that, not the raw
+        // flag. Books made from a real child's photo stay hidden until ticked.
+        showcase: demoOnHomePage(c, vis),
+        showcaseStories: demoOnStoriesPage(c, vis),
         isColoring,
         viewHref: isColoring
           ? `/coloring/${c.themeId}?name=${encodeURIComponent(c.name)}`
@@ -1397,9 +1399,40 @@ export default function AdminDashboard() {
                   <h3 className="font-arabic font-bold text-white text-lg">📚 {t('admin.tab_showcase', 'الكتب الجاهزة')}</h3>
                   <MagicButton onClick={fetchAllStories} size="sm" variant="outline">{t('admin.refresh_data')}</MagicButton>
                 </div>
-                <p className="font-arabic text-white/50 text-sm mb-5">
+                <p className="font-arabic text-white/50 text-sm mb-4">
                   {t('admin.showcase_desc_v2', 'كل الكتب التي أنشأتها — اعرض الكتاب أو جهّز ملف الطباعة.')}
                 </p>
+
+                {/* What the public actually sees right now, so the owner does not
+                    have to read every card's toggles to find out. */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                  {([
+                    { icon: '🏠', title: t('admin.live_home', 'على الصفحة الرئيسية'),
+                      books: allBooks.filter((b: any) => b.showcase),
+                      empty: t('admin.live_home_empty', 'لا شيء مختار — تظهر البطاقات الافتراضية') },
+                    { icon: '📚', title: t('admin.live_stories', 'على صفحة القصص'),
+                      books: allBooks.filter((b: any) => b.showcaseStories),
+                      empty: t('admin.live_stories_empty', 'لا شيء — الصفحة فارغة') },
+                  ]).map((g) => (
+                    <div key={g.title} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="font-arabic font-bold text-white/80 text-xs">{g.icon} {g.title}</span>
+                        <span className={`font-arabic text-[11px] px-2 py-0.5 rounded-full border ${
+                          g.books.length
+                            ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                            : 'bg-white/5 border-white/10 text-white/40'
+                        }`}>{g.books.length}</span>
+                      </div>
+                      {g.books.length === 0 ? (
+                        <p className="font-arabic text-white/35 text-[11px]">{g.empty}</p>
+                      ) : (
+                        <p className="font-arabic text-white/55 text-[11px] leading-relaxed">
+                          {g.books.map((b: any) => `${b.childName} — ${b.themeLabel}`).join(' · ')}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
 
                 {storiesLoading ? (
                   <p className="font-arabic text-white/40 text-sm py-6 text-center">{t('admin.loading')}</p>

@@ -8,7 +8,7 @@ import { publicApi } from '../api/publicApi';
 import { toDisplayUrl } from '../api/mediaUrl';
 import { localizeName } from '../utils/translit';
 import { detectGender, applyGenderTokens } from '../utils/gender';
-import { SHOWCASE_CARDS as CARDS, type ShowcaseCard as Card } from '../data/showcaseCards';
+import { SHOWCASE_CARDS as CARDS, demoOnStoriesPage, type DemoVisibility, type ShowcaseCard as Card } from '../data/showcaseCards';
 import { loadFavorites, saveFavorites } from '../utils/favorites';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -17,13 +17,6 @@ import toast from 'react-hot-toast';
 // space variant shares the space story).
 const TEXT_THEME: Record<string, string> = { space_real: 'space' };
 const textThemeFor = (id: string) => TEXT_THEME[id] || id;
-
-/**
- * Demo books built from a REAL child's photo. They stay off the public site
- * unless the owner deliberately ticks "show on the Stories page" in the
- * dashboard — the toggle can publish them, but never by default.
- */
-const PRIVATE_DEMO_CHILDREN = new Set(['Lora', 'Sara', 'Julia']);
 
 const storyImgs = (id: string) =>
   Array.from({ length: 13 }, (_, i) => `magic-fanoose/generated/${id}/page-${String(i + 1).padStart(2, '0')}.png`);
@@ -51,14 +44,11 @@ export default function Stories() {
 
   // Per-card visibility set in the dashboard. A card built from a real child's
   // photo needs an explicit tick; every other demo card shows unless unticked.
-  const [vis, setVis] = useState<Record<string, { home?: boolean; stories?: boolean }>>({});
+  const [vis, setVis] = useState<DemoVisibility>({});
   useEffect(() => {
     publicApi.getSettings().then((res) => setVis(res?.settings?.demoCards || {})).catch(() => {});
   }, []);
-  const isVisible = (c: Card) => {
-    const flag = vis[c.key]?.stories;
-    return PRIVATE_DEMO_CHILDREN.has(c.name) ? flag === true : flag !== false;
-  };
+  const isVisible = (c: Card) => demoOnStoriesPage(c, vis);
 
   const ft = useMemo(() => i18n.getFixedT(i18n.language), [i18n.language]);
   const nameL = (card: Card) => localizeName(card.name, i18n.language);
