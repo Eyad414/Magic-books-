@@ -1200,6 +1200,33 @@
         "12": "The glass submarine floated gently up toward the surface, and the rush of the water slowly grew quiet.",
         "13": "[NAME] opened both eyes sitting on the sand of the beach, the blue shell resting alongside, knowing that keeping nature clean is the job of every real hero."
       }
+    },
+    "little_chef": {
+      "title": "[NAME] the Little Chef",
+      "tagline": "One morning in the kitchen makes a little hero",
+      "moral": "Care, cleanliness and trying it yourself are the secret behind every job done well.",
+      "conclusion": "Well done, [NAME]! You became the little chef and the best helper in the house. 🍳✨",
+      "questions": [
+        "What is the first thing we do before we start cooking?",
+        "If you were the hero, would you wash the tomatoes first or cut the lettuce?",
+        "Which dish would you most like to make with your family?"
+      ],
+      "dedication": "To [NAME], who loves to help and to try things alone — this story is just for you.",
+      "pages": {
+        "1": "On a bright morning of a day off, [NAME] decided to help Mum in the kitchen and make lunch for the family — apron on, bouncing with excitement.",
+        "2": "[NAME] washed both hands thoroughly with soap and water, then laid out the clean tools neatly on a low table.",
+        "3": "[NAME] opened the simple recipe book and chose to make a crunchy vegetable salad with a tasty grilled chicken sandwich.",
+        "4": "Out came the vegetables from the fridge: “Champion! Shall we start by washing the red tomatoes and the cucumber, or by cutting the fresh green lettuce leaves?” Choose your first step wisely, [NAME]!",
+        "5": "[NAME] began washing the vegetables carefully under cold water, making sure they were clean and safe for everyone to eat.",
+        "6": "With a child-safe plastic knife and Mum watching close by, [NAME] sliced the cucumber into even rounds and the tomatoes into small pieces, careful and focused.",
+        "7": "The vegetables went into a big bowl, then a light pinch of salt, a few drops of olive oil and fresh lemon juice — all folded together gently.",
+        "8": "Time to lay the table and arrange the plates beautifully, to make the whole family hungry. Champion! Can you find the wooden spoon hidden behind the fruit bowl?",
+        "9": "[NAME] set out the plates, the spoons and the napkins on the dining table, neat and lovely.",
+        "10": "[NAME] carried in the salad and the sandwiches and served them to Mum and Dad, smiling with pride and wishing them a delicious meal.",
+        "11": "When everyone tasted the food, they praised how good it was and how carefully it had been made. [NAME] learned that the secret of tasty food is care, cleanliness, and doing it yourself.",
+        "12": "[NAME]'s job did not end at eating: there was the table to wipe and the splashes of water to clear, so the kitchen stayed spotless.",
+        "13": "[NAME] dried both hands and felt proud and content — now the little chef and the first helper in the house."
+      }
     }
   },
   "order_success": {
