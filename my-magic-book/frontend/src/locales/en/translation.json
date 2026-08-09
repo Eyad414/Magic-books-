@@ -1173,6 +1173,33 @@
         "12": "[NAME] closed both eyes and the globe turned slowly, carrying the journey gently back to that quiet bedroom.",
         "13": "[NAME] opened both eyes and looked at the map of the world on the wall, knowing that an open mind and a loving heart make you a friend to every child on earth."
       }
+    },
+    "deep_sea": {
+      "title": "[NAME]'s Adventure in the Deep Sea",
+      "tagline": "A ride in a glass submarine to bring back the ocean's light",
+      "moral": "Keeping nature clean and protecting the creatures in it is the job of every real hero.",
+      "conclusion": "Wonderful, [NAME]! You brought the light back to the deep and became a protector of the sea. 🐬✨",
+      "questions": [
+        "What did the hero do to keep the sea clean?",
+        "If it were you, would you ride the fast dolphin or go with the wise turtle?",
+        "How can we help the sea and its creatures in everyday life?"
+      ],
+      "dedication": "To [NAME], who loves the sea and looks after every creature in it — this story is just for you.",
+      "pages": {
+        "1": "While [NAME] was playing on the beach, a blue shell caught the light in the sand. The moment it was held to an ear, a small glass submarine appeared, calling [NAME] away on a voyage of discovery!",
+        "2": "[NAME] dived down in the submarine into the deep ocean, past colorful coral reefs and fish that glowed like tiny lanterns.",
+        "3": "There [NAME] met a dolphin named Bobo, who explained that the Shining Pearl — the one that lights the whole ocean at night — had vanished beneath the rocks.",
+        "4": "Bobo said: “Champion! Shall we ride the fast dolphin straight through the currents, or go with the wise turtle who knows the safe way?” Choose your path wisely, [NAME]!",
+        "5": "[NAME] chose to go with the wise turtle, who led the way through a beautiful valley of coral and taught [NAME] how to swim slowly and calmly.",
+        "6": "They reached the pearl, wedged tight between the rocks. [NAME] worked the submarine's robotic arm cleverly and carefully, easing the pearl free without harming a single living thing.",
+        "7": "[NAME] set the pearl back where it belonged, and all at once the whole deep lit up in blue and pink — the loveliest sight in the ocean!",
+        "8": "The sea creatures threw a colorful celebration to thank [NAME] for being clever and brave. Champion! Can you find the glowing pink shell hidden among the coral?",
+        "9": "[NAME] helped the little fish gather the plastic bags tangled in the coral, so their home in the water would stay clean.",
+        "10": "[NAME] learned how to talk with the dolphins and whales, through signs and soft musical sounds.",
+        "11": "The king of the seas gave [NAME] a bright shell necklace, a reminder of being a friend to the ocean and a guardian of everything living in it.",
+        "12": "The glass submarine floated gently up toward the surface, and the rush of the water slowly grew quiet.",
+        "13": "[NAME] opened both eyes sitting on the sand of the beach, the blue shell resting alongside, knowing that keeping nature clean is the job of every real hero."
+      }
     }
   },
   "order_success": {
