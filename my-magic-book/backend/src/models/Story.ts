@@ -40,6 +40,8 @@ export interface IStory extends Document {
   generatedCover?: string;
   /** Owner picked this real book to be shown on the public home page. */
   showcase?: boolean;
+  /** Owner picked this real book to be listed on the public Stories page. */
+  showcaseStories?: boolean;
   generatedPortrait?: string;
   // Pro bundle: a SECOND artifact — the line-art coloring book — generated
   // alongside the color story. GCS object paths. Only set for 'pro' orders.
@@ -82,6 +84,7 @@ const StorySchema = new Schema<IStory>(
     generatedCover: { type: String, default: undefined },
     generatedPortrait: { type: String, default: undefined },
     showcase: { type: Boolean, default: false },
+    showcaseStories: { type: Boolean, default: false },
     coloringImages: { type: [String], default: undefined },
     coloringCover: { type: String, default: undefined },
     coloringBackCover: { type: String, default: undefined },

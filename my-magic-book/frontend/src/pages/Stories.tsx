@@ -18,7 +18,11 @@ import toast from 'react-hot-toast';
 const TEXT_THEME: Record<string, string> = { space_real: 'space' };
 const textThemeFor = (id: string) => TEXT_THEME[id] || id;
 
-/** Real children whose demo books are admin-only, never shown publicly. */
+/**
+ * Demo books built from a REAL child's photo. They stay off the public site
+ * unless the owner deliberately ticks "show on the Stories page" in the
+ * dashboard — the toggle can publish them, but never by default.
+ */
 const PRIVATE_DEMO_CHILDREN = new Set(['Lora', 'Sara', 'Julia']);
 
 const storyImgs = (id: string) =>
@@ -44,6 +48,17 @@ export default function Stories() {
       .catch(() => {});
     setFavorites(loadFavorites(user?.id));
   }, [user?.id]);
+
+  // Per-card visibility set in the dashboard. A card built from a real child's
+  // photo needs an explicit tick; every other demo card shows unless unticked.
+  const [vis, setVis] = useState<Record<string, { home?: boolean; stories?: boolean }>>({});
+  useEffect(() => {
+    publicApi.getSettings().then((res) => setVis(res?.settings?.demoCards || {})).catch(() => {});
+  }, []);
+  const isVisible = (c: Card) => {
+    const flag = vis[c.key]?.stories;
+    return PRIVATE_DEMO_CHILDREN.has(c.name) ? flag === true : flag !== false;
+  };
 
   const ft = useMemo(() => i18n.getFixedT(i18n.language), [i18n.language]);
   const nameL = (card: Card) => localizeName(card.name, i18n.language);
@@ -126,7 +141,7 @@ export default function Stories() {
           {/* Books made from a real child's own photo stay in the admin dash and
               off the public site. Add a name here when a new demo uses a real
               family photo rather than a stock/demo face. */}
-          {CARDS.filter((c) => !PRIVATE_DEMO_CHILDREN.has(c.name)).map((card, idx) => {
+          {CARDS.filter(isVisible).map((card, idx) => {
             const cover = coverFor(card);
             const rating = [5.0, 4.9, 4.8][idx % 3];
             const isFav = favorites.includes(card.key);

@@ -27,7 +27,6 @@ export default function AdminDashboard() {
   // Every story ever generated — powers the "ready books" tab.
   const [allStories, setAllStories] = useState<any[]>([]);
   const [storiesLoading, setStoriesLoading] = useState(false);
-  const [showcaseBusyId, setShowcaseBusyId] = useState<string | null>(null);
   // Live build progress per order id, driven by polling the background build.
   const [buildProgress, setBuildProgress] = useState<Record<string, { pct: number; stage: string }>>({});
   const [settings, setSettings] = useState<any>(null);
@@ -566,21 +565,41 @@ export default function AdminDashboard() {
 
   // Publish/unpublish a real book on the public home page. Optimistic, rolled
   // back if the save fails.
-  const toggleShowcase = async (story: any) => {
-    const next = !story.showcase;
-    setShowcaseBusyId(story._id);
-    setAllStories((prev) => prev.map((s) => (s._id === story._id ? { ...s, showcase: next } : s)));
+  /**
+   * Publish/unpublish one book on one public surface. Real books carry the flag
+   * on their Story document; demo cards have none, so theirs lives in
+   * settings.demoCards keyed by the card key. One handler either way so both
+   * kinds of card behave identically in the UI.
+   */
+  const toggleVisibility = async (book: any, surface: 'home' | 'stories') => {
+    const field = surface === 'home' ? 'showcase' : 'showcaseStories';
+    const next = !book[field];
+    const busyKey = book.storyId || book.demoKey;
+    setVisBusy(`${busyKey}:${surface}`);
+
+    const okMsg = surface === 'home'
+      ? (next ? t('admin.showcase_added', 'تمت إضافة الكتاب للصفحة الرئيسية ✅') : t('admin.showcase_removed', 'تمت إزالة الكتاب من الصفحة الرئيسية'))
+      : (next ? t('admin.stories_added', 'تمت إضافة الكتاب لصفحة القصص ✅') : t('admin.stories_removed', 'تمت إزالة الكتاب من صفحة القصص'));
+
     try {
-      const res = await adminApi.updateStory(story._id, { showcase: next });
-      if (!res.success) throw new Error();
-      toast.success(next
-        ? t('admin.showcase_added', 'تمت إضافة الكتاب للصفحة الرئيسية ✅')
-        : t('admin.showcase_removed', 'تمت إزالة الكتاب من الصفحة الرئيسية'));
+      if (book.isDemo) {
+        const merged = { ...(settings.demoCards || {}) };
+        merged[book.demoKey] = { ...(merged[book.demoKey] || {}), [surface]: next };
+        setSettings({ ...settings, demoCards: merged });
+        const res = await adminApi.updateSettings({ demoCards: { [book.demoKey]: merged[book.demoKey] } });
+        if (!res.success) throw new Error();
+      } else {
+        setAllStories((prev) => prev.map((x) => (x._id === book.storyId ? { ...x, [field]: next } : x)));
+        const res = await adminApi.updateStory(book.storyId, { [field]: next });
+        if (!res.success) throw new Error();
+      }
+      toast.success(okMsg);
     } catch {
-      setAllStories((prev) => prev.map((s) => (s._id === story._id ? { ...s, showcase: !next } : s)));
+      if (book.isDemo) setSettings((prev: any) => ({ ...prev }));
+      else setAllStories((prev) => prev.map((x) => (x._id === book.storyId ? { ...x, [field]: !next } : x)));
       toast.error(t('admin.save_settings_fail'));
     } finally {
-      setShowcaseBusyId(null);
+      setVisBusy(null);
     }
   };
 
@@ -594,6 +613,8 @@ export default function AdminDashboard() {
     : t('admin.pending_payment');
 
   const [printingBookKey, setPrintingBookKey] = useState<string | null>(null);
+  // `${storyId|demoKey}:${surface}` while one publish toggle is in flight.
+  const [visBusy, setVisBusy] = useState<string | null>(null);
 
   /**
    * Every book in one list: the real stories customers/we generated, plus the
@@ -614,6 +635,7 @@ export default function AdminDashboard() {
         key: `story-${s._id}`,
         storyId: s._id,
         showcase: !!s.showcase,
+        showcaseStories: !!s.showcaseStories,
         childName: s.childName,
         childGender: s.childGender,
         theme: s.theme,
@@ -629,6 +651,8 @@ export default function AdminDashboard() {
         isColoring: String(s.bookPackage || '').includes('coloring'),
         viewHref: String(s.bookPackage || '').includes('coloring') ? `/book/${s._id}?view=coloring` : `/book/${s._id}`,
       }));
+
+    const vis: Record<string, { home?: boolean; stories?: boolean }> = settings?.demoCards || {};
 
     // Curated theme demos — their artwork lives on the theme, not a Story doc.
     const demos = SHOWCASE_CARDS.map((c) => {
@@ -649,6 +673,11 @@ export default function AdminDashboard() {
         emoji: c.emoji,
         date: '',
         isDemo: true,
+        demoKey: c.key,
+        // Demo cards have no Story doc, so their visibility lives in settings.
+        // Books made from a real child's photo stay hidden until ticked.
+        showcase: !!vis[c.key]?.home,
+        showcaseStories: !!vis[c.key]?.stories,
         isColoring,
         viewHref: isColoring
           ? `/coloring/${c.themeId}?name=${encodeURIComponent(c.name)}`
@@ -1404,24 +1433,34 @@ export default function AdminDashboard() {
                           </div>
                         </div>
 
-                        {!b.isDemo && (
-                          <button
-                            type="button"
-                            role="switch"
-                            aria-checked={!!b.showcase}
-                            onClick={() => toggleShowcase({ _id: b.storyId, showcase: b.showcase })}
-                            disabled={showcaseBusyId === b.storyId}
-                            className={`flex items-center justify-center gap-1.5 px-2 py-1 rounded-lg font-arabic text-[11px] border transition-colors disabled:opacity-50 ${
-                              b.showcase
-                                ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
-                                : 'bg-white/5 border-white/10 text-white/55 hover:border-white/25'
-                            }`}
-                          >
-                            🏠 {b.showcase
-                              ? t('admin.showcase_on', 'ظاهر في الصفحة الرئيسية')
-                              : t('admin.showcase_off', 'أظهره في الصفحة الرئيسية')}
-                          </button>
-                        )}
+                        {/* Publish toggles — every book gets both, demo or not.
+                            Green = live on that public surface. */}
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {([
+                            { surface: 'home' as const, on: !!b.showcase, icon: '🏠',
+                              labelOn: t('admin.showcase_on', 'ظاهر في الرئيسية'),
+                              labelOff: t('admin.showcase_off', 'أظهره في الرئيسية') },
+                            { surface: 'stories' as const, on: !!b.showcaseStories, icon: '📚',
+                              labelOn: t('admin.stories_on', 'ظاهر في صفحة القصص'),
+                              labelOff: t('admin.stories_off', 'أظهره في صفحة القصص') },
+                          ]).map((s) => (
+                            <button
+                              key={s.surface}
+                              type="button"
+                              role="switch"
+                              aria-checked={s.on}
+                              onClick={() => toggleVisibility(b, s.surface)}
+                              disabled={visBusy === `${b.storyId || b.demoKey}:${s.surface}`}
+                              className={`flex items-center justify-center gap-1 px-2 py-1 rounded-lg font-arabic text-[11px] border transition-colors disabled:opacity-50 ${
+                                s.on
+                                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                                  : 'bg-white/5 border-white/10 text-white/55 hover:border-white/25'
+                              }`}
+                            >
+                              {s.icon} {s.on ? s.labelOn : s.labelOff}
+                            </button>
+                          ))}
+                        </div>
 
                         <div className="grid grid-cols-2 gap-2">
                           <Link

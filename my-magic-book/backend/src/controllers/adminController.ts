@@ -517,6 +517,7 @@ export const getPublicSettings = async (_req: Request, res: Response): Promise<v
     const filtered = {
       bookPackages: settings.bookPackages,
       themes: settings.themes.filter((t: any) => t.ready === true),
+      demoCards: settings.demoCards || {},
       homeStats: settings.homeStats || DEFAULT_HOME_STATS,
       allowSkipPhoto: !!settings.allowSkipPhoto,
       aiModeEnabled: !!settings.aiModeEnabled,
@@ -530,15 +531,21 @@ export const getPublicSettings = async (_req: Request, res: Response): Promise<v
 // @route PUT /api/admin/settings
 export const updateSettings = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { bookPackages, themes, homeStats, allowSkipPhoto, aiModeEnabled } = req.body;
+    const { bookPackages, themes, homeStats, allowSkipPhoto, aiModeEnabled, demoCards } = req.body;
     let settings = await SiteSettings.findOne();
 
     if (!settings) {
-      settings = new SiteSettings({ bookPackages, themes, homeStats, allowSkipPhoto, aiModeEnabled });
+      settings = new SiteSettings({ bookPackages, themes, homeStats, allowSkipPhoto, aiModeEnabled, demoCards });
     } else {
       if (bookPackages) {
         settings.bookPackages = bookPackages;
         settings.markModified('bookPackages');
+      }
+      if (demoCards && typeof demoCards === 'object') {
+        // Merge rather than replace: the dashboard sends only the card it just
+        // toggled, and a whole-object write would clear every other card.
+        settings.demoCards = { ...(settings.demoCards || {}), ...demoCards };
+        settings.markModified('demoCards');
       }
       if (themes) {
         settings.themes = themes;

@@ -23,6 +23,11 @@ export const publicApi = {
     const res = await api.get('/public/showcase-books');
     return res.data;
   },
+  /** Real generated books the owner published to the Stories page. */
+  getStoriesPageBooks: async () => {
+    const res = await api.get('/public/stories-page-books');
+    return res.data;
+  },
   storyChat: async (payload: {
     messages: ChatMessage[];
     language: string;

@@ -53,9 +53,25 @@ export interface IHomeStats {
   rating: string;
 }
 
+/**
+ * Per-card visibility for the built-in demo books. Those cards are hardcoded in
+ * the frontend and have no Story document, so their "show on the home page" /
+ * "show on the Stories page" toggles need somewhere to live. Keyed by the
+ * card's `key` (e.g. 'lora-toycity').
+ *
+ * Demo books built from a REAL child's photo (Lora, Sara, Julia) default to
+ * hidden on both surfaces — publishing a real child's face has to be a
+ * deliberate click, never a default.
+ */
+export interface IDemoCardVisibility {
+  home?: boolean;
+  stories?: boolean;
+}
+
 export interface ISiteSettings extends Document {
   bookPackages: IBookPackage[];
   themes: ITheme[];
+  demoCards?: Record<string, IDemoCardVisibility>;
   homeStats?: IHomeStats;
   /** Wizard step 1: show the "no photo" button so a customer can order without
    *  uploading a child photo. Off by default — the photo is required. */
@@ -113,6 +129,7 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
       readyStories: { type: String, default: DEFAULT_HOME_STATS.readyStories },
       rating: { type: String, default: DEFAULT_HOME_STATS.rating },
     },
+    demoCards: { type: Schema.Types.Mixed, default: {} },
     allowSkipPhoto: { type: Boolean, default: false },
     aiModeEnabled: { type: Boolean, default: false },
   },
