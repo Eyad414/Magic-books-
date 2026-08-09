@@ -144,6 +144,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
   const [bookPackage, setBookPackage] = useState(progress.bookCustomization?.bookPackage || 'color');
 
   // Package list with live admin prices (falls back to sensible defaults).
+  const lang = i18n.language;
   const packages = useMemo(() => {
     const DEFAULT_PACKAGES = [
       { id: 'color', label: t('step3.pkg_color'), price: 60, emoji: '🌈', desc: t('step3.pkg_color_desc') },
@@ -157,6 +158,12 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
         .map((defaultPkg) => {
           const livePkg = liveSettings.bookPackages.find((p: any) => p.id === defaultPkg.id);
           if (!livePkg) return defaultPkg;
+          // The dashboard's name/description edits only ever reached the price
+          // and hidden flags before, so a rename in the admin never showed to a
+          // customer. Admin text is typed in Arabic and packages have no
+          // per-language field, so it wins for Arabic and en/he keep the
+          // built-in translation.
+          const useAdminText = lang === 'ar';
           // Keep the "was" price only when it is genuinely higher than the
           // live one. The default carries originalPrice: 140 while the admin
           // has raised pro to 170, which rendered a struck-through 140 next to
@@ -164,6 +171,8 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
           const was = (defaultPkg as any).originalPrice;
           return {
             ...defaultPkg,
+            label: useAdminText && livePkg.label ? livePkg.label : defaultPkg.label,
+            desc: useAdminText && livePkg.desc ? livePkg.desc : defaultPkg.desc,
             price: livePkg.price,
             hidden: livePkg.hidden,
             originalPrice: was && was > livePkg.price ? was : undefined,
@@ -172,7 +181,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
         .filter((pkg) => !(pkg as any).hidden); // admin-hidden packages don't show
     }
     return DEFAULT_PACKAGES;
-  }, [liveSettings, t]);
+  }, [liveSettings, t, lang]);
   
   // Local State: Tracks if the AI is currently generating the text to show a loading indicator
   const [isGenerating, setIsGenerating] = useState(false);

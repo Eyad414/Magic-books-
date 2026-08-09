@@ -70,7 +70,7 @@ const Field = ({ id, label, placeholder, value, onChange, type = 'text', error }
 
 export default function Step3_Checkout({ onPrev }: Props) {
   const { progress, resetProgress, setShippingAddress } = useStoryProgress();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -114,6 +114,7 @@ export default function Step3_Checkout({ onPrev }: Props) {
     }).catch(err => console.error('Failed to load pricing:', err));
   }, []);
 
+  const lang = i18n.language;
   const packages = useMemo(() => {
     const DEFAULT_PACKAGES = [
       { id: 'color', label: t('step3.pkg_color', 'قصة ملونة'), price: 60, emoji: '🌈', desc: t('step3.pkg_color_desc') },
@@ -127,6 +128,12 @@ export default function Step3_Checkout({ onPrev }: Props) {
         .map(defaultPkg => {
           const livePkg = liveSettings.bookPackages.find((p: any) => p.id === defaultPkg.id);
           if (!livePkg) return defaultPkg;
+          // The dashboard's name/description edits only ever reached the price
+          // and hidden flags before, so a rename in the admin never showed to a
+          // customer. Admin text is typed in Arabic and packages have no
+          // per-language field, so it wins for Arabic and en/he keep the
+          // built-in translation.
+          const useAdminText = lang === 'ar';
           // Keep the "was" price only when it is genuinely higher than the
           // live one. The default carries originalPrice: 140 while the admin
           // has raised pro to 170, which rendered a struck-through 140 next to
@@ -134,6 +141,8 @@ export default function Step3_Checkout({ onPrev }: Props) {
           const was = (defaultPkg as any).originalPrice;
           return {
             ...defaultPkg,
+            label: useAdminText && livePkg.label ? livePkg.label : defaultPkg.label,
+            desc: useAdminText && livePkg.desc ? livePkg.desc : defaultPkg.desc,
             price: livePkg.price,
             hidden: livePkg.hidden,
             originalPrice: was && was > livePkg.price ? was : undefined,
@@ -142,7 +151,7 @@ export default function Step3_Checkout({ onPrev }: Props) {
         .filter((pkg) => !(pkg as any).hidden); // admin-hidden packages don't show
     }
     return DEFAULT_PACKAGES;
-  }, [liveSettings, t]);
+  }, [liveSettings, t, lang]);
 
   // One book per order. To order another book (a different theme/child), the
   // customer creates a brand-new story — its own order and payment.
