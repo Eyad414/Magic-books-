@@ -559,12 +559,18 @@ export const getSettings = async (req: Request, res: Response): Promise<void> =>
       // text already lives in the locale file the print pipeline reads, so
       // these rows take it from there instead: a new story needs one line here
       // rather than another twenty-five-line copy.
-      const NEW_STORIES: { id: string; emoji: string; label: string; desc: string }[] = [
+      // The three school stories are one age progression — الروضة ثم اليوم
+      // الأول ثم الصف الأول — so they carry series numbers and a family can buy
+      // them in order as the child grows.
+      const SCHOOL = (part: number) => ({ series: 'school', seriesName: 'سلسلة المدرسة', seriesPart: part });
+      const NEW_STORIES: { id: string; emoji: string; label: string; desc: string;
+                           series?: string; seriesName?: string; seriesPart?: number }[] = [
         { id: 'little_chef',        emoji: '🍳', label: 'الشيف الصغير',        desc: 'يوم في المطبخ: نظافة وترتيب ووجبة يصنعها بنفسه' },
         { id: 'castle_guardian',    emoji: '🏰', label: 'مغامرة حارس القلعة',  desc: 'قلعة تاريخية، لغز قديم، ووسام حارس التاريخ' },
-        { id: 'happy_kindergarten', emoji: '🧸', label: 'الروضة السعيدة',      desc: 'أول يوم في الروضة: ألوان وحكايات وأصدقاء جدد' },
-        { id: 'first_day_school',   emoji: '🎒', label: 'اليوم الأول بالمدرسة', desc: 'معلمة لطيفة، أصدقاء جدد، ونجم نشيط' },
-        { id: 'first_grade',        emoji: '✏️', label: 'مغامرة في الصف الأول', desc: 'حروف وكلمات وقراءة أولى بثقة' },
+        { id: 'little_engineer',    emoji: '🛠️', label: 'عالم البناء والهندسة', desc: 'مخطط وأدوات وبيت شجري للأصدقاء الصغار' },
+        { id: 'happy_kindergarten', emoji: '🧸', label: 'الروضة السعيدة',      desc: 'أول يوم في الروضة: ألوان وحكايات وأصدقاء جدد', ...SCHOOL(1) },
+        { id: 'first_day_school',   emoji: '🎒', label: 'اليوم الأول بالمدرسة', desc: 'معلمة لطيفة، أصدقاء جدد، ونجم نشيط', ...SCHOOL(2) },
+        { id: 'first_grade',        emoji: '✏️', label: 'مغامرة في الصف الأول', desc: 'حروف وكلمات وقراءة أولى بثقة', ...SCHOOL(3) },
         { id: 'future_hero',        emoji: '🚀', label: 'مغامرة بطل المستقبل',  desc: 'تجربة المهن: مهندس، طبيب، معلّم' },
       ];
       const newFolder = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
@@ -585,10 +591,13 @@ export const getSettings = async (req: Request, res: Response): Promise<void> =>
           settings.themes.push({ ...row, ready: true, pages, ...art });
           newDirty = true;
         } else if (!existing.ready || !existing.generatedCover ||
+                   existing.seriesPart !== row.seriesPart ||
                    JSON.stringify(existing.pages || []) !== JSON.stringify(pages)) {
           existing.ready = true;
           existing.pages = pages;
-          Object.assign(existing, art);
+          Object.assign(existing, art, {
+            series: row.series, seriesName: row.seriesName, seriesPart: row.seriesPart,
+          });
           newDirty = true;
         }
       }

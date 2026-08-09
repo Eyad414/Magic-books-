@@ -67,4 +67,5 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   { key: 'sara-firstday',   themeId: 'first_day_school',   name: 'Sara',  emoji: '🎒' },
   { key: 'julia-grade1',    themeId: 'first_grade',        name: 'Julia', emoji: '✏️' },
   { key: 'baha-future',     themeId: 'future_hero',        name: 'Baha',  emoji: '🚀' },
+  { key: 'lora-engineer',   themeId: 'little_engineer',    name: 'Lora',  emoji: '🛠️' },
 ];
