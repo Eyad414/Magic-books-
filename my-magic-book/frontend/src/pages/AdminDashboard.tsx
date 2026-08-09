@@ -1470,7 +1470,13 @@ export default function AdminDashboard() {
             ) : tab === 'showcase' ? (
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-arabic font-bold text-white text-lg">📚 {t('admin.tab_showcase', 'الكتب الجاهزة')}</h3>
+                  <h3 className="font-arabic font-bold text-white text-lg">
+                    📚 {t('admin.tab_showcase', 'الكتب الجاهزة')}
+                    {/* Total, and how many the current filter is showing. */}
+                    <span className="text-white/40 text-sm font-normal mr-2">
+                      ({allBooks.length}{bookFilter ? ` · ${shownBooks.length}` : ''})
+                    </span>
+                  </h3>
                   <MagicButton onClick={fetchAllStories} size="sm" variant="outline">{t('admin.refresh_data')}</MagicButton>
                 </div>
                 <p className="font-arabic text-white/50 text-sm mb-4">
