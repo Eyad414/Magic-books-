@@ -118,6 +118,11 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
         descriptions: { type: Schema.Types.Mixed, default: undefined },
         pages: { type: Schema.Types.Mixed, default: [] },
         ready: { type: Boolean, default: false },
+        // Series grouping — must be declared here, not just on ITheme, or
+        // Mongoose drops them silently on save.
+        series: { type: String, default: undefined },
+        seriesName: { type: String, default: undefined },
+        seriesPart: { type: Number, default: undefined },
         generatedImages: { type: [String], default: undefined },
         generatedPortrait: { type: String, default: undefined },
         generatedCover: { type: String, default: undefined },
