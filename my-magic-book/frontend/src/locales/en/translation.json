@@ -1227,6 +1227,33 @@
         "12": "[NAME]'s job did not end at eating: there was the table to wipe and the splashes of water to clear, so the kitchen stayed spotless.",
         "13": "[NAME] dried both hands and felt proud and content — now the little chef and the first helper in the house."
       }
+    },
+    "little_engineer": {
+      "title": "[NAME]'s Adventure in Building and Engineering",
+      "tagline": "A plan, a toolbox, and a treehouse for the little friends",
+      "moral": "With a plan, tidy habits and safe work, the best ideas become real.",
+      "conclusion": "Well done, [NAME]! You built a house for the little friends with your own hands. 🛠️✨",
+      "questions": [
+        "Why do we need a plan before we start building?",
+        "If you were the hero, would you start with the posts or with the floor?",
+        "What would you build if you had your own toolbox?"
+      ],
+      "dedication": "To [NAME], who loves to build and to plan things out — this story is just for you.",
+      "pages": {
+        "1": "[NAME] sat in the bedroom in a little engineer's helmet, going over a drawing made from scratch — a plan for a wonderful treehouse for the small animals in the garden.",
+        "2": "[NAME] opened a safe little toolbox and laid everything out in order: the measuring tape, the spirit level and the wooden blocks, all ready for work to begin.",
+        "3": "[NAME] went out into the garden and laid the light timber on level ground, to build the base of the house.",
+        "4": "[NAME] stood and thought it over: “Champion! Shall we put up the four wooden posts first to raise the house, or lay the colorful floor?” Choose your step wisely, [NAME]!",
+        "5": "[NAME] chose the posts first, fixing the timber carefully and using the spirit level to check that every post stood perfectly straight.",
+        "6": "[NAME] designed a safe triangular roof to keep the rain and the sun out, and painted it a beautiful blue.",
+        "7": "[NAME] fitted a small door and smooth handles, so getting into the treehouse would be easy and safe for every bird and squirrel friend.",
+        "8": "Time to paint the wooden house in bright colors and decorate the doorway with flowers. Champion! Can you find the orange tool belt hidden behind the tree?",
+        "9": "[NAME] checked the work calmly, resting a light weight on top to be sure it was strong and steady before the little residents moved in.",
+        "10": "The squirrels and the birds came to visit the new treehouse, went inside, and were delighted with its warm, comfortable little rooms.",
+        "11": "Mum gave [NAME] a “Little Engineer” badge, for such careful work, such a fine plan, and a build that was safe as well as beautiful.",
+        "12": "With the work finished, [NAME] cleaned the site, collected every tool and put it back in its box, so the place stayed safe and tidy.",
+        "13": "[NAME] looked up at the treehouse and felt proud, understanding that with a plan and steady work, the loveliest ideas can be built for real."
+      }
     }
   },
   "order_success": {
