@@ -613,6 +613,8 @@ export default function AdminDashboard() {
     : t('admin.pending_payment');
 
   const [printingBookKey, setPrintingBookKey] = useState<string | null>(null);
+  // Narrows الكتب الجاهزة to one public surface. null = show everything.
+  const [bookFilter, setBookFilter] = useState<'home' | 'stories' | null>(null);
   // `${storyId|demoKey}:${surface}` while one publish toggle is in flight.
   const [visBusy, setVisBusy] = useState<string | null>(null);
 
@@ -728,6 +730,12 @@ export default function AdminDashboard() {
 
   // Wizard feature switch: flip it locally, persist just that one flag, and
   // roll back if the save fails.
+  const shownBooks = useMemo(
+    () => allBooks.filter((b: any) =>
+      bookFilter === 'home' ? b.showcase : bookFilter === 'stories' ? b.showcaseStories : true),
+    [allBooks, bookFilter],
+  );
+
   const saveFlag = async (key: 'allowSkipPhoto' | 'aiModeEnabled', value: boolean) => {
     setSettings({ ...settings, [key]: value });
     try {
@@ -1404,35 +1412,61 @@ export default function AdminDashboard() {
                 </p>
 
                 {/* What the public actually sees right now, so the owner does not
-                    have to read every card's toggles to find out. */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                    have to read every card's toggles to find out. Each panel is
+                    also a filter: click it to narrow the grid to just that
+                    surface, click again to go back to everything. */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                   {([
-                    { icon: '🏠', title: t('admin.live_home', 'على الصفحة الرئيسية'),
+                    { id: 'home' as const, icon: '🏠', title: t('admin.live_home', 'على الصفحة الرئيسية'),
                       books: allBooks.filter((b: any) => b.showcase),
                       empty: t('admin.live_home_empty', 'لا شيء مختار — تظهر البطاقات الافتراضية') },
-                    { icon: '📚', title: t('admin.live_stories', 'على صفحة القصص'),
+                    { id: 'stories' as const, icon: '📚', title: t('admin.live_stories', 'على صفحة القصص'),
                       books: allBooks.filter((b: any) => b.showcaseStories),
                       empty: t('admin.live_stories_empty', 'لا شيء — الصفحة فارغة') },
-                  ]).map((g) => (
-                    <div key={g.title} className="rounded-xl border border-white/10 bg-white/5 p-3">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="font-arabic font-bold text-white/80 text-xs">{g.icon} {g.title}</span>
-                        <span className={`font-arabic text-[11px] px-2 py-0.5 rounded-full border ${
-                          g.books.length
-                            ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
-                            : 'bg-white/5 border-white/10 text-white/40'
-                        }`}>{g.books.length}</span>
-                      </div>
-                      {g.books.length === 0 ? (
-                        <p className="font-arabic text-white/35 text-[11px]">{g.empty}</p>
-                      ) : (
-                        <p className="font-arabic text-white/55 text-[11px] leading-relaxed">
-                          {g.books.map((b: any) => `${b.childName} — ${b.themeLabel}`).join(' · ')}
-                        </p>
-                      )}
-                    </div>
-                  ))}
+                  ]).map((g) => {
+                    const active = bookFilter === g.id;
+                    return (
+                      <button
+                        key={g.id}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => setBookFilter(active ? null : g.id)}
+                        title={t('admin.filter_hint', 'اضغط لعرض هذه الكتب فقط')}
+                        className={`text-start rounded-xl border p-3 transition-colors ${
+                          active
+                            ? 'border-gold-500/60 bg-gold-500/10'
+                            : 'border-white/10 bg-white/5 hover:border-white/25'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="font-arabic font-bold text-white/80 text-xs">{g.icon} {g.title}</span>
+                          <span className={`font-arabic text-[11px] px-2 py-0.5 rounded-full border ${
+                            g.books.length
+                              ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                              : 'bg-white/5 border-white/10 text-white/40'
+                          }`}>{g.books.length}</span>
+                        </div>
+                        {g.books.length === 0 ? (
+                          <p className="font-arabic text-white/35 text-[11px]">{g.empty}</p>
+                        ) : (
+                          <p className="font-arabic text-white/55 text-[11px] leading-relaxed">
+                            {g.books.map((b: any) => `${b.childName} — ${b.themeLabel}`).join(' · ')}
+                          </p>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
+
+                {bookFilter && (
+                  <button
+                    type="button"
+                    onClick={() => setBookFilter(null)}
+                    className="mb-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/15 text-white/70 hover:border-white/35 font-arabic text-[11px] transition-colors"
+                  >
+                    ✕ {t('admin.filter_clear', 'عرض كل الكتب')} ({allBooks.length})
+                  </button>
+                )}
 
                 {storiesLoading ? (
                   <p className="font-arabic text-white/40 text-sm py-6 text-center">{t('admin.loading')}</p>
@@ -1440,9 +1474,15 @@ export default function AdminDashboard() {
                   <p className="font-arabic text-white/40 text-sm py-6 text-center bg-white/5 rounded-xl border border-dashed border-white/10">
                     {t('admin.showcase_no_generated', 'لا توجد كتب مُنشأة بعد — أنشئ قصة وستظهر هنا.')}
                   </p>
+                ) : shownBooks.length === 0 ? (
+                  <p className="font-arabic text-white/40 text-sm py-6 text-center bg-white/5 rounded-xl border border-dashed border-white/10">
+                    {bookFilter === 'home'
+                      ? t('admin.filter_none_home', 'لا يوجد كتاب على الصفحة الرئيسية بعد — اضغط 🏠 على أي كتاب لإضافته.')
+                      : t('admin.filter_none_stories', 'لا يوجد كتاب على صفحة القصص بعد — اضغط 📚 على أي كتاب لإضافته.')}
+                  </p>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {allBooks.map((b: any) => (
+                    {shownBooks.map((b: any) => (
                       <div key={b.key} className="bg-dark-700/50 rounded-2xl border border-white/5 p-3 flex flex-col gap-2.5 hover:border-gold-500/30 transition-all">
                         <div className="flex items-center gap-2.5 min-w-0">
                           {b.cover ? (
