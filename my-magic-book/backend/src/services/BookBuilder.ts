@@ -36,6 +36,21 @@ function loadLocale(language: string): any {
   }
 }
 
+/**
+ * A theme's 13 Arabic page texts, straight from the locale file the print
+ * pipeline already reads. Lets the dashboard seed a new story without the text
+ * being pasted a second time into the controller, where the two copies would
+ * drift apart.
+ */
+export function arabicStoryPages(theme: string): string[] {
+  const s = loadLocale('ar')?.stories?.[theme];
+  if (!s?.pages) return [];
+  return Object.keys(s.pages)
+    .sort((a, b) => Number(a) - Number(b))
+    .map((k) => s.pages[k] as string)
+    .filter((t) => typeof t === 'string' && t.trim().length > 0);
+}
+
 /** Localized { title, pages[] } for a theme in the chosen language, or null. */
 function localizedStory(theme: string, language: string): {
   title?: string; pages: string[]; dedication?: string; moral?: string; conclusion?: string; questions?: string[];

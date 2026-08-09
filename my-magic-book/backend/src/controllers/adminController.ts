@@ -4,7 +4,7 @@ import Story from '../models/Story';
 import Order from '../models/Order';
 import SiteSettings, { DEFAULT_HOME_STATS } from '../models/SiteSettings';
 import ContactMessage from '../models/ContactMessage';
-import { buildBookForOrder, reRenderPrintFilesForOrder, submitOrderToBookPod, reRenderColoringForOrder, submitColoringForOrder, buildPreviewPrintFiles, submitPreviewToBookPod } from '../services/BookBuilder';
+import { arabicStoryPages, buildBookForOrder, reRenderPrintFilesForOrder, submitOrderToBookPod, reRenderColoringForOrder, submitColoringForOrder, buildPreviewPrintFiles, submitPreviewToBookPod } from '../services/BookBuilder';
 import { generateIllustration, COST_PER_IMAGE_USD } from '../services/ImageGenerator';
 import { buildIllustrationPrompt, buildPhotorealPrompt, buildCoverPrompt } from '../services/promptBuilder';
 import { swapFace } from '../services/FaceSwapService';
@@ -550,6 +550,49 @@ export const getSettings = async (req: Request, res: Response): Promise<void> =>
         seaTheme.ready = true;
         seaTheme.pages = SEA2_PAGES;
         Object.assign(seaTheme, seaArt, seaSeries);
+        settings.markModified('themes');
+        await settings.save();
+      }
+
+      // ── Newer stories, seeded from one table ────────────────────────────
+      // The blocks above each restate a story's 13 Arabic pages inline. That
+      // text already lives in the locale file the print pipeline reads, so
+      // these rows take it from there instead: a new story needs one line here
+      // rather than another twenty-five-line copy.
+      const NEW_STORIES: { id: string; emoji: string; label: string; desc: string }[] = [
+        { id: 'little_chef',        emoji: '🍳', label: 'الشيف الصغير',        desc: 'يوم في المطبخ: نظافة وترتيب ووجبة يصنعها بنفسه' },
+        { id: 'castle_guardian',    emoji: '🏰', label: 'مغامرة حارس القلعة',  desc: 'قلعة تاريخية، لغز قديم، ووسام حارس التاريخ' },
+        { id: 'happy_kindergarten', emoji: '🧸', label: 'الروضة السعيدة',      desc: 'أول يوم في الروضة: ألوان وحكايات وأصدقاء جدد' },
+        { id: 'first_day_school',   emoji: '🎒', label: 'اليوم الأول بالمدرسة', desc: 'معلمة لطيفة، أصدقاء جدد، ونجم نشيط' },
+        { id: 'first_grade',        emoji: '✏️', label: 'مغامرة في الصف الأول', desc: 'حروف وكلمات وقراءة أولى بثقة' },
+        { id: 'future_hero',        emoji: '🚀', label: 'مغامرة بطل المستقبل',  desc: 'تجربة المهن: مهندس، طبيب، معلّم' },
+      ];
+      const newFolder = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
+      let newDirty = false;
+      for (const row of NEW_STORIES) {
+        const pages = arabicStoryPages(row.id).map((text) => ({ text, imageSrc: '' }));
+        // No text means the locale entry is missing — skip rather than publish
+        // a theme that would render blank pages to a customer.
+        if (pages.length === 0) continue;
+        const base = `${newFolder}/generated/theme_${row.id}`;
+        const art = {
+          generatedCover: `${base}/page-00.png`,
+          generatedImages: Array.from({ length: 13 }, (_, i) => `${base}/page-${String(i + 1).padStart(2, '0')}.png`),
+          generatedPortrait: `${base}/page-99.png`,
+        };
+        const existing: any = settings.themes.find((t: any) => t.id === row.id);
+        if (!existing) {
+          settings.themes.push({ ...row, ready: true, pages, ...art });
+          newDirty = true;
+        } else if (!existing.ready || !existing.generatedCover ||
+                   JSON.stringify(existing.pages || []) !== JSON.stringify(pages)) {
+          existing.ready = true;
+          existing.pages = pages;
+          Object.assign(existing, art);
+          newDirty = true;
+        }
+      }
+      if (newDirty) {
         settings.markModified('themes');
         await settings.save();
       }

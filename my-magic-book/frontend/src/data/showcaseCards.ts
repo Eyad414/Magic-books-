@@ -61,4 +61,10 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   { key: 'baha-school',     themeId: 'school_hero',        name: 'Baha',  emoji: '🏫' },
   { key: 'sara-world',      themeId: 'world_adventure',    name: 'Sara',  emoji: '🌍' },
   { key: 'julia-deepsea',   themeId: 'deep_sea',           name: 'Julia', emoji: '🐬' },
+  { key: 'baha-chef',       themeId: 'little_chef',        name: 'Baha',  emoji: '🍳' },
+  { key: 'baha-castle',     themeId: 'castle_guardian',    name: 'Baha',  emoji: '🏰' },
+  { key: 'lora-kinder',     themeId: 'happy_kindergarten', name: 'Lora',  emoji: '🧸' },
+  { key: 'sara-firstday',   themeId: 'first_day_school',   name: 'Sara',  emoji: '🎒' },
+  { key: 'julia-grade1',    themeId: 'first_grade',        name: 'Julia', emoji: '✏️' },
+  { key: 'baha-future',     themeId: 'future_hero',        name: 'Baha',  emoji: '🚀' },
 ];
