@@ -15,7 +15,7 @@ import Story from '../models/Story';
  */
 async function publishedBooks(flag: 'showcase' | 'showcaseStories') {
   const stories = await Story.find({ [flag]: true })
-    .select('childName childGender theme language mode generatedCover generatedImages generatedPortrait createdAt')
+    .select('childName childGender theme language mode generatedCover generatedImages generatedPortrait homeTag createdAt')
     .sort({ createdAt: -1 })
     .limit(12)
     .lean();
@@ -33,6 +33,7 @@ async function publishedBooks(flag: 'showcase' | 'showcaseStories') {
       cover: s.generatedCover || '',
       images: s.generatedImages || [],
       portrait: s.generatedPortrait || '',
+      homeTag: s.homeTag || '',
     }));
 }
 

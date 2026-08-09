@@ -12,8 +12,14 @@ export interface ShowcaseCard {
   emoji: string; // shown in the dashboard favorites card
 }
 
+/** Badge on the home-page card. Absent = no badge. */
+export type HomeTag = 'bestseller' | 'new' | 'featured';
+
+/** The three badges, in the order they appear in the dashboard. */
+export const HOME_TAGS: HomeTag[] = ['bestseller', 'new', 'featured'];
+
 /** Per-card publish flags, stored in SiteSettings.demoCards keyed by card key. */
-export type DemoVisibility = Record<string, { home?: boolean; stories?: boolean }>;
+export type DemoVisibility = Record<string, { home?: boolean; stories?: boolean; tag?: HomeTag }>;
 
 /**
  * Demo books built from a REAL child's photo. They stay off the public site

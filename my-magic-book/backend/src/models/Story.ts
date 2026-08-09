@@ -42,6 +42,8 @@ export interface IStory extends Document {
   showcase?: boolean;
   /** Owner picked this real book to be listed on the public Stories page. */
   showcaseStories?: boolean;
+  /** Badge shown on the home-page card. Empty/absent = no badge. */
+  homeTag?: 'bestseller' | 'new' | 'featured';
   generatedPortrait?: string;
   // Pro bundle: a SECOND artifact — the line-art coloring book — generated
   // alongside the color story. GCS object paths. Only set for 'pro' orders.
@@ -85,6 +87,7 @@ const StorySchema = new Schema<IStory>(
     generatedPortrait: { type: String, default: undefined },
     showcase: { type: Boolean, default: false },
     showcaseStories: { type: Boolean, default: false },
+    homeTag: { type: String, enum: ['bestseller', 'new', 'featured'], default: undefined },
     coloringImages: { type: [String], default: undefined },
     coloringCover: { type: String, default: undefined },
     coloringBackCover: { type: String, default: undefined },

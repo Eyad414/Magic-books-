@@ -12,7 +12,7 @@ import StatusBadge from '../components/common/StatusBadge';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { findStory } from '../data/stories';
-import { SHOWCASE_CARDS, demoOnHomePage, demoOnStoriesPage, type DemoVisibility } from '../data/showcaseCards';
+import { SHOWCASE_CARDS, demoOnHomePage, demoOnStoriesPage, HOME_TAGS, type DemoVisibility, type HomeTag } from '../data/showcaseCards';
 import { localizeName } from '../utils/translit';
 
 export default function AdminDashboard() {
@@ -638,6 +638,7 @@ export default function AdminDashboard() {
         storyId: s._id,
         showcase: !!s.showcase,
         showcaseStories: !!s.showcaseStories,
+        homeTag: s.homeTag || '',
         childName: s.childName,
         childGender: s.childGender,
         theme: s.theme,
@@ -682,6 +683,7 @@ export default function AdminDashboard() {
         // flag. Books made from a real child's photo stay hidden until ticked.
         showcase: demoOnHomePage(c, vis),
         showcaseStories: demoOnStoriesPage(c, vis),
+        homeTag: vis[c.key]?.tag || '',
         isColoring,
         viewHref: isColoring
           ? `/coloring/${c.themeId}?name=${encodeURIComponent(c.name)}`
@@ -730,6 +732,31 @@ export default function AdminDashboard() {
 
   // Wizard feature switch: flip it locally, persist just that one flag, and
   // roll back if the save fails.
+  /** Set (or clear, by re-picking the same one) the book's home-page badge. */
+  const setHomeTag = async (book: any, tag: HomeTag) => {
+    const next: HomeTag | '' = book.homeTag === tag ? '' : tag;
+    setVisBusy(`${book.storyId || book.demoKey}:tag`);
+    try {
+      if (book.isDemo) {
+        const merged = { ...(settings.demoCards || {}) };
+        merged[book.demoKey] = { ...(merged[book.demoKey] || {}), tag: next || undefined };
+        setSettings({ ...settings, demoCards: merged });
+        const res = await adminApi.updateSettings({ demoCards: { [book.demoKey]: merged[book.demoKey] } });
+        if (!res.success) throw new Error();
+      } else {
+        setAllStories((prev) => prev.map((x) => (x._id === book.storyId ? { ...x, homeTag: next } : x)));
+        const res = await adminApi.updateStory(book.storyId, { homeTag: next || null });
+        if (!res.success) throw new Error();
+      }
+      toast.success(t('admin.save_settings_ok', 'تم الحفظ'));
+    } catch {
+      toast.error(t('admin.save_settings_fail'));
+      fetchAllStories();
+    } finally {
+      setVisBusy(null);
+    }
+  };
+
   const shownBooks = useMemo(
     () => allBooks.filter((b: any) =>
       bookFilter === 'home' ? b.showcase : bookFilter === 'stories' ? b.showcaseStories : true),
@@ -1534,6 +1561,39 @@ export default function AdminDashboard() {
                             </button>
                           ))}
                         </div>
+
+                        {/* Badge on the home-page card. Only meaningful once the
+                            book is actually on the home page, so it appears with
+                            the toggle. Re-picking the active one clears it. */}
+                        {b.showcase && (
+                          <div className="grid grid-cols-3 gap-1.5">
+                            {HOME_TAGS.map((tag) => {
+                              const on = b.homeTag === tag;
+                              const label = tag === 'bestseller'
+                                ? t('bestsellers.tag_best_seller', 'الأكثر مبيعاً')
+                                : tag === 'new'
+                                  ? t('bestsellers.tag_new', 'جديد')
+                                  : t('bestsellers.tag_featured', 'مميز');
+                              return (
+                                <button
+                                  key={tag}
+                                  type="button"
+                                  aria-pressed={on}
+                                  onClick={() => setHomeTag(b, tag)}
+                                  disabled={visBusy === `${b.storyId || b.demoKey}:tag`}
+                                  title={t('admin.tag_hint', 'الشارة على بطاقة الصفحة الرئيسية')}
+                                  className={`px-1.5 py-1 rounded-lg font-arabic text-[10px] border transition-colors disabled:opacity-50 ${
+                                    on
+                                      ? 'bg-gold-500/20 border-gold-500/50 text-gold-300'
+                                      : 'bg-white/5 border-white/10 text-white/45 hover:border-white/25'
+                                  }`}
+                                >
+                                  {label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
 
                         <div className="grid grid-cols-2 gap-2">
                           <Link

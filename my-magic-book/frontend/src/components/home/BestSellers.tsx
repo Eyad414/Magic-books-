@@ -6,7 +6,7 @@ import { publicApi } from '../../api/publicApi';
 import { toDisplayUrl } from '../../api/mediaUrl';
 import { localizeName } from '../../utils/translit';
 import FlipbookPreview, { buildThemePreview } from '../wizard/FlipbookPreview';
-import { SHOWCASE_CARDS } from '../../data/showcaseCards';
+import { SHOWCASE_CARDS, type DemoVisibility, type HomeTag } from '../../data/showcaseCards';
 
 // Some themes reuse another theme's scripted story text (mirrors Stories page).
 const TEXT_THEME: Record<string, string> = { space_real: 'space' };
@@ -23,7 +23,7 @@ export default function BestSellers() {
   // replace the curated mock-ups, so visitors browse an ACTUAL generated book.
   const [realBooks, setRealBooks] = useState<any[]>([]);
   // Demo cards the owner ticked onto the home page in the dashboard.
-  const [demoVis, setDemoVis] = useState<Record<string, { home?: boolean; stories?: boolean }>>({});
+  const [demoVis, setDemoVis] = useState<DemoVisibility>({});
   useEffect(() => {
     publicApi.getSettings()
       .then((res) => {
@@ -55,6 +55,15 @@ export default function BestSellers() {
   // Once the owner publishes real books from the dashboard they take over the
   // section, keeping the same card styling but pointing at an ACTUAL generated
   // book (its own cover, pages and closing portrait).
+  // The owner picks each card's badge in the dashboard; without one the card
+  // simply shows none. Inheriting the curated array's tag by index used to hand
+  // out "best seller" and "new" essentially at random.
+  const tagLabel = (tag?: HomeTag | '') =>
+    tag === 'bestseller' ? t('bestsellers.tag_best_seller')
+      : tag === 'new' ? t('bestsellers.tag_new')
+        : tag === 'featured' ? t('bestsellers.tag_featured')
+          : '';
+
   // Demo books the owner ticked for the home page. They have no Story document,
   // so their artwork comes from the theme, exactly like the curated mock-ups.
   const pickedDemos = SHOWCASE_CARDS
@@ -65,6 +74,7 @@ export default function BestSellers() {
       themeId: c.themeId,
       name: c.name,
       emoji: c.emoji,
+      tag: tagLabel(demoVis[c.key]?.tag),
       localCover: undefined,
       coverPath: c.storyId && !c.storyId.startsWith('theme_')
         ? `magic-fanoose/generated/${c.storyId}/page-00.png`
@@ -78,6 +88,7 @@ export default function BestSellers() {
       id: b.id,
       themeId: b.theme,
       name: b.childName,
+      tag: tagLabel(b.homeTag),
       localCover: undefined,
       coverPath: undefined,
       book: b,
