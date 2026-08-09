@@ -613,6 +613,9 @@ export default function AdminDashboard() {
     : t('admin.pending_payment');
 
   const [printingBookKey, setPrintingBookKey] = useState<string | null>(null);
+  // Stories & Themes: preview the book as a boy or a girl. Only affects the
+  // ع/EN/עב preview links, never any saved data.
+  const [previewGender, setPreviewGender] = useState<'male' | 'female'>('male');
   // Narrows الكتب الجاهزة to one public surface. null = show everything.
   const [bookFilter, setBookFilter] = useState<'home' | 'stories' | null>(null);
   // `${storyId|demoKey}:${surface}` while one publish toggle is in flight.
@@ -1237,7 +1240,36 @@ export default function AdminDashboard() {
                   📚 {t('admin.story_books_title', 'القصص')}
                   <span className="text-white/40 text-sm font-normal mr-2">({settings.themes.filter((th: any) => !th.isColoring).length})</span>
                 </h3>
-                <p className="font-arabic text-white/50 text-sm mb-6">{t('admin.story_books_desc', 'قصص كاملة بالنص والصور (٣٤ صفحة)')}</p>
+                <p className="font-arabic text-white/50 text-sm mb-3">{t('admin.story_books_desc', 'قصص كاملة بالنص والصور (٣٤ صفحة)')}</p>
+
+                {/* Preview as a boy or a girl. Every story carries
+                    {masculine|feminine} tokens, so the two read differently —
+                    this is the quickest way to check a girl's book does not
+                    come out masculine. Also swaps the sample name. */}
+                <div className="mb-6 flex items-center gap-2 flex-wrap">
+                  <span className="font-arabic text-white/50 text-xs">{t('admin.preview_as', 'عاين القصة كـ')}</span>
+                  {([
+                    { g: 'male' as const, label: `👦 ${t('admin.boy', 'ولد')}` },
+                    { g: 'female' as const, label: `👧 ${t('admin.girl', 'بنت')}` },
+                  ]).map((o) => (
+                    <button
+                      key={o.g}
+                      type="button"
+                      aria-pressed={previewGender === o.g}
+                      onClick={() => setPreviewGender(o.g)}
+                      className={`px-3 py-1 rounded-lg font-arabic text-xs border transition-colors ${
+                        previewGender === o.g
+                          ? 'bg-gold-500/20 border-gold-500/50 text-gold-300'
+                          : 'bg-white/5 border-white/10 text-white/55 hover:border-white/25'
+                      }`}
+                    >
+                      {o.label}
+                    </button>
+                  ))}
+                  <span className="font-arabic text-white/35 text-[11px]">
+                    {t('admin.preview_as_help', 'يغيّر الاسم والصياغة في أزرار المعاينة (ع / EN / עב)')}
+                  </span>
+                </div>
                 <div className="space-y-4">
                   {settings.themes.map((theme: any, index: number) => theme.isColoring ? null : (
                     <div key={theme.id} className="px-3 py-2 bg-white/5 rounded-xl border border-white/10 flex flex-wrap items-center gap-1.5">
@@ -1282,14 +1314,21 @@ export default function AdminDashboard() {
                       {/* View the book in each language */}
                       <div className="flex items-center gap-0.5 px-1 py-0.5 rounded-lg bg-dark-800 border border-white/10">
                         <Eye className="w-3.5 h-3.5 text-gold-500 shrink-0" />
-                        {[
-                          { lng: 'ar', label: 'ع', name: 'إياد' },
-                          { lng: 'en', label: 'EN', name: 'Ahmad' },
-                          { lng: 'he', label: 'עב', name: 'עדי' },
-                        ].map((o) => (
+                        {(previewGender === 'female'
+                          ? [
+                              { lng: 'ar', label: 'ع', name: 'سارة' },
+                              { lng: 'en', label: 'EN', name: 'Sara' },
+                              { lng: 'he', label: 'עב', name: 'שרה' },
+                            ]
+                          : [
+                              { lng: 'ar', label: 'ع', name: 'إياد' },
+                              { lng: 'en', label: 'EN', name: 'Ahmad' },
+                              { lng: 'he', label: 'עב', name: 'עדי' },
+                            ]
+                        ).map((o) => (
                           <Link
                             key={o.lng}
-                            to={`/book/${theme.id}?name=${encodeURIComponent(o.name)}&lng=${o.lng}`}
+                            to={`/book/${theme.id}?name=${encodeURIComponent(o.name)}&lng=${o.lng}&gender=${previewGender}`}
                             target="_blank"
                             className="px-1.5 py-0.5 rounded text-xs font-bold text-white/70 hover:text-gold-500 hover:bg-white/5 transition-colors"
                           >

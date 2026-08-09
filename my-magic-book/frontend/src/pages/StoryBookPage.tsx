@@ -212,7 +212,9 @@ export default function StoryBookPage() {
       <StoryBook
         storyId={themeId}
         childName={storyData?.childName || searchParams.get('name') || 'بهاء'}
-        childGender={storyData?.childGender}
+        // ?gender= lets the dashboard preview a THEME as a boy or a girl. A real
+        // story always keeps the customer's own value.
+        childGender={storyData?.childGender || (searchParams.get('gender') as 'male' | 'female' | null) || undefined}
         childPhoto={childPhoto}
         realPhoto={realPhoto}
         coverScene={toDisplayUrl(generatedCover)}
