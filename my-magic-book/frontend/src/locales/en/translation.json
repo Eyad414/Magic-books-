@@ -1254,6 +1254,141 @@
         "12": "With the work finished, [NAME] cleaned the site, collected every tool and put it back in its box, so the place stayed safe and tidy.",
         "13": "[NAME] looked up at the treehouse and felt proud, understanding that with a plan and steady work, the loveliest ideas can be built for real."
       }
+    },
+    "castle_guardian": {
+      "title": "[NAME] and the Guardian of the Old Castle",
+      "tagline": "An ancient castle, a puzzle, and a History Guardian badge",
+      "moral": "Knowing history and protecting old places gives us wisdom and courage.",
+      "conclusion": "Well done, [NAME]! You are the little Guardian of History now. 🏰✨",
+      "questions": [
+        "Why do we look after ancient things?",
+        "If you were the hero, would you climb the tower or visit the hall of shields?",
+        "What is the best thing you have ever seen in a museum?"
+      ],
+      "dedication": "To [NAME], who loves old stories and asks about everything — this story is just for you.",
+      "pages": {
+        "1": "[NAME] was reading a picture book about old castles and knights, and decided to visit the history museum with the family.",
+        "2": "[NAME] stepped into the ancient castle, with its high stone walls and towers reaching up toward the sky.",
+        "3": "There [NAME] met the head guide, who handed over a map for the hunt for the Shield of Courage and Honour.",
+        "4": "[NAME] stopped where the stairway split in two: “Champion! Shall we climb up to the high watchtower, or explore the hall of shields and medals?” Choose your way wisely!",
+        "5": "[NAME] chose the hall, wandering among the old treasures and reading every label with real interest.",
+        "6": "There stood an old wooden box, locked behind a puzzle: numbers to be added up into the right date.",
+        "7": "[NAME] used clever thinking, adding the years written on the labels, and the box opened quietly.",
+        "8": "Inside lay the castle keepsake shield, made of gleaming copper. Champion! Can you find the old brass key hidden beside the shield?",
+        "9": "The guide pinned on the “Little Guardian of History” badge, for such curiosity and such careful listening.",
+        "10": "[NAME] posed for photographs beside the great stone walls, holding the badge with pride.",
+        "11": "[NAME] learned why we protect old places and never touch or damage them, so their story stays for everyone.",
+        "12": "Back home, [NAME] set the castle badge in the special corner of treasures in the bedroom.",
+        "13": "[NAME] sat writing down everything learned that day, knowing that history gives you the wisdom and the courage to build the future."
+      }
+    },
+    "happy_kindergarten": {
+      "title": "[NAME]'s Day at the Happy Kindergarten",
+      "tagline": "Colours, stories and brand new friends",
+      "moral": "Sharing, kindness and tidying up make every day better.",
+      "conclusion": "Well done, [NAME]! You are the kind little hero of the kindergarten. 🧸✨",
+      "questions": [
+        "Which corner would you most like to play in?",
+        "If you were the hero, would you choose the blocks or the colouring?",
+        "How can we be kind friends to the children around us?"
+      ],
+      "dedication": "To [NAME], who takes the very first step with courage and a smile — this story is just for you.",
+      "pages": {
+        "1": "[NAME] woke up with a wide smile, put on comfy colourful clothes, and got ready for kindergarten carrying a little backpack.",
+        "2": "[NAME] walked into the warm kindergarten rooms, full of toys, bright pictures on the walls and colourful wooden blocks.",
+        "3": "The teacher welcomed [NAME] with a gentle smile, helped hang up the bag and wrote [NAME] on a cubby of their very own.",
+        "4": "The other children pointed around the room: “Champion! Shall we play in the blocks and playdough corner, or go to the colouring and stories corner?” Choose your activity wisely, [NAME]!",
+        "5": "[NAME] chose the colouring corner, picked up the wax crayons and drew a laughing sun above a green garden.",
+        "6": "[NAME] sat with the other children in a soft circle, listening to the teacher tell a lovely story about kind animals.",
+        "7": "[NAME] shared toys with a new friend, and learned that sharing makes playing far more fun.",
+        "8": "Time for free play in the kindergarten yard, full of things to climb and ride. Champion! Can you find the little yellow star hidden behind the toy box?",
+        "9": "[NAME] opened the lunchbox and ate two pieces of fruit and drank water, happy and tidy.",
+        "10": "[NAME] sang the numbers and letters song with everyone, hands waving along to the rhythm.",
+        "11": "When playtime ended, [NAME] hurried to put every toy back in its right place, so the kindergarten stayed neat.",
+        "12": "The teacher pinned a “Kind Hero” badge on [NAME], for being so tidy and so gentle with the other children.",
+        "13": "[NAME] went home hugging the badge and telling the family all about the new friends, already looking forward to tomorrow."
+      }
+    },
+    "first_day_school": {
+      "title": "[NAME]'s First Day at School",
+      "tagline": "A new bag, new friends, and a day to remember",
+      "moral": "Being brave on the first step opens the door to friendship and learning.",
+      "conclusion": "Well done, [NAME]! You are the star of the very first day. 🎒✨",
+      "questions": [
+        "What makes you happiest about a first day at school?",
+        "If you were the hero, would you go to the play corner or the school garden?",
+        "How can we welcome a new friend into our class?"
+      ],
+      "dedication": "To [NAME], who walks through the school gate for the first time with a brave heart — this story is just for you.",
+      "pages": {
+        "1": "[NAME] woke early with a heart full of excitement, put on the new school uniform and packed everything neatly into a bright new bag.",
+        "2": "[NAME] walked to school with Mum and Dad, past cheerful painted walls and a wide yard welcoming children with smiles.",
+        "3": "[NAME] stepped into the school yard, where the teacher gave a warm smile and welcomed [NAME] and all the new friends kindly.",
+        "4": "The teacher pointed around the yard: “Champion! Shall we explore the games and activities corner first, or walk through the school garden?” Choose your step wisely!",
+        "5": "[NAME] chose the play corner, and built a tall tower of coloured blocks together with the new friends, all helping.",
+        "6": "The school bell rang, and [NAME] lined up neatly with the class for morning exercises and the school song.",
+        "7": "[NAME] walked toward the classroom with confident steps, excited to discover what came next.",
+        "8": "Break time, and a chance to explore the school. Champion! Can you find the little golden pencil hidden behind the school bag?",
+        "9": "[NAME] helped a classmate carry their things, and that was the first real friendship of the year.",
+        "10": "[NAME] sat with the new friends over a crunchy healthy snack and a cool drink, everyone laughing together.",
+        "11": "The teacher praised how brave and how tidy [NAME] had been, and gave out an “Active Star” sticker for the first day.",
+        "12": "[NAME] went home happy and full of talk about the first adventure and all the new friends.",
+        "13": "[NAME] fell asleep still wearing the sticker, certain now that school is a second home, full of learning and friendship."
+      }
+    },
+    "first_grade": {
+      "title": "[NAME] in First Grade",
+      "tagline": "Letters, words, and a first sentence read out loud",
+      "moral": "With focus and effort, reading and writing become easier and far more fun.",
+      "conclusion": "Well done, [NAME]! You read your very first sentence out loud. ✏️✨",
+      "questions": [
+        "What was the first letter you learned?",
+        "If you were the hero, would you choose the word cards or the colouring?",
+        "What lovely word would you most like to write?"
+      ],
+      "dedication": "To [NAME], who learns a letter a day with patience and joy — this story is just for you.",
+      "pages": {
+        "1": "[NAME] sat at a comfortable desk in the first grade classroom, looking at the board and all the colourful things around the room.",
+        "2": "[NAME] opened a clean white notebook, held the pencil steadily and lined up the colours ready for the writing and drawing lesson.",
+        "3": "The teacher wrote the first letter on the board, and [NAME] began to read it aloud, clear and careful, with everyone cheering.",
+        "4": "The teacher said: “First grade champion! Shall we solve the word-card puzzle, or colour the glowing alphabet chart?” Choose your step wisely!",
+        "5": "[NAME] chose the word cards, calmly arranging letters to build simple words about school and the world outside.",
+        "6": "Faced with a simple sum, [NAME] used the little counting blocks and worked out the right answer alone.",
+        "7": "[NAME] stood up with confidence and read a first whole sentence out clearly, to the teacher’s delight and the class’s applause.",
+        "8": "Free activity time in the classroom, tidying the corners. Champion! Can you find the little orange block hidden behind the class bookshelf?",
+        "9": "[NAME] helped push in the chairs and gather the pencils after the lesson, so the classroom stayed neat.",
+        "10": "The teacher put [NAME]’s name up on the first grade Excellence Board.",
+        "11": "[NAME] shared a favourite story with the other children in the quiet reading corner.",
+        "12": "[NAME] packed everything neatly into the school bag, feeling proud and grown up.",
+        "13": "[NAME] went home telling Mum and Dad how reading and writing had become easier and much more fun, thanks to paying attention and trying hard."
+      }
+    },
+    "future_hero": {
+      "title": "[NAME], Hero of the Future",
+      "tagline": "Many jobs to try, and one big dream",
+      "moral": "Every job needs honesty, learning, and a love of helping other people.",
+      "conclusion": "Well done, [NAME]! You are the hero of the future. 🚀✨",
+      "questions": [
+        "What would you like to be when you grow up?",
+        "If you were the hero, would you try engineering or medicine?",
+        "How can you help people today, while you are still small?"
+      ],
+      "dedication": "To [NAME], who dreams big and starts working on it today — this story is just for you.",
+      "pages": {
+        "1": "[NAME] sat in the bedroom leafing through a picture magazine full of people at work, and wondered with a smile: “What will I be when I grow up?”",
+        "2": "[NAME] opened the toy box and tried on all sorts of things: an engineer’s hard hat, a doctor’s stethoscope, and an astronaut’s suit!",
+        "3": "[NAME] imagined standing in a clever laboratory full of screens and modern tools, for helping people and solving problems.",
+        "4": "[NAME] looked at the choices: “Champion! Shall we take the engineer and coding tour and build smart cities, or the kind doctor tour and look after people’s health?” Choose your path wisely!",
+        "5": "[NAME] tried being a little engineer, drawing a careful plan for a green city that runs on sunshine to protect the environment.",
+        "6": "Then came the kind doctor, using a stethoscope to check that friends were well and telling everyone about healthy food and clean hands.",
+        "7": "[NAME] discovered that whichever job you choose, it needs honesty, learning, and a love of helping others.",
+        "8": "[NAME] visited a hands-on careers exhibition, learning what each person does to build a community. Champion! Can you find the golden star of the future hidden behind the display stand?",
+        "9": "[NAME] also tried being a clever teacher, patiently showing other children how to explore and think things through.",
+        "10": "[NAME] learned that the road to the future starts today, with learning, effort and good habits.",
+        "11": "The teacher gave [NAME] a “Hero of the Future” badge, a reminder of being able to reach any goal at all.",
+        "12": "[NAME] set the badge on the desk and picked up a pencil to study hard, because the future is built today.",
+        "13": "[NAME] closed both eyes with pride and confidence, knowing that with focus and passion there is a great part to play in the future."
+      }
     }
   },
   "order_success": {

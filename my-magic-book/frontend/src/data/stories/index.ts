@@ -19,6 +19,11 @@ import { worldAdventure } from './story09_world';
 import { deepSea } from './story10_deepsea';
 import { littleChef } from './story11_chef';
 import { littleEngineer } from './story12_engineer';
+import { futureHero } from './story17_future';
+import { firstGrade } from './story16_firstgrade';
+import { firstDaySchool } from './story15_firstday';
+import { happyKindergarten } from './story14_kindergarten';
+import { castleGuardian } from './story13_castle';
 
 // ── Future stories — uncomment as you add them ────────────────────────────────
 // import { forestAdventure }   from './story04_forest';
@@ -52,6 +57,11 @@ export const STORIES: StoryDefinition[] = [
   deepSea,
   littleChef,
   littleEngineer,
+  futureHero,
+  firstGrade,
+  firstDaySchool,
+  happyKindergarten,
+  castleGuardian,
   // forestAdventure,
   // desertAdventure,
   // mountainAdventure,
