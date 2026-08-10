@@ -9,7 +9,6 @@ import { toDisplayUrl } from '../api/mediaUrl';
 import { localizeName } from '../utils/translit';
 import { detectGender, applyGenderTokens } from '../utils/gender';
 import { SHOWCASE_CARDS as CARDS, demoOnStoriesPage, type DemoVisibility, type ShowcaseCard as Card } from '../data/showcaseCards';
-import { seriesBadge, seriesCounts } from '../utils/series';
 import { loadFavorites, saveFavorites } from '../utils/favorites';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -51,12 +50,6 @@ export default function Stories() {
   }, []);
   const isVisible = (c: Card) => demoOnStoriesPage(c, vis);
 
-  // "الجزء ١/٢" on books that belong to a numbered set.
-  const serieses = useMemo(() => seriesCounts(Object.values(themes)), [themes]);
-  const badgeFor = (c: Card) => {
-    const th = themes[c.themeId];
-    return th ? seriesBadge(th, serieses, i18n.language) : null;
-  };
 
   const ft = useMemo(() => i18n.getFixedT(i18n.language), [i18n.language]);
   const nameL = (card: Card) => localizeName(card.name, i18n.language);
@@ -163,14 +156,7 @@ export default function Stories() {
                 </div>
 
                 <div className="p-5 flex flex-col flex-1">
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <h3 className="font-arabic font-bold text-white text-lg">{titleFor(card)}</h3>
-                    {badgeFor(card) && (
-                      <span className="shrink-0 font-arabic text-[10px] px-2 py-0.5 rounded-full bg-gold-500/15 border border-gold-500/30 text-gold-400/90 whitespace-nowrap">
-                        {badgeFor(card)}
-                      </span>
-                    )}
-                  </div>
+                  <h3 className="font-arabic font-bold text-white text-lg mb-1">{titleFor(card)}</h3>
                   <p className="font-arabic text-gold-500 text-xs mb-3">
                     {t('stories_page.theme')} {themeLabelFor(card)}
                   </p>

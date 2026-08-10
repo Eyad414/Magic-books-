@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { findStory } from '../data/stories';
 import { SHOWCASE_CARDS, demoOnHomePage, demoOnStoriesPage, HOME_TAGS, type DemoVisibility, type HomeTag } from '../data/showcaseCards';
+import { seriesBadge, seriesCounts } from '../utils/series';
 import { localizeName } from '../utils/translit';
 
 export default function AdminDashboard() {
@@ -616,6 +617,8 @@ export default function AdminDashboard() {
   // Stories & Themes: preview the book as a boy or a girl. Only affects the
   // ع/EN/עב preview links, never any saved data.
   const [previewGender, setPreviewGender] = useState<'male' | 'female'>('male');
+  // Series parts are shown to the OWNER only — customers see plain titles.
+  const themeSerieses = useMemo(() => seriesCounts(settings?.themes || []), [settings]);
   // Narrows الكتب الجاهزة to one public surface. null = show everything.
   const [bookFilter, setBookFilter] = useState<'home' | 'stories' | null>(null);
   // `${storyId|demoKey}:${surface}` while one publish toggle is in flight.
@@ -1286,6 +1289,17 @@ export default function AdminDashboard() {
                           setSettings({ ...settings, themes: newThemes });
                         }}
                       />
+
+                      {/* Which series this story belongs to, and where in it.
+                          Owner-facing only — the customer sees a plain title. */}
+                      {seriesBadge(theme, themeSerieses, 'ar') && (
+                        <span
+                          className="px-2 py-1 rounded-lg font-arabic text-xs bg-gold-500/15 border border-gold-500/30 text-gold-400/90 whitespace-nowrap"
+                          title={theme.seriesName || ''}
+                        >
+                          🔗 {theme.seriesName} · {seriesBadge(theme, themeSerieses, 'ar')}
+                        </span>
+                      )}
 
                       {/* Ready toggle — only `ready` themes appear in the customer wizard */}
                       <label
