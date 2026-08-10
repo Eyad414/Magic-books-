@@ -114,6 +114,9 @@ export default function Step3_Checkout({ onPrev }: Props) {
     }).catch(err => console.error('Failed to load pricing:', err));
   }, []);
 
+  // Read the package NAME off `selectedPkg.label` — never re-translate by id.
+  // t() returns the key itself when a string is missing, so `t(...) || label`
+  // never reaches the fallback and silently discards the admin's rename.
   const lang = i18n.language;
   const packages = useMemo(() => {
     const DEFAULT_PACKAGES = [
@@ -506,7 +509,7 @@ export default function Step3_Checkout({ onPrev }: Props) {
                 { l: t('step5.hero_age'), v: childDetails.childAge ? `${childDetails.childAge} ${t('step5.years')}` : '-' },
                 { l: t('step5.theme'), v: storyConfig?.theme ? (t(`step2.theme_${storyConfig.theme}`) as string) || storyConfig.theme : (t('step2.theme_adventure') as string) },
                 { l: t('step5.language'), v: storyConfig?.language === 'en' ? t('step5.lang_en') : storyConfig?.language === 'he' ? t('step5.lang_he') : t('step5.lang_ar') },
-                { l: t('step5.package_type'), v: `${selectedPkg.emoji} ${(t(`step3.pkg_${selectedPkg.id}`) as string) || selectedPkg.label}` },
+                { l: t('step5.package_type'), v: `${selectedPkg.emoji} ${selectedPkg.label}` },
               ].map((r, i) => (
                 <span key={i} className="font-arabic text-white/45 whitespace-nowrap">
                   {r.l} <span className="text-white/90 font-bold">{r.v}</span>
@@ -565,7 +568,7 @@ export default function Step3_Checkout({ onPrev }: Props) {
           <div className="p-3 rounded-xl bg-gradient-to-l from-gold-500/20 to-gold-500/5 border border-gold-500/30 space-y-1.5">
             <h3 className="font-arabic font-bold text-white text-xs mb-2">💰 {t('step5.price_summary_title')}</h3>
             <div className="flex items-start justify-between gap-4">
-              <span className="font-arabic text-white/50 text-sm flex-shrink-0">{t(`step3.pkg_${selectedPkg.id}`) || selectedPkg.label}:</span>
+              <span className="font-arabic text-white/50 text-sm flex-shrink-0">{selectedPkg.label}:</span>
               <div className="flex items-center gap-2">
                 {(selectedPkg as any).originalPrice && (
                   <span className="font-arabic text-white/30 text-xs line-through">{(selectedPkg as any).originalPrice} ₪</span>
