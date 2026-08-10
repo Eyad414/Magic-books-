@@ -494,7 +494,7 @@
     "street_placeholder_input": "הקלד את שם הרחוב",
     "street_placeholder_disabled": "בחר עיר תחילה",
     "err_street": "אנא בחר או הזן שכונה/רחוב",
-    "floor_label": "קומה *",
+    "floor_label": "קומה",
     "floor_placeholder": "שם או מספר קומה",
     "building_label": "בניין / דירה מס'",
     "optional": "אופציונלי",

@@ -494,7 +494,7 @@
     "street_placeholder_input": "اكتب اسم الشارع",
     "street_placeholder_disabled": "اختر المدينة أولاً",
     "err_street": "يرجى اختيار أو إدخال الحي",
-    "floor_label": "الطابق *",
+    "floor_label": "الطابق",
     "floor_placeholder": "اسم الطابق",
     "building_label": "رقم المبنى / الشقة",
     "optional": "اختياري",

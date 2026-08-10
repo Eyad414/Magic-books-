@@ -494,7 +494,7 @@
     "street_placeholder_input": "Type street name",
     "street_placeholder_disabled": "Select city first",
     "err_street": "Please select or enter the neighborhood/street",
-    "floor_label": "Floor *",
+    "floor_label": "Floor",
     "floor_placeholder": "Floor Name",
     "building_label": "Building / Apartment No.",
     "optional": "Optional",
