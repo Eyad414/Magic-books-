@@ -4,6 +4,7 @@ import Story from '../models/Story';
 import Order from '../models/Order';
 import SiteSettings, { DEFAULT_HOME_STATS } from '../models/SiteSettings';
 import ContactMessage from '../models/ContactMessage';
+import { pollPaymentsOnce } from '../services/PaymentPoller';
 import { arabicStoryPages, buildBookForOrder, reRenderPrintFilesForOrder, submitOrderToBookPod, reRenderColoringForOrder, submitColoringForOrder, buildPreviewPrintFiles, submitPreviewToBookPod } from '../services/BookBuilder';
 import { generateIllustration, COST_PER_IMAGE_USD } from '../services/ImageGenerator';
 import { buildIllustrationPrompt, buildPhotorealPrompt, buildCoverPrompt } from '../services/promptBuilder';
@@ -895,6 +896,19 @@ export const submitOrderColoring = async (req: Request, res: Response): Promise<
   } catch (err: any) {
     console.error('submitOrderColoring failed:', err);
     res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @route POST /api/admin/check-payments
+// @desc  Ask BookPod who has paid, right now, instead of waiting for the timer.
+//        Read-only against BookPod; only ever moves our orders pending → paid.
+export const checkPayments = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await pollPaymentsOnce();
+    res.json({ success: !result.error, ...result });
+  } catch (err: any) {
+    console.error('checkPayments failed:', err);
+    res.status(500).json({ success: false, message: err?.message || 'فشل التحقق من الدفعات' });
   }
 };
 

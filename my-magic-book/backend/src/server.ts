@@ -4,6 +4,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { connectDB } from './config/db';
+import { startPaymentPolling } from './services/PaymentPoller';
 import { maybeResetAdmin } from './utils/resetAdmin';
 
 // Routes
@@ -25,6 +26,9 @@ const PORT = process.env.PORT || 5001;
 // Connect Database, then run the one-shot admin reset if RESET_ADMIN_PASSWORD is set
 connectDB().then(() => {
   maybeResetAdmin();
+  // BookPod has no webhook, so we ask it who paid. Starts only after the DB is
+  // up — the poller reads Orders on its first tick.
+  startPaymentPolling();
 });
 
 // Middleware

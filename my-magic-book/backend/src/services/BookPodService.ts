@@ -52,6 +52,56 @@ export interface BookPodJobResult {
   raw: any;
 }
 
+/** The payment-bearing fields of a BookPod order. */
+export interface BookPodOrderPayment {
+  orderNo: number;
+  /** Our own Order._id — BookPod echoes back what we sent as external_id. */
+  externalId?: string;
+  /** 'paid' | 'not_paid' | 'not_for_payment' (COD/deposit orders). */
+  payment?: string;
+  paidAt?: string | null;
+  paymentRef?: string | null;
+  status?: string;
+}
+
+/**
+ * Orders visible to our API key, keyed by external_id (our Order._id).
+ *
+ * GET /api/v1/orders is NOT scoped to the calling account — it returns every
+ * order in the tenant, tens of thousands of them, most belonging to other
+ * merchants. We therefore filter to our own `order_source` and keep only the
+ * payment fields, so no one else's customer data is ever held in memory longer
+ * than this function runs, let alone written anywhere.
+ */
+export async function fetchOrderPayments(): Promise<Map<string, BookPodOrderPayment>> {
+  const { baseUrl, headers } = cfg();
+  const ours = (process.env.BOOKPOD_ORDER_SOURCE || 'eyad').toLowerCase();
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 60_000);
+  try {
+    const res = await fetch(`${baseUrl}/api/v1/orders`, { headers, signal: ctrl.signal });
+    if (!res.ok) throw new Error(`BookPod orders failed: ${res.status}`);
+    const rows = (await res.json()) as any[];
+    const out = new Map<string, BookPodOrderPayment>();
+    for (const r of Array.isArray(rows) ? rows : []) {
+      if (String(r?.order_source || '').toLowerCase() !== ours) continue;
+      const externalId = r?.external_id ? String(r.external_id) : undefined;
+      if (!externalId) continue;
+      out.set(externalId, {
+        orderNo: Number(r.order_no),
+        externalId,
+        payment: r.payment ?? undefined,
+        paidAt: r.paid_at ?? null,
+        paymentRef: r.payment_ref ?? null,
+        status: r.status ?? undefined,
+      });
+    }
+    return out;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export function isBookPodConfigured(): boolean {
   return !!(process.env.BOOKPOD_USER_ID && process.env.BOOKPOD_TOKEN);
 }
