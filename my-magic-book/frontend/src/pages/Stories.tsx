@@ -149,9 +149,9 @@ export default function Stories() {
                   <button
                     onClick={() => toggleFavorite(card.key)}
                     aria-label={t('stories_page.add_to_favorites')}
-                    className={`absolute top-3 left-3 w-8 h-8 rounded-full flex items-center justify-center transition-all ${isFav ? 'bg-red-500 text-white shadow-lg scale-110' : 'bg-black/25 text-white/70 hover:bg-black/45 hover:text-white'}`}
+                    className={`absolute top-3 left-3 w-11 h-11 rounded-full flex items-center justify-center transition-all ${isFav ? 'bg-red-500 text-white shadow-lg scale-110' : 'bg-black/25 text-white/70 hover:bg-black/45 hover:text-white'}`}
                   >
-                    <Heart className={`w-4 h-4 ${isFav ? 'fill-current' : ''}`} />
+                    <Heart className={`w-5 h-5 ${isFav ? 'fill-current' : ''}`} />
                   </button>
                 </div>
 
@@ -163,7 +163,7 @@ export default function Stories() {
 
                   {/* View row — the whole sample book is readable */}
                   <div className="flex flex-wrap items-center justify-between p-3 rounded-xl bg-dark-700 border border-white/10 mb-4 gap-2 mt-auto">
-                    <button onClick={() => setSelected(card)} className="flex items-center gap-1 pr-3 group cursor-pointer">
+                    <button onClick={() => setSelected(card)} className="flex items-center gap-1 pr-3 py-2 -my-1 min-h-[44px] group cursor-pointer">
                       <Eye className="w-3.5 h-3.5 text-gold-500 group-hover:scale-125 transition-transform" />
                       <span className="font-arabic text-gold-500 text-xs border-b border-transparent group-hover:border-gold-500 transition-colors">{t('stories_page.read_full')}</span>
                     </button>

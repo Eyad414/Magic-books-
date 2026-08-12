@@ -52,7 +52,7 @@ export default function ContactUs() {
                 <div>
                   <p className="font-arabic text-white/50 text-xs mb-1">{item.label}</p>
                   {item.href ? (
-                    <a href={item.href} dir={(item as any).ltr ? 'ltr' : undefined} className="inline-block font-arabic text-white font-medium text-sm hover:text-gold-500 transition-colors">
+                    <a href={item.href} dir={(item as any).ltr ? 'ltr' : undefined} className="inline-flex items-center min-h-[44px] py-2 font-arabic text-white font-medium text-sm hover:text-gold-500 transition-colors">
                       {item.value}
                     </a>
                   ) : (
