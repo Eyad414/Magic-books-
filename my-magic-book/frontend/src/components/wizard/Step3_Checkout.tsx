@@ -597,7 +597,15 @@ export default function Step3_Checkout({ onPrev }: Props) {
                 { id: 'card', label: t('step5.credit_card'), icon: '💳', soon: !ONLINE_PAYMENTS_ENABLED },
                 { id: 'paypal', label: 'PayPal', icon: '🅿️', soon: !ONLINE_PAYMENTS_ENABLED },
                 { id: 'applepay', label: 'Apple Pay', icon: '🍎', soon: !ONLINE_PAYMENTS_ENABLED },
-                { id: 'cash', label: t('step5.cash', 'نقدًا عند الاستلام'), icon: '💵', soon: false },
+                // "on pickup" is wrong for a home delivery — that customer is
+                // paying the courier at the door, and is being charged a
+                // delivery fee two lines above.
+                {
+                  id: 'cash',
+                  label: isPickup ? t('step5.cash', 'نقدًا عند الاستلام') : t('step5.cash_delivery', 'نقدًا عند التوصيل'),
+                  icon: '💵',
+                  soon: false,
+                },
               ].map((method) => {
                 const active = paymentMethod === method.id;
                 const soon = method.soon;
@@ -649,7 +657,9 @@ export default function Step3_Checkout({ onPrev }: Props) {
           )}
           {paymentMethod === 'cash' && (
             <p className="mt-3 px-3 py-2 rounded-lg bg-green-500/10 border border-green-500/20 font-arabic text-green-400 text-xs animate-fade-in">
-              💵 {t('step5.cash_note', 'سيتم تحصيل المبلغ نقدًا عند استلام الطلب من نقطة الاستلام.')}
+              💵 {isPickup
+                ? t('step5.cash_note', 'سيتم تحصيل المبلغ نقدًا عند استلام الطلب من نقطة الاستلام.')
+                : t('step5.cash_note_delivery', 'سيتم تحصيل المبلغ نقدًا عند توصيل الطلب إلى عنوانك.')}
             </p>
           )}
           {paymentMethod === 'paypal' && (

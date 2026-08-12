@@ -514,6 +514,8 @@
     "applepay_note": "Use Touch ID or Face ID to complete the payment.",
     "cash": "Cash on pickup",
     "cash_note": "The amount will be collected in cash when you pick up the order.",
+    "cash_delivery": "Cash on delivery",
+    "cash_note_delivery": "The amount will be collected in cash when the order is delivered to your address.",
     "paypal_note": "You'll be redirected to PayPal to complete the payment securely.",
     "title": "Order Review",
     "desc": "Check your order details before paying",
