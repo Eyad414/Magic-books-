@@ -643,7 +643,7 @@ function extractPairsFromTemplate(
   return pairs;
 }
 
-function extractPairsFromAi(story: { generatedText?: string; childName: string; childAge: string; childGender: 'male' | 'female'; theme: string; language: string }): PagePair[] {
+function extractPairsFromAi(story: { generatedText?: string; childName: string; childAge: string; childGender: 'male' | 'female'; theme: string; language: 'ar' | 'en' | 'he' }): PagePair[] {
   const textChunks = splitStoryIntoPages(story.generatedText || '', ILLUSTRATION_PAGES);
   return textChunks.map((chunk, i) => ({
     text: chunk,
@@ -653,7 +653,7 @@ function extractPairsFromAi(story: { generatedText?: string; childName: string; 
       childAge: story.childAge,
       childGender: story.childGender,
       theme: story.theme,
-      language: story.language as 'ar' | 'en' | 'he',
+      language: story.language,
       pageNumber: i + 1,
     }),
   }));

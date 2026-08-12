@@ -23,7 +23,9 @@ export interface IStory extends Document {
   // admins can add new themes without code changes.
   theme: string;
   storyLength: 'short' | 'medium' | 'long';
-  language: 'ar' | 'en';
+  // Hebrew is a first-class story language, same as the other two — the wizard
+  // offers all three, and AI_Generator/promptBuilder/BookBuilder all speak 'he'.
+  language: 'ar' | 'en' | 'he';
   customThemeNote?: string;
   // Authoring mode: which path was used to build the story
   mode: StoryMode;
@@ -76,7 +78,7 @@ const StorySchema = new Schema<IStory>(
     // Theme id from SiteSettings.themes[]. Validated at admin save time, not here.
     theme: { type: String, default: 'adventure' },
     storyLength: { type: String, enum: ['short', 'medium', 'long'], default: 'medium' },
-    language: { type: String, enum: ['ar', 'en'], default: 'ar' },
+    language: { type: String, enum: ['ar', 'en', 'he'], default: 'ar' },
     customThemeNote: { type: String },
     mode: { type: String, enum: ['template', 'ai'], default: 'template' },
     templatePages: { type: Schema.Types.Mixed, default: undefined },

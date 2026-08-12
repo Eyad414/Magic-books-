@@ -327,6 +327,8 @@
     "themes_loading": "Loading available stories...",
     "gen_success": "Story generated successfully! ✨",
     "err_not_generated": "Please generate the story first",
+    "err_save_failed": "We couldn't save the story — please check your child's details are complete and try again.",
+    "err_no_child_name": "The child's name is missing — go back to step one and complete your child's details.",
     "generate_btn": "Generate Magic Story ✨",
     "regenerate_btn": "Re-generate Story ✨",
     "generating_text": "Crafting special magic...",
