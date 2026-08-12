@@ -508,7 +508,9 @@
     "postalcode_label": "Postal code",
     "postalcode_placeholder": "e.g. 9990000",
     "err_house": "Please enter the house number",
-    "err_postalcode": "Please enter the postal code"
+    "err_postalcode": "Please enter the postal code",
+    "addr_building": "building",
+    "addr_floor": "floor"
   },
   "step5": {
     "applepay_note": "Use Touch ID or Face ID to complete the payment.",

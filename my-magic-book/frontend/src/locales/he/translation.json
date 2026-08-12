@@ -508,7 +508,9 @@
     "postalcode_label": "מיקוד",
     "postalcode_placeholder": "לדוגמה: 9990000",
     "err_house": "אנא הזן מספר בית",
-    "err_postalcode": "אנא הזן מיקוד"
+    "err_postalcode": "אנא הזן מיקוד",
+    "addr_building": "בניין",
+    "addr_floor": "קומה"
   },
   "step5": {
     "applepay_note": "השתמש ב-Touch ID או Face ID להשלמת התשלום.",

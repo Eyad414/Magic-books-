@@ -508,7 +508,9 @@
     "postalcode_label": "الرمز البريدي",
     "postalcode_placeholder": "مثال: 9990000",
     "err_house": "الرجاء إدخال رقم المنزل",
-    "err_postalcode": "الرجاء إدخال الرمز البريدي"
+    "err_postalcode": "الرجاء إدخال الرمز البريدي",
+    "addr_building": "مبنى",
+    "addr_floor": "طابق"
   },
   "step5": {
     "applepay_note": "استخدم Touch ID أو Face ID لإتمام الدفع.",

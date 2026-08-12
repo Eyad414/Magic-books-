@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { localizeName } from '../../utils/translit';
+import { placeName } from '../../data/placeNames';
 
 // Merged checkout step: shipping address (old step 4) + order review & payment
 // (old step 5) on a single screen, so the customer pays in one place.
@@ -182,6 +183,8 @@ export default function Step3_Checkout({ onPrev }: Props) {
   const selectedPkg = packages.find(p => p.id === bookCustomization?.bookPackage) || packages[0];
   const isDigital = selectedPkg.id === 'audio' || selectedPkg.id === 'ebook';
   const isPickup = shippingForm.deliveryMethod === 'pickup';
+  // Arabic uses its own comma; an English address line reading "Silwan، Jerusalem" looks broken.
+  const addrSep = i18n.language?.startsWith('ar') ? '،' : ',';
   const basePrice = selectedPkg.price;
   const discountedBase = couponApplied ? Math.round(basePrice * (1 - discount / 100)) : basePrice;
   const freeDelivery = isDigital || isPickup;
@@ -340,7 +343,10 @@ export default function Step3_Checkout({ onPrev }: Props) {
                 >
                   <option value="" disabled>{t('step4.city_placeholder')}</option>
                   {SUPPORTED_CITIES.map((city, index) => (
-                    <option key={`city-${index}-${city}`} value={city}>{city}</option>
+                    // The Arabic string stays the value — only the label is
+                    // localized, so the order and the BookPod submission are
+                    // byte-identical whichever language the customer used.
+                    <option key={`city-${index}-${city}`} value={city}>{placeName(city, i18n.language)}</option>
                   ))}
                 </select>
                 {errors.city && <p className="text-red-400 text-xs font-arabic mt-1">{errors.city}</p>}
@@ -356,7 +362,7 @@ export default function Step3_Checkout({ onPrev }: Props) {
                   >
                     <option value="">{t('step4.street_placeholder_select')}</option>
                     {CITY_STREETS[shippingForm.city].map((street) => (
-                      <option key={street} value={street}>{street}</option>
+                      <option key={street} value={street}>{placeName(street, i18n.language)}</option>
                     ))}
                   </select>
                 ) : (
@@ -431,9 +437,9 @@ export default function Step3_Checkout({ onPrev }: Props) {
           <div className="space-y-4 animate-fade-in">
             <div className="p-4 rounded-xl bg-dark-700 border border-white/10">
               <p className="font-arabic text-white/60 text-sm">
-                📍 <strong className="text-white">{shippingForm.fullName || t('step4.recipient_fallback')}</strong> — {shippingForm.street}، {shippingForm.city}
-                {shippingForm.buildingNo ? `، مبنى ${shippingForm.buildingNo}` : ''}
-                {shippingForm.floor ? `، طابق ${shippingForm.floor}` : ''}
+                📍 <strong className="text-white">{shippingForm.fullName || t('step4.recipient_fallback')}</strong> — {placeName(shippingForm.street, i18n.language)}{addrSep} {placeName(shippingForm.city, i18n.language)}
+                {shippingForm.buildingNo ? `${addrSep} ${t('step4.addr_building', 'مبنى')} ${shippingForm.buildingNo}` : ''}
+                {shippingForm.floor ? `${addrSep} ${t('step4.addr_floor', 'طابق')} ${shippingForm.floor}` : ''}
               </p>
             </div>
             <div className="w-full h-48 rounded-xl overflow-hidden border-2 border-gold-500/30">
