@@ -1144,7 +1144,7 @@ export default function AdminDashboard() {
                         <input
                           key={lng}
                           type="text"
-                          className="magic-input w-[104px] !py-1.5 text-sm"
+                          className="magic-input flex-1 min-w-[72px] max-w-[104px] !py-1.5 text-sm"
                           title={lng === 'en' ? t('admin.name_en', 'الاسم بالإنجليزية') : t('admin.name_he', 'الاسم بالعبرية')}
                           placeholder={lng === 'en' ? 'EN' : 'עב'}
                           value={pkg.titles?.[lng] || ''}
@@ -1157,7 +1157,7 @@ export default function AdminDashboard() {
                       ))}
                       <input
                         type="number"
-                        className="magic-input w-[86px] !py-1.5 text-sm text-center"
+                        className="magic-input flex-1 min-w-[70px] max-w-[86px] !py-1.5 text-sm text-center"
                         title={t('admin.price_sar')}
                         value={pkg.price}
                         onChange={(e) => {
