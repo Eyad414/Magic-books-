@@ -1166,6 +1166,23 @@ export default function AdminDashboard() {
                           setSettings({ ...settings, bookPackages: newPkgs });
                         }}
                       />
+                      {/* EN / HE descriptions — same rule as the names: blank
+                          falls back to the built-in translation. */}
+                      {(['en', 'he'] as const).map((lng) => (
+                        <input
+                          key={`desc-${lng}`}
+                          type="text"
+                          className="magic-input flex-1 min-w-[110px] max-w-[170px] !py-1.5 text-sm"
+                          title={lng === 'en' ? t('admin.desc_en', 'الوصف بالإنجليزية') : t('admin.desc_he', 'الوصف بالعبرية')}
+                          placeholder={lng === 'en' ? 'EN desc' : 'עב תיאור'}
+                          value={pkg.descriptions?.[lng] || ''}
+                          onChange={(e) => {
+                            const newPkgs = [...settings.bookPackages];
+                            newPkgs[index] = { ...newPkgs[index], descriptions: { ...(newPkgs[index].descriptions || {}), [lng]: e.target.value } };
+                            setSettings({ ...settings, bookPackages: newPkgs });
+                          }}
+                        />
+                      ))}
                       <input
                         type="text"
                         className="magic-input flex-[2] min-w-[150px] !py-1.5 text-sm"
