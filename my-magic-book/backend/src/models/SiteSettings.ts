@@ -8,6 +8,13 @@ export interface IBookPackage {
   desc: string;
   /** Admin toggle: when true the package is hidden from customers (Step 2 & 3). */
   hidden?: boolean;
+  /**
+   * Per-language overrides, same shape the themes use. `label`/`desc` hold the
+   * Arabic the owner types in the dashboard; without these an English or
+   * Hebrew customer kept seeing the built-in translation and never the rename.
+   */
+  titles?: { ar?: string; en?: string; he?: string };
+  descriptions?: { ar?: string; en?: string; he?: string };
 }
 
 export interface ITheme {
@@ -102,6 +109,8 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
       {
         id: { type: String, required: true },
         label: { type: String, required: true },
+        titles: { ar: String, en: String, he: String },
+        descriptions: { ar: String, en: String, he: String },
         price: { type: Number, required: true },
         emoji: { type: String, required: true },
         desc: { type: String, required: true },

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { getPackageLabel, getPackageDesc } from '../../utils/packageLabel';
 import { useStoryProgress } from '../../context/StoryProgressContext';
 import { useAuth } from '../../context/AuthContext';
 import MagicButton from '../common/MagicButton';
@@ -136,7 +137,7 @@ export default function Step3_Checkout({ onPrev }: Props) {
           // customer. Admin text is typed in Arabic and packages have no
           // per-language field, so it wins for Arabic and en/he keep the
           // built-in translation.
-          const useAdminText = lang === 'ar';
+
           // Keep the "was" price only when it is genuinely higher than the
           // live one. The default carries originalPrice: 140 while the admin
           // has raised pro to 170, which rendered a struck-through 140 next to
@@ -144,8 +145,8 @@ export default function Step3_Checkout({ onPrev }: Props) {
           const was = (defaultPkg as any).originalPrice;
           return {
             ...defaultPkg,
-            label: useAdminText && livePkg.label ? livePkg.label : defaultPkg.label,
-            desc: useAdminText && livePkg.desc ? livePkg.desc : defaultPkg.desc,
+            label: getPackageLabel(livePkg, t, lang, defaultPkg.label),
+            desc: getPackageDesc(livePkg, t, lang, (defaultPkg as any).desc),
             price: livePkg.price,
             hidden: livePkg.hidden,
             originalPrice: was && was > livePkg.price ? was : undefined,

@@ -1136,6 +1136,25 @@ export default function AdminDashboard() {
                           setSettings({ ...settings, bookPackages: newPkgs });
                         }}
                       />
+                      {/* EN / HE names. The main field above is the Arabic the
+                          owner types; without these two, a rename never reached
+                          an English or Hebrew customer. Blank = use the built-in
+                          translation, so leaving them empty changes nothing. */}
+                      {(['en', 'he'] as const).map((lng) => (
+                        <input
+                          key={lng}
+                          type="text"
+                          className="magic-input w-[104px] !py-1.5 text-sm"
+                          title={lng === 'en' ? t('admin.name_en', 'الاسم بالإنجليزية') : t('admin.name_he', 'الاسم بالعبرية')}
+                          placeholder={lng === 'en' ? 'EN' : 'עב'}
+                          value={pkg.titles?.[lng] || ''}
+                          onChange={(e) => {
+                            const newPkgs = [...settings.bookPackages];
+                            newPkgs[index] = { ...newPkgs[index], titles: { ...(newPkgs[index].titles || {}), [lng]: e.target.value } };
+                            setSettings({ ...settings, bookPackages: newPkgs });
+                          }}
+                        />
+                      ))}
                       <input
                         type="number"
                         className="magic-input w-[86px] !py-1.5 text-sm text-center"

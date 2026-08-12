@@ -9,6 +9,7 @@ import { toDisplayUrl } from '../../api/mediaUrl';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { localizeName } from '../../utils/translit';
+import { getPackageLabel, getPackageDesc } from '../../utils/packageLabel';
 import { getThemeLabel, getThemeDesc } from '../../utils/themeLabel';
 import { STORY_TEMPLATES } from '../../data/stories/templates';
 import ThemeChatHelper from './ThemeChatHelper';
@@ -162,7 +163,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
           // customer. Admin text is typed in Arabic and packages have no
           // per-language field, so it wins for Arabic and en/he keep the
           // built-in translation.
-          const useAdminText = lang === 'ar';
+
           // Keep the "was" price only when it is genuinely higher than the
           // live one. The default carries originalPrice: 140 while the admin
           // has raised pro to 170, which rendered a struck-through 140 next to
@@ -170,8 +171,8 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
           const was = (defaultPkg as any).originalPrice;
           return {
             ...defaultPkg,
-            label: useAdminText && livePkg.label ? livePkg.label : defaultPkg.label,
-            desc: useAdminText && livePkg.desc ? livePkg.desc : defaultPkg.desc,
+            label: getPackageLabel(livePkg, t, lang, defaultPkg.label),
+            desc: getPackageDesc(livePkg, t, lang, (defaultPkg as any).desc),
             price: livePkg.price,
             hidden: livePkg.hidden,
             originalPrice: was && was > livePkg.price ? was : undefined,

@@ -845,6 +845,8 @@
     "boy": "Boy",
     "girl": "Girl",
     "preview_as_help": "Changes the name and wording in the preview buttons (ع / EN / עב)",
+    "name_en": "Name in English",
+    "name_he": "Name in Hebrew",
     "paid_cash": "Paid — cash on delivery",
     "showcase_desc_v2": "Every book you've created — view it or build the print files.",
     "book_show": "View",
