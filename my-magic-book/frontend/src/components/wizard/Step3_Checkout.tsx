@@ -238,8 +238,13 @@ export default function Step3_Checkout({ onPrev }: Props) {
       setIsSuccess(true);
       toast.success(t('step5.success_toast'));
       setTimeout(() => { resetProgress(); navigate('/dashboard'); }, 3000);
-    } catch {
-      toast.error(t('step5.err_general'));
+    } catch (err: any) {
+      // The server rejects a few orders on purpose — a story with no child photo
+      // can't be illustrated, so checkout refuses it rather than taking the
+      // money. Those messages are written for the customer and say what to fix;
+      // swallowing them into "something went wrong" leaves them stuck.
+      const serverMsg = err?.response?.data?.message;
+      toast.error(serverMsg || t('step5.err_general'));
     } finally {
       setIsProcessing(false);
     }

@@ -21,6 +21,23 @@ export const createCheckout = async (req: Request, res: Response): Promise<void>
       return;
     }
 
+    // Every package illustrates the child, and the illustrator needs a reference
+    // photo — ImageGenerator throws "childPhotoUrl is empty" on the first page
+    // otherwise. Without this check the customer pays first and the build dies
+    // afterwards, which is exactly what happened to order 57E628CB: paid, then
+    // failed at 0% and sat there. Refuse the order instead of taking money for a
+    // book that cannot be produced. This is the backstop for the dashboard's
+    // "allow ordering without a photo" flag, which would otherwise reintroduce
+    // the same guaranteed failure the moment it is switched on.
+    if (!String(story.childPhotoUrl || '').trim()) {
+      res.status(400).json({
+        success: false,
+        message: 'نحتاج صورة الطفل لإنشاء الرسومات — ارجع إلى الخطوة الأولى وأضف صورة قبل إتمام الطلب.',
+        code: 'CHILD_PHOTO_REQUIRED',
+      });
+      return;
+    }
+
     // Resolve the price SERVER-SIDE from the chosen package so the client can't
     // tamper with it. Persist the package on the story — it decides the
     // generation style (color book vs line-art coloring book) after payment.

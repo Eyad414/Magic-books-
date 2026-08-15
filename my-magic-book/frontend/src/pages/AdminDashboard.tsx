@@ -4,7 +4,7 @@ import { adminApi } from '../api/adminApi';
 import { uploadApi } from '../api/uploadApi';
 import { objectPathToUrl } from '../api/mediaUrl';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail, User, Phone, Sparkles } from 'lucide-react';
+import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail, User, Phone, Sparkles, AlertCircle } from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
 import Modal from '../components/common/Modal';
 import ActionButton from '../components/common/ActionButton';
@@ -854,6 +854,15 @@ export default function AdminDashboard() {
                               ) : (
                                 <StatusBadge tone="neutral" icon={Clock}>{t('admin.bookpod_pending', 'بانتظار الإرسال')}</StatusBadge>
                               )}
+                              {/* A failed build looked identical to a healthy one
+                                  waiting to be sent — one order sat 19 days that
+                                  way. The reason was already on the order; it was
+                                  just never shown. */}
+                              {order.illustrationsStatus === 'failed' && (
+                                <StatusBadge tone="red" icon={AlertCircle}>
+                                  {t('admin.build_failed', 'فشل البناء')}
+                                </StatusBadge>
+                              )}
                               {order.storyId?.bookPackage === 'pro' ? (
                                 <div className="flex items-center gap-1 text-xs font-black px-2 py-0.5 rounded-lg bg-gradient-to-l from-gold-400 to-amber-500 text-dark-900 shadow-lg shadow-gold-500/40">
                                   ✨ PRO
@@ -867,6 +876,18 @@ export default function AdminDashboard() {
                                 {new Date(order.createdAt).toLocaleString(i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'he' ? 'he-IL' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' })}
                               </div>
                             </div>
+
+                            {/* The backend has always recorded WHY a build died
+                                (order.illustrationsError). Showing it turns a
+                                silent "failed" into something actionable. */}
+                            {order.illustrationsStatus === 'failed' && order.illustrationsError && (
+                              <div className="mb-2.5 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/25 flex items-start gap-2">
+                                <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                                <p className="font-arabic text-red-300 text-xs leading-relaxed break-words" dir="auto">
+                                  {order.illustrationsError}
+                                </p>
+                              </div>
+                            )}
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                               {/* Customer */}
@@ -1258,13 +1279,26 @@ export default function AdminDashboard() {
                   <p className="font-arabic text-white/45 text-xs mb-3">
                     {t('admin.wizard_flags_help', 'تحكّم بما يظهر للعميل في خطوات إنشاء القصة.')}
                   </p>
-                  <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2">
                     <FlagSwitch
                       on={!!settings.allowSkipPhoto}
                       label={t('admin.flag_skip_photo', 'السماح بالطلب بدون صورة الطفل')}
                       help={t('admin.flag_skip_photo_help', 'مطفأ = صورة الطفل إجبارية في الخطوة ١')}
                       onToggle={() => saveFlag('allowSkipPhoto', !settings.allowSkipPhoto)}
                     />
+                    {/* Turning this on used to guarantee a failed build: the
+                        illustrator needs a reference photo, so a photo-less order
+                        was paid for and then died at the first page. Checkout now
+                        refuses those orders, so the flag is safe but pointless —
+                        say so rather than letting it look usable. */}
+                    {!!settings.allowSkipPhoto && (
+                      <div className="w-full px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/25 flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                        <p className="font-arabic text-red-300 text-xs leading-relaxed">
+                          {t('admin.flag_skip_photo_warn', 'الرسومات تحتاج صورة الطفل. مع تفعيل هذا الخيار سيصل العميل إلى الدفع ثم يُرفض طلبه، لأن الكتاب لا يمكن إنشاؤه بدون صورة.')}
+                        </p>
+                      </div>
+                    )}
                     <FlagSwitch
                       on={!!settings.aiModeEnabled}
                       label={t('admin.flag_ai_mode', 'إظهار «بالذكاء الاصطناعي» في الخطوة ٢')}

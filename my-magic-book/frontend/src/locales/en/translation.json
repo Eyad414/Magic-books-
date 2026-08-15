@@ -820,7 +820,7 @@
     "confirm_build_only": "Build the book for review (generate images + prepare files) without sending to BookPod? (incurs AI generation cost)",
     "building_only": "Building the book for review… (may take a few minutes)",
     "built_for_review": "Book built ✅ Review it, then send to BookPod",
-    "build_failed": "Failed to build the book",
+    "build_failed": "Build failed",
     "wizard_flags_title": "Story wizard options",
     "flag_skip_photo": "Allow ordering without a child photo",
     "flag_skip_photo_help": "Off = the photo is required in step 1",
@@ -867,7 +867,8 @@
     "book_print_ok": "Print files ready ✅",
     "book_print_fail": "Couldn't prepare the print files",
     "book_demo": "Demo book",
-    "book_customer": "Customer book"
+    "book_customer": "Customer book",
+    "flag_skip_photo_warn": "The illustrations need the child's photo. With this on, a customer reaches payment and then has the order refused, because the book can't be made without one."
   },
   "title_page": {
     "presents": "Presented to",
