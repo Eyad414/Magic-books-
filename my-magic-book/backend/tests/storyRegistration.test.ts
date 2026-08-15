@@ -65,6 +65,23 @@ describe('story registration', () => {
       const count = Array.isArray(pages) ? pages.length : Object.keys(pages).length;
       expect(count, `stories.${id}.pages in ${lng} has ${count} pages, expected ${STORY_PAGES}`).toBe(STORY_PAGES);
     });
+
+    // A separate key from stories.<id>.title, and easy to forget: the title
+    // carries [NAME] and gender tokens, so the wizard's theme grid needs its own
+    // short name. Without it getThemeLabel falls back to the theme's Arabic
+    // `label`, and nine stories showed Arabic names on the English and Hebrew
+    // wizard — under "show more", where it went unnoticed.
+    it.each(LOCALES)('has a wizard theme name and description in %s', (lng) => {
+      const step2 = locale(lng).step2 || {};
+      expect(
+        step2[`theme_${id}`]?.trim(),
+        `step2.theme_${id} missing from ${lng} — the theme grid will show Arabic`,
+      ).toBeTruthy();
+      expect(
+        step2[`theme_${id}_desc`]?.trim(),
+        `step2.theme_${id}_desc missing from ${lng}`,
+      ).toBeTruthy();
+    });
   });
 
   it('has no frontend story without a backend scene template', () => {
