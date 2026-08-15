@@ -557,7 +557,8 @@
     "expiry_date": "Expiry Date",
     "secure_payment": "Secure and encrypted payment via global gateways",
     "pay_now": "Pay 💳 {price} ₪ Now",
-    "login_to_pay": "Login to Pay"
+    "login_to_pay": "Login to Pay",
+    "discount": "Discount"
   },
   "footer": {
     "description": "Create a personalized magic story for your child with AI. Stories printed and shipped to your door.",

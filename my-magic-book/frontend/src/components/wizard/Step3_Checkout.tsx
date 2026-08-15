@@ -583,7 +583,7 @@ export default function Step3_Checkout({ onPrev }: Props) {
                 <span className="font-arabic text-white text-sm">{basePrice} ₪</span>
               </div>
             </div>
-            {couponApplied && <Row label={`خصم ${discount}%`} value={`- ${basePrice - discountedBase} ₪`} />}
+            {couponApplied && <Row label={`${t('step5.discount', 'خصم')} ${discount}%`} value={`- ${basePrice - discountedBase} ₪`} />}
             <Row label={t('step5.delivery_fee')} value={deliveryFee === 0 ? `${t('step3.free_delivery', 'مجاني')} 🎉` : `${deliveryFee} ₪`} />
             <div className="mt-1 flex items-center justify-between rounded-xl bg-gold-500/15 border border-gold-500/40 px-3 py-2.5">
               <span className="font-arabic font-black text-white text-lg">{t('step5.total')}</span>
