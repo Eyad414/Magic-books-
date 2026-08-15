@@ -10,6 +10,17 @@ export interface ShowcaseCard {
   name: string;
   storyId?: string;
   emoji: string; // shown in the dashboard favorites card
+  /**
+   * The artwork shows a real child whose family has not agreed to it being
+   * public. Keeps the card off the Stories and home pages until it is ticked,
+   * while still listing it in the dashboard for the owner.
+   *
+   * This has to live on the CARD, not on the name. Privacy used to be inferred
+   * from the displayed name (PRIVATE_DEMO_CHILDREN), so renaming a card to an
+   * invented name silently published it — the label changed but the child's
+   * face on the cover did not.
+   */
+  private?: boolean;
 }
 
 /** Badge on the home-page card. Absent = no badge. */
@@ -35,12 +46,18 @@ export const PRIVATE_DEMO_CHILDREN = new Set(['Lora', 'Sara', 'Julia']);
  */
 export function demoOnStoriesPage(card: ShowcaseCard, vis: DemoVisibility): boolean {
   const flag = vis[card.key]?.stories;
-  return PRIVATE_DEMO_CHILDREN.has(card.name) ? flag === true : flag !== false;
+  return isPrivateCard(card) ? flag === true : flag !== false;
 }
 
 /** Demo cards only reach the home page when explicitly ticked. */
 export function demoOnHomePage(card: ShowcaseCard, vis: DemoVisibility): boolean {
   return vis[card.key]?.home === true;
+}
+
+/** A card needing permission before it can be public — by flag, or by the
+ *  older name-based rule kept for the cards still using a real child's name. */
+export function isPrivateCard(card: ShowcaseCard): boolean {
+  return card.private === true || PRIVATE_DEMO_CHILDREN.has(card.name);
 }
 
 export const SHOWCASE_CARDS: ShowcaseCard[] = [
@@ -49,32 +66,33 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   { key: 'baha-zoo',        themeId: 'zoo_adventure',   name: 'Baha',  emoji: '🦁' },
   { key: 'baha-magicbook',  themeId: 'magic_book',      name: 'Baha',  storyId: 'theme_magic_book', emoji: '📖' },
   { key: 'lora-zoo',        themeId: 'zoo_adventure',   name: 'Lora',  storyId: '6a3bbaf645b418d21337de09', emoji: '🦁' },
-  { key: 'tala-toycity',    themeId: 'toy_city',        name: 'Tala',  emoji: '🤖' },
+  { key: 'tala-toycity',    themeId: 'toy_city',        name: 'Tala', private: true,  emoji: '🤖' },
   { key: 'adam-coloring',   themeId: 'zoo_coloring',    name: 'Adam',  emoji: '🖍️' },
   { key: 'ahmad-coloring',  themeId: 'space_coloring',  name: 'Ahmad', emoji: '🖍️' },
   { key: 'yosef-coloring',  themeId: 'school_coloring', name: 'Yosef', emoji: '🖍️' },
   // Themes that already had demo artwork in storage but no card, so nothing
   // listed them: the two new stories plus pirate and school.
   //
-  // Two rules when picking a demo name here:
-  //   1. Never a real customer's name. Lora, Sara and Julia are real children
-  //      (see PRIVATE_DEMO_CHILDREN), so cards carrying those names stay hidden
-  //      until someone ticks them — which is why half the catalogue was
-  //      invisible on the Stories page.
-  //   2. Match the gender of the child in that theme's artwork. The name drives
+  // Adding a card here:
+  //   1. `private: true` if the cover art shows a real child whose family has
+  //      not agreed to it being public. Judge the ARTWORK, not the name — every
+  //      card below whose cover is a real girl is marked private, whatever name
+  //      it displays. An invented name over a real child's face is still that
+  //      child on the public page.
+  //   2. Match the displayed name to the gender in that artwork. The name drives
   //      detectGender, which resolves the story's {masc|fem} tokens, so a boy's
   //      name over a picture of a girl gives masculine text on a girl's cover.
-  { key: 'lara-dinosaur',   themeId: 'dinosaur_adventure', name: 'Lara',  emoji: '🦕' },
-  { key: 'salma-ocean',     themeId: 'ocean_adventure',    name: 'Salma', emoji: '🐋' },
+  { key: 'lara-dinosaur',   themeId: 'dinosaur_adventure', name: 'Lara', private: true,  emoji: '🦕' },
+  { key: 'salma-ocean',     themeId: 'ocean_adventure',    name: 'Salma', private: true, emoji: '🐋' },
   { key: 'baha-pirate',     themeId: 'pirate_adventure',   name: 'Baha',  emoji: '🏴‍☠️' },
   { key: 'baha-school',     themeId: 'school_hero',        name: 'Baha',  emoji: '🏫' },
   { key: 'ahmad-world',      themeId: 'world_adventure',    name: 'Ahmad',  emoji: '🌍' },
-  { key: 'maya-deepsea',   themeId: 'deep_sea',           name: 'Maya', emoji: '🐬' },
+  { key: 'maya-deepsea',   themeId: 'deep_sea',           name: 'Maya', private: true, emoji: '🐬' },
   { key: 'baha-chef',       themeId: 'little_chef',        name: 'Baha',  emoji: '🍳' },
   { key: 'baha-castle',     themeId: 'castle_guardian',    name: 'Baha',  emoji: '🏰' },
-  { key: 'yara-kinder',     themeId: 'happy_kindergarten', name: 'Yara',  emoji: '🧸' },
-  { key: 'lina-firstday',   themeId: 'first_day_school',   name: 'Lina',  emoji: '🎒' },
-  { key: 'dana-grade1',    themeId: 'first_grade',        name: 'Dana', emoji: '✏️' },
+  { key: 'yara-kinder',     themeId: 'happy_kindergarten', name: 'Yara', private: true,  emoji: '🧸' },
+  { key: 'lina-firstday',   themeId: 'first_day_school',   name: 'Lina', private: true,  emoji: '🎒' },
+  { key: 'dana-grade1',    themeId: 'first_grade',        name: 'Dana', private: true, emoji: '✏️' },
   { key: 'baha-future',     themeId: 'future_hero',        name: 'Baha',  emoji: '🚀' },
-  { key: 'maryam-engineer',   themeId: 'little_engineer',    name: 'Maryam',  emoji: '🛠️' },
+  { key: 'maryam-engineer',   themeId: 'little_engineer',    name: 'Maryam', private: true,  emoji: '🛠️' },
 ];
