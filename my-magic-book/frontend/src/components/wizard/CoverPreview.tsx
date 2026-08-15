@@ -91,7 +91,10 @@ export default function CoverPreview({ childName, childGender, childPhotoUrl, th
 
   // The exact title the printed cover carries: the theme's story title with the
   // child's name and gender tokens resolved.
-  const displayName = localizeName(childName || '', i18n.language);
+  // The BOOK's language, not the site's — this title has to match the cover the
+  // server renders, and that one follows `language`. Reading i18n.language here
+  // meant an English UI showed "Ayad" over a cover printed "اياد".
+  const displayName = localizeName(childName || '', language);
   const gender = resolveGender(childName, childGender === 'female' ? 'female' : 'male');
   const rawTitle = (t(`stories.${theme.replace(/_(real|photoreal|cartoon|pr|hd)$/, '')}.title`, '') as string) || '';
   const storyTitle = applyGenderTokens(rawTitle.replace(/\[NAME\]/gi, displayName), gender);

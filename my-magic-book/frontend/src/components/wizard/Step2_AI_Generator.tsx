@@ -348,7 +348,9 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
             in ready-story mode the text comes from our own written stories. */}
         <p className="font-arabic text-white/50 text-sm">
           {t(aiModeEnabled ? 'step2.desc' : 'step2.desc_template')
-            .replace('{name}', localizeName(progress.childDetails.childName || '', i18n.language))}
+            // form.language, not the site language: this line promises how the
+            // BOOK will spell the name, and that follows the story language.
+            .replace('{name}', localizeName(progress.childDetails.childName || '', form.language))}
         </p>
       </div>
 

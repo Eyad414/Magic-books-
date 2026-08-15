@@ -3,7 +3,6 @@ import { useStoryProgress } from '../../context/StoryProgressContext';
 import MagicButton from '../common/MagicButton';
 import { User, Baby, ChevronLeft, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { localizeName } from '../../utils/translit';
 import { uploadApi } from '../../api/uploadApi';
 import { useSiteFlags } from '../../hooks/useSiteFlags';
 
@@ -12,7 +11,7 @@ interface Props { onNext: () => void; }
 
 export default function Step1_ChildDetails({ onNext }: Props) { // To move to the next page in the steps
   const { progress, setChildDetails } = useStoryProgress(); // To save User Choices in the steps
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   // The photo is required unless the owner re-enables "order without a photo".
   const { allowSkipPhoto } = useSiteFlags();
 
@@ -213,9 +212,14 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
       {form.childName && (
         <div className="p-4 rounded-xl bg-magic-500/10 border border-magic-500/20">
           <p className="font-arabic text-white/70 text-sm text-center">
+            {/* The name the parent typed, exactly as typed. Transliterating it
+                here guessed wrong ("اياد" came back as "Ayad", not Eyad or
+                Iyad) and guessed against the wrong language anyway — the story
+                language isn't chosen until step 2, so the UI language says
+                nothing about how the book should spell the name. */}
             {form.childGender === 'male'
-              ? <>{t('step1.preview_male')}<strong className="text-gold-500">{localizeName(form.childName, i18n.language)}</strong>{t('step1.preview_male_suffix')}</>
-              : <>{t('step1.preview_female')}<strong className="text-gold-500">{localizeName(form.childName, i18n.language)}</strong>{t('step1.preview_female_suffix')}</>
+              ? <>{t('step1.preview_male')}<strong className="text-gold-500">{form.childName}</strong>{t('step1.preview_male_suffix')}</>
+              : <>{t('step1.preview_female')}<strong className="text-gold-500">{form.childName}</strong>{t('step1.preview_female_suffix')}</>
             }
           </p>
         </div>
