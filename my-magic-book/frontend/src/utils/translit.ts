@@ -39,6 +39,9 @@ const NAMES: Forms[] = [
   { en: 'Dana', ar: 'دانة', he: 'דאנה' },
   { en: 'Lina', ar: 'لينا', he: 'לינה' },
   { en: 'Karim', ar: 'كريم', he: 'כרים' },
+  // Already recognised as a girl's name by utils/gender, but with no exact
+  // spelling here it fell to the phonetic fallback and came out wrong.
+  { en: 'Tala', ar: 'تالا', he: 'טאלה' },
 ];
 
 const norm = (s: string) => s.trim().toLowerCase();

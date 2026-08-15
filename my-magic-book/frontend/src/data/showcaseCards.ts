@@ -49,8 +49,8 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   { key: 'baha-zoo',        themeId: 'zoo_adventure',   name: 'Baha',  emoji: '🦁' },
   { key: 'baha-magicbook',  themeId: 'magic_book',      name: 'Baha',  storyId: 'theme_magic_book', emoji: '📖' },
   { key: 'lora-zoo',        themeId: 'zoo_adventure',   name: 'Lora',  storyId: '6a3bbaf645b418d21337de09', emoji: '🦁' },
-  { key: 'lora-toycity',    themeId: 'toy_city',        name: 'Lora',  emoji: '🤖' },
-  { key: 'lora-coloring',   themeId: 'zoo_coloring',    name: 'Lora',  emoji: '🖍️' },
+  { key: 'tala-toycity',    themeId: 'toy_city',        name: 'Tala',  emoji: '🤖' },
+  { key: 'adam-coloring',   themeId: 'zoo_coloring',    name: 'Adam',  emoji: '🖍️' },
   { key: 'ahmad-coloring',  themeId: 'space_coloring',  name: 'Ahmad', emoji: '🖍️' },
   { key: 'yosef-coloring',  themeId: 'school_coloring', name: 'Yosef', emoji: '🖍️' },
   // Themes that already had demo artwork in storage but no card, so nothing
@@ -64,8 +64,8 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   //   2. Match the gender of the child in that theme's artwork. The name drives
   //      detectGender, which resolves the story's {masc|fem} tokens, so a boy's
   //      name over a picture of a girl gives masculine text on a girl's cover.
-  { key: 'sara-dinosaur',   themeId: 'dinosaur_adventure', name: 'Sara',  emoji: '🦕' },
-  { key: 'julia-ocean',     themeId: 'ocean_adventure',    name: 'Julia', emoji: '🐋' },
+  { key: 'lara-dinosaur',   themeId: 'dinosaur_adventure', name: 'Lara',  emoji: '🦕' },
+  { key: 'salma-ocean',     themeId: 'ocean_adventure',    name: 'Salma', emoji: '🐋' },
   { key: 'baha-pirate',     themeId: 'pirate_adventure',   name: 'Baha',  emoji: '🏴‍☠️' },
   { key: 'baha-school',     themeId: 'school_hero',        name: 'Baha',  emoji: '🏫' },
   { key: 'ahmad-world',      themeId: 'world_adventure',    name: 'Ahmad',  emoji: '🌍' },
