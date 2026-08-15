@@ -55,17 +55,26 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   { key: 'yosef-coloring',  themeId: 'school_coloring', name: 'Yosef', emoji: '🖍️' },
   // Themes that already had demo artwork in storage but no card, so nothing
   // listed them: the two new stories plus pirate and school.
+  //
+  // Two rules when picking a demo name here:
+  //   1. Never a real customer's name. Lora, Sara and Julia are real children
+  //      (see PRIVATE_DEMO_CHILDREN), so cards carrying those names stay hidden
+  //      until someone ticks them — which is why half the catalogue was
+  //      invisible on the Stories page.
+  //   2. Match the gender of the child in that theme's artwork. The name drives
+  //      detectGender, which resolves the story's {masc|fem} tokens, so a boy's
+  //      name over a picture of a girl gives masculine text on a girl's cover.
   { key: 'sara-dinosaur',   themeId: 'dinosaur_adventure', name: 'Sara',  emoji: '🦕' },
   { key: 'julia-ocean',     themeId: 'ocean_adventure',    name: 'Julia', emoji: '🐋' },
   { key: 'baha-pirate',     themeId: 'pirate_adventure',   name: 'Baha',  emoji: '🏴‍☠️' },
   { key: 'baha-school',     themeId: 'school_hero',        name: 'Baha',  emoji: '🏫' },
-  { key: 'sara-world',      themeId: 'world_adventure',    name: 'Sara',  emoji: '🌍' },
-  { key: 'julia-deepsea',   themeId: 'deep_sea',           name: 'Julia', emoji: '🐬' },
+  { key: 'ahmad-world',      themeId: 'world_adventure',    name: 'Ahmad',  emoji: '🌍' },
+  { key: 'maya-deepsea',   themeId: 'deep_sea',           name: 'Maya', emoji: '🐬' },
   { key: 'baha-chef',       themeId: 'little_chef',        name: 'Baha',  emoji: '🍳' },
   { key: 'baha-castle',     themeId: 'castle_guardian',    name: 'Baha',  emoji: '🏰' },
-  { key: 'lora-kinder',     themeId: 'happy_kindergarten', name: 'Lora',  emoji: '🧸' },
-  { key: 'sara-firstday',   themeId: 'first_day_school',   name: 'Sara',  emoji: '🎒' },
-  { key: 'julia-grade1',    themeId: 'first_grade',        name: 'Julia', emoji: '✏️' },
+  { key: 'yara-kinder',     themeId: 'happy_kindergarten', name: 'Yara',  emoji: '🧸' },
+  { key: 'lina-firstday',   themeId: 'first_day_school',   name: 'Lina',  emoji: '🎒' },
+  { key: 'dana-grade1',    themeId: 'first_grade',        name: 'Dana', emoji: '✏️' },
   { key: 'baha-future',     themeId: 'future_hero',        name: 'Baha',  emoji: '🚀' },
-  { key: 'lora-engineer',   themeId: 'little_engineer',    name: 'Lora',  emoji: '🛠️' },
+  { key: 'maryam-engineer',   themeId: 'little_engineer',    name: 'Maryam',  emoji: '🛠️' },
 ];

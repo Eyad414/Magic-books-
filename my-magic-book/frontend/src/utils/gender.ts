@@ -13,11 +13,16 @@ const FEMALE_NAMES = new Set(
     'ميسم', 'رهف', 'جودي', 'ملك', 'ريناد', 'لمار', 'دانة', 'دانه', 'جوري', 'شهد',
     'رزان', 'لينا', 'مايا', 'ميار', 'تولين', 'سما', 'يارا', 'ياره', 'ليان', 'روان',
     'هيا', 'وعد', 'غلا', 'رتاج', 'بيسان', 'نور', 'إلين', 'ايلين', 'سيدرا', 'كادي',
+    // Girl names that utils/translit knows but this list was missing, so they
+    // fell through to the 'male' default and rendered a whole book in masculine
+    // Arabic for a girl.
+    'مريم', 'سلمى', 'لارا', 'لورا',
     // transliterations
     'sara', 'sarah', 'reem', 'rem', 'rima', 'reema', 'lin', 'lyn', 'jana', 'mira',
     'tala', 'celine', 'maysam', 'rahaf', 'judy', 'malak', 'renad', 'lamar', 'dana',
     'joury', 'shahd', 'razan', 'lina', 'maya', 'mayar', 'sama', 'yara', 'layan',
     'rawan', 'haya', 'noor', 'nour', 'sidra', 'kadi',
+    'maryam', 'mariam', 'salma', 'lara', 'lora', 'laura',
   ].map((n) => n.toLowerCase())
 );
 
