@@ -1,5 +1,7 @@
 import { Router } from 'express';
-import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam, getSettings, updateSettings, getAllOrders, buildOrderBook, getOrderBuildStatus, reRenderOrderFiles, reRenderOrderColoring, submitOrderColoring, printBook, printBookSubmit, generatePreviewIllustrations, generatePhotorealPreview, generateColoringPreview, listMessages, deleteMessage, getCustomerByEmail, checkPayments } from '../controllers/adminController';
+import multer from 'multer';
+import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam, getSettings, updateSettings, getAllOrders, buildOrderBook, getOrderBuildStatus, reRenderOrderFiles, reRenderOrderColoring, submitOrderColoring, printBook, printBookSubmit, generatePreviewIllustrations, generatePhotorealPreview, generateColoringPreview,
+  importBookPdf, listMessages, deleteMessage, getCustomerByEmail, checkPayments } from '../controllers/adminController';
 import { protect, adminOnly } from '../utils/authMiddleware';
 
 const router = Router();
@@ -33,5 +35,10 @@ router.put('/settings', updateSettings);
 router.post('/themes/:themeId/generate-illustrations', generatePreviewIllustrations);
 router.post('/themes/:themeId/generate-photoreal', generatePhotorealPreview);
 router.post('/themes/:themeId/generate-coloring', generateColoringPreview);
+
+// Re-impose a supplied book PDF onto a chosen trim. 60MB: a scanned interior is
+// far heavier than the 10MB child photos the other upload route accepts.
+const pdfUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 60 * 1024 * 1024 } });
+router.post('/import-book', pdfUpload.single('file'), importBookPdf);
 
 export default router;

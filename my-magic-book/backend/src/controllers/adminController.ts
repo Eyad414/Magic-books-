@@ -10,6 +10,8 @@ import { generateIllustration, COST_PER_IMAGE_USD } from '../services/ImageGener
 import { buildIllustrationPrompt, buildPhotorealPrompt, buildCoverPrompt } from '../services/promptBuilder';
 import { swapFace } from '../services/FaceSwapService';
 import { buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, COLORING_PAGES, SCENE_TEMPLATES } from '../services/sceneTemplates';
+import { reimposePdf } from '../services/BookImportService';
+import { uploadBuffer, pdfFolderPath } from '../services/StorageService';
 
 // The kid photo (already in the bucket) used as the reference face for ADMIN
 // PREVIEW generation only. Real customer orders use the customer's own photo.
@@ -1295,5 +1297,57 @@ export const generatePhotorealPreview = async (req: Request, res: Response): Pro
   } catch (err: any) {
     console.error('generatePhotorealPreview failed:', err);
     res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+/**
+ * Re-impose a supplied PDF onto a chosen trim size and store it, print-ready.
+ *
+ * For books the owner already has as a finished file — their own titles, a
+ * public-domain work, or a customer's manuscript they print as a service. The
+ * generated Magic Fanoos books do not come through here; PrintService lays
+ * those out from scratch.
+ *
+ * Deliberately does no rights checking: it cannot. Whether a given PDF may be
+ * reprinted is the owner's call, and the dashboard says so next to the upload.
+ */
+export const importBookPdf = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const file = (req as any).file;
+    if (!file?.buffer?.length) {
+      res.status(400).json({ success: false, message: 'لم يتم استلام ملف PDF.' });
+      return;
+    }
+    if (file.mimetype && !String(file.mimetype).includes('pdf')) {
+      res.status(400).json({ success: false, message: 'الملف ليس PDF.' });
+      return;
+    }
+
+    const widthMm = Number(req.body?.widthMm) || 150;
+    const heightMm = Number(req.body?.heightMm) || 220;
+    const bleedMm = req.body?.bleedMm !== undefined ? Number(req.body.bleedMm) : 3;
+    const title = String(req.body?.title || 'book').trim().replace(/[^\w\u0600-\u06FF-]+/g, '_').slice(0, 60) || 'book';
+
+    const result = await reimposePdf(file.buffer, { widthMm, heightMm, bleedMm });
+
+    const objectPath = pdfFolderPath('imported', `${Date.now()}_${title}_${widthMm}x${heightMm}.pdf`);
+    const stored = await uploadBuffer(result.pdf, objectPath, 'application/pdf');
+
+    res.json({
+      success: true,
+      url: stored.signedUrl,
+      objectPath,
+      pageCount: result.pageCount,
+      sourceWidthMm: result.sourceWidthMm,
+      sourceHeightMm: result.sourceHeightMm,
+      widthMm, heightMm, bleedMm,
+      fitScale: result.fitScale,
+      // The dashboard warns on this: different proportions mean the margins
+      // move, which the owner should see before sending it to print.
+      aspectChanged: result.aspectChanged,
+    });
+  } catch (err: any) {
+    console.error('[importBookPdf]', err?.message || err);
+    res.status(500).json({ success: false, message: err?.message || 'فشل تجهيز الملف.' });
   }
 };

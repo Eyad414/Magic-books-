@@ -900,7 +900,20 @@
     "coloring_no_pages": "This story has no pages to derive scenes from.",
     "coloring_filled": "Filled {{n}} scenes from the story — review them, then press generate.",
     "coloring_done": "Colouring book generated — {{n}} images, about ${{c}}.",
-    "coloring_hint": "← Start with \\u201cFill from the story\\u201d, then review the scenes."
+    "coloring_hint": "← Start with \\u201cFill from the story\\u201d, then review the scenes.",
+    "import_title": "Import a finished book",
+    "import_help": "Upload a finished book as PDF and pick the trim — we re-impose it with 3mm print bleed and hand back a print-ready file.",
+    "import_rights": "Only for your own books, or one you have permission to print. Copyright is your responsibility.",
+    "import_file": "Book file (PDF)",
+    "import_trim": "Trim (mm)",
+    "import_go": "Prepare for print",
+    "import_working": "Preparing the file for print…",
+    "import_working_short": "Preparing…",
+    "import_pick_file": "Choose a PDF first.",
+    "import_done": "Ready — {{n}} pages at {{w}}×{{h}} mm.",
+    "import_result": "{{n}} pages · source {{sw}}×{{sh}} mm → {{w}}×{{h}} mm (+3mm bleed)",
+    "import_aspect": "The page proportions differ from the source, so the margins shift a little. Check the file before printing.",
+    "import_download": "Download the print file"
   },
   "title_page": {
     "presents": "Presented to",

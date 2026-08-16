@@ -139,6 +139,25 @@ export const adminApi = {
   },
   // Coloring book: colored cover + 16 line-art pages + colored back cover, from
   // the admin-typed scenes + an uploaded reference photo. Long-running (~3 min).
+  /** Re-impose a supplied book PDF onto a chosen trim, print-ready. */
+  importBook: async (
+    file: File,
+    opts: { widthMm: number; heightMm: number; bleedMm?: number; title?: string },
+  ) => {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('widthMm', String(opts.widthMm));
+    form.append('heightMm', String(opts.heightMm));
+    if (opts.bleedMm !== undefined) form.append('bleedMm', String(opts.bleedMm));
+    if (opts.title) form.append('title', opts.title);
+    const response = await axiosInstance.post('/admin/import-book', form, {
+      // A scanned interior is big and every page is redrawn — the default
+      // timeout gives up long before a 118-page book is done.
+      timeout: 5 * 60 * 1000,
+    });
+    return response.data;
+  },
+
   generateThemeColoring: async (themeId: string, opts: { coloringScenes: string[]; coloringCoverScene?: string; coloringBackCoverScene?: string; referencePhoto?: string; childName?: string; childGender?: 'male' | 'female' }) => {
     const response = await axiosInstance.post(
       `/admin/themes/${themeId}/generate-coloring`,

@@ -5,7 +5,7 @@ import { adminApi } from '../api/adminApi';
 import { uploadApi } from '../api/uploadApi';
 import { objectPathToUrl } from '../api/mediaUrl';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail, User, Phone, Sparkles, AlertCircle, Search } from 'lucide-react';
+import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail, User, Phone, Sparkles, AlertCircle, Search, Upload } from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
 import Modal from '../components/common/Modal';
 import ActionButton from '../components/common/ActionButton';
@@ -347,6 +347,39 @@ export default function AdminDashboard() {
       toast.error(err?.response?.data?.message || err.message || 'فشل التوليد', { id: toastId });
     } finally {
       setGeneratingThemeId(null);
+    }
+  };
+
+  // ── Import a finished book PDF and re-impose it onto a chosen trim ───────
+  // For books the owner already has as a file. Rights are the owner's call —
+  // the panel says so — because nothing here can check them.
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importTrim, setImportTrim] = useState({ w: 150, h: 220 });
+  const [importBusy, setImportBusy] = useState(false);
+  const [importResult, setImportResult] = useState<any>(null);
+
+  const handleImportBook = async () => {
+    if (!importFile) { toast.error(t('admin.import_pick_file', 'اختر ملف PDF أولاً.')); return; }
+    setImportBusy(true);
+    setImportResult(null);
+    const toastId = toast.loading(t('admin.import_working', 'جاري تجهيز الملف للطباعة...'));
+    try {
+      const res = await adminApi.importBook(importFile, {
+        widthMm: importTrim.w, heightMm: importTrim.h, bleedMm: 3,
+        title: importFile.name.replace(/\.pdf$/i, ''),
+      });
+      if (res.success) {
+        setImportResult(res);
+        toast.success(t('admin.import_done', 'جاهز — {{n}} صفحة بمقاس {{w}}×{{h}} مم.', {
+          n: res.pageCount, w: res.widthMm, h: res.heightMm,
+        }), { id: toastId });
+      } else {
+        toast.error(res.message || 'فشل التجهيز', { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || 'فشل التجهيز', { id: toastId });
+    } finally {
+      setImportBusy(false);
     }
   };
 
@@ -1356,6 +1389,91 @@ export default function AdminDashboard() {
             ) : tab === 'stories' ? (
               <div>
                 <h2 className="font-arabic font-bold text-xl text-white mb-6">{t('admin.stories_title')}</h2>
+
+                {/* ── Import a finished book PDF onto a print trim ───────── */}
+                <div className="mb-8 p-4 rounded-2xl bg-white/[0.04] border border-white/10">
+                  <h3 className="font-arabic font-black text-white text-base mb-1 flex items-center gap-2">
+                    <Upload className="w-4 h-4 text-gold-500" /> {t('admin.import_title', 'استيراد كتاب جاهز')}
+                  </h3>
+                  <p className="font-arabic text-white/45 text-xs mb-3">
+                    {t('admin.import_help', 'ارفع ملف PDF لكتاب جاهز، واختر المقاس المطلوب — نعيد ترتيبه بحواف طباعة ٣ مم ونعطيك ملفاً جاهزاً للطباعة.')}
+                  </p>
+
+                  {/* Nothing here can check who owns a book, so say it plainly
+                      instead of implying the tool vetted anything. */}
+                  <p className="font-arabic text-amber-300/90 text-[11px] mb-3 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/25">
+                    ⚠️ {t('admin.import_rights', 'استخدمه فقط لكتبك أو لكتاب تملك إذناً بطباعته. حقوق النشر مسؤوليتك.')}
+                  </p>
+
+                  <div className="flex flex-wrap items-end gap-3">
+                    <div>
+                      <label className="block font-arabic text-white/60 text-xs mb-1">{t('admin.import_file', 'ملف الكتاب (PDF)')}</label>
+                      <input
+                        type="file"
+                        accept="application/pdf,.pdf"
+                        onChange={(e) => { setImportFile(e.target.files?.[0] || null); setImportResult(null); }}
+                        className="text-xs text-white/60 file:mr-3 file:rounded-lg file:border-0 file:bg-gold-500/20 file:text-gold-300 file:px-3 file:py-1.5"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-arabic text-white/60 text-xs mb-1">{t('admin.import_trim', 'المقاس (مم)')}</label>
+                      <div className="flex items-center gap-1">
+                        <input type="number" value={importTrim.w} onChange={(e) => setImportTrim({ ...importTrim, w: Number(e.target.value) })} className="magic-input !py-1.5 text-sm max-w-[70px] text-center" />
+                        <span className="text-white/30">×</span>
+                        <input type="number" value={importTrim.h} onChange={(e) => setImportTrim({ ...importTrim, h: Number(e.target.value) })} className="magic-input !py-1.5 text-sm max-w-[70px] text-center" />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {[[150, 220], [220, 220]].map(([w, h]) => (
+                        <button
+                          key={`${w}x${h}`}
+                          type="button"
+                          onClick={() => setImportTrim({ w, h })}
+                          className={`px-2 py-1 rounded-lg font-arabic text-[11px] border transition ${
+                            importTrim.w === w && importTrim.h === h
+                              ? 'bg-gold-500/20 border-gold-500/50 text-gold-300'
+                              : 'bg-white/5 border-white/10 text-white/50 hover:text-white'
+                          }`}
+                        >
+                          {w}×{h}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={handleImportBook}
+                      disabled={importBusy || !importFile}
+                      className="flex items-center gap-2 px-4 py-2 bg-gold-500 text-[#0a1628] rounded-xl font-arabic font-bold text-sm hover:bg-gold-400 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      📐 {importBusy ? t('admin.import_working_short', 'جاري التجهيز...') : t('admin.import_go', 'جهّز للطباعة')}
+                    </button>
+                  </div>
+
+                  {importResult && (
+                    <div className="mt-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/25 space-y-2">
+                      <p className="font-arabic text-emerald-300 text-xs">
+                        ✅ {t('admin.import_result', '{{n}} صفحة · الأصل {{sw}}×{{sh}} مم ← {{w}}×{{h}} مم (+٣ مم حواف)', {
+                          n: importResult.pageCount, sw: importResult.sourceWidthMm, sh: importResult.sourceHeightMm,
+                          w: importResult.widthMm, h: importResult.heightMm,
+                        })}
+                      </p>
+                      {/* The margins move when the proportions differ — better
+                          said here than discovered at the printer. */}
+                      {importResult.aspectChanged && (
+                        <p className="font-arabic text-amber-300/90 text-[11px]">
+                          ⚠️ {t('admin.import_aspect', 'نسبة الصفحة اختلفت عن الأصل، لذا ستتغيّر الهوامش قليلاً. راجع الملف قبل الطباعة.')}
+                        </p>
+                      )}
+                      <a
+                        href={importResult.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-arabic text-xs transition"
+                      >
+                        <Download className="w-3.5 h-3.5" /> {t('admin.import_download', 'تحميل الملف الجاهز')}
+                      </a>
+                    </div>
+                  )}
+                </div>
 
                 {/* ── Wizard switches: features hidden from customers until the
                        owner turns them back on. Saved on click. Deliberately
