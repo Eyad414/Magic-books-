@@ -913,7 +913,18 @@
     "import_done": "מוכן — {{n}} עמודים במידה {{w}}×{{h}} מ\"מ.",
     "import_result": "{{n}} עמודים · מקור {{sw}}×{{sh}} מ\"מ ← {{w}}×{{h}} מ\"מ (+3 מ\"מ בליד)",
     "import_aspect": "יחס העמוד שונה מהמקור, ולכן השוליים יזוזו מעט. בדקו את הקובץ לפני ההדפסה.",
-    "import_download": "הורדת קובץ הדפוס"
+    "import_download": "הורדת קובץ הדפוס",
+    "import_send_title": "שליחה ל-BookPod להדפסה — הכריכה היא עמוד 1, הפנים {{n}} עמודים, איסוף מהדפוס.",
+    "import_cover_note": "הכריכה הנשלחת היא החזית בלבד (בלי שדרה או גב). אם יש לכם כריכה מלאה, שלחו אותה ישירות ל-BookPod.",
+    "import_recipient": "שם המקבל",
+    "import_phone": "טלפון",
+    "import_qty": "עותקים",
+    "import_send_btn": "שליחה ל-BookPod",
+    "import_need_contact": "הזינו שם מקבל וטלפון.",
+    "import_confirm_send": "לשלוח {{n}} עותקים ל-BookPod להדפסה? זו הדפסה אמיתית בתשלום.",
+    "import_sending": "שולחים ל-BookPod…",
+    "import_sent": "נשלח — מספר הזמנה ב-BookPod: {{id}}",
+    "import_job": "מספר הזמנה ב-BookPod: {{id}} · {{n}} עותקים"
   },
   "title_page": {
     "presents": "מוגש ל",

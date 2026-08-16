@@ -913,7 +913,18 @@
     "import_done": "Ready — {{n}} pages at {{w}}×{{h}} mm.",
     "import_result": "{{n}} pages · source {{sw}}×{{sh}} mm → {{w}}×{{h}} mm (+3mm bleed)",
     "import_aspect": "The page proportions differ from the source, so the margins shift a little. Check the file before printing.",
-    "import_download": "Download the print file"
+    "import_download": "Download the print file",
+    "import_send_title": "Send to BookPod for printing — cover is page 1, interior {{n}} pages, collected from the printer.",
+    "import_cover_note": "The cover sent is the front face only (no spine or back). If you have a full wraparound, send that to BookPod directly.",
+    "import_recipient": "Recipient name",
+    "import_phone": "Phone",
+    "import_qty": "Copies",
+    "import_send_btn": "Send to BookPod",
+    "import_need_contact": "Enter the recipient's name and phone.",
+    "import_confirm_send": "Send {{n}} copies to BookPod for printing? This is a real, billable print run.",
+    "import_sending": "Sending to BookPod…",
+    "import_sent": "Sent — BookPod order number: {{id}}",
+    "import_job": "BookPod order number: {{id}} · {{n}} copies"
   },
   "title_page": {
     "presents": "Presented to",

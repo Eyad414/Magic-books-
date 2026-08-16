@@ -913,7 +913,18 @@
     "import_done": "جاهز — {{n}} صفحة بمقاس {{w}}×{{h}} مم.",
     "import_result": "{{n}} صفحة · الأصل {{sw}}×{{sh}} مم ← {{w}}×{{h}} مم (+٣ مم حواف)",
     "import_aspect": "نسبة الصفحة اختلفت عن الأصل، لذا ستتغيّر الهوامش قليلاً. راجع الملف قبل الطباعة.",
-    "import_download": "تحميل الملف الجاهز"
+    "import_download": "تحميل الملف الجاهز",
+    "import_send_title": "إرسال إلى BookPod للطباعة — الغلاف الصفحة ١، والداخل {{n}} صفحة، استلام من المطبعة.",
+    "import_cover_note": "الغلاف المرسل هو الوجه الأمامي فقط (بدون كعب أو ظهر). إن كان لديك غلاف كامل جهّزه وأرسله من BookPod مباشرة.",
+    "import_recipient": "اسم المستلم",
+    "import_phone": "رقم الهاتف",
+    "import_qty": "عدد النسخ",
+    "import_send_btn": "إرسال إلى BookPod",
+    "import_need_contact": "أدخل اسم المستلم ورقم الهاتف.",
+    "import_confirm_send": "إرسال {{n}} نسخة إلى BookPod للطباعة؟ هذه طباعة حقيقية ومدفوعة.",
+    "import_sending": "جاري الإرسال إلى BookPod...",
+    "import_sent": "تم الإرسال — رقم الطلب لدى BookPod: {{id}}",
+    "import_job": "رقم الطلب لدى BookPod: {{id}} · {{n}} نسخة"
   },
   "title_page": {
     "presents": "يُقدّم لـ",

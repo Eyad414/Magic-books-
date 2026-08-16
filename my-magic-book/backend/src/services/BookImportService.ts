@@ -105,3 +105,36 @@ export async function reimposePdf(input: Buffer, opts: ReimposeOpts): Promise<Re
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
+
+/**
+ * Split a re-imposed book into the two files BookPod's API wants: a cover and
+ * an interior. Their create-book step takes them separately — one combined PDF
+ * is not something it accepts.
+ *
+ * Without a supplied cover we take page 1, which is what a single-file export
+ * of a finished book almost always is. That is a FRONT cover only: a printer's
+ * wraparound also carries the spine and back, so a book sent this way gets the
+ * front artwork and nothing on the spine. Said plainly in the dashboard rather
+ * than discovered on the delivered copies.
+ */
+export async function splitCoverInterior(
+  reimposed: Buffer,
+): Promise<{ cover: Buffer; interior: Buffer; interiorPages: number }> {
+  const src = await PDFDocument.load(reimposed, { ignoreEncryption: true });
+  const total = src.getPageCount();
+  if (total < 2) throw new Error('a book needs at least 2 pages to split into cover + interior');
+
+  const coverDoc = await PDFDocument.create();
+  const [c] = await coverDoc.copyPages(src, [0]);
+  coverDoc.addPage(c);
+
+  const interiorDoc = await PDFDocument.create();
+  const rest = await interiorDoc.copyPages(src, src.getPageIndices().slice(1));
+  for (const p of rest) interiorDoc.addPage(p);
+
+  return {
+    cover: Buffer.from(await coverDoc.save()),
+    interior: Buffer.from(await interiorDoc.save()),
+    interiorPages: total - 1,
+  };
+}

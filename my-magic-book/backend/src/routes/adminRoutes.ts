@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam, getSettings, updateSettings, getAllOrders, buildOrderBook, getOrderBuildStatus, reRenderOrderFiles, reRenderOrderColoring, submitOrderColoring, printBook, printBookSubmit, generatePreviewIllustrations, generatePhotorealPreview, generateColoringPreview,
-  importBookPdf, listMessages, deleteMessage, getCustomerByEmail, checkPayments } from '../controllers/adminController';
+  importBookPdf,
+  submitImportedBook, listMessages, deleteMessage, getCustomerByEmail, checkPayments } from '../controllers/adminController';
 import { protect, adminOnly } from '../utils/authMiddleware';
 
 const router = Router();
@@ -40,5 +41,6 @@ router.post('/themes/:themeId/generate-coloring', generateColoringPreview);
 // far heavier than the 10MB child photos the other upload route accepts.
 const pdfUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 60 * 1024 * 1024 } });
 router.post('/import-book', pdfUpload.single('file'), importBookPdf);
+router.post('/import-book/submit', submitImportedBook);
 
 export default router;

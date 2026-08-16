@@ -10,8 +10,9 @@ import { generateIllustration, COST_PER_IMAGE_USD } from '../services/ImageGener
 import { buildIllustrationPrompt, buildPhotorealPrompt, buildCoverPrompt } from '../services/promptBuilder';
 import { swapFace } from '../services/FaceSwapService';
 import { buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, COLORING_PAGES, SCENE_TEMPLATES } from '../services/sceneTemplates';
-import { reimposePdf } from '../services/BookImportService';
+import { reimposePdf, splitCoverInterior } from '../services/BookImportService';
 import { uploadBuffer, pdfFolderPath } from '../services/StorageService';
+import { submitPrintJob, isBookPodConfigured } from '../services/BookPodService';
 
 // The kid photo (already in the bucket) used as the reference face for ADMIN
 // PREVIEW generation only. Real customer orders use the customer's own photo.
@@ -1330,8 +1331,27 @@ export const importBookPdf = async (req: Request, res: Response): Promise<void> 
 
     const result = await reimposePdf(file.buffer, { widthMm, heightMm, bleedMm });
 
-    const objectPath = pdfFolderPath('imported', `${Date.now()}_${title}_${widthMm}x${heightMm}.pdf`);
+    const stamp = `${Date.now()}_${title}_${widthMm}x${heightMm}`;
+    const objectPath = pdfFolderPath('imported', `${stamp}.pdf`);
     const stored = await uploadBuffer(result.pdf, objectPath, 'application/pdf');
+
+    // BookPod's create-book takes cover and interior as separate files, so split
+    // now — the send button later just points at these two paths.
+    let coverPath: string | undefined;
+    let interiorPath: string | undefined;
+    let interiorPages = 0;
+    try {
+      const split = await splitCoverInterior(result.pdf);
+      coverPath = pdfFolderPath('imported', `${stamp}_cover.pdf`);
+      interiorPath = pdfFolderPath('imported', `${stamp}_interior.pdf`);
+      await uploadBuffer(split.cover, coverPath, 'application/pdf');
+      await uploadBuffer(split.interior, interiorPath, 'application/pdf');
+      interiorPages = split.interiorPages;
+    } catch (e: any) {
+      // A one-page PDF cannot be split. The re-imposed file is still useful on
+      // its own, so return it and let the dashboard hide the send button.
+      console.warn('[importBookPdf] split skipped:', e?.message || e);
+    }
 
     res.json({
       success: true,
@@ -1341,6 +1361,7 @@ export const importBookPdf = async (req: Request, res: Response): Promise<void> 
       sourceWidthMm: result.sourceWidthMm,
       sourceHeightMm: result.sourceHeightMm,
       widthMm, heightMm, bleedMm,
+      coverPath, interiorPath, interiorPages,
       fitScale: result.fitScale,
       // The dashboard warns on this: different proportions mean the margins
       // move, which the owner should see before sending it to print.
@@ -1359,5 +1380,63 @@ export const importBookPdf = async (req: Request, res: Response): Promise<void> 
         : 'فشل تجهيز الملف.',
       detail: raw.slice(0, 200),
     });
+  }
+};
+
+
+/**
+ * Send an already-imported book to BookPod as a real print job.
+ *
+ * Separate from the import on purpose: importing is free and repeatable, this
+ * spends money and produces physical copies, so it is its own deliberate act
+ * with its own confirmation in the dashboard.
+ *
+ * Self-pickup by default — the owner printing their own stock collects from
+ * BookPod, which needs only a name and phone rather than a delivery address.
+ */
+export const submitImportedBook = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!isBookPodConfigured()) {
+      res.status(503).json({ success: false, message: 'BookPod غير مهيأ — لم يتم ضبط بيانات الدخول.' });
+      return;
+    }
+    const { coverPath, interiorPath, title, quantity, widthMm, heightMm, name, phone, email, isColoring } = req.body || {};
+    if (!coverPath || !interiorPath) {
+      res.status(400).json({ success: false, message: 'ينقص ملف الغلاف أو الداخل — أعد استيراد الكتاب أولاً.' });
+      return;
+    }
+    if (!String(name || '').trim() || !String(phone || '').trim()) {
+      res.status(400).json({ success: false, message: 'أدخل اسم المستلم ورقم الهاتف.' });
+      return;
+    }
+
+    const qty = Math.max(1, Math.min(Number(quantity) || 1, 500));
+    const job = await submitPrintJob({
+      // Unique per submission: BookPod rejects a repeated reference, and this
+      // is also what PaymentPoller matches on.
+      externalId: `import_${Date.now()}`,
+      title: String(title || 'Imported book').slice(0, 120),
+      isColoring: !!isColoring,
+      // Imported books are the owner's own files; Arabic is the common case
+      // here and is what their existing catalogue uses.
+      readingDirection: 'right',
+      widthCm: (Number(widthMm) || 150) / 10,
+      heightCm: (Number(heightMm) || 220) / 10,
+      bleed: true,
+      coverPath: String(coverPath),
+      interiorPath: String(interiorPath),
+      quantity: qty,
+      shipping: {
+        name: String(name).trim(),
+        phone: String(phone).trim(),
+        email: String(email || '').trim() || undefined,
+        method: 'pickup',
+      } as any,
+    });
+
+    res.json({ success: true, jobId: job.jobId, bookId: job.bookId, status: job.status, quantity: qty });
+  } catch (err: any) {
+    console.error('[submitImportedBook]', err?.message || err);
+    res.status(500).json({ success: false, message: err?.message || 'فشل الإرسال إلى BookPod.' });
   }
 };

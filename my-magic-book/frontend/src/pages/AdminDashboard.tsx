@@ -357,11 +357,50 @@ export default function AdminDashboard() {
   const [importTrim, setImportTrim] = useState({ w: 150, h: 220 });
   const [importBusy, setImportBusy] = useState(false);
   const [importResult, setImportResult] = useState<any>(null);
+  const [importSend, setImportSend] = useState({ name: '', phone: '', qty: 1 });
+  const [importSending, setImportSending] = useState(false);
+  const [importJob, setImportJob] = useState<any>(null);
+
+  // Real print job, real money — separate from importing, which is free and
+  // repeatable, and gated behind its own confirmation.
+  const handleSendImported = async () => {
+    if (!importResult?.coverPath || !importResult?.interiorPath) return;
+    if (!importSend.name.trim() || !importSend.phone.trim()) {
+      toast.error(t('admin.import_need_contact', 'أدخل اسم المستلم ورقم الهاتف.'));
+      return;
+    }
+    if (!window.confirm(t('admin.import_confirm_send', 'إرسال {{n}} نسخة إلى BookPod للطباعة؟ هذه طباعة حقيقية ومدفوعة.', { n: importSend.qty }))) return;
+    setImportSending(true);
+    const toastId = toast.loading(t('admin.import_sending', 'جاري الإرسال إلى BookPod...'));
+    try {
+      const res = await adminApi.submitImportedBook({
+        coverPath: importResult.coverPath,
+        interiorPath: importResult.interiorPath,
+        title: importFile?.name?.replace(/\.pdf$/i, '') || 'Imported book',
+        quantity: importSend.qty,
+        widthMm: importResult.widthMm,
+        heightMm: importResult.heightMm,
+        name: importSend.name.trim(),
+        phone: importSend.phone.trim(),
+      });
+      if (res.success) {
+        setImportJob(res);
+        toast.success(t('admin.import_sent', 'تم الإرسال — رقم الطلب لدى BookPod: {{id}}', { id: res.jobId }), { id: toastId });
+      } else {
+        toast.error(res.message || 'فشل الإرسال', { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || 'فشل الإرسال', { id: toastId });
+    } finally {
+      setImportSending(false);
+    }
+  };
 
   const handleImportBook = async () => {
     if (!importFile) { toast.error(t('admin.import_pick_file', 'اختر ملف PDF أولاً.')); return; }
     setImportBusy(true);
     setImportResult(null);
+    setImportJob(null);
     const toastId = toast.loading(t('admin.import_working', 'جاري تجهيز الملف للطباعة...'));
     try {
       const res = await adminApi.importBook(importFile, {
@@ -1475,6 +1514,47 @@ export default function AdminDashboard() {
                       >
                         <Download className="w-3.5 h-3.5" /> {t('admin.import_download', 'تحميل الملف الجاهز')}
                       </a>
+
+                      {/* Send to BookPod. Needs the cover/interior split, which
+                          a one-page PDF has no way to produce. */}
+                      {importResult.coverPath && importResult.interiorPath && (
+                        <div className="mt-3 pt-3 border-t border-white/10 space-y-2">
+                          <p className="font-arabic text-white/55 text-[11px]">
+                            📦 {t('admin.import_send_title', 'إرسال إلى BookPod للطباعة — الغلاف الصفحة ١، والداخل {{n}} صفحة، استلام من المطبعة.', { n: importResult.interiorPages })}
+                          </p>
+                          {/* The wraparound caveat, before it reaches print. */}
+                          <p className="font-arabic text-amber-300/85 text-[11px]">
+                            ⚠️ {t('admin.import_cover_note', 'الغلاف المرسل هو الوجه الأمامي فقط (بدون كعب أو ظهر). إن كان لديك غلاف كامل جهّزه وأرسله من BookPod مباشرة.')}
+                          </p>
+                          <div className="flex flex-wrap items-end gap-2">
+                            <div>
+                              <label className="block font-arabic text-white/50 text-[10px] mb-1">{t('admin.import_recipient', 'اسم المستلم')}</label>
+                              <input type="text" value={importSend.name} onChange={(e) => setImportSend({ ...importSend, name: e.target.value })} className="magic-input !py-1.5 text-sm max-w-[160px]" />
+                            </div>
+                            <div>
+                              <label className="block font-arabic text-white/50 text-[10px] mb-1">{t('admin.import_phone', 'رقم الهاتف')}</label>
+                              <input type="tel" value={importSend.phone} onChange={(e) => setImportSend({ ...importSend, phone: e.target.value })} className="magic-input !py-1.5 text-sm max-w-[140px]" dir="ltr" />
+                            </div>
+                            <div>
+                              <label className="block font-arabic text-white/50 text-[10px] mb-1">{t('admin.import_qty', 'عدد النسخ')}</label>
+                              <input type="number" min={1} value={importSend.qty} onChange={(e) => setImportSend({ ...importSend, qty: Math.max(1, Number(e.target.value) || 1) })} className="magic-input !py-1.5 !px-2 text-sm w-[70px] text-center" dir="ltr" />
+                            </div>
+                            <button
+                              onClick={handleSendImported}
+                              disabled={importSending}
+                              className="flex items-center gap-1.5 px-3 py-2 bg-magic-600 hover:bg-magic-500 text-white rounded-xl font-arabic font-bold text-xs transition disabled:opacity-40"
+                            >
+                              <Package className="w-3.5 h-3.5" />
+                              {importSending ? t('admin.sending', 'جارٍ الإرسال...') : t('admin.import_send_btn', 'إرسال إلى BookPod')}
+                            </button>
+                          </div>
+                          {importJob && (
+                            <p className="font-arabic text-emerald-300 text-[11px]">
+                              ✅ {t('admin.import_job', 'رقم الطلب لدى BookPod: {{id}} · {{n}} نسخة', { id: importJob.jobId, n: importJob.quantity })}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
