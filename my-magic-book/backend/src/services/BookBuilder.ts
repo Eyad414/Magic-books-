@@ -5,7 +5,7 @@ import { buildBookHtml, BookData } from './HtmlTemplateBuilder';
 import { generateBookPdf } from './PdfGenerator';
 import { uploadBuffer, pdfFolderPath, copyObject } from './StorageService';
 import { splitStoryIntoPages, buildIllustrationPrompt } from './promptBuilder';
-import { getSceneTemplate, buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, resolveTokens, resolveGender, COLORING_PAGES } from './sceneTemplates';
+import { getSceneTemplate, buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, resolveTokens, resolveGender, resolveColoringScenes, COLORING_PAGES } from './sceneTemplates';
 import { coverPreviewSlug, findPreviewCover } from './coverPreviewKey';
 import { printAndSubmitForOrder, printAndSubmitColoringForOrder, buildColoringPrintForOrder, buildPrintFilesForStory, PrintBuildOpts } from './PrintOrchestrator';
 import { isBookPodConfigured } from './BookPodService';
@@ -254,7 +254,10 @@ export async function buildBookForOrder(orderId: string, submitToBookPod = true)
     // artifact (page numbers offset to +200 so it never overwrites the color
     // story above). The printed/BookPod book stays the color story; the coloring
     // book is delivered digitally (viewable in the customer's dashboard).
-    if (story.bookPackage === 'pro' && template?.coloringScenes && template?.coloringCoverScene) {
+    // Pro used to require hand-written coloringScenes + coloringCoverScene, which
+    // only 4 of 17 themes had — so most Pro orders quietly shipped without the
+    // colouring book the customer paid for. Now any theme with page scenes works.
+    if (story.bookPackage === 'pro' && resolveColoringScenes(template)) {
       const col = await generateColoringArtifacts(story, childPhoto, template, sid, 200);
       story.coloringCover = col.cover;
       story.coloringImages = col.images;
@@ -345,9 +348,14 @@ export async function buildBookForOrder(orderId: string, submitToBookPod = true)
 async function generateColoringArtifacts(
   story: any, childPhoto: string, template: any, sid: string, base = 0,
 ): Promise<{ cover: string; images: string[]; backCover?: string }> {
-  const scenes = template.coloringScenes!;
+  // Falls back to the theme's own page scenes, so the colouring book follows
+  // whichever story the customer picked rather than only the four themes that
+  // happen to have hand-written colouring scenes.
+  const resolved = resolveColoringScenes(template);
+  if (!resolved) throw new Error(`no coloring scenes for theme ${story.theme}`);
+  const scenes = resolved.scenes;
   const coverGen = await generateIllustration(
-    buildColoringCoverPrompt(template.coloringCoverScene!, story.childName, story.childGender),
+    buildColoringCoverPrompt(resolved.cover, story.childName, story.childGender),
     childPhoto, { storyId: sid, pageNumber: base + 0 },
   );
   const images: string[] = [];
@@ -359,9 +367,9 @@ async function generateColoringArtifacts(
     images.push(img.objectPath);
   }
   let backCover: string | undefined;
-  if (template.coloringBackCoverScene) {
+  if (resolved.back) {
     const back = await generateIllustration(
-      buildColoringBackCoverPrompt(template.coloringBackCoverScene, story.childName, story.childGender),
+      buildColoringBackCoverPrompt(resolved.back, story.childName, story.childGender),
       childPhoto, { storyId: sid, pageNumber: base + 98 },
     );
     backCover = back.objectPath;

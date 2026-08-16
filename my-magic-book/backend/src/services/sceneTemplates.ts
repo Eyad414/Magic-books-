@@ -804,6 +804,67 @@ const NO_MEDAL_TEXT =
  * `kind` selects cover / portrait / body-page framing. The child's actual face
  * comes from the reference photo passed to the image generator, not from here.
  */
+/**
+ * The colouring scenes to use for a theme.
+ *
+ * Only four themes were ever given hand-written `coloringScenes`, and the Pro
+ * bundle silently skipped the colouring book for every other theme — a customer
+ * paid for Pro, chose Deep Sea, and received no colouring book at all, with
+ * nothing logged.
+ *
+ * Hand-written scenes still win. Otherwise they are derived from the theme's own
+ * pageScenes, which already describe what the child is doing on each page.
+ * Those are written for full-colour art, so they carry outfit pins, lighting and
+ * character-consistency clauses that mean nothing in black-and-white line art
+ * and only dilute the prompt — `forColoring` cuts each scene back to the action.
+ */
+function forColoring(scene: string): string {
+  let out = (scene || '')
+    // Everything from the first wardrobe/lighting/consistency clause onward.
+    .split(/,\s*wearing\b/i)[0]
+    .split(/\.\s*(?:the|his|her)\s+[a-z' -]+\s+is ALWAYS\b/i)[0]
+    .split(/the child is lit by/i)[0]
+    .split(/never the clothes from the reference photo/i)[0]
+    .replace(/\s+/g, ' ')
+    .replace(/[,.;\s]+$/, '')
+    .trim();
+  // A very long remainder is still a whole paragraph; keep the opening action.
+  if (out.length > 200) {
+    const cut = out.slice(0, 200);
+    const stop = Math.max(cut.lastIndexOf(', '), cut.lastIndexOf(' — '));
+    out = (stop > 90 ? cut.slice(0, stop) : cut).trim();
+  }
+  return out;
+}
+
+export function resolveColoringScenes(template: any): {
+  scenes: string[]; cover: string; back?: string;
+} | null {
+  if (!template) return null;
+
+  const hand: string[] = (template.coloringScenes || []).filter((x: string) => (x || '').trim());
+  const derived: string[] = hand.length
+    ? hand
+    : (template.pageScenes || []).map(forColoring).filter(Boolean);
+  if (derived.length === 0) return null;
+
+  // A colouring book is 16 pages; a story is 13. Cycle rather than repeat the
+  // last scene three times.
+  const scenes: string[] = [];
+  for (let i = 0; i < COLORING_PAGES; i++) scenes.push(derived[i % derived.length]);
+
+  const cover =
+    (template.coloringCoverScene || '').trim() ||
+    forColoring(template.coverScene || '') ||
+    derived[0];
+  const back =
+    (template.coloringBackCoverScene || '').trim() ||
+    forColoring(template.portraitScene || '') ||
+    undefined;
+
+  return { scenes, cover, back };
+}
+
 export function buildScenePrompt(
   kind: 'cover' | 'portrait' | 'page',
   scene: string,
