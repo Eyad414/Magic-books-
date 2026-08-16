@@ -1417,10 +1417,13 @@ export default function AdminDashboard() {
                     </div>
                     <div>
                       <label className="block font-arabic text-white/60 text-xs mb-1">{t('admin.import_trim', 'المقاس (مم)')}</label>
-                      <div className="flex items-center gap-1">
-                        <input type="number" value={importTrim.w} onChange={(e) => setImportTrim({ ...importTrim, w: Number(e.target.value) })} className="magic-input !py-1.5 text-sm max-w-[70px] text-center" />
+                      {/* dir=ltr on the whole group: a size is a left-to-right
+                          pair, and on an RTL page the bidi algorithm was
+                          reordering "150×220" so it read 220×150. */}
+                      <div className="flex items-center gap-1" dir="ltr">
+                        <input type="number" value={importTrim.w} onChange={(e) => setImportTrim({ ...importTrim, w: Number(e.target.value) })} className="magic-input !py-1.5 !px-2 text-sm w-[76px] text-center" />
                         <span className="text-white/30">×</span>
-                        <input type="number" value={importTrim.h} onChange={(e) => setImportTrim({ ...importTrim, h: Number(e.target.value) })} className="magic-input !py-1.5 text-sm max-w-[70px] text-center" />
+                        <input type="number" value={importTrim.h} onChange={(e) => setImportTrim({ ...importTrim, h: Number(e.target.value) })} className="magic-input !py-1.5 !px-2 text-sm w-[76px] text-center" />
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -1429,6 +1432,7 @@ export default function AdminDashboard() {
                           key={`${w}x${h}`}
                           type="button"
                           onClick={() => setImportTrim({ w, h })}
+                          dir="ltr"
                           className={`px-2 py-1 rounded-lg font-arabic text-[11px] border transition ${
                             importTrim.w === w && importTrim.h === h
                               ? 'bg-gold-500/20 border-gold-500/50 text-gold-300'
