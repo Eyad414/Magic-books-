@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { seriesBadge, seriesCounts } from '../utils/series';
 import { adminApi } from '../api/adminApi';
 import { uploadApi } from '../api/uploadApi';
 import { objectPathToUrl } from '../api/mediaUrl';
@@ -670,6 +671,8 @@ export default function AdminDashboard() {
   // ع/EN/עב preview links, never any saved data.
   const [previewGender, setPreviewGender] = useState<'male' | 'female'>('male');
   // Narrows الكتب الجاهزة to one public surface. null = show everything.
+  // Series parts are shown to the OWNER only — customers see plain titles.
+  const themeSerieses = useMemo(() => seriesCounts(settings?.themes || []), [settings]);
   const [bookFilter, setBookFilter] = useState<'home' | 'stories' | null>(null);
   // Free-text search over الكتب الجاهزة — the list is long enough that
   // scrolling for one book is slower than typing its name.
@@ -1538,6 +1541,17 @@ export default function AdminDashboard() {
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
+
+                      {/* Series/part, sitting beside delete at the end of the row.
+                          Owner-facing only — the customer sees a plain title. */}
+                      {seriesBadge(theme, themeSerieses, 'ar') && (
+                        <span
+                          className="px-2 py-1 rounded-lg font-arabic text-xs bg-gold-500/15 border border-gold-500/30 text-gold-400/90 whitespace-nowrap"
+                          title={theme.seriesName || ''}
+                        >
+                          🔗 {theme.seriesName} · {seriesBadge(theme, themeSerieses, 'ar')}
+                        </span>
+                      )}
                     </div>
                   ))}
                   <button onClick={() => {

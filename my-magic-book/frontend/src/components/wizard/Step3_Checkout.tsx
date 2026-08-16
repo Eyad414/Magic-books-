@@ -180,7 +180,14 @@ export default function Step3_Checkout({ onPrev }: Props) {
   };
 
   // Price calculation (single book per order)
-  const selectedPkg = packages.find(p => p.id === bookCustomization?.bookPackage) || packages[0];
+  // If the chosen package has since been hidden in the dashboard, the lookup
+  // misses and the customer is silently moved to a different package at a
+  // different price — they'd return to a saved order and just see the wrong
+  // one. Fall back so checkout still works, but say so.
+  const chosenPkgId = bookCustomization?.bookPackage;
+  const matchedPkg = packages.find(p => p.id === chosenPkgId);
+  const selectedPkg = matchedPkg || packages[0];
+  const pkgUnavailable = !!chosenPkgId && !matchedPkg;
   const isDigital = selectedPkg.id === 'audio' || selectedPkg.id === 'ebook';
   const isPickup = shippingForm.deliveryMethod === 'pickup';
   // Arabic uses its own comma; an English address line reading "Silwan، Jerusalem" looks broken.
@@ -580,6 +587,11 @@ export default function Step3_Checkout({ onPrev }: Props) {
                 <span className="font-arabic text-white text-sm">{basePrice} ₪</span>
               </div>
             </div>
+            {pkgUnavailable && (
+              <p className="mb-2 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 font-arabic text-amber-300 text-xs leading-relaxed">
+                ⚠️ {t('step3.pkg_unavailable', 'الباقة التي اخترتها لم تعد متاحة، وتم اختيار «{{name}}» بدلاً منها. يمكنك الرجوع للخطوة السابقة لتغييرها.', { name: selectedPkg.label })}
+              </p>
+            )}
             {couponApplied && <Row label={`${t('step5.discount', 'خصم')} ${discount}%`} value={`- ${basePrice - discountedBase} ₪`} />}
             <Row label={t('step5.delivery_fee')} value={deliveryFee === 0 ? `${t('step3.free_delivery', 'مجاني')} 🎉` : `${deliveryFee} ₪`} />
             <div className="mt-1 flex items-center justify-between rounded-xl bg-gold-500/15 border border-gold-500/40 px-3 py-2.5">

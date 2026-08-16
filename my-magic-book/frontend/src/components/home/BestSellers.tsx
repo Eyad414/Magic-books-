@@ -75,6 +75,7 @@ export default function BestSellers() {
       name: c.name,
       emoji: c.emoji,
       tag: tagLabel(demoVis[c.key]?.tag),
+      homeTag: demoVis[c.key]?.tag || '',
       localCover: undefined,
       coverPath: c.storyId && !c.storyId.startsWith('theme_')
         ? `magic-fanoose/generated/${c.storyId}/page-00.png`
@@ -89,6 +90,7 @@ export default function BestSellers() {
       themeId: b.theme,
       name: b.childName,
       tag: tagLabel(b.homeTag),
+      homeTag: b.homeTag || '',
       localCover: undefined,
       coverPath: undefined,
       book: b,
@@ -98,7 +100,13 @@ export default function BestSellers() {
 
   // Anything the owner published takes over the section; the curated mock-ups
   // are only the empty state.
-  const cards = published.length ? published.slice(0, 4) : bestSellers;
+  // Always show the badges in the same order: new, then best seller, then
+  // featured, then anything untagged. Before this the order was whatever the
+  // books happened to arrive in, so the front page reshuffled itself.
+  const TAG_ORDER: Record<string, number> = { new: 0, bestseller: 1, featured: 2 };
+  const rank = (c: any) => TAG_ORDER[String((c as any).homeTag || '')] ?? 3;
+  const ordered = [...published].sort((a, b) => rank(a) - rank(b));
+  const cards = ordered.length ? ordered.slice(0, 4) : bestSellers;
 
   // Build the full illustrated flipbook preview for the selected showcase book —
   // these are sample stories, so we show them complete (every page, including
