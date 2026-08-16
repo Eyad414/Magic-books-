@@ -4,7 +4,7 @@ import { adminApi } from '../api/adminApi';
 import { uploadApi } from '../api/uploadApi';
 import { objectPathToUrl } from '../api/mediaUrl';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail, User, Phone, Sparkles, AlertCircle } from 'lucide-react';
+import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail, User, Phone, Sparkles, AlertCircle, Search } from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
 import Modal from '../components/common/Modal';
 import ActionButton from '../components/common/ActionButton';
@@ -618,6 +618,9 @@ export default function AdminDashboard() {
   const [previewGender, setPreviewGender] = useState<'male' | 'female'>('male');
   // Narrows الكتب الجاهزة to one public surface. null = show everything.
   const [bookFilter, setBookFilter] = useState<'home' | 'stories' | null>(null);
+  // Free-text search over الكتب الجاهزة — the list is long enough that
+  // scrolling for one book is slower than typing its name.
+  const [bookSearch, setBookSearch] = useState('');
   // `${storyId|demoKey}:${surface}` while one publish toggle is in flight.
   const [visBusy, setVisBusy] = useState<string | null>(null);
 
@@ -760,11 +763,18 @@ export default function AdminDashboard() {
     }
   };
 
-  const shownBooks = useMemo(
-    () => allBooks.filter((b: any) =>
-      bookFilter === 'home' ? b.showcase : bookFilter === 'stories' ? b.showcaseStories : true),
-    [allBooks, bookFilter],
-  );
+  const shownBooks = useMemo(() => {
+    const q = bookSearch.trim().toLowerCase();
+    return allBooks.filter((b: any) => {
+      const onSurface = bookFilter === 'home' ? b.showcase : bookFilter === 'stories' ? b.showcaseStories : true;
+      if (!onSurface) return false;
+      if (!q) return true;
+      // Match the child's name or the theme, in whatever script either is
+      // written in — the owner may search "Baha" or "بهاء" for the same book.
+      const hay = `${b.name || ''} ${b.childName || ''} ${b.themeLabel || ''} ${b.theme || ''}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }, [allBooks, bookFilter, bookSearch]);
 
   const saveFlag = async (key: 'allowSkipPhoto' | 'aiModeEnabled', value: boolean) => {
     setSettings({ ...settings, [key]: value });
@@ -1548,14 +1558,25 @@ export default function AdminDashboard() {
                     📚 {t('admin.tab_showcase', 'الكتب الجاهزة')}
                     {/* Total, and how many the current filter is showing. */}
                     <span className="text-white/40 text-sm font-normal mr-2">
-                      ({allBooks.length}{bookFilter ? ` · ${shownBooks.length}` : ''})
+                      ({allBooks.length}{bookFilter || bookSearch.trim() ? ` · ${shownBooks.length}` : ''})
                     </span>
                   </h3>
                   <MagicButton onClick={fetchAllStories} size="sm" variant="outline">{t('admin.refresh_data')}</MagicButton>
                 </div>
-                <p className="font-arabic text-white/50 text-sm mb-4">
+                <p className="font-arabic text-white/50 text-sm mb-3">
                   {t('admin.showcase_desc_v2', 'كل الكتب التي أنشأتها — اعرض الكتاب أو جهّز ملف الطباعة.')}
                 </p>
+
+                <div className="relative mb-4">
+                  <Search className="w-4 h-4 text-white/30 absolute top-1/2 -translate-y-1/2 start-3 pointer-events-none" />
+                  <input
+                    type="search"
+                    value={bookSearch}
+                    onChange={(e) => setBookSearch(e.target.value)}
+                    placeholder={t('admin.book_search_ph', 'ابحث باسم الطفل أو الموضوع…')}
+                    className="magic-input !py-2 text-sm ps-9"
+                  />
+                </div>
 
                 {/* What the public actually sees right now, so the owner does not
                     have to read every card's toggles to find out. Each panel is

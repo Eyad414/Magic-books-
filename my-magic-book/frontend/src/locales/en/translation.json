@@ -888,7 +888,8 @@
     "book_print_fail": "Couldn't prepare the print files",
     "book_demo": "Demo book",
     "book_customer": "Customer book",
-    "flag_skip_photo_warn": "The illustrations need the child's photo. With this on, a customer reaches payment and then has the order refused, because the book can't be made without one."
+    "flag_skip_photo_warn": "The illustrations need the child's photo. With this on, a customer reaches payment and then has the order refused, because the book can't be made without one.",
+    "book_search_ph": "Search by child's name or theme…"
   },
   "title_page": {
     "presents": "Presented to",
