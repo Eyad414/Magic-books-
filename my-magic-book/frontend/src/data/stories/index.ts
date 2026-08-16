@@ -20,6 +20,7 @@ import { deepSea } from './story10_deepsea';
 import { littleChef } from './story11_chef';
 import { littleEngineer } from './story12_engineer';
 import { futureHero } from './story17_future';
+import { ramadanFirst } from './story18_ramadan';
 import { firstGrade } from './story16_firstgrade';
 import { firstDaySchool } from './story15_firstday';
 import { happyKindergarten } from './story14_kindergarten';
@@ -58,6 +59,7 @@ export const STORIES: StoryDefinition[] = [
   littleChef,
   littleEngineer,
   futureHero,
+  ramadanFirst,
   firstGrade,
   firstDaySchool,
   happyKindergarten,

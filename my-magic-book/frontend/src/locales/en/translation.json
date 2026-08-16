@@ -436,7 +436,9 @@
     "theme_future_hero": "Hero of the Future",
     "theme_future_hero_desc": "Trying out jobs: engineer, doctor, teacher",
     "theme_little_engineer": "Building & Engineering",
-    "theme_little_engineer_desc": "A blueprint, some tools, and a treehouse for little friends"
+    "theme_little_engineer_desc": "A blueprint, some tools, and a treehouse for little friends",
+    "theme_ramadan_first": "First Ramadan",
+    "theme_ramadan_first_desc": "A crescent, a first fast, lanterns and Eid"
   },
   "step3": {
     "title": "Customize Your Book",
@@ -1456,6 +1458,34 @@
         "11": "The teacher gave [NAME] a “Hero of the Future” badge, a reminder of being able to reach any goal at all.",
         "12": "[NAME] set the badge on the desk and picked up a pencil to study hard, because the future is built today.",
         "13": "[NAME] closed both eyes with pride and confidence, knowing that with focus and passion there is a great part to play in the future."
+      }
+    },
+    "ramadan_first": {
+      "title": "[NAME]'s First Ramadan",
+      "tagline": "A crescent, a lantern, and a heart learning to give",
+      "moral": "Fasting is patience and giving is light — and the best thing about Ramadan is that we grow a little inside it.",
+      "conclusion": "Well done, [NAME]! You fasted, you shared, you gave — Eid Mubarak. 🌙🏮",
+      "dedication": "For [NAME], who waits for Ramadan every year — this story is for you.",
+      "questions": [
+        "What do we break the fast with when the call to prayer sounds?",
+        "Why did patience get easier once the hero went out to play?",
+        "Who is the musaharati, and what does he do?",
+        "What is something you would like to share with your neighbours?"
+      ],
+      "pages": {
+        "1": "On a quiet evening, [NAME] stood on the rooftop with the family, searching the sky for the crescent of Ramadan. And suddenly — there it was, thin and silver, like a smile!",
+        "2": "[NAME] hung the golden lantern on the balcony, and its warm light filled the whole house. “Ramadan Kareem!”",
+        "3": "In the kitchen, [NAME] helped Mum arrange the plate of dates and the jug of water on the iftar table, carefully and proudly.",
+        "4": "In the morning [NAME] decided to try fasting for the very first time — the little “sparrows’ fast” — until noon.",
+        "5": "By midday the thirst came. Little hero! On the RIGHT, a cold glass of juice. On the LEFT, a door leading out to play with friends. Which will you choose?",
+        "6": "[NAME] chose to play, and the time flew by, and the thirst was forgotten. Patience is easier when we fill the day with good things.",
+        "7": "[NAME] visited Grandma and read her a page, and Grandma smiled and said, “Your voice lights up this house.”",
+        "8": "Before sunset, [NAME] carried a plate of food to the neighbours. Sharing makes food taste better.",
+        "9": "And at last — the call to prayer! [NAME] broke the fast with a single date and a sip of water, the most delicious date in all the world.",
+        "10": "After iftar, [NAME] walked with the family down a street strung with lanterns, the lights dancing overhead.",
+        "11": "That night [NAME] heard the drum of the musaharati: “Wake, O sleeper!” And up [NAME] got, for suhoor with the family.",
+        "12": "[NAME] gathered toys and coins into a small box and gave them to other children. Giving lights up the heart like a lantern.",
+        "13": "And on the morning of Eid, [NAME] put on new Eid clothes and was given the eidiyah and the warmest hug. “Eid Mubarak, [NAME]!”"
       }
     }
   },

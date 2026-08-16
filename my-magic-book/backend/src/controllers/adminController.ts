@@ -576,6 +576,7 @@ export const getSettings = async (req: Request, res: Response): Promise<void> =>
         { id: 'first_day_school',   emoji: '🎒', label: 'اليوم الأول بالمدرسة', desc: 'معلمة لطيفة، أصدقاء جدد، ونجم نشيط', ...SCHOOL(2) },
         { id: 'first_grade',        emoji: '✏️', label: 'مغامرة في الصف الأول', desc: 'حروف وكلمات وقراءة أولى بثقة', ...SCHOOL(3) },
         { id: 'future_hero',        emoji: '🚀', label: 'مغامرة بطل المستقبل',  desc: 'تجربة المهن: مهندس، طبيب، معلّم' },
+        { id: 'ramadan_first',      emoji: '🌙', label: 'رمضان الأول',          desc: 'هلال وفانوس وأول صيام ومسحراتي وعيد' },
       ];
       const newFolder = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
       let newDirty = false;
