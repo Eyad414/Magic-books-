@@ -54,8 +54,18 @@ export function demoOnStoriesPage(card: ShowcaseCard, vis: DemoVisibility): bool
   return isPrivateCard(card) ? flag === true : flag !== false;
 }
 
-/** Demo cards only reach the home page when explicitly ticked. */
+/**
+ * Demo cards only reach the home page when explicitly ticked — and never while
+ * they need permission.
+ *
+ * The private check was missing here, so a card could be pulled from the
+ * Stories page and carry on sitting on the home page: exactly what happened to
+ * the space colouring card, which was taken off /stories while `home: true`
+ * kept it on the front page. Privacy has to hold on every public surface, not
+ * whichever one someone remembered.
+ */
 export function demoOnHomePage(card: ShowcaseCard, vis: DemoVisibility): boolean {
+  if (isPrivateCard(card)) return false;
   return vis[card.key]?.home === true;
 }
 
