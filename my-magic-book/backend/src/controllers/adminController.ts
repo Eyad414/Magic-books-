@@ -1347,7 +1347,17 @@ export const importBookPdf = async (req: Request, res: Response): Promise<void> 
       aspectChanged: result.aspectChanged,
     });
   } catch (err: any) {
-    console.error('[importBookPdf]', err?.message || err);
-    res.status(500).json({ success: false, message: err?.message || 'فشل تجهيز الملف.' });
+    const raw = String(err?.message || err);
+    console.error('[importBookPdf]', raw);
+    // pdf-lib's parse errors are English and internal ("Can't embed page with
+    // missing Contents"). Say what the owner can act on instead.
+    const damaged = /embed|missing|parse|Invalid PDF|stream|xref|encrypt/i.test(raw);
+    res.status(damaged ? 400 : 500).json({
+      success: false,
+      message: damaged
+        ? 'تعذّر قراءة ملف PDF — قد يكون تالفاً أو محمياً بكلمة مرور. جرّب تصديره من جديد ثم أعد المحاولة.'
+        : 'فشل تجهيز الملف.',
+      detail: raw.slice(0, 200),
+    });
   }
 };
