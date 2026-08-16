@@ -151,6 +151,11 @@ export const adminApi = {
     if (opts.bleedMm !== undefined) form.append('bleedMm', String(opts.bleedMm));
     if (opts.title) form.append('title', opts.title);
     const response = await axiosInstance.post('/admin/import-book', form, {
+      // The shared axios instance defaults to application/json. Without this
+      // override the FormData goes out labelled JSON, multer parses nothing and
+      // the server replies "no PDF received". uploadApi.childPhoto does the
+      // same for the same reason.
+      headers: { 'Content-Type': 'multipart/form-data' },
       // A scanned interior is big and every page is redrawn — the default
       // timeout gives up long before a 118-page book is done.
       timeout: 5 * 60 * 1000,
