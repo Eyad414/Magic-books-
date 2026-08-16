@@ -9,7 +9,7 @@ import { arabicStoryPages, buildBookForOrder, reRenderPrintFilesForOrder, submit
 import { generateIllustration, COST_PER_IMAGE_USD } from '../services/ImageGenerator';
 import { buildIllustrationPrompt, buildPhotorealPrompt, buildCoverPrompt } from '../services/promptBuilder';
 import { swapFace } from '../services/FaceSwapService';
-import { buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, COLORING_PAGES } from '../services/sceneTemplates';
+import { buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, COLORING_PAGES, SCENE_TEMPLATES } from '../services/sceneTemplates';
 
 // The kid photo (already in the bucket) used as the reference face for ADMIN
 // PREVIEW generation only. Real customer orders use the customer's own photo.
@@ -1062,11 +1062,19 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
     // Full-scene front cover — the hero kid inside the themed world (Taletoons
     // style). Uses concrete per-theme background objects (zoo => animals,
     // school => classroom/blackboard, space => planets/rocket, etc.).
-    const coverPrompt = buildCoverPrompt({
-      childName,
-      childGender: 'male',
-      theme: themeId,
-    });
+    // Prefer the theme's own hand-written coverScene — the very same prompt the
+    // printed book and the customer's cover preview use, so the demo cover
+    // actually looks like the book it is advertising.
+    //
+    // buildCoverPrompt reads coverBackground(), whose map is keyed by the OLD
+    // short theme ids (ocean, dinosaurs, pirates…). Every newer id —
+    // deep_sea, ocean_adventure, toy_city, first_grade and the rest — misses
+    // and silently falls through to the generic "magical sparkles" case, which
+    // is how a Deep Sea book got a cover of rainbows, an owl and storybooks.
+    const sceneTpl: any = (SCENE_TEMPLATES as any)[themeId];
+    const coverPrompt = sceneTpl?.coverScene
+      ? buildScenePrompt('cover', sceneTpl.coverScene, childName, 'male')
+      : buildCoverPrompt({ childName, childGender: 'male', theme: themeId });
     try {
       const cover = await generateIllustration(coverPrompt, referencePhoto, {
         storyId: `theme_${themeId}`,
