@@ -838,10 +838,14 @@ export default function AdminDashboard() {
       if (!q) return true;
       // Match the child's name or the theme, in whatever script either is
       // written in — the owner may search "Baha" or "بهاء" for the same book.
-      const hay = `${b.name || ''} ${b.childName || ''} ${b.themeLabel || ''} ${b.theme || ''}`.toLowerCase();
+      // Match what the owner can SEE. The card renders the name through
+      // localizeName, so a book stored as "Baha" shows as بهاء on an Arabic
+      // dashboard — searching بهاء found nothing, which looks broken.
+      const shown = localizeName(b.childName || '', i18n.language);
+      const hay = `${b.name || ''} ${b.childName || ''} ${shown} ${b.themeLabel || ''} ${b.theme || ''}`.toLowerCase();
       return hay.includes(q);
     });
-  }, [allBooks, bookFilter, bookSearch]);
+  }, [allBooks, bookFilter, bookSearch, i18n.language]);
 
   // Item 1: the owner's own books first, customers' orders in their own section
   // underneath — same cards, same buttons, just kept apart so the owner can tell
