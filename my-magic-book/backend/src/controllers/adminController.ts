@@ -1005,6 +1005,13 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
     }
 
     const childName = req.body?.childName || theme.label || 'الطفل';
+    // Which child the demo artwork depicts. This used to be fixed to
+    // PREVIEW_REFERENCE_PHOTO, so every theme's demo showed the same real
+    // child — and publishing a theme meant publishing that child's face, with
+    // no way to swap it short of an env var and a redeploy. The sibling
+    // photoreal/coloring endpoints already accepted an override; this one
+    // didn't, which is the only reason it was hard to change.
+    const referencePhoto: string = req.body?.referencePhoto || PREVIEW_REFERENCE_PHOTO;
 
     // Pull the text from the theme's pages (text entries only).
     const textPages: string[] = (theme.pages || [])
@@ -1023,7 +1030,7 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
         language: 'ar',
         pageNumber: i + 1,
       });
-      const stored = await generateIllustration(prompt, PREVIEW_REFERENCE_PHOTO, {
+      const stored = await generateIllustration(prompt, referencePhoto, {
         storyId: `theme_${themeId}`,
         pageNumber: i + 1,
       });
@@ -1043,7 +1050,7 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
       `warm smile, looking at the camera, soft cinematic studio lighting, gentle bokeh background in the ${theme.label} theme, ` +
       `rich vibrant saturated colors, professional CGI render quality. Centered. No text, no watermark.`;
     try {
-      const portrait = await generateIllustration(portraitPrompt, PREVIEW_REFERENCE_PHOTO, {
+      const portrait = await generateIllustration(portraitPrompt, referencePhoto, {
         storyId: `theme_${themeId}`,
         pageNumber: 99,
       });
@@ -1061,7 +1068,7 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
       theme: themeId,
     });
     try {
-      const cover = await generateIllustration(coverPrompt, PREVIEW_REFERENCE_PHOTO, {
+      const cover = await generateIllustration(coverPrompt, referencePhoto, {
         storyId: `theme_${themeId}`,
         pageNumber: 0,
       });
