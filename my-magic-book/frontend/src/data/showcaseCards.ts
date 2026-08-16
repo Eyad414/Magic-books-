@@ -68,7 +68,9 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   { key: 'lora-zoo',        themeId: 'zoo_adventure',   name: 'Lora',  storyId: '6a3bbaf645b418d21337de09', emoji: '🦁' },
   { key: 'tala-toycity',    themeId: 'toy_city',        name: 'Tala', private: true,  emoji: '🤖' },
   { key: 'adam-coloring',   themeId: 'zoo_coloring',    name: 'Adam',  emoji: '🖍️' },
-  { key: 'ahmad-coloring',  themeId: 'space_coloring',  name: 'Ahmad', emoji: '🖍️' },
+  // Owner says this one is Lora's, despite the displayed name — off the public
+  // page until her family agrees.
+  { key: 'ahmad-coloring',  themeId: 'space_coloring',  name: 'Ahmad', private: true, emoji: '🖍️' },
   { key: 'yosef-coloring',  themeId: 'school_coloring', name: 'Yosef', emoji: '🖍️' },
   // Themes that already had demo artwork in storage but no card, so nothing
   // listed them: the two new stories plus pirate and school.
