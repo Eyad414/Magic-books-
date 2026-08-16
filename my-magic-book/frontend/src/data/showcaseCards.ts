@@ -71,7 +71,7 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   { key: 'baha-zoo',        themeId: 'zoo_adventure',   name: 'Baha',  emoji: '🦁' },
   { key: 'baha-magicbook',  themeId: 'magic_book',      name: 'Baha',  storyId: 'theme_magic_book', emoji: '📖' },
   { key: 'lora-zoo',        themeId: 'zoo_adventure',   name: 'Lora',  storyId: '6a3bbaf645b418d21337de09', emoji: '🦁' },
-  { key: 'tala-toycity',    themeId: 'toy_city',        name: 'Tala', private: true,  emoji: '🤖' },
+  { key: 'baha-toycity',    themeId: 'toy_city',        name: 'Baha',  emoji: '🤖' },
   { key: 'adam-coloring',   themeId: 'zoo_coloring',    name: 'Adam',  emoji: '🖍️' },
   // Owner says this one is Lora's, despite the displayed name — off the public
   // page until her family agrees.
@@ -87,17 +87,17 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   //   2. Match the displayed name to the gender in that artwork. The name drives
   //      detectGender, which resolves the story's {masc|fem} tokens, so a boy's
   //      name over a picture of a girl gives masculine text on a girl's cover.
-  { key: 'lara-dinosaur',   themeId: 'dinosaur_adventure', name: 'Lara', private: true,  emoji: '🦕' },
-  { key: 'salma-ocean',     themeId: 'ocean_adventure',    name: 'Salma', private: true, emoji: '🐋' },
+  { key: 'baha-dinosaur',   themeId: 'dinosaur_adventure', name: 'Baha',  emoji: '🦕' },
+  { key: 'baha-ocean',     themeId: 'ocean_adventure',    name: 'Baha', emoji: '🐋' },
   { key: 'baha-pirate',     themeId: 'pirate_adventure',   name: 'Baha',  emoji: '🏴‍☠️' },
   { key: 'baha-school',     themeId: 'school_hero',        name: 'Baha',  emoji: '🏫' },
   { key: 'ahmad-world',      themeId: 'world_adventure',    name: 'Ahmad',  emoji: '🌍' },
-  { key: 'maya-deepsea',   themeId: 'deep_sea',           name: 'Maya', private: true, emoji: '🐬' },
+  { key: 'baha-deepsea',   themeId: 'deep_sea',           name: 'Baha', emoji: '🐬' },
   { key: 'baha-chef',       themeId: 'little_chef',        name: 'Baha',  emoji: '🍳' },
   { key: 'baha-castle',     themeId: 'castle_guardian',    name: 'Baha',  emoji: '🏰' },
-  { key: 'yara-kinder',     themeId: 'happy_kindergarten', name: 'Yara', private: true,  emoji: '🧸' },
-  { key: 'lina-firstday',   themeId: 'first_day_school',   name: 'Lina', private: true,  emoji: '🎒' },
-  { key: 'dana-grade1',    themeId: 'first_grade',        name: 'Dana', private: true, emoji: '✏️' },
+  { key: 'baha-kinder',     themeId: 'happy_kindergarten', name: 'Baha',  emoji: '🧸' },
+  { key: 'baha-firstday',   themeId: 'first_day_school',   name: 'Baha',  emoji: '🎒' },
+  { key: 'baha-grade1',    themeId: 'first_grade',        name: 'Baha', emoji: '✏️' },
   { key: 'baha-future',     themeId: 'future_hero',        name: 'Baha',  emoji: '🚀' },
-  { key: 'maryam-engineer',   themeId: 'little_engineer',    name: 'Maryam', private: true,  emoji: '🛠️' },
+  { key: 'baha-engineer',   themeId: 'little_engineer',    name: 'Baha',  emoji: '🛠️' },
 ];
