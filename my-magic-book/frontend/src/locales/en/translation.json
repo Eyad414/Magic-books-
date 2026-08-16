@@ -889,7 +889,10 @@
     "book_demo": "Demo book",
     "book_customer": "Customer book",
     "flag_skip_photo_warn": "The illustrations need the child's photo. With this on, a customer reaches payment and then has the order refused, because the book can't be made without one.",
-    "book_search_ph": "Search by child's name or theme…"
+    "book_search_ph": "Search by child's name or theme…",
+    "err_no_child_photo": "No child photo — the illustrations need a reference picture, and this order was placed without one.",
+    "err_quota": "Image generation quota reached for now — try again shortly.",
+    "err_timeout": "Generation timed out before the book finished — try again."
   },
   "title_page": {
     "presents": "Presented to",

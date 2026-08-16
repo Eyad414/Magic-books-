@@ -15,6 +15,27 @@ import { findStory } from '../data/stories';
 import { SHOWCASE_CARDS, demoOnHomePage, demoOnStoriesPage, HOME_TAGS, type DemoVisibility, type HomeTag } from '../data/showcaseCards';
 import { localizeName } from '../utils/translit';
 
+/**
+ * Build failures are thrown by the backend in English (they are aimed at logs).
+ * Showing them raw meant an Arabic dashboard displaying "childPhotoUrl is empty
+ * — Gemini needs a reference photo." Map the ones we cause on purpose to the
+ * dashboard's own language; anything unrecognised still shows verbatim, which
+ * is better than hiding a real error behind a generic phrase.
+ */
+function buildErrorText(raw: string, t: (k: string, d?: any) => string): string {
+  const e = (raw || '').toLowerCase();
+  if (e.includes('childphotourl is empty')) {
+    return t('admin.err_no_child_photo', 'لا توجد صورة للطفل — الرسومات تحتاج صورة مرجعية، والطلب أُنشئ بدونها.');
+  }
+  if (e.includes('quota') || e.includes('rate limit') || e.includes('429')) {
+    return t('admin.err_quota', 'تم تجاوز حصة توليد الصور مؤقتاً — أعد المحاولة بعد قليل.');
+  }
+  if (e.includes('timeout') || e.includes('etimedout')) {
+    return t('admin.err_timeout', 'انتهت مهلة التوليد قبل اكتمال الكتاب — أعد المحاولة.');
+  }
+  return raw;
+}
+
 export default function AdminDashboard() {
   const { t, i18n } = useTranslation();
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -891,7 +912,7 @@ export default function AdminDashboard() {
                               <div className="mb-2.5 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/25 flex items-start gap-2">
                                 <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
                                 <p className="font-arabic text-red-300 text-xs leading-relaxed break-words" dir="auto">
-                                  {order.illustrationsError}
+                                  {buildErrorText(order.illustrationsError, t)}
                                 </p>
                               </div>
                             )}
