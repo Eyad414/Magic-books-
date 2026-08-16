@@ -27,7 +27,7 @@ export interface ShowcaseCard {
 export type HomeTag = 'bestseller' | 'new' | 'featured';
 
 /** The three badges, in the order they appear in the dashboard. */
-export const HOME_TAGS: HomeTag[] = ['bestseller', 'new', 'featured'];
+export const HOME_TAGS: HomeTag[] = ['new', 'bestseller', 'featured'];
 
 /** Per-card publish flags, stored in SiteSettings.demoCards keyed by card key. */
 export type DemoVisibility = Record<string, { home?: boolean; stories?: boolean; tag?: HomeTag }>;

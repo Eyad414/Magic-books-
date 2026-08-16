@@ -96,8 +96,8 @@
     "printing_experience": "years of experience in the printing field",
     "mission_title": "Our Mission",
     "mission_desc": "We aim to make reading a magical and personalized experience for every child. We believe a child who sees themselves as the hero in a story becomes a passionate reader for life.",
-    "follow_title": "Follow Us",
-    "follow_desc": "New books, fresh stories and special offers — the moment they land.",
+    "follow_title": "Come Along for the Story",
+    "follow_desc": "A new little hero every week, peeks behind the drawings, and surprises we announce nowhere else ✨",
     "values_title": "Our Values and Beliefs",
     "values": {
       "1_title": "Passion for Children",
@@ -528,7 +528,9 @@
     "err_house": "Please enter the house number",
     "err_postalcode": "Please enter the postal code",
     "addr_building": "building",
-    "addr_floor": "floor"
+    "addr_floor": "floor",
+    "delivery_banner_home": "🚚 Home delivery within 5–8 working days.",
+    "delivery_banner_pickup": "🏬 Self-pickup is free — we'll let you know the moment your order is ready."
   },
   "step5": {
     "applepay_note": "Use Touch ID or Face ID to complete the payment.",

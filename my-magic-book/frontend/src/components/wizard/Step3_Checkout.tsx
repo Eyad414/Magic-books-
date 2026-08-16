@@ -198,9 +198,13 @@ export default function Step3_Checkout({ onPrev }: Props) {
     if (shippingForm.deliveryMethod === 'delivery') {
       if (!shippingForm.city.trim()) errs.city = t('step4.err_city');
       if (!shippingForm.street.trim()) errs.street = t('step4.err_street');
-      // BookPod home delivery needs a numeric house number + postal code.
-      if (!shippingForm.buildingNo.trim()) errs.buildingNo = t('step4.err_house', 'الرجاء إدخال رقم المنزل');
-      if (!shippingForm.postalCode.trim()) errs.postalCode = t('step4.err_postalcode', 'الرجاء إدخال الرمز البريدي');
+      // House number and postal code were dropped from this step on request.
+      // Validating fields the customer can no longer see would block checkout
+      // with an error pointing at nothing.
+      //
+      // NOTE: BookPod still wants both. BookPodService falls back to house '1'
+      // and zipCode '0000000', so until their checkout collects the real
+      // address, a home delivery is submitted with a placeholder street number.
     } else {
       if (!shippingForm.pickupLocation) errs.pickupLocation = t('step4.err_pickup_location', 'الرجاء اختيار نقطة الاستلام');
     }
@@ -292,7 +296,13 @@ export default function Step3_Checkout({ onPrev }: Props) {
         {/* Shipping estimate banner */}
         <div className="flex items-center gap-3 p-3 rounded-xl bg-magic-500/10 border border-magic-500/20">
           <MapPin className="w-5 h-5 text-magic-400 flex-shrink-0" />
-          <p className="font-arabic text-white/70 text-sm">{t('step4.delivery_banner')}</p>
+          {/* Say what applies to the choice the customer actually made, instead
+              of listing both and leaving them to work out which is theirs. */}
+          <p className="font-arabic text-white/70 text-sm">
+            {isPickup
+              ? t('step4.delivery_banner_pickup', '🏬 الاستلام الشخصي مجاني — نُعلمك فور جهوز الطلب.')
+              : t('step4.delivery_banner_home', '🚚 توصيل للمنزل خلال 5-8 أيام عمل.')}
+          </p>
         </div>
 
         {/* Delivery method toggle */}
@@ -390,24 +400,6 @@ export default function Step3_Checkout({ onPrev }: Props) {
                 placeholder={t('step4.floor_placeholder')}
                 value={shippingForm.floor}
                 onChange={(v: string) => setShippingForm({ ...shippingForm, floor: v })}
-              />
-              <Field
-                id="shipping-house"
-                label={t('step4.house_label', 'رقم المنزل')}
-                placeholder={t('step4.house_placeholder', 'مثال: 12')}
-                type="tel"
-                value={shippingForm.buildingNo}
-                onChange={(v: string) => setShippingForm({ ...shippingForm, buildingNo: v.replace(/\D/g, '') })}
-                error={errors.buildingNo}
-              />
-              <Field
-                id="shipping-postalcode"
-                label={t('step4.postalcode_label', 'الرمز البريدي')}
-                placeholder={t('step4.postalcode_placeholder', 'مثال: 9990000')}
-                type="tel"
-                value={shippingForm.postalCode}
-                onChange={(v: string) => setShippingForm({ ...shippingForm, postalCode: v.replace(/\D/g, '') })}
-                error={errors.postalCode}
               />
               <Field
                 id="shipping-notes"
