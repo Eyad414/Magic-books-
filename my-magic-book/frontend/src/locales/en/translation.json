@@ -892,7 +892,14 @@
     "book_search_ph": "Search by child's name or theme…",
     "err_no_child_photo": "No child photo — the illustrations need a reference picture, and this order was placed without one.",
     "err_quota": "Image generation quota reached for now — try again shortly.",
-    "err_timeout": "Generation timed out before the book finished — try again."
+    "err_timeout": "Generation timed out before the book finished — try again.",
+    "books_mine": "My books",
+    "books_customers": "Customer books",
+    "coloring_fill": "Fill from the story",
+    "coloring_no_pages": "This story has no pages to derive scenes from.",
+    "coloring_filled": "Filled {{n}} scenes from the story — review them, then press generate.",
+    "coloring_done": "Colouring book generated — {{n}} images, about ${{c}}.",
+    "coloring_hint": "← Start with \\u201cFill from the story\\u201d, then review the scenes."
   },
   "title_page": {
     "presents": "Presented to",

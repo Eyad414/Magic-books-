@@ -349,8 +349,35 @@ export default function AdminDashboard() {
     }
   };
 
+  // How many interior pages a coloring book has.
+  const COLORING_PAGE_COUNT = 16;
+
   // Coloring-book generation: per-theme reference photo + the typed scenes.
   const [coloringFiles, setColoringFiles] = useState<Record<string, File | null>>({});
+
+  /**
+   * Fill the colouring scenes from the story the owner has already written.
+   *
+   * Building a colouring book used to mean hand-typing 16 scene descriptions
+   * before the button did anything, which is why it was hard to work out how.
+   * The theme already carries its pages, so the scenes can be derived: one line
+   * per page, name placeholder stripped, plus a cover and a back cover.
+   */
+  const fillColoringScenes = (theme: any, index: number) => {
+    const pages: string[] = (theme.pages || [])
+      .map((p: any) => String(p?.text || p || '').replace(/\{\{\s*name\s*\}\}|\[NAME\]/gi, '').trim())
+      .filter(Boolean);
+    if (pages.length === 0) {
+      toast.error(t('admin.coloring_no_pages', 'لا توجد صفحات في هذه القصة لاشتقاق المشاهد منها.'));
+      return;
+    }
+    const nt = [...settings.themes];
+    nt[index].coloringScenes = pages.slice(0, COLORING_PAGE_COUNT);
+    if (!nt[index].coloringCoverScene) nt[index].coloringCoverScene = pages[0];
+    if (!nt[index].coloringBackCoverScene) nt[index].coloringBackCoverScene = pages[pages.length - 1];
+    setSettings({ ...settings, themes: nt });
+    toast.success(t('admin.coloring_filled', 'تم ملء {{n}} مشهد من القصة — راجعها ثم اضغط توليد.', { n: Math.min(pages.length, COLORING_PAGE_COUNT) }));
+  };
 
   const handleGenerateColoring = async (theme: any) => {
     const scenes = (theme.coloringScenes || []).map((s: string) => (s || '').trim()).filter(Boolean);
@@ -370,7 +397,12 @@ export default function AdminDashboard() {
         childName: theme.label,
       });
       if (res.success) {
-        toast.success(`✨ ${res.imageCount ?? ''} (~$${res.estimatedCostUsd ?? '0'})`, { id: toastId });
+        toast.success(
+          t('admin.coloring_done', 'تم توليد كتاب التلوين — {{n}} صورة، بتكلفة ~${{c}}.', {
+            n: res.imageCount ?? 0, c: res.estimatedCostUsd ?? '0',
+          }),
+          { id: toastId },
+        );
         setSettings((prev: any) => ({ ...prev, themes: prev.themes.map((th: any) => th.id === theme.id ? { ...th, generatedCover: res.generatedCover, generatedImages: res.generatedImages, generatedPortrait: res.generatedPortrait } : th) }));
       } else { toast.error(res.message || 'فشل التوليد', { id: toastId }); }
     } catch (err: any) {
@@ -650,6 +682,17 @@ export default function AdminDashboard() {
    * curated theme demos. They used to be two separate sections with different
    * shapes, so nothing could act on "all books" uniformly.
    */
+  // A book is "mine" when its story belongs to the owner or anyone on the team;
+  // everything else came from a real customer's order. Compared by user id, not
+  // by name — the owner has more than one account (a personal and a business
+  // one), and both must count as mine.
+  const staffIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (user?.id) ids.add(String(user.id));
+    for (const m of team) if (m?._id) ids.add(String(m._id));
+    return ids;
+  }, [user, team]);
+
   const allBooks = useMemo(() => {
     const themeById: Record<string, any> = {};
     for (const th of (settings?.themes || [])) themeById[th.id] = th;
@@ -663,6 +706,8 @@ export default function AdminDashboard() {
       .map((s: any) => ({
         key: `story-${s._id}`,
         storyId: s._id,
+        // Demos have no owner and always count as the owner's own.
+        isMine: staffIds.has(String(s.userId?._id || s.userId || '')),
         showcase: !!s.showcase,
         showcaseStories: !!s.showcaseStories,
         homeTag: s.homeTag || '',
@@ -692,6 +737,7 @@ export default function AdminDashboard() {
       const folder = base ? `magic-fanoose/generated/${base}` : null;
       return {
         key: `demo-${c.key}`,
+        isMine: true,
         childName: c.name,
         theme: c.themeId,
         themeLabel: isColoring ? t('admin.coloring_book', 'كتاب تلوين') : label(c.themeId),
@@ -723,7 +769,7 @@ export default function AdminDashboard() {
       // The print build needs a cover, a back and at least one page.
       canPrint: !!b.cover && !!b.back && (b.images?.length ?? 0) > 0,
     }));
-  }, [allStories, settings, t, i18n.language]);
+  }, [allStories, settings, t, i18n.language, staffIds]);
 
   /** Build this book's print-ready PDFs and open them. Never submits to BookPod. */
   const handlePrintBook = async (b: any) => {
@@ -796,6 +842,14 @@ export default function AdminDashboard() {
       return hay.includes(q);
     });
   }, [allBooks, bookFilter, bookSearch]);
+
+  // Item 1: the owner's own books first, customers' orders in their own section
+  // underneath — same cards, same buttons, just kept apart so the owner can tell
+  // at a glance which books are real orders.
+  const bookGroups = useMemo(() => [
+    { id: 'mine', label: t('admin.books_mine', 'كتبي'), books: shownBooks.filter((b: any) => b.isMine) },
+    { id: 'customers', label: t('admin.books_customers', 'كتب العملاء'), books: shownBooks.filter((b: any) => !b.isMine) },
+  ].filter((g) => g.books.length > 0), [shownBooks, t]);
 
   const saveFlag = async (key: 'allowSkipPhoto' | 'aiModeEnabled', value: boolean) => {
     setSettings({ ...settings, [key]: value });
@@ -1516,7 +1570,16 @@ export default function AdminDashboard() {
                           {/* Scenes + reference photo for generating this coloring book */}
                           <div className="sm:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
                             <div>
-                              <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.coloring_scenes_label', 'مشاهد الصفحات (سطر لكل صفحة — ١٦ سطر)')}</label>
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <label className="block font-arabic text-white/70 text-xs">{t('admin.coloring_scenes_label', 'مشاهد الصفحات (سطر لكل صفحة — ١٦ سطر)')}</label>
+                                <button
+                                  type="button"
+                                  onClick={() => fillColoringScenes(theme, index)}
+                                  className="shrink-0 px-2 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 font-arabic text-[11px] hover:bg-amber-500/25 transition"
+                                >
+                                  ✨ {t('admin.coloring_fill', 'املأ من القصة')}
+                                </button>
+                              </div>
                               <textarea
                                 rows={5}
                                 dir="auto"
@@ -1538,6 +1601,13 @@ export default function AdminDashboard() {
 
                           <div className="sm:col-span-4 flex flex-wrap items-center gap-3 mt-2">
                             <span className="font-arabic text-xs text-amber-300/80">{t('admin.coloring_pages_count', '{{count}} صفحة · غلاف أمامي وخلفي', { count: theme.generatedImages?.length ?? 0 })}</span>
+                            {/* Say what the button needs before it is pressed —
+                                it used to fail with a toast only after clicking. */}
+                            {((theme.coloringScenes || []).filter((x: string) => (x || '').trim()).length === 0) && (
+                              <span className="font-arabic text-xs text-white/45">
+                                {t('admin.coloring_hint', '← ابدأ بـ «املأ من القصة»، ثم راجع المشاهد.')}
+                              </span>
+                            )}
                             <button
                               onClick={() => handleGenerateColoring(theme)}
                               disabled={generatingThemeId === theme.id}
@@ -1669,8 +1739,15 @@ export default function AdminDashboard() {
                       : t('admin.filter_none_stories', 'لا يوجد كتاب على صفحة القصص بعد — اضغط 📚 على أي كتاب لإضافته.')}
                   </p>
                 ) : (
+                  <div className="space-y-6">
+                  {bookGroups.map((g) => (
+                  <div key={g.id}>
+                  <h4 className="font-arabic font-bold text-white/70 text-sm mb-2 flex items-center gap-2">
+                    {g.id === 'customers' ? '🧾' : '⭐'} {g.label}
+                    <span className="text-white/35 font-normal">({g.books.length})</span>
+                  </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {shownBooks.map((b: any) => (
+                    {g.books.map((b: any) => (
                       <div key={b.key} className="bg-dark-700/50 rounded-2xl border border-white/5 p-3 flex flex-col gap-2.5 hover:border-gold-500/30 transition-all">
                         <div className="flex items-center gap-2.5 min-w-0">
                           {b.cover ? (
@@ -1777,6 +1854,9 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                  </div>
+                  ))}
                   </div>
                 )}
               </div>
