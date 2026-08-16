@@ -1077,7 +1077,8 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
     // deep_sea, ocean_adventure, toy_city, first_grade and the rest — misses
     // and silently falls through to the generic "magical sparkles" case, which
     // is how a Deep Sea book got a cover of rainbows, an owl and storybooks.
-    const sceneTpl: any = (SCENE_TEMPLATES as any)[themeId];
+    const baseThemeId = themeId.replace(/_(real|photoreal|cartoon|pr|hd)$/, '');
+    const sceneTpl: any = (SCENE_TEMPLATES as any)[themeId] || (SCENE_TEMPLATES as any)[baseThemeId];
     const coverPrompt = sceneTpl?.coverScene
       ? buildScenePrompt('cover', sceneTpl.coverScene, childName, 'male')
       : buildCoverPrompt({ childName, childGender: 'male', theme: themeId });

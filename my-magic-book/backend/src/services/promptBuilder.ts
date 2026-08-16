@@ -201,7 +201,11 @@ export function coverBackground(theme: string): string {
     custom:
       'a magical wonder-filled storybook world with swirling sparkles, warm glowing light and charming friendly details',
   };
-  return map[theme] || map.custom;
+  // Style variants share their base theme's look. Without this, space_real,
+  // zoo_photoreal and friends miss the map and silently get map.custom — a
+  // generic "magical world" cover on a book about space.
+  const base = theme.replace(/_(real|photoreal|cartoon|pr|hd)$/, '');
+  return map[theme] || map[base] || map.custom;
 }
 
 /**
@@ -263,5 +267,9 @@ function themeStyle(theme: string): string {
     music: 'Whimsical concert scene with floating glowing musical notes, vivid neon-pastel colors and sparkles.',
     custom: 'Vivid magical storybook art, rich saturated colors and a warm, wonder-filled atmosphere.',
   };
-  return map[theme] || map.custom;
+  // Style variants share their base theme's look. Without this, space_real,
+  // zoo_photoreal and friends miss the map and silently get map.custom — a
+  // generic "magical world" cover on a book about space.
+  const base = theme.replace(/_(real|photoreal|cartoon|pr|hd)$/, '');
+  return map[theme] || map[base] || map.custom;
 }
