@@ -704,6 +704,12 @@ export const getPublicSettings = async (_req: Request, res: Response): Promise<v
       homeStats: settings.homeStats || DEFAULT_HOME_STATS,
       allowSkipPhoto: !!settings.allowSkipPhoto,
       aiModeEnabled: !!settings.aiModeEnabled,
+      // Whether the wizard should offer card payment at all. True only once a
+      // hosted checkout exists to send the customer to — BookPod's link, or
+      // Stripe. Offering a card button with nothing behind it is worse than not
+      // offering one, so the wizard reads this rather than hardcoding a flag.
+      onlinePayment: !!(process.env.BOOKPOD_PAYMENT_URL || '').trim() || !!process.env.STRIPE_SECRET_KEY,
+      onlinePaymentProvider: (process.env.BOOKPOD_PAYMENT_URL || '').trim() ? 'bookpod' : (process.env.STRIPE_SECRET_KEY ? 'stripe' : null),
     };
     res.json({ success: true, settings: filtered });
   } catch (error) {

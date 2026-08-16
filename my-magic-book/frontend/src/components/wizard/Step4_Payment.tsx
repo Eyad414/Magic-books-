@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useStoryProgress } from '../../context/StoryProgressContext';
 import { useAuth } from '../../context/AuthContext';
 import MagicButton from '../common/MagicButton';
-import { ChevronRight, CreditCard, Shield, CheckCircle } from 'lucide-react';
+import { ChevronRight, CreditCard, Shield, CheckCircle, Lock } from 'lucide-react';
 import { orderApi } from '../../api/orderApi';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -20,8 +20,6 @@ import { useCheckoutTotals } from '../../hooks/useCheckoutTotals';
  */
 interface Props { onPrev: () => void; }
 
-// Online gateways aren't live yet — cash on delivery is the only real option.
-const ONLINE_PAYMENTS_ENABLED = false;
 
 export default function Step4_Payment({ onPrev }: Props) {
   const { progress, resetProgress } = useStoryProgress();
@@ -32,14 +30,25 @@ export default function Step4_Payment({ onPrev }: Props) {
   const { storyConfig, bookCustomization, shippingAddress } = progress;
   const isPickup = shippingAddress?.deliveryMethod === 'pickup';
 
-  const { selectedPkg, deliveryFee, discountedBase, totalPrice } = useCheckoutTotals({
+  const { selectedPkg, deliveryFee, discountedBase, totalPrice, liveSettings } = useCheckoutTotals({
     bookPackage: bookCustomization?.bookPackage,
     isPickup,
   });
 
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal' | 'applepay' | 'cash'>(
-    ONLINE_PAYMENTS_ENABLED ? 'card' : 'cash',
-  );
+  // Card payment appears only when there is a hosted checkout to hand off to.
+  // The server decides — a card button with nothing behind it is worse than no
+  // card button. Today that means BookPod's payment link, once they supply it.
+  const onlinePaymentsEnabled = !!liveSettings?.onlinePayment;
+  const paysOnBookPod = liveSettings?.onlinePaymentProvider === 'bookpod';
+
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal' | 'applepay' | 'cash'>('cash');
+
+  // Default to card the moment a hosted checkout exists, without overriding a
+  // customer who has already picked cash on this screen.
+  const [touchedMethod, setTouchedMethod] = useState(false);
+  useEffect(() => {
+    if (!touchedMethod && onlinePaymentsEnabled) setPaymentMethod('card');
+  }, [onlinePaymentsEnabled, touchedMethod]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -132,9 +141,9 @@ export default function Step4_Payment({ onPrev }: Props) {
           </h3>
           <div className="flex items-center gap-1 p-1 rounded-full bg-dark-800 border border-white/5 overflow-x-auto">
             {[
-              { id: 'card', label: t('step5.credit_card'), icon: '💳', soon: !ONLINE_PAYMENTS_ENABLED },
-              { id: 'paypal', label: 'PayPal', icon: '🅿️', soon: !ONLINE_PAYMENTS_ENABLED },
-              { id: 'applepay', label: 'Apple Pay', icon: '🍎', soon: !ONLINE_PAYMENTS_ENABLED },
+              { id: 'card', label: t('step5.credit_card'), icon: '💳', soon: !onlinePaymentsEnabled },
+              { id: 'paypal', label: 'PayPal', icon: '🅿️', soon: !onlinePaymentsEnabled },
+              { id: 'applepay', label: 'Apple Pay', icon: '🍎', soon: !onlinePaymentsEnabled },
               // "on pickup" is wrong for a home delivery — that customer is
               // paying the courier at the door, and is being charged a
               // delivery fee two lines above.
@@ -152,7 +161,7 @@ export default function Step4_Payment({ onPrev }: Props) {
                   key={method.id}
                   type="button"
                   disabled={soon}
-                  onClick={() => { if (!soon) setPaymentMethod(method.id as any); }}
+                  onClick={() => { if (!soon) { setTouchedMethod(true); setPaymentMethod(method.id as any); } }}
                   title={soon ? `${method.label} — ${t('step5.soon', 'قريباً')}` : method.label}
                   className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-arabic font-bold whitespace-nowrap transition-all ${
                     soon
@@ -175,21 +184,22 @@ export default function Step4_Payment({ onPrev }: Props) {
           </div>
         </div>
 
-        {ONLINE_PAYMENTS_ENABLED && paymentMethod === 'card' && (
-          <div className="mt-3 p-3 bg-dark-800 rounded-lg border border-white/5 animate-fade-in">
-            <div className="grid grid-cols-1 sm:grid-cols-[1fr_100px_80px] gap-2">
-              <div>
-                <label className="block font-arabic text-white/40 text-[10px] mb-1">{t('step5.card_number')}</label>
-                <input type="text" placeholder="•••• •••• •••• ••••" className="magic-input w-full font-mono text-left !py-2 text-sm tracking-wider" dir="ltr" />
-              </div>
-              <div>
-                <label className="block font-arabic text-white/40 text-[10px] mb-1">{t('step5.expiry_date')}</label>
-                <input type="text" placeholder="MM/YY" className="magic-input w-full text-left !py-2 text-sm" dir="ltr" />
-              </div>
-              <div>
-                <label className="block font-arabic text-white/40 text-[10px] mb-1">CVC</label>
-                <input type="text" placeholder="•••" className="magic-input w-full text-left !py-2 text-sm" dir="ltr" />
-              </div>
+        {/* Card details are entered on the provider's own page, never here.
+            Collecting a card number on this site would put the whole store in
+            PCI scope; handing off keeps it out. So this explains the redirect
+            rather than offering a form. */}
+        {onlinePaymentsEnabled && paymentMethod === 'card' && (
+          <div className="mt-3 p-3 rounded-xl bg-gold-500/5 border border-gold-500/25 animate-fade-in flex items-start gap-2.5">
+            <Lock className="w-4 h-4 text-gold-500 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="font-arabic text-white/85 text-xs font-bold">
+                {paysOnBookPod
+                  ? t('payment.bookpod_title', 'ستُكمل الدفع على صفحة BookPod الآمنة')
+                  : t('payment.hosted_title', 'ستُكمل الدفع على صفحة الدفع الآمنة')}
+              </p>
+              <p className="font-arabic text-white/50 text-[11px] leading-relaxed">
+                {t('payment.hosted_desc', 'ننقلك إلى صفحة الدفع لإدخال بطاقتك، ثم نعيدك إلى هنا. بيانات بطاقتك لا تمر عبر موقعنا إطلاقاً.')}
+              </p>
             </div>
           </div>
         )}
@@ -234,7 +244,11 @@ export default function Step4_Payment({ onPrev }: Props) {
               isLoading={isProcessing}
               icon={<CreditCard className="w-5 h-5" />}
             >
-              {isAuthenticated ? t('step5.pay_now').replace('{price}', String(totalPrice)) : t('step5.login_to_pay')}
+              {!isAuthenticated
+                ? t('step5.login_to_pay')
+                : onlinePaymentsEnabled && paymentMethod === 'card'
+                  ? t('payment.continue_to_pay', 'متابعة الدفع — {price} ₪').replace('{price}', String(totalPrice))
+                  : t('step5.pay_now').replace('{price}', String(totalPrice))}
             </MagicButton>
           </div>
         </div>

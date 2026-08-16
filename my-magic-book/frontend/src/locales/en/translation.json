@@ -1488,6 +1488,10 @@
   },
   "payment": {
     "title": "Payment",
-    "desc": "Choose how you'd like to pay to complete your order."
+    "desc": "Choose how you'd like to pay to complete your order.",
+    "bookpod_title": "You'll finish paying on BookPod's secure page",
+    "hosted_title": "You'll finish paying on the secure payment page",
+    "hosted_desc": "We'll take you there to enter your card, then bring you straight back. Your card details never pass through our site.",
+    "continue_to_pay": "Continue to payment — {price} ₪"
   }
 }

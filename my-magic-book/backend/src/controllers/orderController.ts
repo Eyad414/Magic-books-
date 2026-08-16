@@ -69,6 +69,26 @@ export const createCheckout = async (req: Request, res: Response): Promise<void>
       return;
     }
 
+    // ── BookPod hosted checkout ────────────────────────────────────────────
+    // The customer pays on BookPod's own page, so card details never reach this
+    // server and the store stays out of PCI scope. Their API has no endpoint
+    // that mints a payment link, so the URL they give us is configured once and
+    // the order's id rides along as the reference — the same id BookPod echoes
+    // back as external_id, which is how PaymentPoller already matches a payment
+    // to an order without a webhook.
+    //
+    // Unset until BookPod supplies the link; the wizard hides card payment
+    // entirely in that case, so nobody can reach this branch by accident.
+    const bookPodPayUrl = (process.env.BOOKPOD_PAYMENT_URL || '').trim();
+    if (bookPodPayUrl) {
+      const sep = bookPodPayUrl.includes('?') ? '&' : '?';
+      const checkoutUrl =
+        `${bookPodPayUrl}${sep}reference=${encodeURIComponent(String(order._id))}` +
+        `&amount=${encodeURIComponent(String(totalPrice))}`;
+      res.json({ success: true, order, checkoutUrl, paymentMethod: 'card', provider: 'bookpod' });
+      return;
+    }
+
     if (!stripe) {
       res.status(503).json({ success: false, message: 'الدفع غير مهيأ حالياً' });
       return;

@@ -1542,14 +1542,17 @@ export default function AdminDashboard() {
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
 
-                      {/* Series/part, sitting beside delete at the end of the row.
-                          Owner-facing only — the customer sees a plain title. */}
-                      {seriesBadge(theme, themeSerieses, 'ar') && (
+                      {/* Series/part, beside delete at the end of the row. Just
+                          the link glyph and the part number — the row is already
+                          crowded, and the full "سلسلة البحر · الجزء ٢" is one
+                          hover away. Owner-facing only; customers see a plain
+                          title. */}
+                      {theme.seriesPart && seriesBadge(theme, themeSerieses, 'ar') && (
                         <span
-                          className="px-2 py-1 rounded-lg font-arabic text-xs bg-gold-500/15 border border-gold-500/30 text-gold-400/90 whitespace-nowrap"
-                          title={theme.seriesName || ''}
+                          className="shrink-0 w-7 h-7 inline-flex items-center justify-center gap-0.5 rounded-lg bg-gold-500/15 border border-gold-500/30 text-gold-400/90 font-arabic text-[11px] leading-none cursor-help"
+                          title={`${theme.seriesName || ''} · ${seriesBadge(theme, themeSerieses, 'ar')}`}
                         >
-                          🔗 {theme.seriesName} · {seriesBadge(theme, themeSerieses, 'ar')}
+                          🔗<span className="font-bold">{theme.seriesPart}</span>
                         </span>
                       )}
                     </div>
