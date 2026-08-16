@@ -11,9 +11,14 @@ export interface ShowcaseCard {
   storyId?: string;
   emoji: string; // shown in the dashboard favorites card
   /**
-   * The artwork shows a real child whose family has not agreed to it being
-   * public. Keeps the card off the Stories and home pages until it is ticked,
-   * while still listing it in the dashboard for the owner.
+   * Needs the owner's explicit approval before it can be public. Keeps the card
+   * off the Stories and home pages until it is ticked, while still listing it
+   * in the dashboard.
+   *
+   * Originally set because the artwork showed a real child whose family had not
+   * agreed. The eight below have since been regenerated from Baha's photo, so
+   * that reason is gone — the flag stays only so the owner decides when each
+   * one goes public, rather than eight cards appearing on their own.
    *
    * This has to live on the CARD, not on the name. Privacy used to be inferred
    * from the displayed name (PRIVATE_DEMO_CHILDREN), so renaming a card to an
@@ -76,11 +81,9 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   // listed them: the two new stories plus pirate and school.
   //
   // Adding a card here:
-  //   1. `private: true` if the cover art shows a real child whose family has
-  //      not agreed to it being public. Judge the ARTWORK, not the name — every
-  //      card below whose cover is a real girl is marked private, whatever name
-  //      it displays. An invented name over a real child's face is still that
-  //      child on the public page.
+  //   1. `private: true` if the cover art shows a child you have no permission
+  //      to publish. Judge the ARTWORK, not the name — an invented name over a
+  //      real child's face is still that child on the public page.
   //   2. Match the displayed name to the gender in that artwork. The name drives
   //      detectGender, which resolves the story's {masc|fem} tokens, so a boy's
   //      name over a picture of a girl gives masculine text on a girl's cover.
