@@ -1018,8 +1018,13 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
       .filter((p: any) => p && (p.text || typeof p === 'string'))
       .map((p: any) => substituteName(p.text || p, childName));
 
-    const generatedImages: string[] = [];
-    for (let i = 0; i < PREVIEW_IMAGE_PAGES; i++) {
+    // `only: 'cover'` redoes just the front cover and keeps the existing pages.
+    // A cover can be wrong while the 13 interiors are fine — that is exactly
+    // what happened to deep_sea — and redoing all 15 to fix one costs 15x.
+    const coverOnly = req.body?.only === 'cover';
+
+    const generatedImages: string[] = coverOnly ? [...(theme.generatedImages || [])] : [];
+    for (let i = 0; !coverOnly && i < PREVIEW_IMAGE_PAGES; i++) {
       const pageText = textPages[i] || textPages[textPages.length - 1] || `${childName} ${theme.label}`;
       const prompt = buildIllustrationPrompt({
         pageText,
@@ -1050,13 +1055,14 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
       `warm smile, looking at the camera, soft cinematic studio lighting, gentle bokeh background in the ${theme.label} theme, ` +
       `rich vibrant saturated colors, professional CGI render quality. Centered. No text, no watermark.`;
     try {
+      if (coverOnly) throw new Error('__skip_portrait__');
       const portrait = await generateIllustration(portraitPrompt, referencePhoto, {
         storyId: `theme_${themeId}`,
         pageNumber: 99,
       });
       theme.generatedPortrait = portrait.objectPath;
     } catch (e: any) {
-      console.warn('[generatePreview] portrait failed:', e.message);
+      if (e.message !== '__skip_portrait__') console.warn('[generatePreview] portrait failed:', e.message);
     }
 
     // Full-scene front cover — the hero kid inside the themed world (Taletoons
