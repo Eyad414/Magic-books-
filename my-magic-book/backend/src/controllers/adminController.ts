@@ -11,7 +11,7 @@ import { buildIllustrationPrompt, buildPhotorealPrompt, buildCoverPrompt } from 
 import { swapFace } from '../services/FaceSwapService';
 import { buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, COLORING_PAGES, SCENE_TEMPLATES } from '../services/sceneTemplates';
 import { reimposePdf, splitCoverInterior } from '../services/BookImportService';
-import { uploadBuffer, pdfFolderPath } from '../services/StorageService';
+import { uploadBuffer, pdfFolderPath, listObjects, deleteObject } from '../services/StorageService';
 import { submitPrintJob, isBookPodConfigured } from '../services/BookPodService';
 
 // The kid photo (already in the bucket) used as the reference face for ADMIN
@@ -1438,5 +1438,52 @@ export const submitImportedBook = async (req: Request, res: Response): Promise<v
   } catch (err: any) {
     console.error('[submitImportedBook]', err?.message || err);
     res.status(500).json({ success: false, message: err?.message || 'فشل الإرسال إلى BookPod.' });
+  }
+};
+
+
+/**
+ * List and delete the files produced by the book importer.
+ *
+ * Deletion is hard-fenced to the `imported/` prefix. The same bucket holds
+ * every generated book, every customer's uploaded photo and every print file,
+ * so an endpoint that took arbitrary object paths would be one bad request away
+ * from destroying work that cannot be regenerated. Anything outside the fence
+ * is refused, not merely discouraged.
+ */
+const IMPORTED_PREFIX = () => pdfFolderPath('imported') + '/';
+
+export const listImportedFiles = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const files = await listObjects(IMPORTED_PREFIX());
+    res.json({ success: true, files, prefix: IMPORTED_PREFIX() });
+  } catch (err: any) {
+    console.error('[listImportedFiles]', err?.message || err);
+    res.status(500).json({ success: false, message: err?.message || 'فشل جلب الملفات.' });
+  }
+};
+
+export const deleteImportedFiles = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const paths: string[] = Array.isArray(req.body?.paths) ? req.body.paths.map(String) : [];
+    if (paths.length === 0) {
+      res.status(400).json({ success: false, message: 'لم تحدد أي ملف للحذف.' });
+      return;
+    }
+    const fence = IMPORTED_PREFIX();
+    const outside = paths.filter((p) => !p.startsWith(fence) || p.includes('..'));
+    if (outside.length > 0) {
+      res.status(400).json({
+        success: false,
+        message: 'الحذف مسموح فقط داخل مجلد الكتب المستوردة.',
+        refused: outside,
+      });
+      return;
+    }
+    for (const p of paths) await deleteObject(p);
+    res.json({ success: true, deleted: paths.length });
+  } catch (err: any) {
+    console.error('[deleteImportedFiles]', err?.message || err);
+    res.status(500).json({ success: false, message: err?.message || 'فشل الحذف.' });
   }
 };

@@ -144,3 +144,20 @@ export async function streamObject(
       .pipe(res);
   });
 }
+
+/** Objects under a prefix, newest first. Used by the imported-books cleanup. */
+export async function listObjects(prefix: string): Promise<{ path: string; size: number; updated: string }[]> {
+  const [files] = await bucket.getFiles({ prefix });
+  return files
+    .map((f) => ({
+      path: f.name,
+      size: Number(f.metadata?.size || 0),
+      updated: String(f.metadata?.updated || ''),
+    }))
+    .sort((a, b) => b.updated.localeCompare(a.updated));
+}
+
+/** Delete one object. Missing files are not an error — the goal is "gone". */
+export async function deleteObject(objectPath: string): Promise<void> {
+  await bucket.file(objectPath).delete({ ignoreNotFound: true });
+}
