@@ -3,8 +3,7 @@ import { getPackageLabel, getPackageDesc } from '../../utils/packageLabel';
 import { useStoryProgress } from '../../context/StoryProgressContext';
 import { useAuth } from '../../context/AuthContext';
 import MagicButton from '../common/MagicButton';
-import { ChevronRight, CreditCard, Shield, Package, CheckCircle, Tag, Plus, MapPin } from 'lucide-react';
-import { orderApi } from '../../api/orderApi';
+import { ChevronRight, CreditCard, Package, Tag, Plus, MapPin } from 'lucide-react';
 import { publicApi } from '../../api/publicApi';
 import { toDisplayUrl } from '../../api/mediaUrl';
 import toast from 'react-hot-toast';
@@ -13,14 +12,11 @@ import { useTranslation } from 'react-i18next';
 import { localizeName } from '../../utils/translit';
 import { placeName } from '../../data/placeNames';
 
-// Merged checkout step: shipping address (old step 4) + order review & payment
-// (old step 5) on a single screen, so the customer pays in one place.
-interface Props { onPrev: () => void; }
-
-// Online payment gateways (Visa/PayPal/Apple Pay) aren't live yet — only
-// cash-on-delivery is enabled for now. Flip this to `true` (one line) to
-// turn the online options back on when the gateway is ready.
-const ONLINE_PAYMENTS_ENABLED = false;
+// Step 3 — the customer's details and a review of what they are buying.
+// Payment is its own step (Step4_Payment), so the card is entered on a screen
+// of its own and, once BookPod's link is live, on BookPod's page rather than
+// here.
+interface Props { onNext: () => void; onPrev: () => void; }
 
 // Supported cities for shipping validation and dropdowns.
 const SUPPORTED_CITIES = [
@@ -70,7 +66,7 @@ const Field = ({ id, label, placeholder, value, onChange, type = 'text', error }
   </div>
 );
 
-export default function Step3_Checkout({ onPrev }: Props) {
+export default function Step3_Checkout({ onNext, onPrev }: Props) {
   const { progress, resetProgress, setShippingAddress } = useStoryProgress();
   const { t, i18n } = useTranslation();
   const { isAuthenticated } = useAuth();
@@ -103,11 +99,6 @@ export default function Step3_Checkout({ onPrev }: Props) {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // ── Review / payment state (from old step 5) ─────────────────────────
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal' | 'applepay' | 'cash'>(
-    ONLINE_PAYMENTS_ENABLED ? 'card' : 'cash'
-  );
   const [liveSettings, setLiveSettings] = useState<any>(null);
 
   useEffect(() => {
@@ -219,7 +210,9 @@ export default function Step3_Checkout({ onPrev }: Props) {
     return Object.keys(errs).length === 0;
   };
 
-  const handleCheckout = async () => {
+  // Step 3 ends at the customer's details: validate, save the address, and hand
+  // over to the payment step. Placing the order now happens there.
+  const handleContinue = () => {
     if (!isAuthenticated) {
       toast.error(t('step5.err_login'));
       navigate('/login');
@@ -230,49 +223,8 @@ export default function Step3_Checkout({ onPrev }: Props) {
       return;
     }
     setShippingAddress(shippingForm);
-    setIsProcessing(true);
-    try {
-      const res = await orderApi.createCheckout({
-        storyId: storyConfig?.storyId,
-        shippingAddress: shippingForm,
-        totalPrice,
-        paymentMethod,
-        bookPackage: bookCustomization?.bookPackage,
-      });
-      // Card/online → Stripe Checkout. The webhook marks the order paid and
-      // triggers book generation only after a successful payment.
-      if (res?.checkoutUrl) {
-        window.location.href = res.checkoutUrl;
-        return;
-      }
-      // Cash / self-pickup → order placed offline, no online payment.
-      setIsSuccess(true);
-      toast.success(t('step5.success_toast'));
-      setTimeout(() => { resetProgress(); navigate('/dashboard'); }, 3000);
-    } catch (err: any) {
-      // The server rejects a few orders on purpose — a story with no child photo
-      // can't be illustrated, so checkout refuses it rather than taking the
-      // money. Those messages are written for the customer and say what to fix;
-      // swallowing them into "something went wrong" leaves them stuck.
-      const serverMsg = err?.response?.data?.message;
-      toast.error(serverMsg || t('step5.err_general'));
-    } finally {
-      setIsProcessing(false);
-    }
+    onNext();
   };
-
-  if (isSuccess) {
-    return (
-      <div className="text-center py-12 space-y-6">
-        <div className="w-20 h-20 rounded-full bg-gold-500/20 border-2 border-gold-500 flex items-center justify-center mx-auto animate-pulse-gold">
-          <CheckCircle className="w-10 h-10 text-gold-500" />
-        </div>
-        <h2 className="font-arabic font-black text-white text-2xl">{t('step5.order_on_way')}</h2>
-        <p className="font-arabic text-white/60">{t('step5.order_desc')}</p>
-        <div className="text-5xl animate-bounce-slow">📚✨</div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -601,99 +553,7 @@ export default function Step3_Checkout({ onPrev }: Props) {
           </div>
         </div>
 
-        {/* Payment method */}
-        <div className="p-3 rounded-xl bg-dark-700 border border-white/10">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <h3 className="font-arabic font-bold text-white text-sm flex items-center gap-2 shrink-0">
-              <CreditCard className="w-4 h-4 text-gold-500" /> {t('step5.payment_method_title')}
-            </h3>
-            <div className="flex items-center gap-1 p-1 rounded-full bg-dark-800 border border-white/5 overflow-x-auto">
-              {[
-                { id: 'card', label: t('step5.credit_card'), icon: '💳', soon: !ONLINE_PAYMENTS_ENABLED },
-                { id: 'paypal', label: 'PayPal', icon: '🅿️', soon: !ONLINE_PAYMENTS_ENABLED },
-                { id: 'applepay', label: 'Apple Pay', icon: '🍎', soon: !ONLINE_PAYMENTS_ENABLED },
-                // "on pickup" is wrong for a home delivery — that customer is
-                // paying the courier at the door, and is being charged a
-                // delivery fee two lines above.
-                {
-                  id: 'cash',
-                  label: isPickup ? t('step5.cash', 'نقدًا عند الاستلام') : t('step5.cash_delivery', 'نقدًا عند التوصيل'),
-                  icon: '💵',
-                  soon: false,
-                },
-              ].map((method) => {
-                const active = paymentMethod === method.id;
-                const soon = method.soon;
-                return (
-                  <button
-                    key={method.id}
-                    type="button"
-                    disabled={soon}
-                    onClick={() => { if (!soon) setPaymentMethod(method.id as any); }}
-                    title={soon ? `${method.label} — ${t('step5.soon', 'قريباً')}` : method.label}
-                    className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-arabic font-bold whitespace-nowrap transition-all ${
-                      soon
-                        ? 'text-white/35 cursor-not-allowed'
-                        : active
-                          ? 'bg-gold-500 text-dark-900 shadow-[0_0_12px_rgba(212,169,55,0.4)]'
-                          : 'text-white/60 hover:text-white hover:bg-white/5'
-                    }`}
-                  >
-                    <span className={`text-base leading-none ${soon ? 'opacity-60' : ''}`}>{method.icon}</span>
-                    <span className={active ? '' : 'hidden sm:inline'}>{method.label}</span>
-                    {soon && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gold-500/15 text-gold-500/80 border border-gold-500/25">
-                        {t('step5.soon', 'قريباً')}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {ONLINE_PAYMENTS_ENABLED && paymentMethod === 'card' && (
-            <div className="mt-3 p-3 bg-dark-800 rounded-lg border border-white/5 animate-fade-in">
-              <div className="grid grid-cols-1 sm:grid-cols-[1fr_100px_80px] gap-2">
-                <div>
-                  <label className="block font-arabic text-white/40 text-[10px] mb-1">{t('step5.card_number')}</label>
-                  <input type="text" placeholder="•••• •••• •••• ••••" className="magic-input w-full font-mono text-left !py-2 text-sm tracking-wider" dir="ltr" />
-                </div>
-                <div>
-                  <label className="block font-arabic text-white/40 text-[10px] mb-1">{t('step5.expiry_date')}</label>
-                  <input type="text" placeholder="MM/YY" className="magic-input w-full text-left !py-2 text-sm" dir="ltr" />
-                </div>
-                <div>
-                  <label className="block font-arabic text-white/40 text-[10px] mb-1">CVC</label>
-                  <input type="text" placeholder="•••" className="magic-input w-full text-left !py-2 text-sm" dir="ltr" />
-                </div>
-              </div>
-            </div>
-          )}
-          {paymentMethod === 'cash' && (
-            <p className="mt-3 px-3 py-2 rounded-lg bg-green-500/10 border border-green-500/20 font-arabic text-green-400 text-xs animate-fade-in">
-              💵 {isPickup
-                ? t('step5.cash_note', 'سيتم تحصيل المبلغ نقدًا عند استلام الطلب من نقطة الاستلام.')
-                : t('step5.cash_note_delivery', 'سيتم تحصيل المبلغ نقدًا عند توصيل الطلب إلى عنوانك.')}
-            </p>
-          )}
-          {paymentMethod === 'paypal' && (
-            <p className="mt-3 px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 font-arabic text-blue-300 text-xs animate-fade-in">
-              🅿️ {t('step5.paypal_note', 'سيتم تحويلك إلى PayPal لإتمام الدفع بأمان.')}
-            </p>
-          )}
-          {paymentMethod === 'applepay' && (
-            <p className="mt-3 px-3 py-2 rounded-lg bg-white/5 border border-white/10 font-arabic text-white/70 text-xs animate-fade-in">
-              🍎 {t('step5.applepay_note', 'استخدم Touch ID أو Face ID لإتمام الدفع.')}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Security badge */}
-      <div className="flex items-center gap-2 justify-center text-white/30">
-        <Shield className="w-4 h-4 text-green-500" />
-        <span className="font-arabic text-xs">{t('step5.secure_payment')}</span>
+        {/* Payment moved to step 4 — this step is details and review only. */}
       </div>
 
       {/* Navigation */}
@@ -701,21 +561,9 @@ export default function Step3_Checkout({ onPrev }: Props) {
         <MagicButton variant="outline" size="lg" onClick={onPrev} icon={<ChevronRight className="w-5 h-5 nav-icon" />}>
           {t('wizard.prev_btn')}
         </MagicButton>
-        <div className="relative flex-1 group">
-          <div className="pointer-events-none absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-gold-500 via-amber-400 to-gold-500 opacity-40 blur-md animate-pulse group-hover:opacity-70 transition-opacity" />
-          <div className="relative">
-            <MagicButton
-              id="checkout-btn"
-              fullWidth
-              size="lg"
-              onClick={handleCheckout}
-              isLoading={isProcessing}
-              icon={<CreditCard className="w-5 h-5" />}
-            >
-              {isAuthenticated ? t('step5.pay_now').replace('{price}', String(totalPrice)) : t('step5.login_to_pay')}
-            </MagicButton>
-          </div>
-        </div>
+        <MagicButton fullWidth size="lg" onClick={handleContinue} icon={<CreditCard className="w-5 h-5" />}>
+          {t('checkout.to_payment', 'التالي — الدفع')}
+        </MagicButton>
       </div>
     </div>
   );

@@ -2,11 +2,12 @@ import { useStoryProgress } from '../context/StoryProgressContext';
 import Step1_ChildDetails from '../components/wizard/Step1_ChildDetails';
 import Step2_AI_Generator from '../components/wizard/Step2_AI_Generator';
 import Step3_Checkout from '../components/wizard/Step3_Checkout';
+import Step4_Payment from '../components/wizard/Step4_Payment';
 import { CheckCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 4;
 
 export default function CreateStory() {
   const { progress, setStep } = useStoryProgress();
@@ -14,8 +15,8 @@ export default function CreateStory() {
   // Admins can jump freely between steps (to review pages) without filling in
   // the details; customers can only step back to a completed step.
   const isAdmin = user?.role === 'admin' || user?.email === 'eyadat720@gmail.com';
-  // Clamp: returning users may have a stale step (4/5) saved from the old
-  // 5-step wizard in localStorage — never render an out-of-range slot.
+  // Clamp: a saved step from an older wizard (or a future one) must never render
+  // an out-of-range slot. Payment is now step 4, so 4 is valid again.
   const currentStep = Math.min(Math.max(progress.currentStep || 1, 1), TOTAL_STEPS);
   const { t } = useTranslation();
 
@@ -23,6 +24,7 @@ export default function CreateStory() {
     { number: 1, label: t('wizard.step1_label'), emoji: '👶' },
     { number: 2, label: t('wizard.step2_label'), emoji: '✨' },
     { number: 3, label: t('wizard.step3_label'), emoji: '🚀' },
+    { number: 4, label: t('wizard.step4_label', 'الدفع'), emoji: '💳' },
   ];
 
   const goNext = () => {
@@ -101,7 +103,8 @@ export default function CreateStory() {
         <div className="glass-card p-6 sm:p-8">
           {currentStep === 1 && <Step1_ChildDetails onNext={goNext} />}
           {currentStep === 2 && <Step2_AI_Generator onNext={goNext} onPrev={goPrev} />}
-          {currentStep === 3 && <Step3_Checkout onPrev={goPrev} />}
+          {currentStep === 3 && <Step3_Checkout onNext={goNext} onPrev={goPrev} />}
+          {currentStep === 4 && <Step4_Payment onPrev={goPrev} />}
         </div>
       </div>
     </div>

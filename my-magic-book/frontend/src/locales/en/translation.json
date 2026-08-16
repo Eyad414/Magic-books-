@@ -273,12 +273,12 @@
   "wizard": {
     "step1_label": "Your child",
     "step2_label": "Your story",
-    "step3_label": "Checkout",
-    "step4_label": "Shipping Address",
+    "step3_label": "Your details",
+    "step4_label": "Payment",
     "step5_label": "Order Review",
     "build": "Build",
     "your_magic_story": "Your Magic Story",
-    "header_desc": "Complete 3 simple steps to create a personalized book for your child",
+    "header_desc": "Complete 4 simple steps to create a personalized book for your child",
     "step_x_of_y": "Step {current} of {total} — ",
     "prev_btn": "Previous"
   },
@@ -1462,14 +1462,15 @@
     "reset": "Reset all"
   },
   "checkout": {
-    "title": "Shipping & payment",
+    "title": "Delivery details",
     "secure_badge": "Secure & protected payment",
     "trust_secure": "Secure payment",
     "trust_preview": "You previewed your story free",
     "trust_delivery": "Delivered to your door",
     "trust_quality": "Premium printing",
-    "desc": "Last step — enter your delivery details and complete your order.",
-    "err_shipping": "Please complete your shipping details first"
+    "desc": "Enter your delivery details and review your order, then continue to payment.",
+    "err_shipping": "Please complete your shipping details first",
+    "to_payment": "Next — payment"
   },
   "cover_preview": {
     "title": "See your child on the cover",
@@ -1484,5 +1485,9 @@
     "wait_note": "Please keep this page open — the artwork is being drawn.",
     "remaining": "{n} free previews left",
     "error": "Couldn't create the cover, please try again"
+  },
+  "payment": {
+    "title": "Payment",
+    "desc": "Choose how you'd like to pay to complete your order."
   }
 }
