@@ -1034,6 +1034,11 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
     // `only: 'cover'` redoes just the front cover and keeps the existing pages.
     // A cover can be wrong while the 13 interiors are fine — that is exactly
     // what happened to deep_sea — and redoing all 15 to fix one costs 15x.
+    const ONLY_VALUES = ['all', 'pages', 'cover', 'page', 'portrait'];
+    if (req.body?.only && !ONLY_VALUES.includes(req.body.only)) {
+      res.status(400).json({ success: false, message: `unknown only='${req.body.only}' — expected ${ONLY_VALUES.join(', ')}` });
+      return;
+    }
     const coverOnly = req.body?.only === 'cover';
     // The mirror image: redo the 13 interiors and keep the cover and portrait.
     // Needed when a prompt fix applies to the pages but the cover came out well
@@ -1044,12 +1049,16 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
     // in an otherwise good book is the common case, and redoing 13 to fix it
     // costs 13x and rerolls twelve images that were already right.
     const singlePage = req.body?.only === 'page' ? Number(req.body?.pageIndex) : 0;
+    // The back-cover portrait alone. Without this, `only: 'portrait'` fell
+    // through every guard and quietly regenerated all 13 pages as well —
+    // an unknown `only` value costing 13x instead of erroring.
+    const portraitOnly = req.body?.only === 'portrait';
 
     const basePages = themeId.replace(/_(real|photoreal|cartoon|pr|hd)$/, '');
     const sceneTplPages: any = (SCENE_TEMPLATES as any)[themeId] || (SCENE_TEMPLATES as any)[basePages];
 
-    const generatedImages: string[] = (coverOnly || singlePage) ? [...(theme.generatedImages || [])] : [];
-    for (let i = 0; !coverOnly && i < PREVIEW_IMAGE_PAGES; i++) {
+    const generatedImages: string[] = (coverOnly || singlePage || portraitOnly) ? [...(theme.generatedImages || [])] : [];
+    for (let i = 0; !coverOnly && !portraitOnly && i < PREVIEW_IMAGE_PAGES; i++) {
       if (singlePage && i !== singlePage - 1) continue;
       // Prefer the theme's hand-written pageScenes, through the SAME call the
       // printed book makes (BookBuilder). This path used to prompt from the
@@ -1126,7 +1135,7 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
       ? buildScenePrompt('cover', sceneTpl.coverScene, childName, 'male')
       : buildCoverPrompt({ childName, childGender: 'male', theme: themeId });
     try {
-      if (pagesOnly || singlePage) throw new Error('__skip_cover__');
+      if (pagesOnly || singlePage || portraitOnly) throw new Error('__skip_cover__');
       const cover = await generateIllustration(coverPrompt, referencePhoto, {
         storyId: `theme_${themeId}`,
         pageNumber: 0,
