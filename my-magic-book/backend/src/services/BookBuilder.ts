@@ -4,7 +4,7 @@ import { generateIllustration } from './ImageGenerator';
 import { buildBookHtml, BookData } from './HtmlTemplateBuilder';
 import { generateBookPdf } from './PdfGenerator';
 import { uploadBuffer, pdfFolderPath, copyObject } from './StorageService';
-import { splitStoryIntoPages, buildIllustrationPrompt } from './promptBuilder';
+import { splitStoryIntoPages, buildIllustrationPrompt, buildFallbackCoverPrompt, buildFallbackPortraitPrompt, NO_TEXT_RULE, type FallbackArtStyle } from './promptBuilder';
 import { getSceneTemplate, buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, resolveTokens, resolveGender, resolveColoringScenes, COLORING_PAGES } from './sceneTemplates';
 import { coverPreviewSlug, findPreviewCover } from './coverPreviewKey';
 import { printAndSubmitForOrder, printAndSubmitColoringForOrder, buildColoringPrintForOrder, buildPrintFilesForStory, PrintBuildOpts } from './PrintOrchestrator';
@@ -242,11 +242,59 @@ export async function buildBookForOrder(orderId: string, submitToBookPod = true)
         const stored = await generateIllustration(pairs[i].imagePrompt, childPhoto, { storyId: sid, pageNumber: i + 1 });
         paths.push(stored.objectPath);
         pageTexts.push(pairs[i].text);
+        await reportProgress(
+          String(order._id),
+          5 + ((i + 1) / ILLUSTRATION_PAGES) * 70,
+          `الصفحة ${i + 1} من ${ILLUSTRATION_PAGES}`,
+        );
       }
       story.generatedImages = paths;
       await story.save();
+
+      // Cover and back portrait. This branch used to stop at the 13 interior
+      // pages, so a book on a theme without a scene template had neither: the
+      // viewer fell back to the child's RAW UPLOADED SNAPSHOT as the front
+      // cover, and the order still reported "ready" because that check only
+      // counts interior pages. Every customer on a photoreal-variant theme got
+      // that book.
+      //
+      // The style follows the artwork that was just drawn — CGI for an AI-mode
+      // story, soft storybook for a template one — because a photoreal cover on
+      // a cartoon book is worse than no cover at all.
+      const artStyle: FallbackArtStyle = story.mode === 'ai' ? 'cgi' : 'storybook';
+      const coverPrompt = buildFallbackCoverPrompt({
+        childName: story.childName,
+        childGender: resolveGender(story.childName, story.childGender),
+        childAge: story.childAge,
+        theme: story.theme,
+        openingText: pageTexts[0],
+        style: artStyle,
+      });
+      await reportProgress(String(order._id), 76, 'الغلاف الأمامي');
+      // Reuses a cover the customer already approved from the free preview when
+      // one matches, exactly like the template path — that keeps this from
+      // costing an extra image on every such order.
+      const fallbackCover = await reuseApprovedCover(story, coverPrompt, childPhoto, sid);
+
+      await reportProgress(String(order._id), 79, 'الصورة الختامية');
+      const fallbackPortrait = await generateIllustration(
+        buildFallbackPortraitPrompt({
+          childName: story.childName,
+          childGender: resolveGender(story.childName, story.childGender),
+          childAge: story.childAge,
+          theme: story.theme,
+          style: artStyle,
+        }),
+        childPhoto,
+        { storyId: sid, pageNumber: 99 },
+      );
+
+      story.generatedCover = fallbackCover;
+      story.generatedPortrait = fallbackPortrait.objectPath;
+      await story.save();
+
       imageUrls = paths.map(proxyUrl);
-      coverImageUrl = story.coverImageUrl || imageUrls[0] || '';
+      coverImageUrl = proxyUrl(fallbackCover);
       storyTitle = story.mode === 'ai' ? aiStoryTitle(story) : `${story.childName} ${story.theme}`;
     }
 
@@ -282,6 +330,22 @@ export async function buildBookForOrder(orderId: string, submitToBookPod = true)
     };
 
     // Step 3: render the PDF and upload to GCS.
+    // A book is only "ready" if it has everything a reader sees. There was no
+    // completeness check at all — the status was set on reaching the end of the
+    // function — so a book with 13 pages and no cover reported ready and was
+    // delivered that way. A missing piece now fails the build loudly, where the
+    // dashboard shows the reason, instead of shipping quietly.
+    if (!isColoringBook) {
+      const missing = [
+        story.generatedCover ? '' : 'cover',
+        story.generatedPortrait ? '' : 'back portrait',
+        (story.generatedImages || []).length === ILLUSTRATION_PAGES ? '' : `${ILLUSTRATION_PAGES} interior pages`,
+      ].filter(Boolean);
+      if (missing.length) {
+        throw new Error(`book is incomplete — missing ${missing.join(', ')}`);
+      }
+    }
+
     await reportProgress(orderId, 82, 'تجهيز ملف الكتاب (PDF)');
     const html = buildBookHtml(bookData);
     const pdfBuffer = await generateBookPdf(html);
@@ -645,7 +709,12 @@ function extractPairsFromTemplate(
       imagePrompt: substituteName(img?.prompt || '', childName) ||
         // Fallback: if author didn't write a prompt for this page, derive one
         // from the text on the same page.
-        `Children's book illustration of ${childName}. Scene: ${substituteName(t?.content || '', childName)}. Soft pastel storybook style, square 1:1, no text.`,
+        // The trailing rule used to be a bare "no text." — Gemini wrote straight
+        // through it and baked invented Arabic letters into a paid customer's
+        // page. NO_TEXT_RULE names the surfaces it likes to letter.
+        `Children's book illustration of ${childName}, whose face clearly resembles the reference photograph — ` +
+        `the SAME child and outfit on every page. Scene: ${substituteName(t?.content || '', childName)}. ` +
+        `Soft pastel storybook style, square 1:1. ${NO_TEXT_RULE}`,
     });
   }
   return pairs;

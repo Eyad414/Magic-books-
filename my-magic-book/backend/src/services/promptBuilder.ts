@@ -273,3 +273,85 @@ function themeStyle(theme: string): string {
   const base = theme.replace(/_(real|photoreal|cartoon|pr|hd)$/, '');
   return map[theme] || map[base] || map.custom;
 }
+
+/**
+ * The no-text rule for prompts DERIVED FROM STORY TEXT.
+ *
+ * The scene templates carry their own NO_TEXT line, but a book on a theme with
+ * no template gets its prompts built from the page text, and those used to end
+ * in a bare "no text". Gemini writes through that: a paid customer's page came
+ * back with "تنرطد" — invented Arabic letters — baked into the corner of the
+ * artwork. Naming the specific things it likes to letter is what stops it.
+ */
+export const NO_TEXT_RULE =
+  'ABSOLUTELY NO TEXT ANYWHERE: no letters, no words, no Arabic script, no numbers, no signs, no titles ' +
+  'and no watermark — every wall, poster, book, sign and surface is completely blank and unlettered.';
+
+/** Which look a book's artwork has, so its cover is drawn to match. */
+export type FallbackArtStyle = 'storybook' | 'cgi';
+
+interface FallbackCoverInput {
+  childName: string;
+  childGender: 'male' | 'female';
+  childAge?: string | number;
+  theme: string;
+  /** The book's opening line, so the cover shows this story rather than a generic pose. */
+  openingText?: string;
+  style: FallbackArtStyle;
+}
+
+/**
+ * FRONT COVER for a book built without a scene template.
+ *
+ * Those books are drawn by BookBuilder's fallback path, which used to generate
+ * the 13 interior pages and stop — no cover, no back portrait — so the viewer
+ * fell back to the child's RAW UPLOADED SNAPSHOT as the front cover, and the
+ * order still reported "ready".
+ *
+ * The style has to follow the book: an AI-mode story is rendered in the CGI
+ * Pixar look of buildIllustrationPrompt, while a template story is drawn in the
+ * soft pastel storybook look derived from its text. Putting the photoreal cover
+ * wrapper on the latter produces a photograph on the front of a cartoon book.
+ */
+export function buildFallbackCoverPrompt(input: FallbackCoverInput): string {
+  const { childName, childGender, childAge, theme, openingText, style } = input;
+  if (style === 'cgi') {
+    return `${buildCoverPrompt({ childName, childAge, childGender, theme })} ${NO_TEXT_RULE}`;
+  }
+  const ageStr = String(childAge ?? '5').split('-')[0];
+  const child = childGender === 'female' ? 'girl' : 'boy';
+  const opening = openingText ? trimForPrompt(openingText, 220) : '';
+  return [
+    `Children's book FRONT COVER illustration of ${childName}, a cheerful ${ageStr}-year-old ${child} whose face,`,
+    `hair and skin tone clearly resemble the reference photograph — the SAME child and the SAME outfit as the`,
+    `interior pages, shown centred as the smiling hero of the story.`,
+    opening ? `The story opens: "${opening}".` : '',
+    `Around them: ${coverBackground(theme)}.`,
+    `Soft pastel storybook style, square 1:1, warm magical glow.`,
+    NO_TEXT_RULE,
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
+
+/**
+ * BACK-COVER portrait for the same books. Without it the back cover falls back
+ * to the raw uploaded photo, which is the one place a real snapshot is least
+ * expected — every other page is drawn.
+ */
+export function buildFallbackPortraitPrompt(input: Omit<FallbackCoverInput, 'openingText'>): string {
+  const { childName, childGender, childAge, theme, style } = input;
+  const ageStr = String(childAge ?? '5').split('-')[0];
+  const child = childGender === 'female' ? 'girl' : 'boy';
+  const base = [
+    `${childName}, a cheerful ${ageStr}-year-old ${child} whose face, hair and skin tone clearly resemble the`,
+    `reference photograph — the SAME child and outfit as the rest of the book. A warm friendly close-up portrait,`,
+    `smiling happily straight at the viewer and waving goodbye, framed head-and-shoulders, with a soft simple`,
+    `background hinting at ${coverBackground(theme)}.`,
+  ].join(' ');
+  const look =
+    style === 'cgi'
+      ? `High-quality 3D rendered Pixar / DreamWorks style children's book BACK-COVER portrait, square 1:1. ${base} Soft realistic textures, dreamy glow, professional CGI render quality. ${COLOR_GRADE}`
+      : `Children's book BACK-COVER portrait illustration, square 1:1. ${base} Soft pastel storybook style, gentle warm light.`;
+  return `${look} ${NO_TEXT_RULE}`;
+}
