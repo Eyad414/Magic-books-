@@ -950,7 +950,9 @@
     "import_sent": "נשלח — מספר הזמנה ב-BookPod: {{id}}",
     "import_job": "מספר הזמנה ב-BookPod: {{id}} · {{n}} עותקים",
     "pkg_hidden_short": "מוסתרת",
-    "pkg_visible_short": "מוצגת"
+    "pkg_visible_short": "מוצגת",
+    "order_search_ph": "חיפוש לפי מספר הזמנה (#C496F510), לקוח או ילד…",
+    "order_search_none": "אין הזמנה התואמת ל־„{{q}}”"
   },
   "title_page": {
     "presents": "מוגש ל",

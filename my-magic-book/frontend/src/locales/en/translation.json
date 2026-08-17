@@ -950,7 +950,9 @@
     "import_sent": "Sent — BookPod order number: {{id}}",
     "import_job": "BookPod order number: {{id}} · {{n}} copies",
     "pkg_hidden_short": "Hidden",
-    "pkg_visible_short": "Visible"
+    "pkg_visible_short": "Visible",
+    "order_search_ph": "Search by order number (#C496F510), customer or child…",
+    "order_search_none": "No order matches “{{q}}”"
   },
   "title_page": {
     "presents": "Presented to",

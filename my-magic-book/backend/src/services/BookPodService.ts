@@ -168,6 +168,27 @@ function gsUri(uploadUrl: string, fileName: string, fallbackBucket: string): str
   return `gs://${fallbackBucket}/${fileName}`;
 }
 
+/**
+ * Cover lamination. BookPod accepts only these three, and rejects anything else
+ * with `1016: Laminationtype must be one of: none, flat, matt.`
+ *
+ * We sent 'gloss' — accepted when the earlier jobs went through (28258, 28987,
+ * 29116), refused now. It failed the CREATE-BOOK step, so every submission died
+ * with a 500 before an order was ever placed, and the only clue in the browser
+ * was "500 (Internal Server Error)". Keeping the allowed set here, and matching
+ * against it, so a future value change is a clear error and not a mystery.
+ */
+export const BOOKPOD_LAMINATION_TYPES = ['none', 'flat', 'matt'] as const;
+export type BookPodLamination = (typeof BOOKPOD_LAMINATION_TYPES)[number];
+
+/** Overridable, but never allowed to be a value BookPod will reject. */
+export const LAMINATION: BookPodLamination = (() => {
+  const want = (process.env.BOOKPOD_LAMINATION || '').trim().toLowerCase();
+  return (BOOKPOD_LAMINATION_TYPES as readonly string[]).includes(want)
+    ? (want as BookPodLamination)
+    : 'matt';
+})();
+
 function slug(s: string): string {
   return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'magicfanoose';
 }
@@ -205,7 +226,7 @@ export async function submitPrintJob(input: BookPodJobInput): Promise<BookPodJob
     category: ['childrens', 'picture-book'],
     printcolor: input.isColoring ? 'bw' : 'color',
     sheettype: input.isColoring ? 'white110' : 'chromo170',
-    laminationtype: 'gloss',
+    laminationtype: LAMINATION,
     finishtype: 'soft',
     readingdirection: input.readingDirection,
     width: input.widthCm,

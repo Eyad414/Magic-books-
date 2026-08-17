@@ -950,7 +950,9 @@
     "import_sent": "تم الإرسال — رقم الطلب لدى BookPod: {{id}}",
     "import_job": "رقم الطلب لدى BookPod: {{id}} · {{n}} نسخة",
     "pkg_hidden_short": "مخفية",
-    "pkg_visible_short": "ظاهرة"
+    "pkg_visible_short": "ظاهرة",
+    "order_search_ph": "ابحث برقم الطلب (#C496F510) أو اسم العميل أو الطفل…",
+    "order_search_none": "لا يوجد طلب مطابق لـ «{{q}}»"
   },
   "title_page": {
     "presents": "يُقدّم لـ",

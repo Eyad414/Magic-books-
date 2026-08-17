@@ -747,6 +747,12 @@ export default function AdminDashboard() {
   // Free-text search over الكتب الجاهزة — the list is long enough that
   // scrolling for one book is slower than typing its name.
   const [bookSearch, setBookSearch] = useState('');
+  // Free-text search over the ORDERS list. The card shows a short id like
+  // #C496F510, which is the handle used to talk about an order — but there was
+  // no way to look one up by it, so finding a specific order meant scrolling
+  // the whole list. Matches the id, the customer and the child too, since the
+  // question is usually "where is so-and-so's order".
+  const [orderSearch, setOrderSearch] = useState('');
   // `${storyId|demoKey}:${surface}` while one publish toggle is in flight.
   const [visBusy, setVisBusy] = useState<string | null>(null);
 
@@ -920,6 +926,35 @@ export default function AdminDashboard() {
     });
   }, [allBooks, bookFilter, bookSearch, i18n.language]);
 
+  /**
+   * Orders matching the search box. Searching the SHORT id is the main case —
+   * "#C496F510" is how an order gets referred to — so the id is matched with or
+   * without the leading '#', in any case, and the full id works too.
+   */
+  const shownOrders = useMemo(() => {
+    const q = orderSearch.trim().toLowerCase().replace(/^#/, '');
+    if (!q) return orders;
+    return orders.filter((o: any) => {
+      const id = String(o._id || '');
+      const child = o.storyId?.childName || '';
+      const hay = [
+        id,
+        id.slice(-8),
+        o.userId?.name,
+        o.userId?.email,
+        o.shippingAddress?.phone,
+        o.shippingAddress?.fullName,
+        child,
+        localizeName(child, i18n.language),
+        o.storyId?.theme,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [orders, orderSearch, i18n.language]);
+
   // Item 1: the owner's own books first, customers' orders in their own section
   // underneath — same cards, same buttons, just kept apart so the owner can tell
   // at a glance which books are real orders.
@@ -984,18 +1019,41 @@ export default function AdminDashboard() {
             {tab === 'orders' ? (
               <div>
                 <div className="flex items-center justify-between mb-5">
-                  <h2 className="font-arabic font-bold text-xl text-white">{t('admin.orders_title')}</h2>
+                  <h2 className="font-arabic font-bold text-xl text-white">
+                    {t('admin.orders_title')}
+                    <span className="text-white/40 text-sm font-normal ms-2">
+                      ({orders.length}{orderSearch.trim() ? ` · ${shownOrders.length}` : ''})
+                    </span>
+                  </h2>
                   <MagicButton onClick={fetchOrders} size="sm" variant="outline">{t('admin.refresh_data')}</MagicButton>
                 </div>
 
+                <div className="relative mb-4">
+                  <Search className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none" />
+                  <input
+                    type="text"
+                    className="magic-input pe-10"
+                    placeholder={t('admin.order_search_ph', 'ابحث برقم الطلب (#C496F510) أو اسم العميل أو الطفل…')}
+                    value={orderSearch}
+                    onChange={(e) => setOrderSearch(e.target.value)}
+                  />
+                </div>
+
                 <div className="space-y-3">
-                  {orders.length === 0 ? (
+                  {shownOrders.length === 0 && orderSearch.trim() ? (
+                    <div className="text-center py-16 bg-white/5 rounded-3xl border border-dashed border-white/10">
+                      <Search className="w-10 h-10 text-white/20 mx-auto mb-3" />
+                      <p className="font-arabic text-white/40">
+                        {t('admin.order_search_none', 'لا يوجد طلب مطابق لـ «{{q}}»', { q: orderSearch.trim() })}
+                      </p>
+                    </div>
+                  ) : orders.length === 0 ? (
                     <div className="text-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10">
                       <Package className="w-12 h-12 text-white/20 mx-auto mb-4" />
                       <p className="font-arabic text-white/40">{t('admin.no_new_orders')}</p>
                     </div>
                   ) : (
-                    orders.map((order) => (
+                    shownOrders.map((order) => (
                       <div key={order._id} className="bg-dark-700/50 rounded-2xl border border-white/5 p-3.5 hover:border-gold-500/30 transition-all group">
                         <div className="flex flex-col gap-3">
                           {/* Order Info */}
