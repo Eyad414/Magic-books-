@@ -97,6 +97,11 @@ app.get('/api/health', async (req, res) => {
         (process.env.RESEND_FROM || '').includes('resend.dev'),
       frontendUrl: (process.env.FRONTEND_URL || 'https://magicfanoos.com').replace(/\/$/, ''),
     },
+    // The exact commit this server is running, from Render's own env var.
+    // scenesHash only moves when a PROMPT changes, so a fix anywhere else —
+    // the build path, a controller — deploys with no outward sign at all, and
+    // the only way to tell was to pay for a build and watch what happened.
+    commit: (process.env.RENDER_GIT_COMMIT || '').slice(0, 7) || 'local',
     // Which database this server is actually on — the NAME only, no host and
     // no credentials. Two deploys pointed at different databases once, and it
     // was invisible from outside: both answered every request perfectly well,
