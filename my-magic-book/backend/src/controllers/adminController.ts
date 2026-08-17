@@ -1035,6 +1035,11 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
     // A cover can be wrong while the 13 interiors are fine — that is exactly
     // what happened to deep_sea — and redoing all 15 to fix one costs 15x.
     const coverOnly = req.body?.only === 'cover';
+    // The mirror image: redo the 13 interiors and keep the cover and portrait.
+    // Needed when a prompt fix applies to the pages but the cover came out well
+    // — regenerating it too would reroll a good image for nothing, since the
+    // model gives a different picture from the same prompt every time.
+    const pagesOnly = req.body?.only === 'pages';
 
     const generatedImages: string[] = coverOnly ? [...(theme.generatedImages || [])] : [];
     for (let i = 0; !coverOnly && i < PREVIEW_IMAGE_PAGES; i++) {
@@ -1068,7 +1073,7 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
       `warm smile, looking at the camera, soft cinematic studio lighting, gentle bokeh background in the ${theme.label} theme, ` +
       `rich vibrant saturated colors, professional CGI render quality. Centered. No text, no watermark.`;
     try {
-      if (coverOnly) throw new Error('__skip_portrait__');
+      if (coverOnly || pagesOnly) throw new Error('__skip_portrait__');
       const portrait = await generateIllustration(portraitPrompt, referencePhoto, {
         storyId: `theme_${themeId}`,
         pageNumber: 99,
@@ -1096,13 +1101,14 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
       ? buildScenePrompt('cover', sceneTpl.coverScene, childName, 'male')
       : buildCoverPrompt({ childName, childGender: 'male', theme: themeId });
     try {
+      if (pagesOnly) throw new Error('__skip_cover__');
       const cover = await generateIllustration(coverPrompt, referencePhoto, {
         storyId: `theme_${themeId}`,
         pageNumber: 0,
       });
       theme.generatedCover = cover.objectPath;
     } catch (e: any) {
-      console.warn('[generatePreview] cover failed:', e.message);
+      if (e.message !== '__skip_cover__') console.warn('[generatePreview] cover failed:', e.message);
     }
 
     settings.markModified('themes');
