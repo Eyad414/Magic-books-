@@ -932,8 +932,15 @@ export default function AdminDashboard() {
    * without the leading '#', in any case, and the full id works too.
    */
   const shownOrders = useMemo(() => {
-    const q = orderSearch.trim().toLowerCase().replace(/^#/, '');
-    if (!q) return orders;
+    // Several orders get discussed together — "C496F510, 212CEB16, 2EE0257D" —
+    // so pasting that whole list shows those three rather than nothing. Split on
+    // commas and spaces, drop the '#', and match an order if it hits ANY term.
+    const terms = orderSearch
+      .toLowerCase()
+      .split(/[\s,،]+/)
+      .map((t) => t.trim().replace(/^#/, ''))
+      .filter(Boolean);
+    if (!terms.length) return orders;
     return orders.filter((o: any) => {
       const id = String(o._id || '');
       const child = o.storyId?.childName || '';
@@ -951,7 +958,7 @@ export default function AdminDashboard() {
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
-      return hay.includes(q);
+      return terms.some((term) => hay.includes(term));
     });
   }, [orders, orderSearch, i18n.language]);
 
