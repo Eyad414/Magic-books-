@@ -1040,9 +1040,14 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
     // — regenerating it too would reroll a good image for nothing, since the
     // model gives a different picture from the same prompt every time.
     const pagesOnly = req.body?.only === 'pages';
+    // `only: 'page'` + `pageIndex` redoes ONE interior page. A single bad page
+    // in an otherwise good book is the common case, and redoing 13 to fix it
+    // costs 13x and rerolls twelve images that were already right.
+    const singlePage = req.body?.only === 'page' ? Number(req.body?.pageIndex) : 0;
 
-    const generatedImages: string[] = coverOnly ? [...(theme.generatedImages || [])] : [];
+    const generatedImages: string[] = (coverOnly || singlePage) ? [...(theme.generatedImages || [])] : [];
     for (let i = 0; !coverOnly && i < PREVIEW_IMAGE_PAGES; i++) {
+      if (singlePage && i !== singlePage - 1) continue;
       const pageText = textPages[i] || textPages[textPages.length - 1] || `${childName} ${theme.label}`;
       const prompt = buildIllustrationPrompt({
         pageText,
@@ -1057,7 +1062,8 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
         storyId: `theme_${themeId}`,
         pageNumber: i + 1,
       });
-      generatedImages.push(stored.objectPath);
+      if (singlePage) generatedImages[i] = stored.objectPath;
+      else generatedImages.push(stored.objectPath);
     }
 
     // Persist the body images immediately so a later portrait/cover hiccup
@@ -1073,7 +1079,7 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
       `warm smile, looking at the camera, soft cinematic studio lighting, gentle bokeh background in the ${theme.label} theme, ` +
       `rich vibrant saturated colors, professional CGI render quality. Centered. No text, no watermark.`;
     try {
-      if (coverOnly || pagesOnly) throw new Error('__skip_portrait__');
+      if (coverOnly || pagesOnly || singlePage) throw new Error('__skip_portrait__');
       const portrait = await generateIllustration(portraitPrompt, referencePhoto, {
         storyId: `theme_${themeId}`,
         pageNumber: 99,
@@ -1101,7 +1107,7 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
       ? buildScenePrompt('cover', sceneTpl.coverScene, childName, 'male')
       : buildCoverPrompt({ childName, childGender: 'male', theme: themeId });
     try {
-      if (pagesOnly) throw new Error('__skip_cover__');
+      if (pagesOnly || singlePage) throw new Error('__skip_cover__');
       const cover = await generateIllustration(coverPrompt, referencePhoto, {
         storyId: `theme_${themeId}`,
         pageNumber: 0,
