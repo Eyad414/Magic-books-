@@ -15,6 +15,11 @@ export interface IUser extends Document {
    *  most recent PAID order (see coverPreviewController). Trimmed to the last
    *  50 so the document can't grow without bound. */
   coverPreviews?: Date[];
+  /** SHA-256 of the password-reset token, never the token itself — a leaked
+   *  database dump would otherwise hand over working reset links. The plain
+   *  token exists only in the email we send. */
+  resetTokenHash?: string;
+  resetTokenExpires?: Date;
   createdAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
@@ -30,6 +35,10 @@ const UserSchema = new Schema<IUser>(
     location: { type: String, trim: true },
     lastLoginAt: { type: Date },
     coverPreviews: { type: [Date], default: undefined },
+    // `select: false`, like passwordHash: these must never ride along in a user
+    // object that gets serialised into an API response.
+    resetTokenHash: { type: String, select: false },
+    resetTokenExpires: { type: Date, select: false },
   },
   { timestamps: true }
 );

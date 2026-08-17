@@ -10,6 +10,8 @@ import Policy from './pages/Policy';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 import AdminDashboard from './pages/AdminDashboard';
 import StoryBookPage from './pages/StoryBookPage';
@@ -78,6 +80,8 @@ export default function App() {
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
       </Routes>
       <AccessibilityWidget />
     </>

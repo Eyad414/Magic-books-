@@ -96,6 +96,17 @@ export default function Login() {
               </div>
             </div>
 
+            {/* `text-end`, not `text-left`: the link sits on the side the line
+                ends on, which flips with the language. */}
+            <div className="text-end">
+              <Link
+                to="/forgot-password"
+                className="font-arabic text-gold-500/80 hover:text-gold-500 hover:underline text-sm"
+              >
+                {t('auth.forgot_password')}
+              </Link>
+            </div>
+
             <MagicButton
               id="login-submit-btn"
               type="submit"

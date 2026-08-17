@@ -15,6 +15,14 @@ export const authApi = {
     });
     return data;
   },
+  forgotPassword: async (email: string) => {
+    const { data } = await api.post('/auth/forgot-password', { email });
+    return data;
+  },
+  resetPassword: async (token: string, password: string) => {
+    const { data } = await api.post('/auth/reset-password', { token, password });
+    return data;
+  },
   makeMeAdmin: async () => {
     const { data } = await api.put('/auth/make-admin');
     return data;
