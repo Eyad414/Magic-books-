@@ -22,6 +22,7 @@ import { littleEngineer } from './story12_engineer';
 import { futureHero } from './story17_future';
 import { ramadanFirst } from './story18_ramadan';
 import { eidFirst } from './story19_eid';
+import { bigBrother } from './story20_bigbrother';
 import { firstGrade } from './story16_firstgrade';
 import { firstDaySchool } from './story15_firstday';
 import { happyKindergarten } from './story14_kindergarten';
@@ -62,6 +63,7 @@ export const STORIES: StoryDefinition[] = [
   futureHero,
   ramadanFirst,
   eidFirst,
+  bigBrother,
   firstGrade,
   firstDaySchool,
   happyKindergarten,

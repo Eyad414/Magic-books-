@@ -440,7 +440,9 @@
     "theme_ramadan_first": "First Ramadan",
     "theme_ramadan_first_desc": "A crescent, a first fast, lanterns and Eid",
     "theme_eid_first": "First Eid",
-    "theme_eid_first_desc": "Eid clothes, the eidiyah, and a joy worth dividing"
+    "theme_eid_first_desc": "Eid clothes, the eidiyah, and a joy worth dividing",
+    "theme_big_brother": "Big Brother",
+    "theme_big_brother_desc": "News, a teddy given away, and a heart that grows"
   },
   "step3": {
     "title": "Customize Your Book",
@@ -1516,6 +1518,34 @@
         "11": "[NAME] handed out sweets to the children of the neighbourhood, and small hands reached out with joy and thanks.",
         "12": "In the evening the family took a photograph together, with [NAME] in the middle holding the very same lantern from Ramadan.",
         "13": "Before bed [NAME] put the eidiyah in its box and smiled: “The best day of the year — and we'll wait for the next Eid together.”"
+      }
+    },
+    "big_brother": {
+      "title": "[NAME] Becomes a Big {Brother|Sister}",
+      "tagline": "A small heart making room for a new love",
+      "moral": "Love does not get divided when someone new arrives — it grows.",
+      "conclusion": "Well done, [NAME]! You became a kind big one. 👶💙",
+      "dedication": "For [NAME], who welcomed someone new with a big heart — this story is for you.",
+      "questions": [
+        "How did the hero feel when they heard the news?",
+        "How did the hero calm the baby when he cried?",
+        "What would you like to teach your little brother or sister?",
+        "What do you do to help your mum at home?"
+      ],
+      "pages": {
+        "1": "[NAME]’s mum sat down and said with a smile: “I have lovely news… you’re going to have a little brother!” And [NAME]’s eyes went wide with surprise and joy.",
+        "2": "That night [NAME] thought quietly: “Will they still love me the same?” — and hugged the little teddy bear tight.",
+        "3": "[NAME] helped get the baby’s room ready, and hung paper stars above the tiny cot.",
+        "4": "At the shop, [NAME] chose a present for the baby: two tiny socks the colour of the sky.",
+        "5": "Little hero! On the RIGHT, keep the favourite teddy. On the LEFT, give it to the baby. Which will you choose?",
+        "6": "[NAME] laid the teddy in the baby’s cot and said, “I’ll teach him how to play with it.”",
+        "7": "The day came! [NAME] waited at Grandma’s, counting the minutes with a thumping heart.",
+        "8": "And at last… [NAME] saw the little brother for the very first time. So small — his fingers tinier than a button!",
+        "9": "The baby cried, so [NAME] sang him a quiet song… and he hushed and fell asleep. “I know how to calm him!”",
+        "10": "[NAME] fetched the nappy and the towel, and became Mum’s number one helper.",
+        "11": "Little hero! Can you see the tiny BLUE SOCK right in front of the cot?",
+        "12": "Mum hugged [NAME] and said: “My heart is big enough for both of you. You are the big one now.”",
+        "13": "Before bed, [NAME] whispered to the baby: “I’ll teach you everything… and I’ll always keep you safe.”"
       }
     }
   },

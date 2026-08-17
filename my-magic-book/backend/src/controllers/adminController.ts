@@ -580,6 +580,7 @@ const SCHOOL = (part: number) => ({ series: 'school', seriesName: 'سلسلة ا
         { id: 'future_hero',        emoji: '🚀', label: 'مغامرة بطل المستقبل',  desc: 'تجربة المهن: مهندس، طبيب، معلّم' },
         { id: 'ramadan_first',      emoji: '🌙', label: 'رمضان الأول',          desc: 'هلال وفانوس وأول صيام ومسحراتي وعيد', ...MOON(1) },
         { id: 'eid_first',          emoji: '🎁', label: 'عيد الأول',            desc: 'ثياب العيد، والعيدية، وفرح يُقسَّم', ...MOON(2) },
+        { id: 'big_brother',        emoji: '👶', label: 'أخ كبير',              desc: 'خبر جديد، ودبٌّ يُهدى، وقلبٌ يكبر' },
       ];
       const newFolder = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
       let newDirty = false;

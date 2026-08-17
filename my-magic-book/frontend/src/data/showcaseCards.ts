@@ -113,4 +113,5 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   // سلسلة الهلال — both generated from Baha's photo, so no permission question.
   { key: 'baha-ramadan',    themeId: 'ramadan_first',      name: 'Baha',  emoji: '🌙' },
   { key: 'baha-eid',        themeId: 'eid_first',          name: 'Baha',  emoji: '🎁' },
+  { key: 'baha-bigbrother', themeId: 'big_brother',        name: 'Baha',  emoji: '👶' },
 ];
