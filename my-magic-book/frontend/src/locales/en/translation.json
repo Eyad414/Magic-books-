@@ -438,7 +438,9 @@
     "theme_little_engineer": "Building & Engineering",
     "theme_little_engineer_desc": "A blueprint, some tools, and a treehouse for little friends",
     "theme_ramadan_first": "First Ramadan",
-    "theme_ramadan_first_desc": "A crescent, a first fast, lanterns and Eid"
+    "theme_ramadan_first_desc": "A crescent, a first fast, lanterns and Eid",
+    "theme_eid_first": "First Eid",
+    "theme_eid_first_desc": "Eid clothes, the eidiyah, and a joy worth dividing"
   },
   "step3": {
     "title": "Customize Your Book",
@@ -1486,6 +1488,34 @@
         "11": "That night [NAME] heard the drum of the musaharati: “Wake, O sleeper!” And up [NAME] got, for suhoor with the family.",
         "12": "[NAME] gathered toys and coins into a small box and gave them to other children. Giving lights up the heart like a lantern.",
         "13": "And on the morning of Eid, [NAME] put on new Eid clothes and was given the eidiyah and the warmest hug. “Eid Mubarak, [NAME]!”"
+      }
+    },
+    "eid_first": {
+      "title": "[NAME]'s First Eid",
+      "tagline": "New clothes, an eidiyah, and a joy worth dividing",
+      "moral": "Eid is not only new clothes — Eid is making the people around us happy.",
+      "conclusion": "Eid Mubarak, [NAME]! You shared your joy, and it grew. 🌙🎁",
+      "dedication": "For [NAME], who knows the best gift is the one we give — this story is for you.",
+      "questions": [
+        "What do we say to people on the morning of Eid?",
+        "Why did the joy grow bigger when the hero shared the eidiyah?",
+        "What is the nicest thing you have done on Eid?",
+        "Who would you like to make happy next Eid?"
+      ],
+      "pages": {
+        "1": "On the night before Eid, [NAME] heard the takbeer drifting from the mosque, laid the new Eid clothes beside the bed, and fell asleep full of waiting.",
+        "2": "Early in the morning [NAME] woke before everyone, put on the new Eid clothes and a little perfume. Today is Eid!",
+        "3": "[NAME] went with the family to the Eid prayer, through streets full of people and decorations and smiles.",
+        "4": "After the prayer [NAME] hugged everyone and said, “Eid Mubarak!” — and their heart filled right up with joy.",
+        "5": "Grandfather gave [NAME] the eidiyah in a small envelope, and [NAME] thanked him with the widest smile.",
+        "6": "Little hero! On the RIGHT, a sweet shop full of colours. On the LEFT, a friend who received no eidiyah at all. Which will you choose?",
+        "7": "[NAME] chose to share, and bought a small gift for the friend. Joy grows bigger when we divide it.",
+        "8": "At Grandma's, [NAME] helped arrange the tray of kaak and maamoul, and tasted the first warm piece.",
+        "9": "In the Eid square [NAME] rode the swing, and the laughter rose over the whole square.",
+        "10": "Little hero! Can you see the big RED BALLOON right in front of the swing?",
+        "11": "[NAME] handed out sweets to the children of the neighbourhood, and small hands reached out with joy and thanks.",
+        "12": "In the evening the family took a photograph together, with [NAME] in the middle holding the very same lantern from Ramadan.",
+        "13": "Before bed [NAME] put the eidiyah in its box and smiled: “The best day of the year — and we'll wait for the next Eid together.”"
       }
     }
   },

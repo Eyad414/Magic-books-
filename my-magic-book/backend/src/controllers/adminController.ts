@@ -566,7 +566,9 @@ export const getSettings = async (req: Request, res: Response): Promise<void> =>
       // The three school stories are one age progression — الروضة ثم اليوم
       // الأول ثم الصف الأول — so they carry series numbers and a family can buy
       // them in order as the child grows.
-      const SCHOOL = (part: number) => ({ series: 'school', seriesName: 'سلسلة المدرسة', seriesPart: part });
+      // رمضان → العيد: the fanoos and the crescent pendant carry across both parts.
+const MOON = (part: number) => ({ series: 'moon', seriesName: 'سلسلة الهلال', seriesPart: part });
+const SCHOOL = (part: number) => ({ series: 'school', seriesName: 'سلسلة المدرسة', seriesPart: part });
       const NEW_STORIES: { id: string; emoji: string; label: string; desc: string;
                            series?: string; seriesName?: string; seriesPart?: number }[] = [
         { id: 'little_chef',        emoji: '🍳', label: 'الشيف الصغير',        desc: 'يوم في المطبخ: نظافة وترتيب ووجبة يصنعها بنفسه' },
@@ -576,7 +578,8 @@ export const getSettings = async (req: Request, res: Response): Promise<void> =>
         { id: 'first_day_school',   emoji: '🎒', label: 'اليوم الأول بالمدرسة', desc: 'معلمة لطيفة، أصدقاء جدد، ونجم نشيط', ...SCHOOL(2) },
         { id: 'first_grade',        emoji: '✏️', label: 'مغامرة في الصف الأول', desc: 'حروف وكلمات وقراءة أولى بثقة', ...SCHOOL(3) },
         { id: 'future_hero',        emoji: '🚀', label: 'مغامرة بطل المستقبل',  desc: 'تجربة المهن: مهندس، طبيب، معلّم' },
-        { id: 'ramadan_first',      emoji: '🌙', label: 'رمضان الأول',          desc: 'هلال وفانوس وأول صيام ومسحراتي وعيد' },
+        { id: 'ramadan_first',      emoji: '🌙', label: 'رمضان الأول',          desc: 'هلال وفانوس وأول صيام ومسحراتي وعيد', ...MOON(1) },
+        { id: 'eid_first',          emoji: '🎁', label: 'عيد الأول',            desc: 'ثياب العيد، والعيدية، وفرح يُقسَّم', ...MOON(2) },
       ];
       const newFolder = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
       let newDirty = false;
