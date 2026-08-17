@@ -1,6 +1,7 @@
 // Load .env FIRST — before any import whose module-level code reads process.env
 // (e.g. the Stripe client in orderController is created at import time).
 import 'dotenv/config';
+import { createHash } from 'crypto';
 import express from 'express';
 import cors from 'cors';
 import { connectDB } from './config/db';
@@ -74,6 +75,12 @@ app.get('/api/health', async (req, res) => {
     },
     // Which story scene-templates this build knows about (confirms deploys).
     stories: Object.keys(SCENE_TEMPLATES),
+    // Fingerprint of the actual scene PROMPTS. The list above only names the
+    // stories, so it stays identical when a prompt is rewritten — and firing a
+    // regeneration at a server still running the old prompt spends real money
+    // to reproduce the bug it was meant to fix. This changes whenever any
+    // prompt does, so a deploy can be confirmed before paying for images.
+    scenesHash: createHash('sha1').update(JSON.stringify(SCENE_TEMPLATES)).digest('hex').slice(0, 12),
   };
   // Diagnostic: ?probe=upscale actually calls the Imagen upscaler once (cached 5
   // min) so we can see the real HTTP status/error from this host's identity.
