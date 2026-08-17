@@ -1045,19 +1045,35 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
     // costs 13x and rerolls twelve images that were already right.
     const singlePage = req.body?.only === 'page' ? Number(req.body?.pageIndex) : 0;
 
+    const basePages = themeId.replace(/_(real|photoreal|cartoon|pr|hd)$/, '');
+    const sceneTplPages: any = (SCENE_TEMPLATES as any)[themeId] || (SCENE_TEMPLATES as any)[basePages];
+
     const generatedImages: string[] = (coverOnly || singlePage) ? [...(theme.generatedImages || [])] : [];
     for (let i = 0; !coverOnly && i < PREVIEW_IMAGE_PAGES; i++) {
       if (singlePage && i !== singlePage - 1) continue;
-      const pageText = textPages[i] || textPages[textPages.length - 1] || `${childName} ${theme.label}`;
-      const prompt = buildIllustrationPrompt({
-        pageText,
-        childName,
-        childAge: '5',
-        childGender: 'male',
-        theme: themeId,
-        language: 'ar',
-        pageNumber: i + 1,
-      });
+      // Prefer the theme's hand-written pageScenes, through the SAME call the
+      // printed book makes (BookBuilder). This path used to prompt from the
+      // Arabic page TEXT instead, so every scene prompt — the pinned outfit,
+      // the pinned characters, "no other people in frame" — was written,
+      // committed, and never sent. The demo pages were generated a completely
+      // different way from the book they advertise, and no amount of editing
+      // the scenes changed them.
+      //
+      // Falls back to the old text-derived prompt for themes with no template.
+      const pageScene = sceneTplPages?.pageScenes?.[i];
+      const prompt = pageScene
+        ? buildScenePrompt('page', pageScene, childName, 'male', {
+            medal: (sceneTplPages.medalPages || []).includes(i + 1),
+          })
+        : buildIllustrationPrompt({
+            pageText: textPages[i] || textPages[textPages.length - 1] || `${childName} ${theme.label}`,
+            childName,
+            childAge: '5',
+            childGender: 'male',
+            theme: themeId,
+            language: 'ar',
+            pageNumber: i + 1,
+          });
       const stored = await generateIllustration(prompt, referencePhoto, {
         storyId: `theme_${themeId}`,
         pageNumber: i + 1,
@@ -1080,7 +1096,10 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
       `rich vibrant saturated colors, professional CGI render quality. Centered. No text, no watermark.`;
     try {
       if (coverOnly || pagesOnly || singlePage) throw new Error('__skip_portrait__');
-      const portrait = await generateIllustration(portraitPrompt, referencePhoto, {
+      const portraitFinal = sceneTplPages?.portraitScene
+        ? buildScenePrompt('portrait', sceneTplPages.portraitScene, childName, 'male')
+        : portraitPrompt;
+      const portrait = await generateIllustration(portraitFinal, referencePhoto, {
         storyId: `theme_${themeId}`,
         pageNumber: 99,
       });
