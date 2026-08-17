@@ -56,7 +56,7 @@ export const createCheckout = async (req: Request, res: Response): Promise<void>
       storyId,
       shippingAddress,
       totalPrice,
-      currency: 'SAR',
+      currency: 'ILS',
       paymentMethod: paymentMethod === 'cash' ? 'cash' : 'card',
       paymentStatus: 'pending',
     });
@@ -102,8 +102,8 @@ export const createCheckout = async (req: Request, res: Response): Promise<void>
       line_items: [
         {
           price_data: {
-            currency: 'sar',
-            // SAR is a 2-decimal currency → amount is in halalas.
+            currency: 'ils',
+            // ILS is a 2-decimal currency → amount is in agorot.
             unit_amount: Math.round(totalPrice * 100),
             product_data: {
               name: `كتاب ${story.childName} — ${story.theme}`,

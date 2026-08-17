@@ -78,7 +78,10 @@ const OrderSchema = new Schema<IOrder>(
     storyId: { type: Schema.Types.ObjectId, ref: 'Story', required: true },
     shippingAddress: { type: ShippingAddressSchema, required: true },
     totalPrice: { type: Number, required: true },
-    currency: { type: String, default: 'SAR' },
+    // The store sells in Israel and always has: a 70 here has always meant 70
+    // shekels. It was labelled SAR from an early Saudi-market assumption, so
+    // every order card read "70 SAR" for a price nobody ever charged in riyals.
+    currency: { type: String, default: 'ILS' },
     paymentMethod: { type: String, enum: ['cash', 'card'], default: 'card' },
     paymentStatus: {
       type: String,

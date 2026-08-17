@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { findStory } from '../data/stories';
 import { SHOWCASE_CARDS, demoOnHomePage, demoOnStoriesPage, HOME_TAGS, type DemoVisibility, type HomeTag } from '../data/showcaseCards';
 import { localizeName } from '../utils/translit';
+import { formatMoney } from '../utils/money';
 
 /**
  * Build failures are thrown by the backend in English (they are aimed at logs).
@@ -1095,7 +1096,7 @@ export default function AdminDashboard() {
                                   <Sparkles className="w-4 h-4 text-white/30 shrink-0" /> {order.storyId?.theme ? (t(`step2.theme_${order.storyId.theme}`, { defaultValue: order.storyId.theme }) as string) : '...'}
                                 </div>
                                 <div className="flex items-center gap-2 font-arabic text-white font-bold text-sm">
-                                  <span className="w-4 text-center text-white/30 shrink-0">💰</span> {order.totalPrice} {order.currency}
+                                  <span className="w-4 text-center text-white/30 shrink-0">💰</span> {formatMoney(order.totalPrice, order.currency)}
                                 </div>
                               </div>
                             </div>
@@ -2294,7 +2295,7 @@ export default function AdminDashboard() {
                             <span className={`text-xs font-bold px-2 py-1 rounded-lg ${isSettled(o) ? 'bg-green-500/20 text-green-400' : 'bg-gold-500/20 text-gold-500'}`}>
                               {payLabel(o)}
                             </span>
-                            <span className="font-arabic text-white/60 text-xs whitespace-nowrap">{o.totalPrice} {o.currency}</span>
+                            <span className="font-arabic text-white/60 text-xs whitespace-nowrap">{formatMoney(o.totalPrice, o.currency)}</span>
                           </div>
                         </div>
                       ))}
