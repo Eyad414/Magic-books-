@@ -2,6 +2,7 @@
 // (e.g. the Stripe client in orderController is created at import time).
 import 'dotenv/config';
 import { createHash } from 'crypto';
+import mongoose from 'mongoose';
 import express from 'express';
 import cors from 'cors';
 import { connectDB } from './config/db';
@@ -81,6 +82,26 @@ app.get('/api/health', async (req, res) => {
     // to reproduce the bug it was meant to fix. This changes whenever any
     // prompt does, so a deploy can be confirmed before paying for images.
     scenesHash: createHash('sha1').update(JSON.stringify(SCENE_TEMPLATES)).digest('hex').slice(0, 12),
+    // Mail config — booleans and the FROM address only, never the API key.
+    // A password-reset request answers the same way whether or not it sent
+    // anything (so nobody can test which emails are registered), which also
+    // means a silent misconfiguration looks exactly like success from outside.
+    // This is the one place the setup can be checked without reading the host's
+    // logs. `sharedSender` is the important one: Resend's onboarding address
+    // only delivers to the address the Resend account was registered with, so
+    // while it is true, mail to a CUSTOMER is rejected.
+    mail: {
+      configured: !!process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 'your_resend_api_key',
+      from: process.env.RESEND_FROM || 'Magic Fanoos <onboarding@resend.dev>',
+      sharedSender: !(process.env.RESEND_FROM || '').includes('@') ||
+        (process.env.RESEND_FROM || '').includes('resend.dev'),
+      frontendUrl: (process.env.FRONTEND_URL || 'https://magicfanoos.com').replace(/\/$/, ''),
+    },
+    // Which database this server is actually on — the NAME only, no host and
+    // no credentials. Two deploys pointed at different databases once, and it
+    // was invisible from outside: both answered every request perfectly well,
+    // just about different data.
+    db: mongoose.connection?.name || 'not connected',
   };
   // Diagnostic: ?probe=upscale actually calls the Imagen upscaler once (cached 5
   // min) so we can see the real HTTP status/error from this host's identity.

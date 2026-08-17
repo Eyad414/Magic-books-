@@ -201,7 +201,8 @@
     "reset_error": "Couldn't change the password — the link may have expired.",
     "reset_mismatch": "The passwords don't match",
     "reset_no_token_title": "Incomplete link",
-    "reset_no_token_desc": "Open the link from the email exactly as it is, or request a new one."
+    "reset_no_token_desc": "Open the link from the email exactly as it is, or request a new one.",
+    "forgot_sent_hint": "Didn't get it? Check that you entered the same email you registered with, and look in your spam folder."
   },
   "dashboard": {
     "admin_special_desc": "This is the story you ordered — ready to view and print (220×220 mm)",

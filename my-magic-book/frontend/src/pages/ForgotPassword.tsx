@@ -55,7 +55,12 @@ export default function ForgotPassword() {
             <div className="text-center">
               <MailCheck className="w-12 h-12 text-gold-500 mx-auto mb-4" />
               <h1 className="font-arabic font-black text-white text-2xl mb-3">{t('auth.forgot_sent_title')}</h1>
-              <p className="font-arabic text-white/60 text-sm leading-relaxed mb-6">{t('auth.forgot_sent_desc')}</p>
+              <p className="font-arabic text-white/60 text-sm leading-relaxed mb-4">{t('auth.forgot_sent_desc')}</p>
+              {/* The confirmation cannot say whether the address had an account,
+                  so someone who mistyped it would otherwise sit waiting for a
+                  mail that was never sent. This says what to check without
+                  revealing anything about who is registered. */}
+              <p className="font-arabic text-white/40 text-xs leading-relaxed mb-6">{t('auth.forgot_sent_hint')}</p>
               <Link to="/login" className="font-arabic text-gold-500 hover:underline font-bold text-sm">
                 {t('auth.back_to_login')}
               </Link>

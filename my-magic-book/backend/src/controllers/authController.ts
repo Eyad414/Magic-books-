@@ -108,6 +108,12 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
       // The customer is told the same thing regardless, so a silent delivery
       // failure would look exactly like success to everyone. Say it here.
       if (!sent) console.error(`[auth] reset link for ${user.email} could NOT be emailed`);
+    } else {
+      // The caller is told the same thing either way, so from outside "no
+      // account with that address" is indistinguishable from "sent". Without
+      // this line the logs are silent too, and there is no way left to tell
+      // why an expected mail never arrived.
+      console.warn(`[auth] password reset requested for ${email} — no account with that address, nothing sent`);
     }
 
     res.json({ success: true, message: vague });
