@@ -836,8 +836,8 @@
     "remove_admin": "הסר מהצוות",
     "remove_admin_success": "הוסר",
     "remove_admin_fail": "ההסרה נכשלה",
-    "pkg_visible": "גלוי ללקוחות (לחץ להסתרה)",
-    "pkg_hidden": "מוסתר מהלקוחות (לחץ להצגה)",
+    "pkg_visible": "מוצגת ללקוחות (לחצו להסתרה)",
+    "pkg_hidden": "מוסתרת מהלקוחות (לחצו להצגה)",
     "story_name": "שם הסיפור",
     "ready_short": "מוכן",
     "draft_short": "טיוטה",
@@ -947,7 +947,9 @@
     "import_confirm_send": "לשלוח {{n}} עותקים ל-BookPod להדפסה? זו הדפסה אמיתית בתשלום.",
     "import_sending": "שולחים ל-BookPod…",
     "import_sent": "נשלח — מספר הזמנה ב-BookPod: {{id}}",
-    "import_job": "מספר הזמנה ב-BookPod: {{id}} · {{n}} עותקים"
+    "import_job": "מספר הזמנה ב-BookPod: {{id}} · {{n}} עותקים",
+    "pkg_hidden_short": "מוסתרת",
+    "pkg_visible_short": "מוצגת"
   },
   "title_page": {
     "presents": "מוגש ל",

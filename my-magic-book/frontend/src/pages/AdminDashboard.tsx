@@ -527,14 +527,11 @@ export default function AdminDashboard() {
   };
 
 
-  const getLocalizedPkgLabel = (pkg: any) => {
-    const defaultArabicNames = ['قصة ملونة', 'دفتر تلوين', 'ملف صوتي (Audio)', 'نسخة رقمية (E-Book)', 'باقة Pro الشاملة'];
-    const isCustomized = pkg.label && !defaultArabicNames.includes(pkg.label);
-    if (isCustomized) return pkg.label;
-    const key = `step3.pkg_${pkg.id}`;
-    const translated = t(key);
-    return translated !== key ? translated : pkg.label;
-  };
+  // getLocalizedPkgLabel used to render this row's name in the dashboard's own
+  // language. It is gone on purpose: an editable field must show the value it
+  // saves, and this one saved to pkg.label (Arabic) whatever language it had
+  // displayed. Customers still see translated names — getPackageLabel does that
+  // in the wizard, where nothing is being edited.
 
   const getLocalizedPkgDesc = (pkg: any) => {
     const defaultArabicDescs = [
@@ -1309,10 +1306,18 @@ export default function AdminDashboard() {
                     <div key={pkg.id} className="px-3 py-2 bg-white/5 rounded-xl border border-white/10 flex flex-wrap items-center gap-1.5">
                       <input
                         type="text"
-                        className="magic-input flex-1 min-w-[110px] sm:max-w-[150px] !py-1.5 text-sm"
+                        className="magic-input flex-1 min-w-[130px] sm:max-w-[190px] !py-1.5 text-sm"
                         title={t('admin.name')}
-                        placeholder={t('admin.name')}
-                        value={getLocalizedPkgLabel(pkg)}
+                        // Labelled like the EN/עב boxes beside it, because this
+                        // one is the ARABIC name — it used to be titled just
+                        // "Name" while DISPLAYING whatever language the dash was
+                        // in and SAVING into the Arabic field. Editing it in
+                        // Hebrew therefore overwrote the Arabic: 'ملف صوتي
+                        // (Audio)' became '(Audio)', the leftover of the Hebrew
+                        // 'קובץ שמע (Audio)' with the Hebrew words removed.
+                        placeholder="ع"
+                        dir="rtl"
+                        value={pkg.label || ''}
                         onChange={(e) => {
                           const newPkgs = [...settings.bookPackages];
                           newPkgs[index].label = e.target.value;

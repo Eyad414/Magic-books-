@@ -947,7 +947,9 @@
     "import_confirm_send": "Send {{n}} copies to BookPod for printing? This is a real, billable print run.",
     "import_sending": "Sending to BookPod…",
     "import_sent": "Sent — BookPod order number: {{id}}",
-    "import_job": "BookPod order number: {{id}} · {{n}} copies"
+    "import_job": "BookPod order number: {{id}} · {{n}} copies",
+    "pkg_hidden_short": "Hidden",
+    "pkg_visible_short": "Visible"
   },
   "title_page": {
     "presents": "Presented to",

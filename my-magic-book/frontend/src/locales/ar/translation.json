@@ -947,7 +947,9 @@
     "import_confirm_send": "إرسال {{n}} نسخة إلى BookPod للطباعة؟ هذه طباعة حقيقية ومدفوعة.",
     "import_sending": "جاري الإرسال إلى BookPod...",
     "import_sent": "تم الإرسال — رقم الطلب لدى BookPod: {{id}}",
-    "import_job": "رقم الطلب لدى BookPod: {{id}} · {{n}} نسخة"
+    "import_job": "رقم الطلب لدى BookPod: {{id}} · {{n}} نسخة",
+    "pkg_hidden_short": "مخفية",
+    "pkg_visible_short": "ظاهرة"
   },
   "title_page": {
     "presents": "يُقدّم لـ",
