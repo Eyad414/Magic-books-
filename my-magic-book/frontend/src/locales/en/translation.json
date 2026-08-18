@@ -29,13 +29,10 @@
     "browse_stories": "Browse Stories",
     "stats_stories_created": "Stories Created",
     "stats_happy_families": "Happy Families",
-    "stats_ready_stories": "Ready stories",
+    "stats_ready_stories": "Ready Stories",
     "stats_rating": "Average Rating",
     "custom_story": "📖 Custom Story",
-    "discover_more": "Discover More",
-    "stats_languages": "Languages",
-    "stats_pages": "Pages + cover",
-    "stats_pickup": "Pickup or delivery"
+    "discover_more": "Discover More"
   },
   "workflow": {
     "badge": "Simple 3-step process",
