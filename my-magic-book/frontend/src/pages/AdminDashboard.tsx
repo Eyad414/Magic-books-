@@ -427,9 +427,22 @@ export default function AdminDashboard() {
    * It deliberately reads the same values the send does, including a designed
    * or uploaded cover, so what is reviewed is what is printed.
    */
+  /**
+   * Which interior goes with the cover that is currently chosen.
+   *
+   * The importer splits page 1 off as the cover, so the default interior is
+   * pages 2..N — right when the file really opens with a cover. The moment the
+   * owner supplies or designs one, page 1 is a page of their BOOK, and sending
+   * the split interior would drop it. So a custom cover ships the WHOLE file.
+   */
+  const importInterior = (): { path?: string; pages?: number; full: boolean } =>
+    importCover
+      ? { path: importResult?.objectPath, pages: importResult?.pageCount, full: true }
+      : { path: importResult?.interiorPath, pages: importResult?.interiorPages, full: false };
+
   const handleSaveImportedFiles = () => {
     const coverPath = importCover?.coverPath || importResult?.coverPath;
-    const interiorPath = importResult?.interiorPath;
+    const interiorPath = importInterior().path;
     const base = (importFile?.name?.replace(/\.pdf$/i, '') || 'imported-book').slice(0, 40);
     const files = [
       { path: coverPath, name: `${base}-cover.pdf` },
@@ -458,6 +471,8 @@ export default function AdminDashboard() {
       toast.error(t('admin.import_need_contact', 'أدخل اسم المستلم ورقم الهاتف.'));
       return;
     }
+    const interiorPath = importInterior().path;
+    if (!interiorPath) { toast.error(t('admin.import_no_interior', 'لا يوجد ملف داخلي — استورد الكتاب أولاً.')); return; }
     if (!window.confirm(t('admin.import_confirm_send', 'إرسال {{n}} نسخة إلى BookPod للطباعة؟ هذه طباعة حقيقية ومدفوعة.', { n: importSend.qty }))) return;
     setImportSending(true);
     const toastId = toast.loading(t('admin.import_sending', 'جاري الإرسال إلى BookPod...'));
@@ -465,7 +480,9 @@ export default function AdminDashboard() {
       const res = await adminApi.submitImportedBook({
         // A designed cover replaces page 1 — that is the whole point of it.
         coverPath: importCover?.coverPath || importResult.coverPath,
-        interiorPath: importResult.interiorPath,
+        // ...and then page 1 is a page of the book, not a cover, so the whole
+        // file is the interior. Sending the split interior would drop it.
+        interiorPath: interiorPath,
         title: importFile?.name?.replace(/\.pdf$/i, '') || 'Imported book',
         quantity: importSend.qty,
         widthMm: importResult.widthMm,
@@ -1685,8 +1702,17 @@ export default function AdminDashboard() {
                       {importResult.coverPath && importResult.interiorPath && (
                         <div className="mt-3 pt-3 border-t border-white/10 space-y-2">
                           <p className="font-arabic text-white/55 text-[11px]">
-                            📦 {t('admin.import_send_title', 'إرسال إلى BookPod للطباعة — الغلاف الصفحة ١، والداخل {{n}} صفحة، استلام من المطبعة.', { n: importResult.interiorPages })}
+                            📦 {importCover
+                              ? t('admin.import_send_title_own', 'إرسال إلى BookPod للطباعة — غلافك، والداخل كل الصفحات ({{n}}), استلام من المطبعة.', { n: importInterior().pages })
+                              : t('admin.import_send_title', 'إرسال إلى BookPod للطباعة — الغلاف الصفحة ١، والداخل {{n}} صفحة، استلام من المطبعة.', { n: importResult.interiorPages })}
                           </p>
+                          {/* Spelled out because it changes what gets printed:
+                              with your own cover, page 1 is a page of the book. */}
+                          {importCover && (
+                            <p className="font-arabic text-emerald-300/80 text-[11px]">
+                              ✅ {t('admin.import_keeps_all_pages', 'لن تُحذف أي صفحة — الصفحة الأولى تبقى داخل الكتاب لأن الغلاف صار ملفاً منفصلاً.')}
+                            </p>
+                          )}
                           {/* Design a real cover. Page 1 of a manuscript is body
                               text, so "the cover" is a page of paragraphs. */}
                           <div className="rounded-xl border border-white/10 bg-white/5 p-2.5 space-y-2">

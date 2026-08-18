@@ -121,3 +121,50 @@ describe('an uploaded cover is used as given', () => {
     expect(html).toContain('>AN AUTHOR<');
   });
 });
+
+/**
+ * Re-imposition must never lose content. reimposePdf scales each page to fit —
+ * "contain, never crop" — so a wide page gains margins rather than losing a
+ * line of text off the edge, and every page of the source survives.
+ */
+describe('re-imposition keeps the whole book', () => {
+  it('contains each page instead of cropping it', async () => {
+    const { reimposePdf, inspectPdf, splitCoverInterior } = await import('../src/services/BookImportService');
+    const { PDFDocument } = await import('pdf-lib');
+
+    // A source deliberately WIDER in proportion than the target trim, which is
+    // where cropping would happen if it were going to.
+    const src = await PDFDocument.create();
+    for (let i = 0; i < 5; i++) {
+      const page = src.addPage([842, 595]); // A4 landscape
+      // Real content, and marks near the edges: an empty page has no content
+      // stream to embed, and cropping would be invisible on a blank sheet.
+      page.drawRectangle({ x: 2, y: 2, width: 838, height: 591, borderWidth: 2 });
+      page.drawText(`page ${i + 1}`, { x: 10, y: 570, size: 12 });
+    }
+    const input = Buffer.from(await src.save());
+
+    const out = await reimposePdf(input, { widthMm: 150, heightMm: 220 });
+    expect(out.pageCount).toBe(5);
+    expect(out.fitScale).toBeLessThanOrEqual(1);
+    expect(out.aspectChanged).toBe(true);
+
+    const info = await inspectPdf(out.pdf);
+    expect(info.pageCount).toBe(5);
+
+    // Splitting is lossless: the cover and interior together are the book.
+    const split = await splitCoverInterior(out.pdf);
+    const cover = await PDFDocument.load(split.cover);
+    const interior = await PDFDocument.load(split.interior);
+    expect(cover.getPageCount() + interior.getPageCount()).toBe(5);
+    expect(split.interiorPages).toBe(4);
+  });
+
+  it('refuses to split a book too short to have a cover and an interior', async () => {
+    const { splitCoverInterior } = await import('../src/services/BookImportService');
+    const { PDFDocument } = await import('pdf-lib');
+    const one = await PDFDocument.create();
+    one.addPage([420, 595]);
+    await expect(splitCoverInterior(Buffer.from(await one.save()))).rejects.toThrow(/at least 2 pages/);
+  });
+});

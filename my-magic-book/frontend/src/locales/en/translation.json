@@ -960,7 +960,9 @@
     "import_cover_ready_own_img": "Your cover is ready — laid out as a full cover instead of page 1.",
     "import_cover_clear": "Undo — use page 1",
     "import_save_files": "Save files to review",
-    "import_files_saved": "Cover and interior downloaded — check them before sending"
+    "import_files_saved": "Cover and interior downloaded — check them before sending",
+    "import_send_title_own": "Send to BookPod — your cover, and all {{n}} pages inside, pickup from the printer.",
+    "import_keeps_all_pages": "No page is dropped — page 1 stays inside the book, because the cover is now its own file."
   },
   "title_page": {
     "presents": "Presented to",
