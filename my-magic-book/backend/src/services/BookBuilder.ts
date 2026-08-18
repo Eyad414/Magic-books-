@@ -7,6 +7,7 @@ import { uploadBuffer, pdfFolderPath, copyObject } from './StorageService';
 import { splitStoryIntoPages, buildIllustrationPrompt, buildFallbackCoverPrompt, buildFallbackPortraitPrompt, NO_TEXT_RULE, type FallbackArtStyle } from './promptBuilder';
 import { getSceneTemplate, buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, resolveTokens, resolveGender, resolveColoringScenes, COLORING_PAGES } from './sceneTemplates';
 import { coverPreviewSlug, findPreviewCover } from './coverPreviewKey';
+import { describeCoverScene } from './CoverConcept';
 import { printAndSubmitForOrder, printAndSubmitColoringForOrder, buildColoringPrintForOrder, buildPrintFilesForStory, PrintBuildOpts } from './PrintOrchestrator';
 import { isBookPodConfigured } from './BookPodService';
 import { localizeName } from '../utils/translit';
@@ -262,7 +263,20 @@ export async function buildBookForOrder(orderId: string, submitToBookPod = true)
       // story, soft storybook for a template one — because a photoreal cover on
       // a cartoon book is worse than no cover at all.
       const artStyle: FallbackArtStyle = story.mode === 'ai' ? 'cgi' : 'storybook';
+      // What the cover should SHOW is designed from this book's own story, not
+      // looked up from a theme map that only knows about twenty themes — a book
+      // about a first day at school and one about a lost puppy were getting the
+      // same generic sparkles. Text-only, so it costs nothing; it just decides
+      // what goes into the cover image we were generating anyway.
+      await reportProgress(String(order._id), 75, 'تصميم الغلاف');
+      const coverScene = await describeCoverScene({
+        theme: story.theme,
+        childName: story.childName,
+        pages: pageTexts,
+        title: story.mode === 'ai' ? aiStoryTitle(story) : undefined,
+      });
       const coverPrompt = buildFallbackCoverPrompt({
+        coverScene,
         childName: story.childName,
         childGender: resolveGender(story.childName, story.childGender),
         childAge: story.childAge,
@@ -279,6 +293,7 @@ export async function buildBookForOrder(orderId: string, submitToBookPod = true)
       await reportProgress(String(order._id), 79, 'الصورة الختامية');
       const fallbackPortrait = await generateIllustration(
         buildFallbackPortraitPrompt({
+          coverScene,
           childName: story.childName,
           childGender: resolveGender(story.childName, story.childGender),
           childAge: story.childAge,

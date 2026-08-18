@@ -297,6 +297,13 @@ interface FallbackCoverInput {
   theme: string;
   /** The book's opening line, so the cover shows this story rather than a generic pose. */
   openingText?: string;
+  /**
+   * What the cover should SHOW, designed from the book's own story (see
+   * CoverConcept). Falls back to the theme map when absent — that map only
+   * knows about twenty themes, so a book outside it got a generic
+   * "magical world" cover that said nothing about the story.
+   */
+  coverScene?: string;
   style: FallbackArtStyle;
 }
 
@@ -315,8 +322,20 @@ interface FallbackCoverInput {
  */
 export function buildFallbackCoverPrompt(input: FallbackCoverInput): string {
   const { childName, childGender, childAge, theme, openingText, style } = input;
+  const setting = (input.coverScene || '').trim() || coverBackground(theme);
   if (style === 'cgi') {
-    return `${buildCoverPrompt({ childName, childAge, childGender, theme })} ${NO_TEXT_RULE}`;
+    const ageCgi = String(childAge ?? '5').split('-')[0];
+    const childCgi = childGender === 'female' ? 'girl' : 'boy';
+    return [
+      `High-quality 3D rendered Pixar / DreamWorks style children's book FRONT COVER, square 1:1 aspect ratio.`,
+      `${childName}, a joyful ${ageCgi}-year-old ${childCgi} with a photorealistic recognizable face that closely matches the reference photo,`,
+      `shown waist-up and centered as the smiling hero looking straight at the viewer with a big happy smile.`,
+      `Surrounding background and props: ${setting}.`,
+      `These elements clearly fill the whole frame around the child so the cover instantly tells what the story is about.`,
+      `Soft realistic textures, dreamy glow, highly detailed, professional CGI render quality.`,
+      COLOR_GRADE,
+      NO_TEXT_RULE,
+    ].join(' ');
   }
   const ageStr = String(childAge ?? '5').split('-')[0];
   const child = childGender === 'female' ? 'girl' : 'boy';
@@ -326,7 +345,7 @@ export function buildFallbackCoverPrompt(input: FallbackCoverInput): string {
     `hair and skin tone clearly resemble the reference photograph — the SAME child and the SAME outfit as the`,
     `interior pages, shown centred as the smiling hero of the story.`,
     opening ? `The story opens: "${opening}".` : '',
-    `Around them: ${coverBackground(theme)}.`,
+    `Around them: ${setting}.`,
     `Soft pastel storybook style, square 1:1, warm magical glow.`,
     NO_TEXT_RULE,
   ]
@@ -341,13 +360,15 @@ export function buildFallbackCoverPrompt(input: FallbackCoverInput): string {
  */
 export function buildFallbackPortraitPrompt(input: Omit<FallbackCoverInput, 'openingText'>): string {
   const { childName, childGender, childAge, theme, style } = input;
+  // Same world as the cover, so front and back belong to one book.
+  const setting = (input.coverScene || '').trim() || coverBackground(theme);
   const ageStr = String(childAge ?? '5').split('-')[0];
   const child = childGender === 'female' ? 'girl' : 'boy';
   const base = [
     `${childName}, a cheerful ${ageStr}-year-old ${child} whose face, hair and skin tone clearly resemble the`,
     `reference photograph — the SAME child and outfit as the rest of the book. A warm friendly close-up portrait,`,
     `smiling happily straight at the viewer and waving goodbye, framed head-and-shoulders, with a soft simple`,
-    `background hinting at ${coverBackground(theme)}.`,
+    `background hinting at ${setting}.`,
   ].join(' ');
   const look =
     style === 'cgi'

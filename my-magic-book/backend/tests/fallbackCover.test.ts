@@ -6,6 +6,7 @@ import {
   buildFallbackPortraitPrompt,
   NO_TEXT_RULE,
 } from '../src/services/promptBuilder';
+import { sanitizeCoverScene } from '../src/services/CoverConcept';
 
 /**
  * Books on a theme with no scene template are drawn by BookBuilder's fallback
@@ -86,5 +87,55 @@ describe('BookBuilder fallback path', () => {
 
   it('refuses to mark an incomplete book ready', () => {
     expect(src).toContain('book is incomplete — missing');
+  });
+});
+
+/**
+ * The cover is the one page whose job is to say what the book is about. It used
+ * to be assembled from a hardcoded theme→background map of about twenty ids, so
+ * anything outside it — a story about starting a new school, a lost puppy —
+ * fell through to `custom`: a generic "magical wonder-filled world" that said
+ * nothing. CoverConcept designs the scene from the book's own text instead.
+ */
+describe('cover designed from the book, not the theme map', () => {
+  const base = { childName: 'سارة', childGender: 'female' as const, childAge: '6', theme: 'unknown_theme_xyz' };
+  const scene = 'a sunlit school yard on the first morning, a red backpack, a bell and classmates waving at the gate';
+
+  it('an unmapped theme alone falls back to the generic world', () => {
+    const prompt = buildFallbackCoverPrompt({ ...base, style: 'storybook' });
+    expect(prompt).toContain('magical wonder-filled storybook world');
+  });
+
+  it('a designed scene replaces the generic world in both styles', () => {
+    for (const style of ['storybook', 'cgi'] as const) {
+      const prompt = buildFallbackCoverPrompt({ ...base, style, coverScene: scene });
+      expect(prompt).toContain('school yard');
+      expect(prompt).not.toContain('magical wonder-filled storybook world');
+    }
+  });
+
+  it('puts the back portrait in the same world as the cover', () => {
+    const prompt = buildFallbackPortraitPrompt({ ...base, style: 'storybook', coverScene: scene });
+    expect(prompt).toContain('school yard');
+  });
+
+  it('keeps the CGI cover photoreal-faced and text-free', () => {
+    const prompt = buildFallbackCoverPrompt({ ...base, style: 'cgi', coverScene: scene });
+    expect(prompt).toMatch(/3D rendered/i);
+    expect(prompt).toContain(NO_TEXT_RULE);
+  });
+});
+
+describe('sanitizeCoverScene', () => {
+  it('strips the wrappers a model adds around its answer', () => {
+    expect(sanitizeCoverScene('Scene: "a moonlit desert camp with a brass lantern."')).toBe(
+      'a moonlit desert camp with a brass lantern',
+    );
+    expect(sanitizeCoverScene('```\na busy market at sunset\n```')).toBe('a busy market at sunset');
+  });
+
+  it('caps an essay so it cannot crowd out the art direction', () => {
+    const long = 'a very detailed scene '.repeat(40);
+    expect(sanitizeCoverScene(long).length).toBeLessThanOrEqual(320);
   });
 });
