@@ -396,6 +396,31 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleUploadOwnCover = async (file: File | null) => {
+    if (!file || !importResult?.interiorPages) return;
+    setImportCoverBusy(true);
+    const toastId = toast.loading(t('admin.import_cover_uploading', 'جاري رفع الغلاف...'));
+    try {
+      const res = await adminApi.uploadImportedCover(file, {
+        title: importFile?.name?.replace(/\.pdf$/i, '') || 'Imported book',
+        widthMm: importResult.widthMm,
+        heightMm: importResult.heightMm,
+        interiorPages: importResult.interiorPages,
+      });
+      if (res.success) {
+        setImportCover(res);
+        if (res.warning) toast(res.warning, { icon: '⚠️', duration: 7000 });
+        toast.success(t('admin.import_cover_uploaded', 'تم رفع غلافك ✅ سيُرسل بدل الصفحة الأولى'), { id: toastId });
+      } else {
+        toast.error(res.message || 'فشل الرفع', { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || 'فشل الرفع', { id: toastId });
+    } finally {
+      setImportCoverBusy(false);
+    }
+  };
+
   const handleSendImported = async () => {
     if (!importResult?.coverPath || !importResult?.interiorPath) return;
     if (!importSend.name.trim() || !importSend.phone.trim()) {
@@ -1656,12 +1681,42 @@ export default function AdminDashboard() {
                                   : t('admin.import_cover_design_btn', '🎨 صمّم الغلاف')}
                               </button>
                             </div>
+                            {/* Or use the cover the owner already has. For a real
+                                title this is usually the only cover that may
+                                legitimately go on the book. */}
+                            <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-white/10">
+                              <span className="font-arabic text-white/45 text-[10px]">
+                                {t('admin.import_cover_or_upload', 'أو ارفع غلافك الجاهز (PDF أو صورة):')}
+                              </span>
+                              <input
+                                type="file"
+                                accept="application/pdf,image/*"
+                                disabled={importCoverBusy}
+                                onChange={(e) => { handleUploadOwnCover(e.target.files?.[0] || null); e.target.value = ''; }}
+                                className="text-[11px] font-arabic text-white/60 file:me-2 file:px-2.5 file:py-1 file:rounded-lg file:border-0 file:bg-gold-500/20 file:text-gold-300 file:font-bold file:cursor-pointer"
+                              />
+                            </div>
+
                             {importCover && (
                               <div className="flex items-center gap-2 pt-1">
                                 <img src={importCover.previewUrl} alt="" className="h-16 w-auto object-contain rounded-lg border border-white/15 bg-black/30" />
                                 <div className="font-arabic text-emerald-300/90 text-[10px] leading-relaxed">
-                                  {t('admin.import_cover_ready', 'الغلاف جاهز — سيُرسل بدل الصفحة الأولى.')}
-                                  <span className="block text-white/35" dir="ltr">{importCover.widthMm}×{importCover.heightMm}mm · spine {importCover.spineMm}mm</span>
+                                  {importCover.source === 'upload-pdf'
+                                    ? t('admin.import_cover_ready_own', 'غلافك جاهز — سيُرسل كما هو بدل الصفحة الأولى.')
+                                    : importCover.source === 'upload-image'
+                                      ? t('admin.import_cover_ready_own_img', 'غلافك جاهز — رُتّب كغلاف كامل بدل الصفحة الأولى.')
+                                      : t('admin.import_cover_ready', 'الغلاف جاهز — سيُرسل بدل الصفحة الأولى.')}
+                                  {importCover.widthMm && (
+                                    <span className="block text-white/35" dir="ltr">
+                                      {importCover.widthMm}×{importCover.heightMm}mm{importCover.spineMm ? ` · spine ${importCover.spineMm}mm` : ''}
+                                    </span>
+                                  )}
+                                  <button
+                                    onClick={() => setImportCover(null)}
+                                    className="mt-1 text-white/40 hover:text-white/70 underline"
+                                  >
+                                    {t('admin.import_cover_clear', 'تراجع — استخدم الصفحة الأولى')}
+                                  </button>
                                 </div>
                               </div>
                             )}

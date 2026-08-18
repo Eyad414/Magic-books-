@@ -149,6 +149,29 @@ export const adminApi = {
     return response.data;
   },
 
+  /**
+   * Upload the owner's OWN cover for an imported book (PDF taken as-is, image
+   * composed into a wraparound).
+   *
+   * The Content-Type header is set explicitly: the shared axios instance
+   * defaults to application/json, and a FormData body sent under that label
+   * reaches the server with no file attached — which is exactly how the first
+   * book import failed with "no PDF received".
+   */
+  uploadImportedCover: async (
+    file: File,
+    opts: { title?: string; author?: string; widthMm?: number; heightMm?: number; interiorPages?: number; rtl?: boolean },
+  ) => {
+    const form = new FormData();
+    form.append('file', file);
+    Object.entries(opts).forEach(([k, v]) => v !== undefined && form.append(k, String(v)));
+    const response = await axiosInstance.post('/admin/import-book/cover-upload', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 5 * 60 * 1000,
+    });
+    return response.data;
+  },
+
   submitImportedBook: async (body: {
     coverPath: string; interiorPath: string; title?: string; quantity?: number;
     widthMm?: number; heightMm?: number; name: string; phone: string; email?: string; isColoring?: boolean;

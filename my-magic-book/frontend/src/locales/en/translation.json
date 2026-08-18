@@ -952,7 +952,13 @@
     "pkg_hidden_short": "Hidden",
     "pkg_visible_short": "Visible",
     "order_search_ph": "Search by order number (#C496F510), customer or child…",
-    "order_search_none": "No order matches “{{q}}”"
+    "order_search_none": "No order matches “{{q}}”",
+    "import_cover_or_upload": "Or upload your own cover (PDF or image):",
+    "import_cover_uploading": "Uploading the cover…",
+    "import_cover_uploaded": "Your cover is uploaded ✅ it replaces page 1",
+    "import_cover_ready_own": "Your cover is ready — sent as-is instead of page 1.",
+    "import_cover_ready_own_img": "Your cover is ready — laid out as a full cover instead of page 1.",
+    "import_cover_clear": "Undo — use page 1"
   },
   "title_page": {
     "presents": "Presented to",

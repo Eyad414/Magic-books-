@@ -952,7 +952,13 @@
     "pkg_hidden_short": "מוסתרת",
     "pkg_visible_short": "מוצגת",
     "order_search_ph": "חיפוש לפי מספר הזמנה (#C496F510), לקוח או ילד…",
-    "order_search_none": "אין הזמנה התואמת ל־„{{q}}”"
+    "order_search_none": "אין הזמנה התואמת ל־„{{q}}”",
+    "import_cover_or_upload": "או העלה את הכריכה שלך (PDF או תמונה):",
+    "import_cover_uploading": "מעלה את הכריכה…",
+    "import_cover_uploaded": "הכריכה הועלתה ✅ היא תישלח במקום עמוד 1",
+    "import_cover_ready_own": "הכריכה שלך מוכנה — תישלח כמו שהיא במקום עמוד 1.",
+    "import_cover_ready_own_img": "הכריכה שלך מוכנה — סודרה ככריכה מלאה במקום עמוד 1.",
+    "import_cover_clear": "ביטול — השתמש בעמוד 1"
   },
   "title_page": {
     "presents": "מוגש ל",

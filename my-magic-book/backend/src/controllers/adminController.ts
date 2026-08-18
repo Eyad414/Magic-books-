@@ -10,8 +10,8 @@ import { generateIllustration, COST_PER_IMAGE_USD } from '../services/ImageGener
 import { buildIllustrationPrompt, buildPhotorealPrompt, buildCoverPrompt } from '../services/promptBuilder';
 import { swapFace } from '../services/FaceSwapService';
 import { buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, COLORING_PAGES, SCENE_TEMPLATES } from '../services/sceneTemplates';
-import { reimposePdf, splitCoverInterior } from '../services/BookImportService';
-import { buildImportedCover } from '../services/ImportedCoverService';
+import { inspectPdf, reimposePdf, splitCoverInterior } from '../services/BookImportService';
+import { buildImportedCover, composeImportedCover } from '../services/ImportedCoverService';
 import { publicProxyUrl } from '../services/PrintService';
 import { uploadBuffer, pdfFolderPath, listObjects, deleteObject } from '../services/StorageService';
 import { submitPrintJob, isBookPodConfigured } from '../services/BookPodService';
@@ -1529,6 +1529,79 @@ export const designImportedCover = async (req: Request, res: Response): Promise<
   } catch (err: any) {
     console.error('[designImportedCover]', err?.message || err);
     res.status(500).json({ success: false, message: err?.message || 'تعذّر تصميم الغلاف.' });
+  }
+};
+
+
+/**
+ * Use the owner's OWN cover for an imported book.
+ *
+ * The importer takes page 1 of the supplied PDF, and designImportedCover draws
+ * one — but neither helps when the owner already HAS the cover, which for a
+ * real title is the normal case: a designer made it, and it is the only cover
+ * that may legitimately go on that book.
+ *
+ * A PDF is taken as-is: it is already the artwork the printer should receive,
+ * and re-laying it out would only degrade it. An IMAGE is composed into the
+ * same wraparound the designer produces (back + spine + front, title typeset),
+ * because a bare JPEG is not a print file.
+ */
+export const uploadImportedCover = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const file = (req as any).file;
+    if (!file?.buffer?.length) {
+      res.status(400).json({ success: false, message: 'لم يتم استلام ملف الغلاف.' });
+      return;
+    }
+    const { title, author, widthMm, heightMm, interiorPages, rtl } = req.body || {};
+    const mime = String(file.mimetype || '');
+    const stamp = Date.now();
+
+    if (mime.includes('pdf')) {
+      const info = await inspectPdf(file.buffer);
+      const coverPath = pdfFolderPath('imported', `${stamp}_own-cover.pdf`);
+      await uploadBuffer(file.buffer, coverPath, 'application/pdf');
+      res.json({
+        success: true,
+        coverPath,
+        source: 'upload-pdf',
+        pageCount: info.pageCount,
+        widthMm: info.sourceWidthMm,
+        heightMm: info.sourceHeightMm,
+        // Said plainly rather than silently accepted: a printer expects ONE
+        // sheet, and a multi-page upload is usually a whole book by mistake.
+        warning: info.pageCount > 1
+          ? `الملف يحتوي ${info.pageCount} صفحات — يُرسل كما هو، وعادةً يكون الغلاف صفحة واحدة.`
+          : undefined,
+      });
+      return;
+    }
+
+    if (!mime.startsWith('image/')) {
+      res.status(400).json({ success: false, message: 'الغلاف يجب أن يكون PDF أو صورة.' });
+      return;
+    }
+
+    const pages = Number(interiorPages);
+    if (!Number.isFinite(pages) || pages < 1) {
+      res.status(400).json({ success: false, message: 'عدد صفحات الكتاب غير معروف — استورد الملف أولاً.' });
+      return;
+    }
+    const ext = mime.includes('png') ? 'png' : 'jpg';
+    const artPath = pdfFolderPath('imported', `${stamp}_own-cover-art.${ext}`);
+    await uploadBuffer(file.buffer, artPath, mime);
+    const result = await composeImportedCover(artPath, {
+      title: String(title || '').trim() || 'Imported book',
+      author: String(author || '').trim() || undefined,
+      widthMm: Number(widthMm) || 150,
+      heightMm: Number(heightMm) || 220,
+      interiorPages: pages,
+      rtl: rtl !== 'false' && rtl !== false,
+    });
+    res.json({ success: true, ...result, source: 'upload-image', previewUrl: publicProxyUrl(result.previewPath || artPath) });
+  } catch (err: any) {
+    console.error('[uploadImportedCover]', err?.message || err);
+    res.status(500).json({ success: false, message: err?.message || 'تعذّر رفع الغلاف.' });
   }
 };
 

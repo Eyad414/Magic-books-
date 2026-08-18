@@ -4,6 +4,7 @@ import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam
   importBookPdf,
   submitImportedBook,
   designImportedCover,
+  uploadImportedCover,
   listImportedFiles,
   deleteImportedFiles, listMessages, deleteMessage, getCustomerByEmail, checkPayments } from '../controllers/adminController';
 import { protect, adminOnly } from '../utils/authMiddleware';
@@ -47,6 +48,9 @@ router.post('/import-book', pdfUpload.single('file'), importBookPdf);
 router.post('/import-book/submit', submitImportedBook);
 // Designs real cover art for an imported book (page 1 of a manuscript is body text, not a cover).
 router.post('/import-book/cover', designImportedCover);
+// The owner's OWN cover file — for a real title this is usually the only cover
+// that may legitimately go on the book.
+router.post('/import-book/cover-upload', pdfUpload.single('file'), uploadImportedCover);
 router.get('/import-book/files', listImportedFiles);
 router.post('/import-book/files/delete', deleteImportedFiles);
 
