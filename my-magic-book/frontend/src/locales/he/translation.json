@@ -32,7 +32,10 @@
     "stats_ready_stories": "סיפורים מוכנים",
     "stats_rating": "דירוג ממוצע",
     "custom_story": "📖 סיפור מותאם אישית",
-    "discover_more": "גלה עוד"
+    "discover_more": "גלה עוד",
+    "stats_languages": "שפות",
+    "stats_pages": "עמודים + כריכה",
+    "stats_pickup": "איסוף או משלוח"
   },
   "workflow": {
     "badge": "תהליך פשוט בן 3 שלבים",

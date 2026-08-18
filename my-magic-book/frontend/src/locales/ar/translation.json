@@ -29,10 +29,13 @@
     "browse_stories": "استعرض القصص",
     "stats_stories_created": "قصة مُنشأة",
     "stats_happy_families": "عائلة سعيدة",
-    "stats_ready_stories": "قصص جاهزة",
+    "stats_ready_stories": "قصة جاهزة",
     "stats_rating": "تقييم متوسط",
     "custom_story": "📖 قصة مخصصة",
-    "discover_more": "اكتشف المزيد"
+    "discover_more": "اكتشف المزيد",
+    "stats_languages": "لغات",
+    "stats_pages": "صفحة + غلاف",
+    "stats_pickup": "استلام أو توصيل"
   },
   "workflow": {
     "badge": "عملية بسيطة في 3 خطوات",

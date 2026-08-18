@@ -60,12 +60,19 @@ export interface ITheme {
   coloringBackCoverScene?: string;
 }
 
-/** Editable "trust" counters shown on the home hero (admin-controlled). */
+/**
+ * The four figures under the home hero (admin-controlled).
+ *
+ * These used to be invented social proof — "+500 stories", "+150 families",
+ * "5 stars" — while the shop had 18 orders and no reviews at all. Every field
+ * here is now something that can be pointed at: the catalogue, the languages,
+ * the page count, where you collect the book.
+ */
 export interface IHomeStats {
-  storiesCreated: string;
-  happyFamilies: string;
   readyStories: string;
-  rating: string;
+  languages: string;
+  pages: string;
+  pickup: string;
 }
 
 /**
@@ -97,10 +104,10 @@ export interface ISiteSettings extends Document {
 }
 
 export const DEFAULT_HOME_STATS: IHomeStats = {
-  storiesCreated: '+500',
-  happyFamilies: '+100',
-  readyStories: '+20',
-  rating: '5 ⭐',
+  readyStories: '20',
+  languages: '3',
+  pages: '13',
+  pickup: 'القدس',
 };
 
 const SiteSettingsSchema = new Schema<ISiteSettings>(
@@ -146,10 +153,10 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
       },
     ],
     homeStats: {
-      storiesCreated: { type: String, default: DEFAULT_HOME_STATS.storiesCreated },
-      happyFamilies: { type: String, default: DEFAULT_HOME_STATS.happyFamilies },
       readyStories: { type: String, default: DEFAULT_HOME_STATS.readyStories },
-      rating: { type: String, default: DEFAULT_HOME_STATS.rating },
+      languages: { type: String, default: DEFAULT_HOME_STATS.languages },
+      pages: { type: String, default: DEFAULT_HOME_STATS.pages },
+      pickup: { type: String, default: DEFAULT_HOME_STATS.pickup },
     },
     demoCards: { type: Schema.Types.Mixed, default: {} },
     allowSkipPhoto: { type: Boolean, default: false },

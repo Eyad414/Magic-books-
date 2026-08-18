@@ -6,7 +6,7 @@ import { useStoryProgress } from '../../context/StoryProgressContext';
 import { publicApi } from '../../api/publicApi';
 
 // Fallback stats if the backend hasn't set custom ones yet.
-const DEFAULT_STATS = { storiesCreated: '+500', happyFamilies: '+100', readyStories: '+20', rating: '5 ⭐' };
+const DEFAULT_STATS = { readyStories: '20', languages: '3', pages: '13', pickup: 'القدس' };
 
 export default function HeroSection() {
   const { t } = useTranslation();
@@ -77,10 +77,10 @@ export default function HeroSection() {
             {/* Stats */}
             <div className="flex items-center justify-center lg:justify-end gap-8 mt-10">
               {[
-                { value: stats.storiesCreated, label: t('hero.stats_stories_created') },
-                { value: stats.happyFamilies, label: t('hero.stats_happy_families') },
                 { value: stats.readyStories, label: t('hero.stats_ready_stories') },
-                { value: stats.rating, label: t('hero.stats_rating') },
+                { value: stats.languages, label: t('hero.stats_languages') },
+                { value: stats.pages, label: t('hero.stats_pages') },
+                { value: stats.pickup, label: t('hero.stats_pickup') },
               ].map((stat) => (
                 <div key={stat.label} className="text-center">
                   <div className="font-arabic font-black text-gold-500 text-2xl" dir="ltr">{stat.value}</div>
