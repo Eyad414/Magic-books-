@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { summarizeArtwork, themeArtFolder, STORY_PAGES } from '../src/services/PrintReadiness';
+import { summarizeArtwork, themeArtFolder, STORY_PAGES, artworkPaths } from '../src/services/PrintReadiness';
 
 /**
  * This decides whether a book is worth paying a printer for. It used to be
@@ -64,5 +64,42 @@ describe('print readiness', () => {
     // one book reads as having no artwork at all.
     expect(themeArtFolder('zoo_adventure')).toBe('theme_zoo');
     expect(themeArtFolder('deep_sea')).toBe('theme_deep_sea');
+  });
+});
+
+describe('artworkPaths', () => {
+  const folder = 'magic-fanoose/generated/theme_zoo';
+  const complete = [
+    `${folder}/page-00.png`,
+    ...Array.from({ length: 13 }, (_, i) => `${folder}/page-${String(i + 1).padStart(2, '0')}.png`),
+    `${folder}/page-99.png`,
+  ];
+
+  it('returns the cover, the 13 pages in order, and the closing portrait', () => {
+    const art = artworkPaths(complete)!;
+    expect(art.coverPath).toBe(`${folder}/page-00.png`);
+    expect(art.backPath).toBe(`${folder}/page-99.png`);
+    expect(art.imagePaths).toHaveLength(13);
+    expect(art.imagePaths[0]).toBe(`${folder}/page-01.png`);
+    expect(art.imagePaths[12]).toBe(`${folder}/page-13.png`);
+  });
+
+  it('orders pages by number, not by how storage listed them', () => {
+    const shuffled = [...complete].reverse();
+    expect(artworkPaths(shuffled)!.imagePaths[0]).toBe(`${folder}/page-01.png`);
+  });
+
+  it('refuses a book with a missing page rather than printing a gap', () => {
+    expect(artworkPaths(complete.filter((p) => !p.endsWith('page-07.png')))).toBeNull();
+  });
+
+  it('refuses a book with no cover and one with no closing portrait', () => {
+    expect(artworkPaths(complete.filter((p) => !p.endsWith('page-00.png')))).toBeNull();
+    expect(artworkPaths(complete.filter((p) => !p.endsWith('page-99.png')))).toBeNull();
+  });
+
+  it('ignores anything else sitting in the folder', () => {
+    const art = artworkPaths([...complete, `${folder}/preview.pdf`, `${folder}/page-14.png`])!;
+    expect(art.imagePaths).toHaveLength(13);
   });
 });

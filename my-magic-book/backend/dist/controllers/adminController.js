@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteImportedFiles = exports.listImportedFiles = exports.getPrintReadiness = exports.listPrintJobs = exports.uploadImportedCover = exports.designImportedCover = exports.submitImportedBook = exports.importBookPdf = exports.generatePhotorealPreview = exports.generateColoringPreview = exports.generatePreviewIllustrations = exports.printBookSubmit = exports.printBook = exports.checkPayments = exports.submitOrderColoring = exports.reRenderOrderColoring = exports.reRenderOrderFiles = exports.getOrderBuildStatus = exports.buildOrderBook = exports.confirmOrderPayment = exports.getAllOrders = exports.updateSettings = exports.getPublicSettings = exports.getSettings = exports.getTeam = exports.removeAdmin = exports.addAdmin = exports.deleteStory = exports.updateStory = exports.getAllStories = exports.getCustomerByEmail = exports.deleteMessage = exports.listMessages = void 0;
+exports.deleteImportedFiles = exports.listImportedFiles = exports.getPrintReadiness = exports.listPrintJobs = exports.sendReadyThemeBook = exports.uploadImportedCover = exports.designImportedCover = exports.submitImportedBook = exports.importBookPdf = exports.generatePhotorealPreview = exports.generateColoringPreview = exports.generatePreviewIllustrations = exports.printBookSubmit = exports.printBook = exports.checkPayments = exports.submitOrderColoring = exports.reRenderOrderColoring = exports.reRenderOrderFiles = exports.getOrderBuildStatus = exports.buildOrderBook = exports.confirmOrderPayment = exports.getAllOrders = exports.updateSettings = exports.getPublicSettings = exports.getSettings = exports.getTeam = exports.removeAdmin = exports.addAdmin = exports.deleteStory = exports.updateStory = exports.getAllStories = exports.getCustomerByEmail = exports.deleteMessage = exports.listMessages = void 0;
 const User_1 = __importDefault(require("../models/User"));
 const Story_1 = __importDefault(require("../models/Story"));
 const Order_1 = __importDefault(require("../models/Order"));
@@ -1064,7 +1064,9 @@ exports.printBook = printBook;
  */
 async function recordPrintJob(entry) {
     try {
-        await PrintJob_1.default.create(entry);
+        // sentAt is set on every row so the log sorts the same way whether a row
+        // was captured at send time or rebuilt from BookPod afterwards.
+        await PrintJob_1.default.create({ sentAt: new Date(), ...entry });
     }
     catch (err) {
         console.warn('[recordPrintJob] not saved:', err?.message || err);
@@ -1107,6 +1109,14 @@ const printBookSubmit = async (req, res) => {
     }
     catch (err) {
         console.error('printBookSubmit failed:', err);
+        await recordPrintJob({
+            source: 'theme',
+            title: `${req.body?.childName || ''} — ${req.body?.theme || 'book'}`.trim(),
+            reference: req.body?.theme,
+            failed: true,
+            error: String(err?.message || err).slice(0, 300),
+            submittedBy: String(req.user?.email || ''),
+        });
         res.status(500).json({ success: false, message: err.message || 'فشل الإرسال إلى BookPod' });
     }
 };
@@ -1600,6 +1610,14 @@ const submitImportedBook = async (req, res) => {
     }
     catch (err) {
         console.error('[submitImportedBook]', err?.message || err);
+        await recordPrintJob({
+            source: 'imported',
+            title: String(req.body?.title || 'Imported book').slice(0, 120),
+            reference: String(req.body?.interiorPath || '').split('/').pop(),
+            failed: true,
+            error: String(err?.message || err).slice(0, 300),
+            submittedBy: String(req.user?.email || ''),
+        });
         res.status(500).json({ success: false, message: err?.message || 'فشل الإرسال إلى BookPod.' });
     }
 };
@@ -1721,11 +1739,88 @@ const uploadImportedCover = async (req, res) => {
     }
 };
 exports.uploadImportedCover = uploadImportedCover;
+/**
+ * Send a finished demo book to the printer, straight from the readiness list.
+ *
+ * Until now the only way to print one was to open the book viewer and send it
+ * from there, one at a time — the readiness panel could say a book was ready
+ * but not act on it. Real money: the caller confirms, and this refuses a book
+ * whose artwork is incomplete rather than paying to print a gap.
+ */
+const sendReadyThemeBook = async (req, res) => {
+    const theme = String(req.body?.theme || '').trim();
+    const childName = String(req.body?.childName || '').trim();
+    const adminEmail = String(req.user?.email || '');
+    try {
+        const ship = req.body?.shipping || {};
+        const shipping = {
+            fullName: String(ship.fullName || '').trim(),
+            phone: String(ship.phone || '').trim(),
+            city: String(ship.city || '').trim(),
+            street: String(ship.street || '').trim(),
+            buildingNo: String(ship.buildingNo || '').trim(),
+            floor: String(ship.floor || '').trim(),
+            postalCode: String(ship.postalCode || '').trim(),
+            notes: String(ship.notes || '').trim(),
+            deliveryMethod: ship.deliveryMethod === 'delivery' ? 'delivery' : 'pickup',
+            pickupLocation: String(ship.pickupLocation || 'القدس').trim(),
+        };
+        if (!theme || !childName) {
+            res.status(400).json({ success: false, message: 'اسم الكتاب واسم الطفل مطلوبان.' });
+            return;
+        }
+        if (!shipping.fullName || !shipping.phone) {
+            res.status(400).json({ success: false, message: 'الاسم ورقم الهاتف مطلوبان للإرسال.' });
+            return;
+        }
+        const art = await (0, PrintReadiness_1.loadThemeArtwork)(theme);
+        if (!art) {
+            res.status(400).json({ success: false, message: 'هذا الكتاب ناقص — أكمل صوره قبل إرساله للطباعة.' });
+            return;
+        }
+        const result = await (0, BookBuilder_1.submitPreviewToBookPod)({
+            theme,
+            childName,
+            childGender: req.body?.childGender === 'female' ? 'female' : 'male',
+            language: String(req.body?.language || 'ar'),
+            coverPath: art.coverPath,
+            backPath: art.backPath,
+            imagePaths: art.imagePaths,
+        }, shipping);
+        await recordPrintJob({
+            source: 'theme',
+            title: `${childName} — ${theme}`,
+            reference: theme,
+            coverPath: art.coverPath,
+            interiorPages: art.imagePaths.length,
+            quantity: 1,
+            coverSource: 'generated',
+            bookpodJobId: result?.jobId ? String(result.jobId) : undefined,
+            shippingName: shipping.fullName,
+            shippingPhone: shipping.phone,
+            submittedBy: adminEmail,
+        });
+        res.json({ success: true, jobId: result?.jobId });
+    }
+    catch (err) {
+        console.error('[sendReadyThemeBook]', err?.message || err);
+        await recordPrintJob({
+            source: 'theme',
+            title: `${childName || ''} — ${theme}`.trim(),
+            reference: theme,
+            failed: true,
+            error: String(err?.message || err).slice(0, 300),
+            submittedBy: adminEmail,
+        });
+        res.status(500).json({ success: false, message: err?.message || 'فشل الإرسال إلى BookPod.' });
+    }
+};
+exports.sendReadyThemeBook = sendReadyThemeBook;
 /** The most recent books sent to the printer, newest first. */
 const listPrintJobs = async (req, res) => {
     try {
         const limit = Math.min(Math.max(Number(req.query.limit) || 30, 1), 200);
-        const jobs = await PrintJob_1.default.find({}).sort({ createdAt: -1 }).limit(limit).lean();
+        const jobs = await PrintJob_1.default.find({}).sort({ sentAt: -1, createdAt: -1 }).limit(limit).lean();
         res.json({ success: true, count: jobs.length, jobs });
     }
     catch (err) {

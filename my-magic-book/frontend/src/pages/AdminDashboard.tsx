@@ -294,6 +294,40 @@ export default function AdminDashboard() {
 
   // Admin-only: download the print-ready files (cover + interior PDFs) so they
   // can be archived or sent to a print shop manually.
+  const submitReadyBook = async () => {
+    if (!sendBook) return;
+    const { childName, fullName, phone } = sendForm;
+    if (!childName.trim() || !fullName.trim() || !phone.trim()) {
+      toast.error(t('admin.send_needs_fields', 'اسم الطفل واسم المستلم ورقم الهاتف مطلوبة'));
+      return;
+    }
+    if (!window.confirm(t('admin.send_confirm', 'إرسال هذا الكتاب إلى BookPod للطباعة؟ هذه طباعة حقيقية ومدفوعة.'))) return;
+
+    setSendBusy(true);
+    const toastId = toast.loading(t('admin.import_sending', 'جاري الإرسال إلى BookPod...'));
+    try {
+      const res = await adminApi.sendReadyThemeBook({
+        theme: sendBook.id,
+        childName: childName.trim(),
+        shipping: { fullName: fullName.trim(), phone: phone.trim(), deliveryMethod: 'pickup', pickupLocation: 'القدس' },
+      });
+      if (res?.success) {
+        toast.success(`${t('admin.sent_to_bookpod_ok', 'تم الإرسال إلى BookPod للطباعة ✅')}${res.jobId ? ` (#${res.jobId})` : ''}`, { id: toastId, duration: 8000 });
+        setSendBook(null);
+        loadPrintJobs();
+      } else {
+        toast.error(res?.message || t('admin.send_failed', 'فشل الإرسال إلى BookPod'), { id: toastId });
+        loadPrintJobs();
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || t('admin.send_failed', 'فشل الإرسال إلى BookPod'), { id: toastId });
+      // A failure is logged server-side now, so the panel can show it.
+      loadPrintJobs();
+    } finally {
+      setSendBusy(false);
+    }
+  };
+
   const loadPrintJobs = async () => {
     try {
       const res = await adminApi.getPrintJobs(30);
@@ -932,6 +966,11 @@ export default function AdminDashboard() {
   // PDFs kept no record at all, so when the boxes arrive there was nothing to
   // match them against — and when a send looked wrong, nothing to audit.
   const [printJobs, setPrintJobs] = useState<any[] | null>(null);
+  // Sending a demo book is a real, paid print run, so it is deliberate: pick a
+  // book, fill in who it ships to, confirm.
+  const [sendBook, setSendBook] = useState<{ id: string; label?: string } | null>(null);
+  const [sendForm, setSendForm] = useState({ childName: '', fullName: '', phone: '' });
+  const [sendBusy, setSendBusy] = useState(false);
   // Free-text search over the ORDERS list. The card shows a short id like
   // #C496F510, which is the handle used to talk about an order — but there was
   // no way to look one up by it, so finding a specific order meant scrolling
@@ -2304,7 +2343,18 @@ export default function AdminDashboard() {
                           {b.ready ? <CheckCircle className="w-3.5 h-3.5 shrink-0 text-emerald-400" /> : <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-400" />}
                           <span className="flex-1 truncate">{b.label || b.id}</span>
                           {b.ready ? (
-                            <span className="text-emerald-300/70 shrink-0">{t('admin.readiness_ok', 'جاهز')}</span>
+                            // Ready means the files exist — this is the only
+                            // place that can act on that without hunting for
+                            // the book in the viewer first.
+                            <button
+                              onClick={() => {
+                                setSendBook({ id: b.id, label: b.label });
+                                setSendForm({ childName: '', fullName: '', phone: '' });
+                              }}
+                              className="shrink-0 px-2 py-0.5 rounded-lg bg-emerald-500/25 text-emerald-100 border border-emerald-400/40 hover:bg-emerald-500/40 font-bold"
+                            >
+                              📤 {t('admin.readiness_send', 'أرسل')}
+                            </button>
                           ) : (
                             // The gaps by number — "11 of 13" does not say which
                             // page to regenerate.
@@ -2314,6 +2364,55 @@ export default function AdminDashboard() {
                           )}
                         </div>
                       ))}
+                    </div>
+                  )}
+
+                  {/* Deliberately a second step: a print run costs money, so the
+                      book, the name printed inside it and who collects it are
+                      all confirmed before anything is sent. */}
+                  {sendBook && (
+                    <div className="mt-3 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-400/30">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-arabic text-emerald-100 text-xs font-bold">
+                          📤 {t('admin.send_panel_title', 'إرسال «{{book}}» للطباعة', { book: sendBook.label || sendBook.id })}
+                        </p>
+                        <button onClick={() => setSendBook(null)} className="text-white/40 hover:text-white/80 text-xs font-arabic">
+                          {t('common.cancel', 'إلغاء')}
+                        </button>
+                      </div>
+                      <div className="grid gap-1.5 sm:grid-cols-3 mb-2">
+                        <input
+                          value={sendForm.childName}
+                          onChange={(e) => setSendForm({ ...sendForm, childName: e.target.value })}
+                          placeholder={t('admin.send_child_name', 'اسم الطفل داخل الكتاب')}
+                          className="px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] font-arabic placeholder:text-white/30"
+                        />
+                        <input
+                          value={sendForm.fullName}
+                          onChange={(e) => setSendForm({ ...sendForm, fullName: e.target.value })}
+                          placeholder={t('admin.send_receiver', 'اسم المستلم')}
+                          className="px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] font-arabic placeholder:text-white/30"
+                        />
+                        <input
+                          value={sendForm.phone}
+                          onChange={(e) => setSendForm({ ...sendForm, phone: e.target.value })}
+                          placeholder={t('admin.send_phone', 'رقم الهاتف')}
+                          dir="ltr"
+                          className="px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] font-arabic placeholder:text-white/30"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-arabic text-amber-200/70 text-[10px]">
+                          ⚠️ {t('admin.send_cost_note', 'طباعة حقيقية ومدفوعة — نسخة واحدة، استلام من المطبعة في القدس.')}
+                        </p>
+                        <button
+                          onClick={submitReadyBook}
+                          disabled={sendBusy}
+                          className="shrink-0 px-3 py-1.5 rounded-xl bg-emerald-500/30 text-emerald-50 border border-emerald-400/50 hover:bg-emerald-500/45 font-arabic text-[11px] font-bold disabled:opacity-50"
+                        >
+                          {sendBusy ? t('admin.import_sending', 'جاري الإرسال إلى BookPod...') : t('admin.send_now', 'إرسال إلى BookPod')}
+                        </button>
+                      </div>
                     </div>
                   )}
 

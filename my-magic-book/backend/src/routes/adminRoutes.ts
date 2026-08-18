@@ -7,6 +7,7 @@ import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam
   uploadImportedCover,
   getPrintReadiness,
   listPrintJobs,
+  sendReadyThemeBook,
   listImportedFiles,
   deleteImportedFiles, listMessages, deleteMessage, getCustomerByEmail, checkPayments } from '../controllers/adminController';
 import { protect, adminOnly } from '../utils/authMiddleware';
@@ -44,6 +45,8 @@ router.get('/print-readiness', getPrintReadiness);
 // A log of every book sent to the printer — demo books and imported ones kept
 // no record at all before this.
 router.get('/print-jobs', listPrintJobs);
+// BILLABLE: prints and ships one finished demo book.
+router.post('/print-readiness/send', sendReadyThemeBook);
 router.get('/settings', getSettings);
 router.put('/settings', updateSettings);
 router.post('/themes/:themeId/generate-illustrations', generatePreviewIllustrations);

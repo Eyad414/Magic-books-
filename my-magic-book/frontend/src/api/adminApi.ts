@@ -31,6 +31,22 @@ export const adminApi = {
     return response.data;
   },
 
+  /**
+   * BILLABLE — prints and ships one finished demo book straight from the
+   * readiness list. The server resolves the artwork itself, so what was
+   * checked as ready is exactly what goes.
+   */
+  sendReadyThemeBook: async (body: {
+    theme: string;
+    childName: string;
+    childGender?: 'male' | 'female';
+    language?: string;
+    shipping: { fullName: string; phone: string; deliveryMethod?: 'delivery' | 'pickup'; pickupLocation?: string; city?: string; street?: string; buildingNo?: string; notes?: string };
+  }) => {
+    const response = await axiosInstance.post('/admin/print-readiness/send', body);
+    return response.data;
+  },
+
   /** Log of books sent to the printer (demo books and imported PDFs). */
   getPrintJobs: async (limit = 30) => {
     const response = await axiosInstance.get('/admin/print-jobs', { params: { limit } });

@@ -829,7 +829,7 @@
     "confirm_resend": "This order is already generated. Re-send it to BookPod for printing?",
     "sending_to_print": "Building the book and sending to print… (a few minutes)",
     "sent_to_print": "Book built and prepared for printing ✅",
-    "send_failed": "Failed to send to print",
+    "send_failed": "Send to BookPod failed",
     "no_files_yet": "No files yet — send the order to print first",
     "files_downloading": "Downloading print files 📁",
     "add_admin_hint": "Enter the email of someone who already has an account — they'll become an admin.",
@@ -982,7 +982,16 @@
     "sent_log_title": "Recently sent to print",
     "sent_cover_page1": "cover: page 1",
     "sent_cover_own": "cover: separate file",
-    "sent_failed": "never reached BookPod"
+    "sent_failed": "never reached BookPod",
+    "readiness_send": "Send",
+    "send_panel_title": "Send “{{book}}” to print",
+    "send_child_name": "child's name in the book",
+    "send_receiver": "receiver name",
+    "send_phone": "phone",
+    "send_now": "Send to BookPod",
+    "send_cost_note": "A real, paid print run — one copy, pickup from the printer in Jerusalem.",
+    "send_confirm": "Send this book to BookPod for printing? This is a real, paid print run.",
+    "send_needs_fields": "child's name, receiver and phone are required"
   },
   "title_page": {
     "presents": "Presented to",

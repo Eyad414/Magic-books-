@@ -829,7 +829,7 @@
     "confirm_resend": "ההזמנה כבר נוצרה. לשלוח שוב ל-BookPod להדפסה?",
     "sending_to_print": "בונה את הספר ושולח להדפסה… (כמה דקות)",
     "sent_to_print": "הספר נבנה והוכן להדפסה ✅",
-    "send_failed": "השליחה להדפסה נכשלה",
+    "send_failed": "השליחה ל-BookPod נכשלה",
     "no_files_yet": "אין קבצים עדיין — שלח את ההזמנה להדפסה תחילה",
     "files_downloading": "מוריד קבצי הדפסה 📁",
     "add_admin_hint": "הזן אימייל של מישהו שכבר יש לו חשבון — הוא יהפוך למנהל.",
@@ -982,7 +982,16 @@
     "sent_log_title": "נשלח לאחרונה להדפסה",
     "sent_cover_page1": "כריכה: עמוד 1",
     "sent_cover_own": "כריכה: קובץ נפרד",
-    "sent_failed": "לא הגיע — השליחה נכשלה"
+    "sent_failed": "לא הגיע — השליחה נכשלה",
+    "readiness_send": "שלח",
+    "send_panel_title": "שליחת «{{book}}» להדפסה",
+    "send_child_name": "שם הילד בספר",
+    "send_receiver": "שם המקבל",
+    "send_phone": "טלפון",
+    "send_now": "שליחה ל-BookPod",
+    "send_cost_note": "הדפסה אמיתית בתשלום — עותק אחד, איסוף מהדפוס בירושלים.",
+    "send_confirm": "לשלוח את הספר ל-BookPod להדפסה? זו הדפסה אמיתית בתשלום.",
+    "send_needs_fields": "שם הילד, שם המקבל וטלפון הם שדות חובה"
   },
   "title_page": {
     "presents": "מוגש ל",

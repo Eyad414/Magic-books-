@@ -91,6 +91,15 @@ export declare const designImportedCover: (req: Request, res: Response) => Promi
  * because a bare JPEG is not a print file.
  */
 export declare const uploadImportedCover: (req: Request, res: Response) => Promise<void>;
+/**
+ * Send a finished demo book to the printer, straight from the readiness list.
+ *
+ * Until now the only way to print one was to open the book viewer and send it
+ * from there, one at a time — the readiness panel could say a book was ready
+ * but not act on it. Real money: the caller confirms, and this refuses a book
+ * whose artwork is incomplete rather than paying to print a gap.
+ */
+export declare const sendReadyThemeBook: (req: Request, res: Response) => Promise<void>;
 /** The most recent books sent to the printer, newest first. */
 export declare const listPrintJobs: (req: Request, res: Response) => Promise<void>;
 /**

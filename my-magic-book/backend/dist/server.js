@@ -105,6 +105,13 @@ app.get('/api/health', async (req, res) => {
         // was invisible from outside: both answered every request perfectly well,
         // just about different data.
         db: mongoose_1.default.connection?.name || 'not connected',
+        // Enough to tell whether THIS deploy could submit a print job, and which
+        // BookPod account it would land in — never the token itself.
+        bookpod: {
+            configured: !!(process.env.BOOKPOD_USER_ID && process.env.BOOKPOD_TOKEN),
+            source: process.env.BOOKPOD_ORDER_SOURCE || 'eyad',
+            account: (process.env.BOOKPOD_USER_ID || '').slice(0, 6) || 'none',
+        },
     };
     // Diagnostic: ?probe=upscale actually calls the Imagen upscaler once (cached 5
     // min) so we can see the real HTTP status/error from this host's identity.

@@ -45,7 +45,7 @@ const ShippingAddressSchema = new mongoose_1.Schema({
     postalCode: { type: String },
     floor: { type: String },
     notes: { type: String },
-    country: { type: String, required: true, default: 'SA' },
+    country: { type: String, required: true, default: 'IL' },
     deliveryMethod: { type: String, enum: ['delivery', 'pickup'], default: 'delivery' },
     pickupLocation: { type: String },
 });

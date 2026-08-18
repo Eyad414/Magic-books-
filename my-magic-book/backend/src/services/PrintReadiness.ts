@@ -74,3 +74,41 @@ export async function checkThemes(themes: { id: string; label?: string }[]): Pro
   for (const t of themes) out.push(await checkThemeArtwork(t.id, t.label));
   return out;
 }
+
+export interface ThemeArtwork {
+  coverPath: string;
+  backPath: string;
+  imagePaths: string[];
+}
+
+/**
+ * The exact files a print job would use, in page order.
+ *
+ * Resolved from the same listing the readiness check reads, so what the
+ * dashboard calls ready and what actually goes to the printer cannot drift
+ * apart. Returns null when anything at all is missing — a partial book is
+ * never worth a printer's invoice.
+ */
+export function artworkPaths(objectPaths: Iterable<string>): ThemeArtwork | null {
+  const byName = new Map<string, string>();
+  for (const p of objectPaths) byName.set(p.split('/').pop() || '', p);
+
+  const imagePaths: string[] = [];
+  for (let i = 1; i <= STORY_PAGES; i++) {
+    const file = byName.get(`page-${String(i).padStart(2, '0')}.png`);
+    if (!file) return null;
+    imagePaths.push(file);
+  }
+  const coverPath = byName.get('page-00.png');
+  const backPath = byName.get('page-99.png');
+  if (!coverPath || !backPath) return null;
+
+  return { coverPath, backPath, imagePaths };
+}
+
+/** Same, straight from storage. */
+export async function loadThemeArtwork(themeId: string): Promise<ThemeArtwork | null> {
+  const folder = themeArtFolder(themeId);
+  const objects = await listObjects(`${process.env.GCS_PDF_FOLDER || 'magic-fanoose'}/generated/${folder}/`);
+  return artworkPaths(objects.map((o) => o.path));
+}

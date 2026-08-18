@@ -12,7 +12,7 @@ import { swapFace } from '../services/FaceSwapService';
 import { buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, COLORING_PAGES, SCENE_TEMPLATES } from '../services/sceneTemplates';
 import { inspectPdf, reimposePdf, splitCoverInterior } from '../services/BookImportService';
 import { coverSourceFor, buildImportedCover, composeImportedCover } from '../services/ImportedCoverService';
-import { checkThemes, type ThemeReadiness } from '../services/PrintReadiness';
+import { checkThemes, loadThemeArtwork, type ThemeReadiness } from '../services/PrintReadiness';
 import PrintJob from '../models/PrintJob';
 import { publicProxyUrl } from '../services/PrintService';
 import { uploadBuffer, pdfFolderPath, listObjects, deleteObject } from '../services/StorageService';
@@ -1724,6 +1724,90 @@ export const uploadImportedCover = async (req: Request, res: Response): Promise<
 };
 
 
+
+
+/**
+ * Send a finished demo book to the printer, straight from the readiness list.
+ *
+ * Until now the only way to print one was to open the book viewer and send it
+ * from there, one at a time — the readiness panel could say a book was ready
+ * but not act on it. Real money: the caller confirms, and this refuses a book
+ * whose artwork is incomplete rather than paying to print a gap.
+ */
+export const sendReadyThemeBook = async (req: Request, res: Response): Promise<void> => {
+  const theme = String(req.body?.theme || '').trim();
+  const childName = String(req.body?.childName || '').trim();
+  const adminEmail = String((req as any).user?.email || '');
+  try {
+    const ship = req.body?.shipping || {};
+    const shipping = {
+      fullName: String(ship.fullName || '').trim(),
+      phone: String(ship.phone || '').trim(),
+      city: String(ship.city || '').trim(),
+      street: String(ship.street || '').trim(),
+      buildingNo: String(ship.buildingNo || '').trim(),
+      floor: String(ship.floor || '').trim(),
+      postalCode: String(ship.postalCode || '').trim(),
+      notes: String(ship.notes || '').trim(),
+      deliveryMethod: ship.deliveryMethod === 'delivery' ? ('delivery' as const) : ('pickup' as const),
+      pickupLocation: String(ship.pickupLocation || 'القدس').trim(),
+    };
+    if (!theme || !childName) {
+      res.status(400).json({ success: false, message: 'اسم الكتاب واسم الطفل مطلوبان.' });
+      return;
+    }
+    if (!shipping.fullName || !shipping.phone) {
+      res.status(400).json({ success: false, message: 'الاسم ورقم الهاتف مطلوبان للإرسال.' });
+      return;
+    }
+
+    const art = await loadThemeArtwork(theme);
+    if (!art) {
+      res.status(400).json({ success: false, message: 'هذا الكتاب ناقص — أكمل صوره قبل إرساله للطباعة.' });
+      return;
+    }
+
+    const result = await submitPreviewToBookPod(
+      {
+        theme,
+        childName,
+        childGender: req.body?.childGender === 'female' ? 'female' : 'male',
+        language: String(req.body?.language || 'ar'),
+        coverPath: art.coverPath,
+        backPath: art.backPath,
+        imagePaths: art.imagePaths,
+      },
+      shipping,
+    );
+
+    await recordPrintJob({
+      source: 'theme',
+      title: `${childName} — ${theme}`,
+      reference: theme,
+      coverPath: art.coverPath,
+      interiorPages: art.imagePaths.length,
+      quantity: 1,
+      coverSource: 'generated',
+      bookpodJobId: result?.jobId ? String(result.jobId) : undefined,
+      shippingName: shipping.fullName,
+      shippingPhone: shipping.phone,
+      submittedBy: adminEmail,
+    });
+
+    res.json({ success: true, jobId: result?.jobId });
+  } catch (err: any) {
+    console.error('[sendReadyThemeBook]', err?.message || err);
+    await recordPrintJob({
+      source: 'theme',
+      title: `${childName || ''} — ${theme}`.trim(),
+      reference: theme,
+      failed: true,
+      error: String(err?.message || err).slice(0, 300),
+      submittedBy: adminEmail,
+    });
+    res.status(500).json({ success: false, message: err?.message || 'فشل الإرسال إلى BookPod.' });
+  }
+};
 
 /** The most recent books sent to the printer, newest first. */
 export const listPrintJobs = async (req: Request, res: Response): Promise<void> => {
