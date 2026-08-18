@@ -34,6 +34,8 @@ router.get('/print-readiness', adminController_1.getPrintReadiness);
 // A log of every book sent to the printer — demo books and imported ones kept
 // no record at all before this.
 router.get('/print-jobs', adminController_1.listPrintJobs);
+// Accounts, sign-ins and what each person actually bought.
+router.get('/customers', adminController_1.listCustomers);
 // BILLABLE: prints and ships one finished demo book.
 router.post('/print-readiness/send', adminController_1.sendReadyThemeBook);
 router.get('/settings', adminController_1.getSettings);

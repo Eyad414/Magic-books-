@@ -991,7 +991,22 @@
     "send_now": "إرسال إلى BookPod",
     "send_cost_note": "طباعة حقيقية ومدفوعة — نسخة واحدة، استلام من المطبعة في القدس.",
     "send_confirm": "إرسال هذا الكتاب إلى BookPod للطباعة؟ هذه طباعة حقيقية ومدفوعة.",
-    "send_needs_fields": "اسم الطفل واسم المستلم ورقم الهاتف مطلوبة"
+    "send_needs_fields": "اسم الطفل واسم المستلم ورقم الهاتف مطلوبة",
+    "tab_customers": "العملاء",
+    "customers_load": "تحديث",
+    "customers_idle": "اضغط «تحديث» لعرض العملاء.",
+    "cust_total": "حساب",
+    "cust_new7": "جديد هذا الأسبوع",
+    "cust_returning": "رجعوا أكثر من مرة",
+    "cust_buyers": "دفعوا فعلاً",
+    "cust_admin": "مدير",
+    "cust_paid_badge": "زبون",
+    "cust_orders": "{{n}} طلب",
+    "cust_joined": "انضم",
+    "cust_last_login": "آخر دخول",
+    "cust_never": "لم يدخل بعد",
+    "cust_logins": "مرات الدخول",
+    "cust_active30": "دخلوا خلال ٣٠ يوم"
   },
   "title_page": {
     "presents": "يُقدّم لـ",

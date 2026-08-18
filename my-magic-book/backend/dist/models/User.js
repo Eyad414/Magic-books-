@@ -47,6 +47,7 @@ const UserSchema = new mongoose_1.Schema({
     phone: { type: String, trim: true },
     location: { type: String, trim: true },
     lastLoginAt: { type: Date },
+    loginCount: { type: Number, default: 0 },
     coverPreviews: { type: [Date], default: undefined },
     // `select: false`, like passwordHash: these must never ride along in a user
     // object that gets serialised into an API response.

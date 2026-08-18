@@ -59,6 +59,7 @@ const login = async (req, res) => {
         }
         const token = signToken(user._id.toString());
         user.lastLoginAt = new Date();
+        user.loginCount = (user.loginCount || 0) + 1;
         await user.save();
         res.json({
             success: true,

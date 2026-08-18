@@ -100,6 +100,14 @@ export declare const uploadImportedCover: (req: Request, res: Response) => Promi
  * whose artwork is incomplete rather than paying to print a gap.
  */
 export declare const sendReadyThemeBook: (req: Request, res: Response) => Promise<void>;
+/**
+ * Who signed up, who came back, and who actually bought something.
+ *
+ * The dashboard could show orders and books but never the people behind them,
+ * so "how many accounts do we have, and are any of them returning?" had no
+ * answer short of opening the database.
+ */
+export declare const listCustomers: (_req: Request, res: Response) => Promise<void>;
 /** The most recent books sent to the printer, newest first. */
 export declare const listPrintJobs: (req: Request, res: Response) => Promise<void>;
 /**

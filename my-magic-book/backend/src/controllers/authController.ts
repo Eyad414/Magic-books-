@@ -66,6 +66,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const token = signToken(user._id.toString());
 
     user.lastLoginAt = new Date();
+    user.loginCount = (user.loginCount || 0) + 1;
     await user.save();
 
     res.json({

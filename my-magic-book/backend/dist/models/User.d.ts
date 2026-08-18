@@ -8,6 +8,9 @@ export interface IUser extends Document {
     phone?: string;
     location?: string;
     lastLoginAt?: Date;
+    /** How many times this account has signed in. "Last seen" alone cannot tell
+     *  a customer who keeps coming back from one who logged in once. */
+    loginCount?: number;
     /** Timestamps of free cover previews this account generated. Each one costs
      *  real Gemini credit, so the quota counts the entries made since the user's
      *  most recent PAID order (see coverPreviewController). Trimmed to the last

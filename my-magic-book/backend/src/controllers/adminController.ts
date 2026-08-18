@@ -1809,6 +1809,74 @@ export const sendReadyThemeBook = async (req: Request, res: Response): Promise<v
   }
 };
 
+
+/**
+ * Who signed up, who came back, and who actually bought something.
+ *
+ * The dashboard could show orders and books but never the people behind them,
+ * so "how many accounts do we have, and are any of them returning?" had no
+ * answer short of opening the database.
+ */
+export const listCustomers = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const users = await User.find({}).select('name email role phone location createdAt lastLoginAt loginCount').sort({ createdAt: -1 }).lean();
+    const orders = await Order.find({}).select('userId totalPrice currency paymentStatus createdAt').lean();
+
+    const spend = new Map<string, { orders: number; paid: number; total: number; last?: Date }>();
+    for (const o of orders) {
+      const key = String(o.userId || '');
+      if (!key) continue;
+      const row = spend.get(key) || { orders: 0, paid: 0, total: 0 };
+      row.orders += 1;
+      if (o.paymentStatus === 'paid') {
+        row.paid += 1;
+        row.total += o.totalPrice || 0;
+      }
+      if (!row.last || new Date(o.createdAt) > new Date(row.last)) row.last = o.createdAt as Date;
+      spend.set(key, row);
+    }
+
+    const customers = users.map((u: any) => {
+      const s = spend.get(String(u._id)) || { orders: 0, paid: 0, total: 0 };
+      return {
+        _id: u._id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        phone: u.phone,
+        createdAt: u.createdAt,
+        lastLoginAt: u.lastLoginAt,
+        loginCount: u.loginCount || 0,
+        orders: s.orders,
+        paidOrders: s.paid,
+        totalSpent: s.total,
+        lastOrderAt: s.last,
+      };
+    });
+
+    const since = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    res.json({
+      success: true,
+      summary: {
+        total: customers.length,
+        admins: customers.filter((c) => c.role === 'admin').length,
+        newLast7: customers.filter((c) => new Date(c.createdAt) >= since(7)).length,
+        newLast30: customers.filter((c) => new Date(c.createdAt) >= since(30)).length,
+        activeLast30: customers.filter((c) => c.lastLoginAt && new Date(c.lastLoginAt) >= since(30)).length,
+        // Signed in more than once — the only signal we have that someone came back.
+        returning: customers.filter((c) => c.loginCount > 1).length,
+        withOrders: customers.filter((c) => c.orders > 0).length,
+        buyers: customers.filter((c) => c.paidOrders > 0).length,
+        revenue: customers.reduce((a, c) => a + c.totalSpent, 0),
+      },
+      customers,
+    });
+  } catch (err: any) {
+    console.error('[listCustomers]', err?.message || err);
+    res.status(500).json({ success: false, message: err?.message || 'تعذّر جلب قائمة العملاء.' });
+  }
+};
+
 /** The most recent books sent to the printer, newest first. */
 export const listPrintJobs = async (req: Request, res: Response): Promise<void> => {
   try {

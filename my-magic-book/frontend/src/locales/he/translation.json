@@ -991,7 +991,22 @@
     "send_now": "שליחה ל-BookPod",
     "send_cost_note": "הדפסה אמיתית בתשלום — עותק אחד, איסוף מהדפוס בירושלים.",
     "send_confirm": "לשלוח את הספר ל-BookPod להדפסה? זו הדפסה אמיתית בתשלום.",
-    "send_needs_fields": "שם הילד, שם המקבל וטלפון הם שדות חובה"
+    "send_needs_fields": "שם הילד, שם המקבל וטלפון הם שדות חובה",
+    "tab_customers": "לקוחות",
+    "customers_load": "רענון",
+    "customers_idle": "לחץ «רענון» כדי להציג לקוחות.",
+    "cust_total": "חשבונות",
+    "cust_new7": "חדשים השבוע",
+    "cust_returning": "חזרו",
+    "cust_buyers": "שילמו בפועל",
+    "cust_admin": "מנהל",
+    "cust_paid_badge": "לקוח",
+    "cust_orders": "{{n}} הזמנות",
+    "cust_joined": "הצטרף",
+    "cust_last_login": "כניסה אחרונה",
+    "cust_never": "טרם נכנס",
+    "cust_logins": "כניסות",
+    "cust_active30": "נכנסו ב-30 יום"
   },
   "title_page": {
     "presents": "מוגש ל",

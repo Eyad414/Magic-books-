@@ -47,6 +47,12 @@ export const adminApi = {
     return response.data;
   },
 
+  /** Accounts, sign-ins, and what each person actually ordered. */
+  getCustomers: async () => {
+    const response = await axiosInstance.get('/admin/customers');
+    return response.data;
+  },
+
   /** Log of books sent to the printer (demo books and imported PDFs). */
   getPrintJobs: async (limit = 30) => {
     const response = await axiosInstance.get('/admin/print-jobs', { params: { limit } });

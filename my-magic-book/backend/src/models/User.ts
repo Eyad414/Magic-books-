@@ -10,6 +10,9 @@ export interface IUser extends Document {
   phone?: string;
   location?: string;
   lastLoginAt?: Date;
+  /** How many times this account has signed in. "Last seen" alone cannot tell
+   *  a customer who keeps coming back from one who logged in once. */
+  loginCount?: number;
   /** Timestamps of free cover previews this account generated. Each one costs
    *  real Gemini credit, so the quota counts the entries made since the user's
    *  most recent PAID order (see coverPreviewController). Trimmed to the last
@@ -34,6 +37,7 @@ const UserSchema = new Schema<IUser>(
     phone: { type: String, trim: true },
     location: { type: String, trim: true },
     lastLoginAt: { type: Date },
+    loginCount: { type: Number, default: 0 },
     coverPreviews: { type: [Date], default: undefined },
     // `select: false`, like passwordHash: these must never ride along in a user
     // object that gets serialised into an API response.

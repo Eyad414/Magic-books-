@@ -43,7 +43,7 @@ export default function AdminDashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState<'team' | 'pricing' | 'stories' | 'orders' | 'showcase' | 'messages'>('orders');
+  const [tab, setTab] = useState<'team' | 'pricing' | 'stories' | 'orders' | 'showcase' | 'messages' | 'customers'>('orders');
   const [team, setTeam] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
@@ -325,6 +325,15 @@ export default function AdminDashboard() {
       loadPrintJobs();
     } finally {
       setSendBusy(false);
+    }
+  };
+
+  const loadCustomers = async () => {
+    try {
+      const res = await adminApi.getCustomers();
+      if (res.success) setCustomers(res);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'تعذّر جلب قائمة العملاء');
     }
   };
 
@@ -966,6 +975,8 @@ export default function AdminDashboard() {
   // PDFs kept no record at all, so when the boxes arrive there was nothing to
   // match them against — and when a send looked wrong, nothing to audit.
   const [printJobs, setPrintJobs] = useState<any[] | null>(null);
+  // Who signed up and who came back — the dash could show orders but never people.
+  const [customers, setCustomers] = useState<any | null>(null);
   // Sending a demo book is a real, paid print run, so it is deliberate: pick a
   // book, fill in who it ships to, confirm.
   const [sendBook, setSendBook] = useState<{ id: string; label?: string } | null>(null);
@@ -1222,6 +1233,7 @@ export default function AdminDashboard() {
               {[
                 { id: 'orders', label: t('admin.tab_orders'), icon: Package },
                 { id: 'messages', label: t('admin.tab_messages', 'الرسائل'), icon: Mail },
+                { id: 'customers', label: t('admin.tab_customers', 'العملاء'), icon: Users },
                 { id: 'showcase', label: t('admin.tab_showcase', 'الكتب الجاهزة'), icon: BookOpen },
                 { id: 'stories', label: t('admin.tab_stories'), icon: BookOpen },
                 { id: 'pricing', label: t('admin.tab_pricing'), icon: Settings },
@@ -1517,6 +1529,83 @@ export default function AdminDashboard() {
                     ))
                   )}
                 </div>
+              </div>
+            ) : tab === 'customers' ? (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-arabic font-bold text-white text-lg">
+                    👥 {t('admin.tab_customers', 'العملاء')}
+                    {customers && <span className="text-white/40 text-sm font-normal"> — {customers.summary.total}</span>}
+                  </h3>
+                  <button
+                    onClick={loadCustomers}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 text-white/80 border border-white/15 hover:bg-white/15 font-arabic text-sm font-bold"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    {t('admin.customers_load', 'تحديث')}
+                  </button>
+                </div>
+
+                {!customers ? (
+                  <p className="font-arabic text-white/40 text-sm">{t('admin.customers_idle', 'اضغط «تحديث» لعرض العملاء.')}</p>
+                ) : (
+                  <>
+                    {/* The four numbers worth knowing before reading any row. */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
+                      {[
+                        { v: customers.summary.total, l: t('admin.cust_total', 'حساب') },
+                        { v: customers.summary.newLast7, l: t('admin.cust_new7', 'جديد هذا الأسبوع') },
+                        { v: customers.summary.activeLast30, l: t('admin.cust_active30', 'دخلوا خلال ٣٠ يوم') },
+                        { v: customers.summary.buyers, l: t('admin.cust_buyers', 'دفعوا فعلاً') },
+                      ].map((k) => (
+                        <div key={k.l} className="glass-card p-3 text-center">
+                          <div className="font-arabic font-black text-gold-500 text-2xl" dir="ltr">{k.v}</div>
+                          <div className="font-arabic text-white/45 text-[11px] mt-0.5">{k.l}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="space-y-2">
+                      {customers.customers.map((c: any) => (
+                        <div key={c._id} className="glass-card p-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-arabic font-bold text-white text-sm truncate">{c.name || '—'}</span>
+                                {c.role === 'admin' && (
+                                  <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 text-[10px] font-arabic">{t('admin.cust_admin', 'مدير')}</span>
+                                )}
+                                {c.paidOrders > 0 && (
+                                  <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-arabic">
+                                    {t('admin.cust_paid_badge', 'زبون')}
+                                  </span>
+                                )}
+                              </div>
+                              <a href={`mailto:${c.email}`} className="font-arabic text-white/50 text-[11px] hover:text-gold-500" dir="ltr">{c.email}</a>
+                              {c.phone && <span className="font-arabic text-white/35 text-[11px] mr-2" dir="ltr">{c.phone}</span>}
+                            </div>
+                            <div className="text-left shrink-0">
+                              {c.totalSpent > 0 && <div className="font-arabic font-black text-gold-500 text-lg" dir="ltr">{c.totalSpent}₪</div>}
+                              <div className="font-arabic text-white/35 text-[11px]">
+                                {t('admin.cust_orders', '{{n}} طلب', { n: c.orders })}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 pt-2 border-t border-white/10 font-arabic text-[11px] text-white/40">
+                            <span>{t('admin.cust_joined', 'انضم')}: {new Date(c.createdAt).toLocaleDateString()}</span>
+                            <span>
+                              {t('admin.cust_last_login', 'آخر دخول')}:{' '}
+                              {c.lastLoginAt ? new Date(c.lastLoginAt).toLocaleDateString() : t('admin.cust_never', 'لم يدخل بعد')}
+                            </span>
+                            {/* Counting started the day this was added, so a
+                                zero means "not since then", not "never". */}
+                            {c.loginCount > 0 && <span>{t('admin.cust_logins', 'مرات الدخول')}: {c.loginCount}</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             ) : tab === 'messages' ? (
               <div>

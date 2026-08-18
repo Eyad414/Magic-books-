@@ -991,7 +991,22 @@
     "send_now": "Send to BookPod",
     "send_cost_note": "A real, paid print run — one copy, pickup from the printer in Jerusalem.",
     "send_confirm": "Send this book to BookPod for printing? This is a real, paid print run.",
-    "send_needs_fields": "child's name, receiver and phone are required"
+    "send_needs_fields": "child's name, receiver and phone are required",
+    "tab_customers": "Customers",
+    "customers_load": "Refresh",
+    "customers_idle": "Press “Refresh” to list customers.",
+    "cust_total": "accounts",
+    "cust_new7": "new this week",
+    "cust_returning": "came back",
+    "cust_buyers": "actually paid",
+    "cust_admin": "admin",
+    "cust_paid_badge": "customer",
+    "cust_orders": "{{n}} orders",
+    "cust_joined": "joined",
+    "cust_last_login": "last sign-in",
+    "cust_never": "never signed in",
+    "cust_logins": "sign-ins",
+    "cust_active30": "signed in (30d)"
   },
   "title_page": {
     "presents": "Presented to",

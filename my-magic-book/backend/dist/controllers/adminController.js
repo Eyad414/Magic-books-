@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteImportedFiles = exports.listImportedFiles = exports.getPrintReadiness = exports.listPrintJobs = exports.sendReadyThemeBook = exports.uploadImportedCover = exports.designImportedCover = exports.submitImportedBook = exports.importBookPdf = exports.generatePhotorealPreview = exports.generateColoringPreview = exports.generatePreviewIllustrations = exports.printBookSubmit = exports.printBook = exports.checkPayments = exports.submitOrderColoring = exports.reRenderOrderColoring = exports.reRenderOrderFiles = exports.getOrderBuildStatus = exports.buildOrderBook = exports.confirmOrderPayment = exports.getAllOrders = exports.updateSettings = exports.getPublicSettings = exports.getSettings = exports.getTeam = exports.removeAdmin = exports.addAdmin = exports.deleteStory = exports.updateStory = exports.getAllStories = exports.getCustomerByEmail = exports.deleteMessage = exports.listMessages = void 0;
+exports.deleteImportedFiles = exports.listImportedFiles = exports.getPrintReadiness = exports.listPrintJobs = exports.listCustomers = exports.sendReadyThemeBook = exports.uploadImportedCover = exports.designImportedCover = exports.submitImportedBook = exports.importBookPdf = exports.generatePhotorealPreview = exports.generateColoringPreview = exports.generatePreviewIllustrations = exports.printBookSubmit = exports.printBook = exports.checkPayments = exports.submitOrderColoring = exports.reRenderOrderColoring = exports.reRenderOrderFiles = exports.getOrderBuildStatus = exports.buildOrderBook = exports.confirmOrderPayment = exports.getAllOrders = exports.updateSettings = exports.getPublicSettings = exports.getSettings = exports.getTeam = exports.removeAdmin = exports.addAdmin = exports.deleteStory = exports.updateStory = exports.getAllStories = exports.getCustomerByEmail = exports.deleteMessage = exports.listMessages = void 0;
 const User_1 = __importDefault(require("../models/User"));
 const Story_1 = __importDefault(require("../models/Story"));
 const Order_1 = __importDefault(require("../models/Order"));
@@ -1816,6 +1816,73 @@ const sendReadyThemeBook = async (req, res) => {
     }
 };
 exports.sendReadyThemeBook = sendReadyThemeBook;
+/**
+ * Who signed up, who came back, and who actually bought something.
+ *
+ * The dashboard could show orders and books but never the people behind them,
+ * so "how many accounts do we have, and are any of them returning?" had no
+ * answer short of opening the database.
+ */
+const listCustomers = async (_req, res) => {
+    try {
+        const users = await User_1.default.find({}).select('name email role phone location createdAt lastLoginAt loginCount').sort({ createdAt: -1 }).lean();
+        const orders = await Order_1.default.find({}).select('userId totalPrice currency paymentStatus createdAt').lean();
+        const spend = new Map();
+        for (const o of orders) {
+            const key = String(o.userId || '');
+            if (!key)
+                continue;
+            const row = spend.get(key) || { orders: 0, paid: 0, total: 0 };
+            row.orders += 1;
+            if (o.paymentStatus === 'paid') {
+                row.paid += 1;
+                row.total += o.totalPrice || 0;
+            }
+            if (!row.last || new Date(o.createdAt) > new Date(row.last))
+                row.last = o.createdAt;
+            spend.set(key, row);
+        }
+        const customers = users.map((u) => {
+            const s = spend.get(String(u._id)) || { orders: 0, paid: 0, total: 0 };
+            return {
+                _id: u._id,
+                name: u.name,
+                email: u.email,
+                role: u.role,
+                phone: u.phone,
+                createdAt: u.createdAt,
+                lastLoginAt: u.lastLoginAt,
+                loginCount: u.loginCount || 0,
+                orders: s.orders,
+                paidOrders: s.paid,
+                totalSpent: s.total,
+                lastOrderAt: s.last,
+            };
+        });
+        const since = (days) => new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+        res.json({
+            success: true,
+            summary: {
+                total: customers.length,
+                admins: customers.filter((c) => c.role === 'admin').length,
+                newLast7: customers.filter((c) => new Date(c.createdAt) >= since(7)).length,
+                newLast30: customers.filter((c) => new Date(c.createdAt) >= since(30)).length,
+                activeLast30: customers.filter((c) => c.lastLoginAt && new Date(c.lastLoginAt) >= since(30)).length,
+                // Signed in more than once — the only signal we have that someone came back.
+                returning: customers.filter((c) => c.loginCount > 1).length,
+                withOrders: customers.filter((c) => c.orders > 0).length,
+                buyers: customers.filter((c) => c.paidOrders > 0).length,
+                revenue: customers.reduce((a, c) => a + c.totalSpent, 0),
+            },
+            customers,
+        });
+    }
+    catch (err) {
+        console.error('[listCustomers]', err?.message || err);
+        res.status(500).json({ success: false, message: err?.message || 'تعذّر جلب قائمة العملاء.' });
+    }
+};
+exports.listCustomers = listCustomers;
 /** The most recent books sent to the printer, newest first. */
 const listPrintJobs = async (req, res) => {
     try {
