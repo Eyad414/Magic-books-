@@ -958,7 +958,9 @@
     "import_cover_uploaded": "Your cover is uploaded ✅ it replaces page 1",
     "import_cover_ready_own": "Your cover is ready — sent as-is instead of page 1.",
     "import_cover_ready_own_img": "Your cover is ready — laid out as a full cover instead of page 1.",
-    "import_cover_clear": "Undo — use page 1"
+    "import_cover_clear": "Undo — use page 1",
+    "import_save_files": "Save files to review",
+    "import_files_saved": "Cover and interior downloaded — check them before sending"
   },
   "title_page": {
     "presents": "Presented to",

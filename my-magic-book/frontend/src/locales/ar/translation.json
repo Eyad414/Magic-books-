@@ -958,7 +958,9 @@
     "import_cover_uploaded": "تم رفع غلافك ✅ سيُرسل بدل الصفحة الأولى",
     "import_cover_ready_own": "غلافك جاهز — سيُرسل كما هو بدل الصفحة الأولى.",
     "import_cover_ready_own_img": "غلافك جاهز — رُتّب كغلاف كامل بدل الصفحة الأولى.",
-    "import_cover_clear": "تراجع — استخدم الصفحة الأولى"
+    "import_cover_clear": "تراجع — استخدم الصفحة الأولى",
+    "import_save_files": "حفظ الملفات للمراجعة",
+    "import_files_saved": "تم تنزيل الغلاف والداخل — راجعهما قبل الإرسال"
   },
   "title_page": {
     "presents": "يُقدّم لـ",

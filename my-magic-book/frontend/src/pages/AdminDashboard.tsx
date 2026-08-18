@@ -421,6 +421,37 @@ export default function AdminDashboard() {
     }
   };
 
+  /**
+   * Download the EXACT pair that would go to BookPod, so it can be opened and
+   * checked first — the same habit the order cards support with "حفظ الملفات".
+   * It deliberately reads the same values the send does, including a designed
+   * or uploaded cover, so what is reviewed is what is printed.
+   */
+  const handleSaveImportedFiles = () => {
+    const coverPath = importCover?.coverPath || importResult?.coverPath;
+    const interiorPath = importResult?.interiorPath;
+    const base = (importFile?.name?.replace(/\.pdf$/i, '') || 'imported-book').slice(0, 40);
+    const files = [
+      { path: coverPath, name: `${base}-cover.pdf` },
+      { path: interiorPath, name: `${base}-interior.pdf` },
+    ].filter((f): f is { path: string; name: string } => !!f.path);
+    if (!files.length) {
+      toast.error(t('admin.no_files_yet', 'لا توجد ملفات بعد — أرسل الطلب للطباعة أولاً'));
+      return;
+    }
+    files.forEach((f) => {
+      const a = document.createElement('a');
+      a.href = objectPathToUrl(f.path);
+      a.download = f.name;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    });
+    toast.success(t('admin.import_files_saved', 'تم تنزيل الغلاف والداخل — راجعهما قبل الإرسال'));
+  };
+
   const handleSendImported = async () => {
     if (!importResult?.coverPath || !importResult?.interiorPath) return;
     if (!importSend.name.trim() || !importSend.phone.trim()) {
@@ -1748,6 +1779,17 @@ export default function AdminDashboard() {
                             >
                               <Package className="w-3.5 h-3.5" />
                               {importSending ? t('admin.sending', 'جارٍ الإرسال...') : t('admin.import_send_btn', 'إرسال إلى BookPod')}
+                            </button>
+                            {/* Check before you print: the exact pair that the
+                                send would upload, including whichever cover is
+                                active. Sits BEFORE the send button in reading
+                                order for the same reason. */}
+                            <button
+                              onClick={handleSaveImportedFiles}
+                              className="flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/15 text-white/80 rounded-xl font-arabic font-bold text-xs transition"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              {t('admin.import_save_files', 'حفظ الملفات للمراجعة')}
                             </button>
                           </div>
                           {importJob && (

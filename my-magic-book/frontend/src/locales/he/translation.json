@@ -958,7 +958,9 @@
     "import_cover_uploaded": "הכריכה הועלתה ✅ היא תישלח במקום עמוד 1",
     "import_cover_ready_own": "הכריכה שלך מוכנה — תישלח כמו שהיא במקום עמוד 1.",
     "import_cover_ready_own_img": "הכריכה שלך מוכנה — סודרה ככריכה מלאה במקום עמוד 1.",
-    "import_cover_clear": "ביטול — השתמש בעמוד 1"
+    "import_cover_clear": "ביטול — השתמש בעמוד 1",
+    "import_save_files": "שמירת הקבצים לבדיקה",
+    "import_files_saved": "הכריכה והפנים ירדו — בדוק אותם לפני השליחה"
   },
   "title_page": {
     "presents": "מוגש ל",
