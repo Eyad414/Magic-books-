@@ -2343,6 +2343,13 @@ export default function AdminDashboard() {
                             )}
                             {/* BookPod's own word on the job, so a cancelled
                                 send is never mistaken for one in progress. */}
+                            {/* A send that never reached BookPod is the one
+                                worth seeing first, not hiding. */}
+                            {j.failed && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-300" title={j.error || ''}>
+                                {t('admin.sent_failed', 'لم يصل — فشل الإرسال')}
+                              </span>
+                            )}
                             {j.bookpodStatus && (
                               <span
                                 className={`text-[10px] px-1.5 py-0.5 rounded ${

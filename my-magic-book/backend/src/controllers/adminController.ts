@@ -1062,6 +1062,14 @@ export const printBookSubmit = async (req: Request, res: Response): Promise<void
     res.json({ success: true, jobId: result.jobId });
   } catch (err: any) {
     console.error('printBookSubmit failed:', err);
+    await recordPrintJob({
+      source: 'theme',
+      title: `${req.body?.childName || ''} — ${req.body?.theme || 'book'}`.trim(),
+      reference: req.body?.theme,
+      failed: true,
+      error: String(err?.message || err).slice(0, 300),
+      submittedBy: String((req as any).user?.email || ''),
+    });
     res.status(500).json({ success: false, message: err.message || 'فشل الإرسال إلى BookPod' });
   }
 };
@@ -1582,6 +1590,14 @@ export const submitImportedBook = async (req: Request, res: Response): Promise<v
     res.json({ success: true, jobId: job.jobId, bookId: job.bookId, status: job.status, quantity: qty });
   } catch (err: any) {
     console.error('[submitImportedBook]', err?.message || err);
+    await recordPrintJob({
+      source: 'imported',
+      title: String(req.body?.title || 'Imported book').slice(0, 120),
+      reference: String(req.body?.interiorPath || '').split('/').pop(),
+      failed: true,
+      error: String(err?.message || err).slice(0, 300),
+      submittedBy: String((req as any).user?.email || ''),
+    });
     res.status(500).json({ success: false, message: err?.message || 'فشل الإرسال إلى BookPod.' });
   }
 };

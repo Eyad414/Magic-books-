@@ -981,7 +981,8 @@
     "readiness_desc": "Checks the images that actually exist in storage (13 pages + cover + back portrait) — not the paths recorded on the story.",
     "sent_log_title": "Recently sent to print",
     "sent_cover_page1": "cover: page 1",
-    "sent_cover_own": "cover: separate file"
+    "sent_cover_own": "cover: separate file",
+    "sent_failed": "never reached BookPod"
   },
   "title_page": {
     "presents": "Presented to",

@@ -42,6 +42,13 @@ export interface IPrintJob extends Document {
   backfilled?: boolean;
   /** When the book actually went. On a backfilled row createdAt is just today. */
   sentAt?: Date;
+  /**
+   * Set when the send did NOT reach BookPod. Failures are logged too: a send
+   * that failed used to leave nothing at all, which is exactly the case that
+   * later can't be explained.
+   */
+  failed?: boolean;
+  error?: string;
   createdAt: Date;
 }
 
@@ -65,6 +72,8 @@ const PrintJobSchema = new Schema<IPrintJob>(
     bookpodStatus: { type: String },
     backfilled: { type: Boolean, default: false },
     sentAt: { type: Date },
+    failed: { type: Boolean, default: false },
+    error: { type: String },
   },
   { timestamps: true },
 );
