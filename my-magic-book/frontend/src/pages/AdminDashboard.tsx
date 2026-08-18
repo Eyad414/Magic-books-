@@ -361,9 +361,41 @@ export default function AdminDashboard() {
   const [importSend, setImportSend] = useState({ name: '', phone: '', qty: 1 });
   const [importSending, setImportSending] = useState(false);
   const [importJob, setImportJob] = useState<any>(null);
+  // A designed cover for an imported book: the importer's "cover" is page 1 of
+  // the supplied PDF, which for a manuscript exported from Word is body text.
+  const [importCover, setImportCover] = useState<any>(null);
+  const [importCoverBusy, setImportCoverBusy] = useState(false);
+  const [importSubject, setImportSubject] = useState('');
 
   // Real print job, real money — separate from importing, which is free and
   // repeatable, and gated behind its own confirmation.
+  const handleDesignImportedCover = async () => {
+    if (!importResult?.interiorPages) return;
+    const title = importFile?.name?.replace(/\.pdf$/i, '') || 'Imported book';
+    if (!window.confirm(t('admin.import_cover_confirm', 'تصميم غلاف جديد لهذا الكتاب؟ صورة واحدة مدفوعة (~$0.04).'))) return;
+    setImportCoverBusy(true);
+    const toastId = toast.loading(t('admin.import_cover_designing', 'جاري تصميم الغلاف...'));
+    try {
+      const res = await adminApi.designImportedCover({
+        title,
+        subject: importSubject.trim() || undefined,
+        widthMm: importResult.widthMm,
+        heightMm: importResult.heightMm,
+        interiorPages: importResult.interiorPages,
+      });
+      if (res.success) {
+        setImportCover(res);
+        toast.success(t('admin.import_cover_done', 'تم تصميم الغلاف ✅ سيُرسل بدل الصفحة الأولى'), { id: toastId });
+      } else {
+        toast.error(res.message || 'فشل التصميم', { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || 'فشل التصميم', { id: toastId });
+    } finally {
+      setImportCoverBusy(false);
+    }
+  };
+
   const handleSendImported = async () => {
     if (!importResult?.coverPath || !importResult?.interiorPath) return;
     if (!importSend.name.trim() || !importSend.phone.trim()) {
@@ -375,7 +407,8 @@ export default function AdminDashboard() {
     const toastId = toast.loading(t('admin.import_sending', 'جاري الإرسال إلى BookPod...'));
     try {
       const res = await adminApi.submitImportedBook({
-        coverPath: importResult.coverPath,
+        // A designed cover replaces page 1 — that is the whole point of it.
+        coverPath: importCover?.coverPath || importResult.coverPath,
         interiorPath: importResult.interiorPath,
         title: importFile?.name?.replace(/\.pdf$/i, '') || 'Imported book',
         quantity: importSend.qty,
@@ -1593,10 +1626,53 @@ export default function AdminDashboard() {
                           <p className="font-arabic text-white/55 text-[11px]">
                             📦 {t('admin.import_send_title', 'إرسال إلى BookPod للطباعة — الغلاف الصفحة ١، والداخل {{n}} صفحة، استلام من المطبعة.', { n: importResult.interiorPages })}
                           </p>
-                          {/* The wraparound caveat, before it reaches print. */}
-                          <p className="font-arabic text-amber-300/85 text-[11px]">
-                            ⚠️ {t('admin.import_cover_note', 'الغلاف المرسل هو الوجه الأمامي فقط (بدون كعب أو ظهر). إن كان لديك غلاف كامل جهّزه وأرسله من BookPod مباشرة.')}
-                          </p>
+                          {/* Design a real cover. Page 1 of a manuscript is body
+                              text, so "the cover" is a page of paragraphs. */}
+                          <div className="rounded-xl border border-white/10 bg-white/5 p-2.5 space-y-2">
+                            <p className="font-arabic text-white/70 text-[11px] font-bold">
+                              🎨 {t('admin.import_cover_design_title', 'تصميم غلاف للكتاب')}
+                            </p>
+                            <p className="font-arabic text-white/45 text-[10px] leading-relaxed">
+                              {t('admin.import_cover_design_desc', 'اكتب موضوع الكتاب بكلماتك، ونصمّم غلافاً كاملاً (وجه + كعب + ظهر) بمقاس الكتاب. صورة واحدة مدفوعة (~$0.04).')}
+                            </p>
+                            <div className="flex flex-wrap items-end gap-2">
+                              <div className="flex-1 min-w-[180px]">
+                                <label className="block font-arabic text-white/50 text-[10px] mb-1">{t('admin.import_cover_subject', 'موضوع الكتاب')}</label>
+                                <input
+                                  type="text"
+                                  value={importSubject}
+                                  onChange={(e) => setImportSubject(e.target.value)}
+                                  placeholder={t('admin.import_cover_subject_ph', 'مثال: كتاب عن الفروق في التواصل بين الرجل والمرأة')}
+                                  className="magic-input !py-1.5 text-sm w-full"
+                                />
+                              </div>
+                              <button
+                                onClick={handleDesignImportedCover}
+                                disabled={importCoverBusy}
+                                className="px-3 py-1.5 rounded-xl bg-fuchsia-500/15 text-fuchsia-200 border border-fuchsia-400/30 hover:bg-fuchsia-500/25 font-arabic text-sm font-bold disabled:opacity-50"
+                              >
+                                {importCoverBusy
+                                  ? t('admin.import_cover_designing_btn', 'جاري التصميم…')
+                                  : t('admin.import_cover_design_btn', '🎨 صمّم الغلاف')}
+                              </button>
+                            </div>
+                            {importCover && (
+                              <div className="flex items-center gap-2 pt-1">
+                                <img src={importCover.previewUrl} alt="" className="h-16 w-auto object-contain rounded-lg border border-white/15 bg-black/30" />
+                                <div className="font-arabic text-emerald-300/90 text-[10px] leading-relaxed">
+                                  {t('admin.import_cover_ready', 'الغلاف جاهز — سيُرسل بدل الصفحة الأولى.')}
+                                  <span className="block text-white/35" dir="ltr">{importCover.widthMm}×{importCover.heightMm}mm · spine {importCover.spineMm}mm</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* The wraparound caveat — only while page 1 is still the cover. */}
+                          {!importCover && (
+                            <p className="font-arabic text-amber-300/85 text-[11px]">
+                              ⚠️ {t('admin.import_cover_note', 'الغلاف المرسل هو الوجه الأمامي فقط (بدون كعب أو ظهر). إن كان لديك غلاف كامل جهّزه وأرسله من BookPod مباشرة.')}
+                            </p>
+                          )}
                           <div className="flex flex-wrap items-end gap-2">
                             <div>
                               <label className="block font-arabic text-white/50 text-[10px] mb-1">{t('admin.import_recipient', 'اسم المستلم')}</label>

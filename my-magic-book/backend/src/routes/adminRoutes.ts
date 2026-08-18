@@ -3,6 +3,7 @@ import multer from 'multer';
 import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam, getSettings, updateSettings, getAllOrders, buildOrderBook, getOrderBuildStatus, reRenderOrderFiles, reRenderOrderColoring, submitOrderColoring, printBook, printBookSubmit, generatePreviewIllustrations, generatePhotorealPreview, generateColoringPreview,
   importBookPdf,
   submitImportedBook,
+  designImportedCover,
   listImportedFiles,
   deleteImportedFiles, listMessages, deleteMessage, getCustomerByEmail, checkPayments } from '../controllers/adminController';
 import { protect, adminOnly } from '../utils/authMiddleware';
@@ -44,6 +45,8 @@ router.post('/themes/:themeId/generate-coloring', generateColoringPreview);
 const pdfUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 60 * 1024 * 1024 } });
 router.post('/import-book', pdfUpload.single('file'), importBookPdf);
 router.post('/import-book/submit', submitImportedBook);
+// Designs real cover art for an imported book (page 1 of a manuscript is body text, not a cover).
+router.post('/import-book/cover', designImportedCover);
 router.get('/import-book/files', listImportedFiles);
 router.post('/import-book/files/delete', deleteImportedFiles);
 

@@ -75,6 +75,52 @@ async function generateContentRetrying(request: any): Promise<any> {
  *
  * Cost: ~$0.039 per image as of late 2025. Only ever called from BookBuilder.
  */
+/**
+ * Generate an image from a prompt ALONE, with no reference photo.
+ *
+ * generateIllustration always sends the child's photo, because a personalised
+ * book's whole point is that the child is in it. An IMPORTED book has no child
+ * — it is somebody's finished manuscript — so its cover has nothing to
+ * reference and that function refuses ("childPhotoUrl is empty"). Same model,
+ * same retry and storage behaviour, minus the reference part.
+ */
+export async function generateImageFromPrompt(
+  prompt: string,
+  opts: { folder?: string; filename?: string } = {},
+): Promise<StoredObject> {
+  const MAX_ATTEMPTS = 3;
+  let imgPart: any = null;
+  let lastDiag = '';
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const promptText =
+      attempt === 1 ? prompt : `${prompt}\n\nOutput an IMAGE only. Do not reply with text.`;
+    const response = await generateContentRetrying({
+      model: MODEL,
+      contents: [{ role: 'user', parts: [{ text: promptText }] }],
+    });
+    const parts = response.candidates?.[0]?.content?.parts ?? [];
+    imgPart = parts.find((p: any) => p.inlineData?.data);
+    if (imgPart?.inlineData?.data) break;
+    lastDiag =
+      `attempt ${attempt}: finishReason=${response.candidates?.[0]?.finishReason ?? 'unknown'}`;
+    console.warn(`[ImageGenerator] no image (${lastDiag}), retrying...`);
+  }
+  if (!imgPart?.inlineData?.data) {
+    throw new Error(`Gemini returned no image after ${MAX_ATTEMPTS} attempts. ${lastDiag}`);
+  }
+  const imgBuffer = Buffer.from(imgPart.inlineData.data, 'base64');
+  const contentType = imgPart.inlineData.mimeType || 'image/png';
+  const ext = contentType.includes('jpeg') ? 'jpg' : 'png';
+  const objectPath = pdfFolderPath(opts.folder || 'generated', opts.filename || `${Date.now()}.${ext}`);
+
+  _imagesGenerated += 1;
+  console.log(
+    `[ImageGenerator] image #${_imagesGenerated} → ${objectPath} ` +
+    `(~$${COST_PER_IMAGE_USD.toFixed(3)}, session total ~$${(_imagesGenerated * COST_PER_IMAGE_USD).toFixed(2)})`
+  );
+  return uploadBuffer(imgBuffer, objectPath, contentType);
+}
+
 export async function generateIllustration(
   prompt: string,
   childPhotoUrl: string,

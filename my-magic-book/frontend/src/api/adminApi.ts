@@ -140,6 +140,15 @@ export const adminApi = {
   // Coloring book: colored cover + 16 line-art pages + colored back cover, from
   // the admin-typed scenes + an uploaded reference photo. Long-running (~3 min).
   /** Send an already-imported book to BookPod as a real (billable) print job. */
+  /** Design real cover art for an imported book (1 paid image). */
+  designImportedCover: async (body: {
+    title: string; subject?: string; author?: string;
+    widthMm?: number; heightMm?: number; interiorPages: number; rtl?: boolean;
+  }) => {
+    const response = await axiosInstance.post('/admin/import-book/cover', body, { timeout: 5 * 60 * 1000 });
+    return response.data;
+  },
+
   submitImportedBook: async (body: {
     coverPath: string; interiorPath: string; title?: string; quantity?: number;
     widthMm?: number; heightMm?: number; name: string; phone: string; email?: string; isColoring?: boolean;

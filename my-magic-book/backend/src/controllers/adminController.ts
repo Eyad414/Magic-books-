@@ -11,6 +11,8 @@ import { buildIllustrationPrompt, buildPhotorealPrompt, buildCoverPrompt } from 
 import { swapFace } from '../services/FaceSwapService';
 import { buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, COLORING_PAGES, SCENE_TEMPLATES } from '../services/sceneTemplates';
 import { reimposePdf, splitCoverInterior } from '../services/BookImportService';
+import { buildImportedCover } from '../services/ImportedCoverService';
+import { publicProxyUrl } from '../services/PrintService';
 import { uploadBuffer, pdfFolderPath, listObjects, deleteObject } from '../services/StorageService';
 import { submitPrintJob, isBookPodConfigured } from '../services/BookPodService';
 
@@ -1486,6 +1488,49 @@ export const submitImportedBook = async (req: Request, res: Response): Promise<v
   }
 };
 
+
+
+/**
+ * Design a cover for an imported book.
+ *
+ * The importer's "cover" is page 1 of the supplied PDF, which for a manuscript
+ * exported from Word is a page of body text. This generates real cover art from
+ * what the owner says the book is about and lays it out as a wraparound (back +
+ * spine + front) at the book's own trim — one paid image (~$0.039).
+ */
+export const designImportedCover = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { title, subject, author, widthMm, heightMm, interiorPages, rtl } = req.body || {};
+    if (!String(title || '').trim()) {
+      res.status(400).json({ success: false, message: 'أدخل عنوان الكتاب أولاً.' });
+      return;
+    }
+    const pages = Number(interiorPages);
+    if (!Number.isFinite(pages) || pages < 1) {
+      res.status(400).json({ success: false, message: 'عدد صفحات الكتاب غير معروف — استورد الملف أولاً.' });
+      return;
+    }
+    const result = await buildImportedCover({
+      title: String(title).trim(),
+      subject: String(subject || '').trim() || undefined,
+      author: String(author || '').trim() || undefined,
+      widthMm: Number(widthMm) || 150,
+      heightMm: Number(heightMm) || 220,
+      interiorPages: pages,
+      rtl: rtl !== false,
+    });
+    // Prefer the flat render of the FINISHED layout — it shows the title, the
+    // spine and where the fold lands, which the raw art does not.
+    res.json({
+      success: true,
+      ...result,
+      previewUrl: publicProxyUrl(result.previewPath || result.artPath),
+    });
+  } catch (err: any) {
+    console.error('[designImportedCover]', err?.message || err);
+    res.status(500).json({ success: false, message: err?.message || 'تعذّر تصميم الغلاف.' });
+  }
+};
 
 /**
  * List and delete the files produced by the book importer.
