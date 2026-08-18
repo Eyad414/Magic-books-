@@ -92,7 +92,7 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
     buildingNo: progress.shippingAddress?.buildingNo || '',
     postalCode: progress.shippingAddress?.postalCode || '',
     street: progress.shippingAddress?.street || '',
-    country: progress.shippingAddress?.country || 'SA',
+    country: progress.shippingAddress?.country || 'IL',
     deliveryMethod: progress.shippingAddress?.deliveryMethod || 'delivery',
     pickupLocation: progress.shippingAddress?.pickupLocation || '',
   });

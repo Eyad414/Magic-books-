@@ -69,7 +69,9 @@ const defaultProgress: StoryProgress = {
   childDetails: { childAge: '3-5', childGender: 'male' },
   storyConfig: { theme: 'adventure', language: 'ar' },
   bookCustomization: { coverColor: '#1B1F5E', bookPackage: 'color', quantity: 1, extraBooks: [] },
-  shippingAddress: { country: 'SA', deliveryMethod: 'delivery' },
+  // Never shown or chosen in checkout: every order ships from Jerusalem,
+  // either pickup or local delivery, so this is the shop's own country.
+  shippingAddress: { country: 'IL', deliveryMethod: 'delivery' },
 };
 
 const StoryProgressContext = createContext<StoryProgressContextType | undefined>(undefined);
