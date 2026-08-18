@@ -786,6 +786,53 @@ export const getAllOrders = async (req: Request, res: Response): Promise<void> =
 // @desc  Manually mark an order paid (if needed) and kick the BookBuilder.
 //        This is the pre-Stripe escape hatch — use only after confirming the
 //        customer paid by another channel.
+
+/**
+ * Confirm that a customer's payment arrived, WITHOUT building or printing.
+ *
+ * BookPod takes the card payment on their own page, but they have no webhook
+ * and no way to look a payment up by reference before a print job exists — and
+ * the customer pays before the book is built. So somebody sees the payment in
+ * the BookPod account and says so here.
+ *
+ * Deliberately separate from the build: "Send to BookPod" also marks an order
+ * paid, which is the wrong tool for a card payment because it immediately
+ * spends money on generation and a print run. This only records the money.
+ *
+ * One-way, like PaymentPoller: it moves pending → paid and nothing else. An
+ * order that is already paid is left alone rather than re-stamped, so a second
+ * click cannot overwrite who confirmed it the first time.
+ */
+export const confirmOrderPayment = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      res.status(404).json({ success: false, message: 'الطلب غير موجود' });
+      return;
+    }
+    if (order.paymentStatus === 'paid') {
+      res.json({ success: true, alreadyPaid: true, order });
+      return;
+    }
+    if (order.paymentStatus === 'refunded') {
+      res.status(409).json({ success: false, message: 'هذا الطلب مسترجع — لا يمكن تأكيد دفعه.' });
+      return;
+    }
+
+    const admin = (req as any).user;
+    order.paymentStatus = 'paid';
+    order.paidAt = new Date();
+    order.paidConfirmedBy = String(admin?.email || admin?._id || 'admin');
+    await order.save();
+    console.log(`[admin] order ${order._id} marked paid by ${order.paidConfirmedBy}`);
+
+    res.json({ success: true, order });
+  } catch (err: any) {
+    console.error('[confirmOrderPayment]', err?.message || err);
+    res.status(500).json({ success: false, message: err?.message || 'تعذّر تأكيد الدفع.' });
+  }
+};
+
 export const buildOrderBook = async (req: Request, res: Response): Promise<void> => {
   try {
     const order = await Order.findById(req.params.id);

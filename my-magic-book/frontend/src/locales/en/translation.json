@@ -962,7 +962,14 @@
     "import_save_files": "Save files to review",
     "import_files_saved": "Cover and interior downloaded — check them before sending",
     "import_send_title_own": "Send to BookPod — your cover, and all {{n}} pages inside, pickup from the printer.",
-    "import_keeps_all_pages": "No page is dropped — page 1 stays inside the book, because the cover is now its own file."
+    "import_keeps_all_pages": "No page is dropped — page 1 stays inside the book, because the cover is now its own file.",
+    "confirm_payment": "Confirm payment",
+    "confirming_payment": "Confirming the payment…",
+    "confirming_payment_short": "Confirming…",
+    "confirm_payment_ask": "Confirm the customer paid {{amount}} for this order? The book will not be built or sent to print now.",
+    "payment_confirmed": "Payment confirmed ✅ the order is ready to build",
+    "already_paid": "This order is already paid",
+    "confirm_payment_failed": "Couldn't confirm the payment"
   },
   "title_page": {
     "presents": "Presented to",

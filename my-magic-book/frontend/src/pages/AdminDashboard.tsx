@@ -118,6 +118,40 @@ export default function AdminDashboard() {
       handle.id = window.setTimeout(tick, 1200);
     });
 
+  const [confirmingPayId, setConfirmingPayId] = useState<string | null>(null);
+
+  /**
+   * Record that a card payment arrived. Separate from "Send to BookPod" on
+   * purpose: that one also marks the order paid, but it immediately spends
+   * money on generation and a print run, which is not what confirming a payment
+   * should do. This only records the money; building stays a separate decision.
+   */
+  const handleConfirmPayment = async (order: any) => {
+    if (confirmingPayId) return;
+    const amount = `${order.totalPrice} ${order.currency === 'ILS' ? '₪' : order.currency}`;
+    if (!window.confirm(t('admin.confirm_payment_ask', 'تأكيد أن الزبون دفع {{amount}} لهذا الطلب؟ لن يتم بناء الكتاب أو إرساله للطباعة الآن.', { amount }))) return;
+    setConfirmingPayId(order._id);
+    const toastId = toast.loading(t('admin.confirming_payment', 'جاري تأكيد الدفع...'));
+    try {
+      const res = await adminApi.confirmOrderPayment(order._id);
+      if (res.success) {
+        toast.success(
+          res.alreadyPaid
+            ? t('admin.already_paid', 'هذا الطلب مدفوع بالفعل')
+            : t('admin.payment_confirmed', 'تم تأكيد الدفع ✅ الطلب جاهز للبناء'),
+          { id: toastId },
+        );
+        await fetchOrders();
+      } else {
+        toast.error(res.message || t('admin.confirm_payment_failed', 'تعذّر تأكيد الدفع'), { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || t('admin.confirm_payment_failed', 'تعذّر تأكيد الدفع'), { id: toastId });
+    } finally {
+      setConfirmingPayId(null);
+    }
+  };
+
   const handleSendToBookPod = async (order: any) => {
     if (buildingOrderId) return;
     const already = order.illustrationsStatus === 'ready';
@@ -1341,6 +1375,25 @@ export default function AdminDashboard() {
                               {rerenderingOrderId === order._id ? t('admin.rerendering_short', 'جارٍ التجهيز...') : t('admin.rerender_files', 'إعادة تجهيز الملفات')}
                             </ActionButton>
                             </>); })()}
+                            {/* Card payments land in the BookPod account with no
+                                webhook to tell us, so a person confirms them.
+                                Shown only while the money is genuinely open —
+                                a cash-on-delivery order is settled on delivery,
+                                not here. */}
+                            {order.paymentStatus === 'pending' && order.paymentMethod !== 'cash' && (
+                              <ActionButton
+                                variant="gold"
+                                icon={CheckCircle}
+                                active={confirmingPayId === order._id}
+                                spin={confirmingPayId === order._id}
+                                onClick={() => handleConfirmPayment(order)}
+                                disabled={!!confirmingPayId}
+                              >
+                                {confirmingPayId === order._id
+                                  ? t('admin.confirming_payment_short', 'جارٍ التأكيد...')
+                                  : t('admin.confirm_payment', 'تأكيد الدفع')}
+                              </ActionButton>
+                            )}
                             {/* Admin-only: download the print-ready files */}
                             <ActionButton variant="ghost" icon={Download} onClick={() => handleSaveFolder(order)} disabled={!order.printInteriorUrl && !order.printCoverUrl}>
                               {t('admin.save_folder', 'حفظ الملفات')}

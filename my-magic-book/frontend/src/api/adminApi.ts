@@ -55,6 +55,12 @@ export const adminApi = {
   // submit the print job. markPaid lets an admin fulfil a cash/COD order.
   // Returns 202 immediately — the build (~15 images, ~3 min) runs in the
   // background; poll buildStatus for progress.
+  /** Record that a card payment arrived — no build, no print run. */
+  confirmOrderPayment: async (id: string) => {
+    const response = await axiosInstance.post(`/admin/orders/${id}/confirm-payment`);
+    return response.data;
+  },
+
   buildOrder: async (id: string, opts?: { markPaid?: boolean; buildOnly?: boolean }) => {
     const response = await axiosInstance.post(`/admin/orders/${id}/build`, {
       markPaid: opts?.markPaid ?? false,

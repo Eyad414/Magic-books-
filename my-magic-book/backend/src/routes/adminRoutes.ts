@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam, getSettings, updateSettings, getAllOrders, buildOrderBook, getOrderBuildStatus, reRenderOrderFiles, reRenderOrderColoring, submitOrderColoring, printBook, printBookSubmit, generatePreviewIllustrations, generatePhotorealPreview, generateColoringPreview,
+import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam, getSettings, updateSettings, getAllOrders, confirmOrderPayment, buildOrderBook, getOrderBuildStatus, reRenderOrderFiles, reRenderOrderColoring, submitOrderColoring, printBook, printBookSubmit, generatePreviewIllustrations, generatePhotorealPreview, generateColoringPreview,
   importBookPdf,
   submitImportedBook,
   designImportedCover,
@@ -18,6 +18,8 @@ router.put('/stories/:id', updateStory);
 router.delete('/stories/:id', deleteStory);
 
 router.get('/orders', getAllOrders);
+// Records that a card payment arrived, without building or printing anything.
+router.post('/orders/:id/confirm-payment', confirmOrderPayment);
 router.post('/orders/:id/build', buildOrderBook);
 router.get('/orders/:id/build-status', getOrderBuildStatus);
 router.post('/orders/:id/rerender-files', reRenderOrderFiles);

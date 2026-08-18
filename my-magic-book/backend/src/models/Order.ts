@@ -31,6 +31,8 @@ export interface IOrder extends Document {
   /** How the customer chose to pay. Cash/COD orders must not be shown as
    *  "awaiting payment" — that wording is for card checkouts. */
   paymentMethod?: 'cash' | 'card';
+  paidAt?: Date;
+  paidConfirmedBy?: string;
   stripeSessionId?: string;
   stripePaymentIntentId?: string;
   illustrationsStatus: IllustrationsStatus;
@@ -88,6 +90,12 @@ const OrderSchema = new Schema<IOrder>(
       enum: ['pending', 'paid', 'failed', 'refunded'],
       default: 'pending',
     },
+    // Who confirmed a payment by hand, and when. BookPod has no webhook and no
+    // lookup for a reference that has no print job yet, so a card payment is
+    // confirmed by a person reading their BookPod account. That is fine, but it
+    // must leave a trace: "why is this order paid" needs an answer later.
+    paidAt: { type: Date },
+    paidConfirmedBy: { type: String },
     stripeSessionId: { type: String },
     stripePaymentIntentId: { type: String },
     illustrationsStatus: {

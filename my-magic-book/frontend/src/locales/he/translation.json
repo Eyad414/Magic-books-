@@ -962,7 +962,14 @@
     "import_save_files": "שמירת הקבצים לבדיקה",
     "import_files_saved": "הכריכה והפנים ירדו — בדוק אותם לפני השליחה",
     "import_send_title_own": "שליחה ל-BookPod — הכריכה שלך, וכל {{n}} העמודים בפנים, איסוף מהדפוס.",
-    "import_keeps_all_pages": "שום עמוד לא נמחק — עמוד 1 נשאר בתוך הספר, כי הכריכה היא קובץ נפרד."
+    "import_keeps_all_pages": "שום עמוד לא נמחק — עמוד 1 נשאר בתוך הספר, כי הכריכה היא קובץ נפרד.",
+    "confirm_payment": "אישור תשלום",
+    "confirming_payment": "מאשר את התשלום…",
+    "confirming_payment_short": "מאשר…",
+    "confirm_payment_ask": "לאשר שהלקוח שילם {{amount}} עבור ההזמנה? הספר לא ייבנה ולא יישלח להדפסה כעת.",
+    "payment_confirmed": "התשלום אושר ✅ ההזמנה מוכנה לבנייה",
+    "already_paid": "ההזמנה כבר שולמה",
+    "confirm_payment_failed": "לא הצלחנו לאשר את התשלום"
   },
   "title_page": {
     "presents": "מוגש ל",
