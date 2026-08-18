@@ -2328,7 +2328,7 @@ export default function AdminDashboard() {
                       <div className="space-y-1">
                         {printJobs.slice(0, 8).map((j: any) => (
                           <div key={j._id} className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-arabic text-white/60">
-                            <span className="text-white/35" dir="ltr">{new Date(j.createdAt).toLocaleDateString()}</span>
+                            <span className="text-white/35" dir="ltr">{new Date(j.sentAt || j.createdAt).toLocaleDateString()}</span>
                             <span className="text-white/85 truncate max-w-[45%]">{j.title}</span>
                             {j.bookpodJobId && (
                               <span className="px-1.5 py-0.5 rounded bg-magic-500/20 text-magic-200" dir="ltr">#{j.bookpodJobId}</span>
@@ -2339,6 +2339,22 @@ export default function AdminDashboard() {
                                 {j.coverSource === 'page-1'
                                   ? t('admin.sent_cover_page1', 'الغلاف: الصفحة ١')
                                   : t('admin.sent_cover_own', 'الغلاف: ملف منفصل')}
+                              </span>
+                            )}
+                            {/* BookPod's own word on the job, so a cancelled
+                                send is never mistaken for one in progress. */}
+                            {j.bookpodStatus && (
+                              <span
+                                className={`text-[10px] px-1.5 py-0.5 rounded ${
+                                  j.bookpodStatus === 'CANCELLED'
+                                    ? 'bg-red-500/15 text-red-300/80'
+                                    : j.bookpodStatus === 'READY_FOR_DELIVERY'
+                                      ? 'bg-emerald-500/15 text-emerald-300/80'
+                                      : 'bg-white/10 text-white/45'
+                                }`}
+                                dir="ltr"
+                              >
+                                {String(j.bookpodStatus).replace(/_/g, ' ').toLowerCase()}
                               </span>
                             )}
                           </div>

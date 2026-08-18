@@ -1014,7 +1014,9 @@ export const printBook = async (req: Request, res: Response): Promise<void> => {
  */
 async function recordPrintJob(entry: Record<string, unknown>): Promise<void> {
   try {
-    await PrintJob.create(entry);
+    // sentAt is set on every row so the log sorts the same way whether a row
+    // was captured at send time or rebuilt from BookPod afterwards.
+    await PrintJob.create({ sentAt: new Date(), ...entry });
   } catch (err: any) {
     console.warn('[recordPrintJob] not saved:', err?.message || err);
   }
@@ -1711,7 +1713,7 @@ export const uploadImportedCover = async (req: Request, res: Response): Promise<
 export const listPrintJobs = async (req: Request, res: Response): Promise<void> => {
   try {
     const limit = Math.min(Math.max(Number(req.query.limit) || 30, 1), 200);
-    const jobs = await PrintJob.find({}).sort({ createdAt: -1 }).limit(limit).lean();
+    const jobs = await PrintJob.find({}).sort({ sentAt: -1, createdAt: -1 }).limit(limit).lean();
     res.json({ success: true, count: jobs.length, jobs });
   } catch (err: any) {
     console.error('[listPrintJobs]', err?.message || err);

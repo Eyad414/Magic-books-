@@ -33,6 +33,15 @@ export interface IPrintJob extends Document {
   shippingName?: string;
   shippingPhone?: string;
   submittedBy?: string;
+  /** BookPod's own status the last time we looked: IN_PROCESS, CANCELLED, ... */
+  bookpodStatus?: string;
+  /**
+   * Reconstructed from BookPod's order list rather than captured at send time,
+   * so it carries only what BookPod knows — no file paths, no cover source.
+   */
+  backfilled?: boolean;
+  /** When the book actually went. On a backfilled row createdAt is just today. */
+  sentAt?: Date;
   createdAt: Date;
 }
 
@@ -53,11 +62,14 @@ const PrintJobSchema = new Schema<IPrintJob>(
     shippingName: { type: String },
     shippingPhone: { type: String },
     submittedBy: { type: String },
+    bookpodStatus: { type: String },
+    backfilled: { type: Boolean, default: false },
+    sentAt: { type: Date },
   },
   { timestamps: true },
 );
 
 // The dashboard only ever asks for the most recent sends.
-PrintJobSchema.index({ createdAt: -1 });
+PrintJobSchema.index({ sentAt: -1 });
 
 export default mongoose.model<IPrintJob>('PrintJob', PrintJobSchema);
