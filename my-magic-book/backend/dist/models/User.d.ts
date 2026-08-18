@@ -8,6 +8,16 @@ export interface IUser extends Document {
     phone?: string;
     location?: string;
     lastLoginAt?: Date;
+    /** Timestamps of free cover previews this account generated. Each one costs
+     *  real Gemini credit, so the quota counts the entries made since the user's
+     *  most recent PAID order (see coverPreviewController). Trimmed to the last
+     *  50 so the document can't grow without bound. */
+    coverPreviews?: Date[];
+    /** SHA-256 of the password-reset token, never the token itself — a leaked
+     *  database dump would otherwise hand over working reset links. The plain
+     *  token exists only in the email we send. */
+    resetTokenHash?: string;
+    resetTokenExpires?: Date;
     createdAt: Date;
     comparePassword(candidatePassword: string): Promise<boolean>;
 }

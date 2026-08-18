@@ -978,7 +978,10 @@
     "readiness_count": "{{ready}} of {{total}} ready",
     "readiness_ok": "ready",
     "readiness_idle": "Press “Check now” to see the list.",
-    "readiness_desc": "Checks the images that actually exist in storage (13 pages + cover + back portrait) — not the paths recorded on the story."
+    "readiness_desc": "Checks the images that actually exist in storage (13 pages + cover + back portrait) — not the paths recorded on the story.",
+    "sent_log_title": "Recently sent to print",
+    "sent_cover_page1": "cover: page 1",
+    "sent_cover_own": "cover: separate file"
   },
   "title_page": {
     "presents": "Presented to",

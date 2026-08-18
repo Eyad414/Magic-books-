@@ -22,10 +22,19 @@ export interface IOrder extends Document {
     totalPrice: number;
     currency: string;
     paymentStatus: PaymentStatus;
+    /** How the customer chose to pay. Cash/COD orders must not be shown as
+     *  "awaiting payment" — that wording is for card checkouts. */
+    paymentMethod?: 'cash' | 'card';
+    paidAt?: Date;
+    paidConfirmedBy?: string;
     stripeSessionId?: string;
     stripePaymentIntentId?: string;
     illustrationsStatus: IllustrationsStatus;
     illustrationsError?: string;
+    /** 0-100 while a book is building, so the dashboard can show a real bar. */
+    buildProgress?: number;
+    /** Human label for the current step, e.g. "الصفحة ٤ من ١٣". */
+    buildStage?: string;
     bookPdfUrl?: string;
     printCoverUrl?: string;
     printInteriorUrl?: string;

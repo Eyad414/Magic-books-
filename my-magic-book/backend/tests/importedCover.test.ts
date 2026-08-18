@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { importedCoverArtPrompt, coverHtml } from '../src/services/ImportedCoverService';
+import { importedCoverArtPrompt, coverHtml, coverSourceFor } from '../src/services/ImportedCoverService';
 
 /**
  * The importer's "cover" is page 1 of the supplied PDF. That is right when the
@@ -166,5 +166,20 @@ describe('re-imposition keeps the whole book', () => {
     const one = await PDFDocument.create();
     one.addPage([420, 595]);
     await expect(splitCoverInterior(Buffer.from(await one.save()))).rejects.toThrow(/at least 2 pages/);
+  });
+});
+
+describe('coverSourceFor', () => {
+  it('names a cover we designed', () => {
+    expect(coverSourceFor('/pdfs/imported/1712_designed-cover.pdf')).toBe('designed');
+  });
+
+  it('names a cover the owner supplied', () => {
+    expect(coverSourceFor('/pdfs/imported/1712_own-cover.pdf')).toBe('uploaded');
+  });
+
+  it('falls back to page 1, which is what BookPod uses when no cover is sent', () => {
+    expect(coverSourceFor('/pdfs/imported/1712_book.pdf')).toBe('page-1');
+    expect(coverSourceFor('')).toBe('page-1');
   });
 });

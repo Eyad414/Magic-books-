@@ -11,8 +11,9 @@ import { buildIllustrationPrompt, buildPhotorealPrompt, buildCoverPrompt } from 
 import { swapFace } from '../services/FaceSwapService';
 import { buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, COLORING_PAGES, SCENE_TEMPLATES } from '../services/sceneTemplates';
 import { inspectPdf, reimposePdf, splitCoverInterior } from '../services/BookImportService';
-import { buildImportedCover, composeImportedCover } from '../services/ImportedCoverService';
+import { coverSourceFor, buildImportedCover, composeImportedCover } from '../services/ImportedCoverService';
 import { checkThemes, type ThemeReadiness } from '../services/PrintReadiness';
+import PrintJob from '../models/PrintJob';
 import { publicProxyUrl } from '../services/PrintService';
 import { uploadBuffer, pdfFolderPath, listObjects, deleteObject } from '../services/StorageService';
 import { submitPrintJob, isBookPodConfigured } from '../services/BookPodService';
@@ -1005,6 +1006,20 @@ export const printBook = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+
+/**
+ * Record a send. Best-effort by design: the print job has already been placed
+ * and paid for by the time this runs, so a logging failure must never turn a
+ * successful submission into an error for the admin.
+ */
+async function recordPrintJob(entry: Record<string, unknown>): Promise<void> {
+  try {
+    await PrintJob.create(entry);
+  } catch (err: any) {
+    console.warn('[recordPrintJob] not saved:', err?.message || err);
+  }
+}
+
 // @route POST /api/admin/print-book/submit
 // @desc  Build a showcase/preview book and SUBMIT it to BookPod for printing,
 //        using shipping details from the viewer's form. BILLABLE — reached only
@@ -1028,6 +1043,20 @@ export const printBookSubmit = async (req: Request, res: Response): Promise<void
       res.status(502).json({ success: false, message: 'تم تجهيز الملفات لكن BookPod لم يقبل الطلب — تحقق من الإعدادات/السجلات' });
       return;
     }
+    await recordPrintJob({
+      source: 'theme',
+      title: `${childName || ''} — ${theme}`.trim(),
+      reference: theme,
+      coverPath,
+      interiorPages: (imagePaths || []).length,
+      quantity: 1,
+      coverSource: 'generated',
+      bookpodJobId: result.jobId ? String(result.jobId) : undefined,
+      shippingName: shipping.fullName,
+      shippingPhone: shipping.phone,
+      submittedBy: String((req as any).user?.email || ''),
+    });
+
     res.json({ success: true, jobId: result.jobId });
   } catch (err: any) {
     console.error('printBookSubmit failed:', err);
@@ -1529,6 +1558,25 @@ export const submitImportedBook = async (req: Request, res: Response): Promise<v
       } as any,
     });
 
+    await recordPrintJob({
+      source: 'imported',
+      title: String(title || 'Imported book').slice(0, 120),
+      reference: String(interiorPath).split('/').pop(),
+      coverPath: String(coverPath),
+      interiorPath: String(interiorPath),
+      quantity: qty,
+      widthMm: Number(widthMm) || undefined,
+      heightMm: Number(heightMm) || undefined,
+      // Which cover actually went is the question that could not be answered
+      // when a send looked wrong: page 1 of the book, or one supplied instead.
+      coverSource: coverSourceFor(String(coverPath)),
+      bookpodJobId: job.jobId ? String(job.jobId) : undefined,
+      bookpodBookId: job.bookId ? String(job.bookId) : undefined,
+      shippingName: String(name).trim(),
+      shippingPhone: String(phone).trim(),
+      submittedBy: String((req as any).user?.email || ''),
+    });
+
     res.json({ success: true, jobId: job.jobId, bookId: job.bookId, status: job.status, quantity: qty });
   } catch (err: any) {
     console.error('[submitImportedBook]', err?.message || err);
@@ -1657,6 +1705,19 @@ export const uploadImportedCover = async (req: Request, res: Response): Promise<
   }
 };
 
+
+
+/** The most recent books sent to the printer, newest first. */
+export const listPrintJobs = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = Math.min(Math.max(Number(req.query.limit) || 30, 1), 200);
+    const jobs = await PrintJob.find({}).sort({ createdAt: -1 }).limit(limit).lean();
+    res.json({ success: true, count: jobs.length, jobs });
+  } catch (err: any) {
+    console.error('[listPrintJobs]', err?.message || err);
+    res.status(500).json({ success: false, message: err?.message || 'تعذّر جلب سجل الإرسال.' });
+  }
+};
 
 /**
  * Which demo books are complete enough to send to the printer.

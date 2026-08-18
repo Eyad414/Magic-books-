@@ -16,7 +16,7 @@ export interface IStory extends Document {
     childPhotoUrl?: string;
     theme: string;
     storyLength: 'short' | 'medium' | 'long';
-    language: 'ar' | 'en';
+    language: 'ar' | 'en' | 'he';
     customThemeNote?: string;
     mode: StoryMode;
     templatePages?: StoryTemplatePage[];
@@ -24,6 +24,12 @@ export interface IStory extends Document {
     coverImageUrl?: string;
     generatedImages?: string[];
     generatedCover?: string;
+    /** Owner picked this real book to be shown on the public home page. */
+    showcase?: boolean;
+    /** Owner picked this real book to be listed on the public Stories page. */
+    showcaseStories?: boolean;
+    /** Badge shown on the home-page card. Empty/absent = no badge. */
+    homeTag?: 'bestseller' | 'new' | 'featured';
     generatedPortrait?: string;
     coloringImages?: string[];
     coloringCover?: string;

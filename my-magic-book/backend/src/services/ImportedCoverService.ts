@@ -323,3 +323,15 @@ export async function renderCoverPng(html: string, widthMm: number, heightMm: nu
     try { proc?.kill('SIGKILL'); } catch { /* ignore */ }
   }
 }
+
+/**
+ * Which cover a submission actually used, read back from the file it sent.
+ * This is the question that could not be answered when a send looked wrong:
+ * page 1 of the interior, a cover we designed, or one the owner supplied.
+ */
+export function coverSourceFor(coverPath: string): 'page-1' | 'designed' | 'uploaded' {
+  const p = String(coverPath || '');
+  if (/_designed-cover/.test(p)) return 'designed';
+  if (/_own-cover/.test(p)) return 'uploaded';
+  return 'page-1';
+}

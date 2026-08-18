@@ -43,7 +43,7 @@ const StorySchema = new mongoose_1.Schema({
     // Theme id from SiteSettings.themes[]. Validated at admin save time, not here.
     theme: { type: String, default: 'adventure' },
     storyLength: { type: String, enum: ['short', 'medium', 'long'], default: 'medium' },
-    language: { type: String, enum: ['ar', 'en'], default: 'ar' },
+    language: { type: String, enum: ['ar', 'en', 'he'], default: 'ar' },
     customThemeNote: { type: String },
     mode: { type: String, enum: ['template', 'ai'], default: 'template' },
     templatePages: { type: mongoose_1.Schema.Types.Mixed, default: undefined },
@@ -52,6 +52,9 @@ const StorySchema = new mongoose_1.Schema({
     generatedImages: { type: [String], default: undefined },
     generatedCover: { type: String, default: undefined },
     generatedPortrait: { type: String, default: undefined },
+    showcase: { type: Boolean, default: false },
+    showcaseStories: { type: Boolean, default: false },
+    homeTag: { type: String, enum: ['bestseller', 'new', 'featured'], default: undefined },
     coloringImages: { type: [String], default: undefined },
     coloringCover: { type: String, default: undefined },
     coloringBackCover: { type: String, default: undefined },

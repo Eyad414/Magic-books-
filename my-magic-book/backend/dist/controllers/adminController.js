@@ -36,17 +36,25 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generatePhotorealPreview = exports.generateColoringPreview = exports.generatePreviewIllustrations = exports.printBookSubmit = exports.printBook = exports.submitOrderColoring = exports.reRenderOrderColoring = exports.reRenderOrderFiles = exports.buildOrderBook = exports.getAllOrders = exports.updateSettings = exports.getPublicSettings = exports.getSettings = exports.getTeam = exports.removeAdmin = exports.addAdmin = exports.deleteStory = exports.updateStory = exports.getAllStories = exports.getCustomerByEmail = exports.deleteMessage = exports.listMessages = void 0;
+exports.deleteImportedFiles = exports.listImportedFiles = exports.getPrintReadiness = exports.listPrintJobs = exports.uploadImportedCover = exports.designImportedCover = exports.submitImportedBook = exports.importBookPdf = exports.generatePhotorealPreview = exports.generateColoringPreview = exports.generatePreviewIllustrations = exports.printBookSubmit = exports.printBook = exports.checkPayments = exports.submitOrderColoring = exports.reRenderOrderColoring = exports.reRenderOrderFiles = exports.getOrderBuildStatus = exports.buildOrderBook = exports.confirmOrderPayment = exports.getAllOrders = exports.updateSettings = exports.getPublicSettings = exports.getSettings = exports.getTeam = exports.removeAdmin = exports.addAdmin = exports.deleteStory = exports.updateStory = exports.getAllStories = exports.getCustomerByEmail = exports.deleteMessage = exports.listMessages = void 0;
 const User_1 = __importDefault(require("../models/User"));
 const Story_1 = __importDefault(require("../models/Story"));
 const Order_1 = __importDefault(require("../models/Order"));
 const SiteSettings_1 = __importStar(require("../models/SiteSettings"));
 const ContactMessage_1 = __importDefault(require("../models/ContactMessage"));
+const PaymentPoller_1 = require("../services/PaymentPoller");
 const BookBuilder_1 = require("../services/BookBuilder");
 const ImageGenerator_1 = require("../services/ImageGenerator");
 const promptBuilder_1 = require("../services/promptBuilder");
 const FaceSwapService_1 = require("../services/FaceSwapService");
 const sceneTemplates_1 = require("../services/sceneTemplates");
+const BookImportService_1 = require("../services/BookImportService");
+const ImportedCoverService_1 = require("../services/ImportedCoverService");
+const PrintReadiness_1 = require("../services/PrintReadiness");
+const PrintJob_1 = __importDefault(require("../models/PrintJob"));
+const PrintService_1 = require("../services/PrintService");
+const StorageService_1 = require("../services/StorageService");
+const BookPodService_1 = require("../services/BookPodService");
 // The kid photo (already in the bucket) used as the reference face for ADMIN
 // PREVIEW generation only. Real customer orders use the customer's own photo.
 const PREVIEW_REFERENCE_PHOTO = process.env.PREVIEW_REFERENCE_PHOTO ||
@@ -328,6 +336,324 @@ const getSettings = async (req, res) => {
                 settings.markModified('themes');
                 await settings.save();
             }
+            // Ocean Adventure — seeded as a DRAFT with no artwork; the owner presses
+            // 🎨 when they want to pay for the images, then ticks "جاهزة" to publish.
+            // Re-applied while it stays a draft so text edits in code reach the dash.
+            const OCEAN_PAGES = [
+                { text: "كَانَ{|تْ} [NAME] {يَلْعَبُ|تَلْعَبُ} عَلَى الشَّاطِئِ، فَوَجَدَ{|تْ} صَدَفَةً كَبِيرَةً تَلْمَعُ. وَضَعَ{هَا|تْهَا} عَلَى أُذُنِ{هِ|هَا}... فَسَمِعَ{|تْ} أُغْنِيَةً جَمِيلَةً، وَسَحَبَتْ{هُ|هَا} مَوْجَةٌ لَطِيفَةٌ إِلَى الْمَاءِ!", imageSrc: "" },
+                { text: "فَتَحَ{|تْ} [NAME] عَيْنَيْ{هِ|هَا} تَحْتَ الْمَاءِ، وَه{ُوَ|ِيَ} {يَتَنَفَّسُ|تَتَنَفَّسُ} {وَيَتَكَلَّمُ|وَتَتَكَلَّمُ}! حَوْلَ{هُ|هَا} أَسْمَاكٌ مُلَوَّنَةٌ وَمَرْجَانٌ يُضِيءُ مِثْلَ الْمَصَابِيحِ.", imageSrc: "" },
+                { text: "اِقْتَرَبَ حُوتٌ أَزْرَقُ ضَخْمٌ اسْمُهُ فُقَاعَة. لَكِنَّهُ لَطِيفٌ وَلَيْسَ مُخِيفاً. قَالَ بِحُزْنٍ: \"ضَاعَتْ أُغْنِيَتِي، وَلَا أَسْتَطِيعُ أَنْ أُنَادِيَ عَائِلَتِي!\"", imageSrc: "" },
+                { text: "قَالَ فُقَاعَة: \"أُغْنِيَتِي فِي مَكَانٍ مَا فِي الْمُحِيطِ!\" فَكَّرَ{|تْ} [NAME] وَقَالَ{|تْ}: \"يَا بَطَل{|ةَ}! هَلْ نَبْحَثُ فِي الْوَادِي الْعَمِيقِ الْمُظْلِمِ، أَمْ نَرْكَبُ التَّيَّارَ السَّرِيعَ إِلَى حَدِيقَةِ الْمَرْجَانِ؟\"", imageSrc: "" },
+                { text: "رَكِبَ{|تْ} [NAME] عَلَى ظَهْرِ فُقَاعَة بِشَجَاعَةٍ، وَسَبَحَا مَعاً بَيْنَ الْأَسْمَاكِ، وَالْفَقَاقِيعُ تَتَرَاقَصُ حَوْلَهُمَا.", imageSrc: "" },
+                { text: "وَصَلَا إِلَى حَدِيقَةِ الْمَرْجَانِ، فَرَأَ{ى|تْ} [NAME] الصَّدَفَةَ الذَّهَبِيَّةَ دَاخِلَ مَغَارَةٍ ضَيِّقَةٍ. دَخَلَ{|تْ} بِهُدُوءٍ وَأَخْرَجَ{هَا|تْهَا} بِذَكَاءٍ.", imageSrc: "" },
+                { text: "فَتَحَ فُقَاعَة فَمَهُ وَغَنَّى! رَجَعَتْ أُغْنِيَتُهُ، فَصَاحَ بِفَرَحٍ: \"شُكْراً يَا [NAME]! الْآنَ تَسْمَعُنِي عَائِلَتِي!\"", imageSrc: "" },
+                { text: "أَخَذَ فُقَاعَة صَدِيقَ{هُ|تَهُ} إِلَى مَغَارَةٍ مَلِيئَةٍ بِالْمَرْجَانِ الْمُلَوَّنِ وَاللَّآلِئِ. يَا بَطَل{|ةَ}! هَلْ {تَجِدُ|تَجِدِينَ} حِصَانَ الْبَحْرِ الصَّغِيرَ الْمُخْتَبِئَ بَيْنَ الْمَرْجَانِ؟", imageSrc: "" },
+                { text: "فَرِحَتِ الْأَسْمَاكُ بِذَكَاءِ [NAME]، وَرَقَصَتْ حَوْلَ{هُ|هَا}، وَقَدَّمَتْ {لَهُ|لَهَا} أَكْبَرَ لُؤْلُؤَةٍ فِي الْبَحْرِ!", imageSrc: "" },
+                { text: "نَظَرَ{|تْ} [NAME] إِلَى الْأَعْلَى، فَرَأَ{ى|تْ} سَلَاحِفَ كَبِيرَةً تَسْبَحُ بِبُطْءٍ بَيْنَ أَشِعَّةِ الشَّمْسِ، وَقَنَادِيلَ بَحْرٍ تُضِيءُ مِثْلَ النُّجُومِ.", imageSrc: "" },
+                { text: "أَعْطَى فُقَاعَة [NAME] صَدَفَةً صَغِيرَةً تُغَنِّي، لِ{يَتَذَكَّرَ|تَتَذَكَّرَ} دَائِماً أَنَّ{هُ|هَا} بَطَل{ٌ|ةٌ} وَصَدِيق{ٌ|َةٌ} لِلْبَحْرِ.", imageSrc: "" },
+                { text: "أَغْمَضَ{|تْ} [NAME] عَيْنَيْ{هِ|هَا} وَتَمَنَّ{ى|تْ} الْعَوْدَةَ إِلَى الشَّاطِئِ. اِرْتَفَعَ{|تْ} بِبُطْءٍ مَعَ الْفَقَاقِيعِ، وَفُقَاعَة {يُوَدِّعُهُ|يُوَدِّعُهَا} بِأُغْنِيَةٍ جَمِيلَةٍ.", imageSrc: "" },
+                { text: "فَتَحَ{|تْ} [NAME] عَيْنَيْ{هِ|هَا} عَلَى الشَّاطِئِ، وَالصَّدَفَةُ الصَّغِيرَةُ فِي يَدِ{هِ|هَا}. {عَرَفَ|عَرَفَتْ} أَنَّ مُسَاعَدَةَ الْأَصْدِقَاءِ تَصْنَعُ أَجْمَلَ الْمُغَامَرَاتِ!", imageSrc: "" },
+            ];
+            const oceanFolder = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
+            const oceanBase = `${oceanFolder}/generated/theme_ocean_adventure`;
+            const oceanArt = {
+                generatedCover: `${oceanBase}/page-00.png`,
+                generatedImages: Array.from({ length: 13 }, (_, i) => `${oceanBase}/page-${String(i + 1).padStart(2, '0')}.png`),
+                generatedPortrait: `${oceanBase}/page-99.png`,
+            };
+            const oceanTheme = settings.themes.find((t) => t.id === 'ocean_adventure');
+            if (!oceanTheme) {
+                settings.themes.push({
+                    id: 'ocean_adventure', emoji: '🐋',
+                    label: 'مغامرة في أعماق المحيط', desc: 'رحلة ساحرة إلى عالم البحر',
+                    ready: true, pages: OCEAN_PAGES, ...oceanArt,
+                    series: 'sea', seriesName: 'سلسلة البحر', seriesPart: 1,
+                });
+                settings.markModified('themes');
+                await settings.save();
+            }
+            else if (!oceanTheme.ready || !oceanTheme.generatedCover || oceanTheme.series !== 'sea' ||
+                JSON.stringify(oceanTheme.pages || []) !== JSON.stringify(OCEAN_PAGES)) {
+                // Publish it and keep text/artwork in sync with the code.
+                oceanTheme.ready = true;
+                oceanTheme.pages = OCEAN_PAGES;
+                oceanTheme.series = 'sea';
+                oceanTheme.seriesName = 'سلسلة البحر';
+                oceanTheme.seriesPart = 1;
+                Object.assign(oceanTheme, oceanArt);
+                settings.markModified('themes');
+                await settings.save();
+            }
+            // Dinosaur Adventure — seeded so it shows up in the dashboard's Stories &
+            // Themes tab. Left ready:false and with no demo images: the owner generates
+            // the artwork with the 🎨 button, reviews it, then ticks "جاهزة" to publish.
+            // Never re-seeded once present, so admin edits are not overwritten.
+            const DINO_PAGES = [
+                { text: "كَانَ{|تْ} [NAME] {يَلْعَبُ|تَلْعَبُ} فِي الْحَدِيقَةِ، فَوَجَدَ{|تْ} حَجَراً لَامِعاً كَبَيْضَةٍ كَبِيرَةٍ. لَمَسَ{هُ|تْهُ}... فَاهْتَزَّتِ الْأَرْضُ وَاخْتَفَتِ الْحَدِيقَةُ!", imageSrc: "" },
+                { text: "فَتَحَ{|تْ} [NAME] عَيْنَيْ{هِ|هَا} فِي غَابَةٍ عَجِيبَةٍ، أَشْجَارُهَا عَالِيَةٌ جِدّاً. وَسَمِعَ{|تْ} خُطُوَاتٍ كَبِيرَةً تَهُزُّ الْأَرْضَ!", imageSrc: "" },
+                { text: "ظَهَرَ دِينَاصُورٌ ضَخْمٌ اسْمُهُ تْرِيكْس! لَكِنَّهُ لَطِيفٌ وَلَيْسَ مُخِيفاً. يَلْبَسُ وِشَاحاً أَخْضَرَ، وَيَبْحَثُ بِحُزْنٍ عَنْ نَظَّارَتِهِ الضَّائِعَةِ.", imageSrc: "" },
+                { text: "قَالَ تْرِيكْس: \"لَا أَرَى جَيِّداً بِدُونِ نَظَّارَتِي!\" فَكَّرَ{|تْ} [NAME] وَقَالَ{|تْ}: \"يَا بَطَل{|ةَ}! هَلْ نَبْحَثُ عَنْهَا مِنَ الْأَرْضِ عَلَى ظَهْرِ تْرِيكْس، أَمْ مِنَ السَّمَاءِ مَعَ الدِّينَاصُورِ الطَّائِرِ؟\"", imageSrc: "" },
+                { text: "صَعِدَ{|تْ} [NAME] عَلَى ظَهْرِ تْرِيكْس بِشَجَاعَةٍ، وَمَشَيَا مَعاً فِي الْغَابَةِ يَبْحَثَانِ فِي كُلِّ مَكَانٍ.", imageSrc: "" },
+                { text: "وَصَلَا إِلَى بُحَيْرَةٍ زَرْقَاءَ، فَرَأَ{ى|تْ} [NAME] النَّظَّارَةَ فَوْقَ شَجَرَةٍ عَالِيَةٍ! أَخَذَ{|تْ} غُصْناً طَوِيلاً وَأَنْزَلَ{هَا|تْهَا} بِذَكَاءٍ.", imageSrc: "" },
+                { text: "لَبِسَ تْرِيكْس نَظَّارَتَهُ وَصَاحَ بِفَرَحٍ: \"شُكْراً يَا [NAME]! الْآنَ أَرَى أَصْدِقَائِي وَالْأَلْوَانَ مِنْ جَدِيدٍ!\"", imageSrc: "" },
+                { text: "أَخَذَ تْرِيكْس صَدِيقَ{هُ|تَهُ} إِلَى كَهْفٍ سِرِّيٍّ فِيهِ رُسُومَاتٌ قَدِيمَةٌ عَجِيبَةٌ. يَا بَطَل{|ةَ}! هَلْ {تَجِدُ|تَجِدِينَ} بَيْضَةَ الدِّينَاصُورِ الْمُنَقَّطَةَ بَيْنَ الصُّخُورِ؟", imageSrc: "" },
+                { text: "فَرِحَتِ الدِّينَاصُورَاتُ بِذَكَاءِ [NAME]، وَقَطَفَتْ {لَهُ|لَهَا} أَكْبَرَ فَرَاوْلَةٍ فِي الْعَالَمِ! كَانَتْ بِحَجْمِ الْبِطِّيخَةِ وَلَذِيذَةً جِدّاً.", imageSrc: "" },
+                { text: "نَظَرَ{|تْ} [NAME] إِلَى الْجَبَلِ الْبَعِيدِ، فَرَأَ{ى|تْ} بُرْكَاناً عَجِيباً يَخْرُجُ مِنْهُ فَقَاقِيعُ صَابُونٍ مُلَوَّنَةٌ بَدَلاً مِنَ النَّارِ! فَضَحِكَ{|تْ} كَثِيراً.", imageSrc: "" },
+                { text: "أَعْطَى تْرِيكْس [NAME] حَجَراً صَغِيراً عَلَيْهِ رَسْمُ قَلْبٍ، لِ{يَتَذَكَّرَ|تَتَذَكَّرَ} دَائِماً أَنَّ{هُ|هَا} بَطَل{ٌ|ةٌ} وَصَدِيق{ٌ|َةٌ} لِلدِّينَاصُورَاتِ.", imageSrc: "" },
+                { text: "أَغْمَضَ{|تْ} [NAME] عَيْنَيْ{هِ|هَا} وَتَمَنَّ{ى|تْ} الْعَوْدَةَ إِلَى الْبَيْتِ. بَدَأَتِ الْأَشْجَارُ تَخْتَفِي بِبُطْءٍ، وَتْرِيكْس يُوَدِّعُ{هُ|هَا} بِلُطْفٍ.", imageSrc: "" },
+                { text: "فَتَحَ{|تْ} [NAME] عَيْنَيْ{هِ|هَا} فِي حَدِيقَةِ الْبَيْتِ، وَالْحَجَرُ الصَّغِيرُ فِي يَدِ{هِ|هَا}. {عَرَفَ|عَرَفَتْ} أَنَّ الشَّجَاعَةَ تَقُودُ إِلَى أَجْمَلِ الْمُغَامَرَاتِ!", imageSrc: "" },
+            ];
+            const dinoFolder = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
+            const dinoBase = `${dinoFolder}/generated/theme_dinosaur_adventure`;
+            const dinoArt = {
+                generatedCover: `${dinoBase}/page-00.png`,
+                generatedImages: Array.from({ length: 13 }, (_, i) => `${dinoBase}/page-${String(i + 1).padStart(2, '0')}.png`),
+                generatedPortrait: `${dinoBase}/page-99.png`,
+            };
+            const dinoTheme = settings.themes.find((t) => t.id === 'dinosaur_adventure');
+            if (!dinoTheme) {
+                settings.themes.push({
+                    id: 'dinosaur_adventure', emoji: '🦕',
+                    label: 'مغامرة مع الديناصورات', desc: 'رحلة عجيبة إلى عالم ما قبل التاريخ',
+                    ready: true, pages: DINO_PAGES, ...dinoArt,
+                });
+                settings.markModified('themes');
+                await settings.save();
+            }
+            else if (!dinoTheme.ready || !dinoTheme.generatedCover ||
+                JSON.stringify(dinoTheme.pages || []) !== JSON.stringify(DINO_PAGES)) {
+                // Publish it and keep text/artwork in sync with the code.
+                dinoTheme.ready = true;
+                dinoTheme.pages = DINO_PAGES;
+                Object.assign(dinoTheme, dinoArt);
+                settings.markModified('themes');
+                await settings.save();
+            }
+            // Toy City — showcase story promoted to a real orderable theme. Scene
+            // template lives in sceneTemplates.ts; text mirrors the ar locale.
+            const TOY_PAGES = [
+                { text: "بَيْنَمَا كَان{َ|َتْ} [NAME] {يُرَتِّبُ|تُرَتِّبُ} غُرْفَتَ{هُ|هَا}، أَضَاءَتْ سَيَّارَةُ السِّبَاقِ الصَّغِيرَةُ بِنُورٍ ذَهَبِيٍّ وَفَتَحَتْ بَابًا سِحْرِيًّا سَحَبَ{هُ|هَا} إِلَى مَدِينَةِ الْأَلْعَابِ!", imageSrc: "" },
+                { text: "سَقَطَ{|تْ} [NAME] بِلُطْفٍ عَلَى شَارِعٍ مَصْنُوعٍ مِنْ مَسَارَاتِ السِّبَاقِ السَّرِيعَةِ، وَكَانَتِ الْبُيُوتُ حَوْلَ{هُ|هَا} مَبْنِيَّةً مِنْ مُكَعَّبَاتِ اللِّيغُو الْمُلَوَّنَةِ.", imageSrc: "" },
+                { text: "قَابَلَ{|تْ} [NAME] رُوبُوتًا صَغِيرًا يُدْعَى تِيكِي كَانَ مُتَوَقِّفًا عَنِ الْحَرَكَةِ. قَالَ تِيكِي بِصَوْتٍ ضَعِيفٍ: أَحْتَاجُ إِلَى بَطَّارِيَةِ الِابْتِسَامَاتِ لِأَعْمَلَ مِنْ جَدِيدٍ!", imageSrc: "" },
+                { text: "أَشَارَ تِيكِي إِلَى طَرِيقَيْنِ: يَا بَطَلَ{ةُ|} هَلْ نَرْكَبُ قِطَارَ الدِّبَبَةِ السَّرِيعَ أَمْ نَتَسَلَّقُ بُرْجَ الْمُكَعَّبَاتِ الْعَالِيَ؟ اخْتَارِ{|ي} طَرِيقَكِ بِذَكَاءٍ يَا [NAME]!", imageSrc: "" },
+                { text: "قَرَّرَ{|تْ} [NAME] تَسَلُّقَ بُرْجِ الْمُكَعَّبَاتِ. عِنْدَمَا بَدَأَ الْبُرْجُ يَهْتَزُّ، أَسْرَعَتِ الطَّائِرَاتُ الْوَرَقِيَّةُ وَأَمْسَكَتْ بِيَدِ{هِ|هَا} لِ{يَ|تَ}صِلَ{|إِلَى} الْقِمَّةَ بِكُلِّ شَجَاعَةٍ.", imageSrc: "" },
+                { text: "وَجَدَ{|تْ} [NAME] الْبَطَّارِيَةَ فِي أَعْلَى الْبُرْجِ لَكِنَّهَا كَانَتْ مُطْفَأَةً. تَذَكَّرَ{|تْ} كَلَامَ تِيكِي، فَابْتَسَمَ{|تْ} لَهَا بِصِدْقٍ، وَفَجْأَةً أَضَاءَتِ الْبَطَّارِيَةُ بِأَنْوَارٍ مُلَوَّنَةٍ!", imageSrc: "" },
+                { text: "رَكَضَ{|تْ} [NAME] وَأَعْطَ{ى|تْ} الْبَطَّارِيَةَ لِتِيكِي، فَقَفَزَ الرُّوبُوتُ فَرِحًا وَبَدَأَ يَرْقُصُ وَيَشْكُرُ صَدِيقَ{هُ|ها} الذَّكِيَّةَ.", imageSrc: "" },
+                { text: "أَخَذَ{هُ|هَا} تِيكِي فِي جَوْلَةٍ دَاخِلَ مَصْنَعِ الْأَلْعَابِ الْعَجِيبِ حَيْثُ تَتَحَوَّلُ الْأَفْكَارُ إِلَى أَلْعَابٍ حَقِيقِيَّةٍ. هَلْ يُمْكِنُكَ الْعُثُورُ عَلَى الْمِفْتَاحِ الْفِضِّيِّ الصَّغِيرِ الْمَخْبُوءِ بَيْنَ الْآلَاتِ؟", imageSrc: "" },
+                { text: "وَجَدَ{|تْ} [NAME] عَرُوسَةً قُمَاشِيَّةً مَكْسُورَةً وَحَزِينَةً، فَاسْتَخْدَمَ{|تْ} ذَكَاءَ{هُ|هَا} الْهَنْدَسِيَّ وَمَهَارَتَ{هُ|هَا} وَقَامَ{|تْ} بِإِصْلَاحِهَا بِهُدُوءٍ وَلُطْفٍ.", imageSrc: "" },
+                { text: "ابْتَسَمَتِ الْعَرُوسَةُ وَقَدَّمَتْ لِـ [NAME] مِفْتَاحَ الْأَلْعَابِ الذَّهَبِيَّ الَّذِي يَمْنَحُ{هُ|هَا} الْقُدْرَةَ عَلَى الْعِنَايَةِ بِأَلْعَابِ{هِ|هَا} دَائِمًا.", imageSrc: "" },
+                { text: "احْتِفَالًا بِـ [NAME]، نَظَّمَتِ الْمَدِينَةُ سِبَاقًا خُرَافِيًّا، وَكَانَ{|تْ} بَطَلُنَا هُوَ{|} السَّائِق{ُ|َةُ} الْأَوَّل{ُ|ى} لِسَيَّارَةٍ طَائِرَةٍ فِي السَّمَاءِ!", imageSrc: "" },
+                { text: "قَالَ تِيكِي وَهُوَ يُوَدِّعُ{هُ|هَا}: عِنْدَمَا تَشْتَاقُ{|ِينَ} إِلَيْنَا يَا [NAME]، فَقَطِ احْتَضِن{|ِي} أَلْعَابَكَ بِقُوَّةٍ، وَسَنَلْتَقِي فِي الْأَحْلَامِ!", imageSrc: "" },
+                { text: "فَتَحَ{|تْ} [NAME] عَيْنَيْ{هِ|هَا} لِ{يَجِدَ|تَجِدَ} نَفْسَ{هُ|هَا} فِي غُرْفَتِ{هِ|هَا} {يُمْسِكُ|تُمْسِكُ} بِمِفْتَاحِ الْأَلْعَابِ، وَمُنْذُ ذَلِكَ الْيَوْمِ أَصْبَحَ{|تْ} {يَعْتَنِي|تَعْتَنِي} بِأَلْعَابِ{هِ|هَا} جَيِّدًا لِأَنَّ لِكُلِّ لُعْبَةٍ رُوحًا وَسِحْرًا خَاصًّا.", imageSrc: "" },
+            ];
+            const toyFolder = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
+            const toyBase = `${toyFolder}/generated/theme_toy_city`;
+            const toyArt = {
+                generatedCover: `${toyBase}/page-00.png`,
+                generatedImages: Array.from({ length: 13 }, (_, i) => `${toyBase}/page-${String(i + 1).padStart(2, '0')}.png`),
+                generatedPortrait: `${toyBase}/page-99.png`,
+            };
+            const toyTheme = settings.themes.find((t) => t.id === 'toy_city');
+            if (!toyTheme) {
+                settings.themes.push({
+                    id: 'toy_city', emoji: '🤖',
+                    label: 'مدينة الألعاب السحرية', desc: 'مغامرة داخل مدينة ألعاب سحرية مليئة بالروبوتات والمكعبات',
+                    ready: true, pages: TOY_PAGES, ...toyArt,
+                });
+                settings.markModified('themes');
+                await settings.save();
+            }
+            else if (!toyTheme.ready || !toyTheme.generatedCover ||
+                JSON.stringify(toyTheme.pages || []) !== JSON.stringify(TOY_PAGES)) {
+                toyTheme.ready = true;
+                toyTheme.pages = TOY_PAGES;
+                Object.assign(toyTheme, toyArt);
+                settings.markModified('themes');
+                await settings.save();
+            }
+            // School Hero — artwork and ar/en/he text were already in place; it
+            // just was never published, so the Stories page had no cover for it.
+            const SCHOOL_PAGES = [
+                { text: "اسْتَيْقَظَ{|تْ} [NAME] بِنَشَاطٍ كَبِيرٍ، وَارْتَدَ{ى|تْ} حَقِيبَت{َهُ|َهَا} الْمُفَضَّلَةَ وَانْطَلَقَ{|تْ} نَحْوَ مَدْرَسَت{ِهِ|ِهَا} الْجَمِيلَةِ وَه{ُوَ|ِيَ} {يَ|تَ}بْتَسِمُ لِلْكَائِنَاتِ مِنْ حَوْل{ِهِ|ِهَا}.", imageSrc: "" },
+                { text: "عِنْدَمَا وَصَلَ{|تْ} [NAME]، تَفَاجَأَ{|تْ} بِأَنَّ الْأَلْوَانَ قَدِ اخْتَفَتْ تَمَامًا مِنْ لَوْحَاتِ وَجُدْرَانِ الْمَدْرَسَةِ! كَانَتْ تَبْدُو حَزِينَةً بِاللَّوْنَيْنِ الْأَبْيَضِ وَالْأَسْوَدِ.", imageSrc: "" },
+                { text: "لَمْ {يَ|تَ}سْتَسْلِمْ [NAME]، بَلْ قَرَّرَ{|تْ} أَنْ {يَ|تَ}كْتَشِفَ السِّرَّ وَ{يَ|تَ}سْتَخْدِمَ \"أَقْلَام{َهُ|َهَا} السِّحْرِيَّةَ\" وَلُطْف{َهُ|َهَا} لِ{يُ|تُ}عِيدَ الْحَيَاةَ وَالْبَهْجَةَ لِمَدْرَسَت{ِهِ|ِهَا}.", imageSrc: "" },
+                { text: "فِي فَصْلِ الْعُلُومِ، وَجَدَ{|تْ} صَدِيق{َهُ|َهَا} سَامِي حَزِينًا لِأَنَّ تَجْرِبَةَ الْبُرْكَانِ لَمْ تَنْجَحْ، فَسَاعَدَ{|تْ}هُ [NAME] بِلَمْسَةٍ ذَكِيَّةٍ مِنْ خَيَال{ِهِ|ِهَا} لِتَنْفَجِرَ الْأَلْوَانُ مُجَدَّدًا.", imageSrc: "" },
+                { text: "دَخَلَ{|تْ} [NAME] الْمَكْتَبَةَ، فَسَمِعَ{|تْ} الْكُتُبَ تَهْمِسُ بِحُزْنٍ، وَتَطْلُبُ مِنْ أَحَدٍ أَنْ يُرَتِّبَهَا لِتَعُودَ الْحِكَايَاتُ وَالْقِصَصُ إِلَى مَكَانِهَا الصَّحِيحِ.", imageSrc: "" },
+                { text: "نَادَ{ى|تْ} [NAME] زُمَلَاء{َهُ|َهَا}، وَبَدَأُوا جَمِيعًا فِي تَرْتِيبِ الْكُتُبِ بِانْتِظَامٍ وَهُمْ يُغَنُّونَ أَجْمَلَ الْأَلْحَانِ، لِيَعُودَ الدِّفْءُ إِلَى زَوَايَا الْمَكْتَبَةِ.", imageSrc: "" },
+                { text: "فِي سَاحَةِ اللَّعِبِ، سَمِعَ{|تْ} [NAME] مُوَاءً رَقِيقًا؛ لَقَدْ كَانَتْ هُنَاكَ قِطَّةٌ صَغِيرَةٌ خَائِفَةٌ وَعَالِقَةٌ فَوْقَ غُصْنِ شَجَرَةِ الْمَدْرَسَةِ الْعَالِيَةِ.", imageSrc: "" },
+                { text: "بِلَا تَرَدُّدٍ، جَمَعَ{|تْ} [NAME] الْمُكَعَّبَاتِ الْمُلَوَّنَةَ الْكَبِيرَةَ وَبَنَ{ى|تْ} مِنْهَا سُلَّمًا آمِنًا، وَتَلَقَّ{ى|تْ} الْقِطَّةَ بِلُطْفٍ لِ{يُ|تُ}عِيدَهَا إِلَى الْأَرْضِ بِسَلَامٍ.", imageSrc: "" },
+                { text: "فِي وَقْتِ الِاسْتِرَاحَةِ، رَأَ{ى|تْ} [NAME] طِفْلًا جَدِيدًا يَجْلِسُ بِمُفْرَدِهِ، فَذَهَبَ{|تْ} إِلَيْهِ وَتَشَارَكَ{|تْ} مَعَهُ طَعَام{َهُ|َهَا}، لِ{يَ|تَ}عْرِفَ أَنَّ اللُّطْفَ هُوَ الْقُوَّةُ الْخَارِقَةُ الْحَقِيقِيَّةُ.", imageSrc: "" },
+                { text: "فِي حِصَّةِ الْفَنِّ، وَبِإِذْنٍ مِنَ الْمُعَلِّمَةِ، بَدَأَ{|تْ} [NAME] {يَ|تَ}رْسُمُ أَحْلَامَ التَّلَامِيذِ عَلَى الْجُدْرَانِ، وَفَجْأَةً.. بَدَأَتِ الْأَلْوَانُ الزَّاهِيَةُ تَعُودُ لِلْمَدْرَسَةِ كُلِّهَا!", imageSrc: "" },
+                { text: "فِي نِهَايَةِ الْيَوْمِ الدِّرَاسِيِّ، صَفَّقَ الْجَمِيعُ بِحَرَارَةٍ لِـ [NAME]، وَقَدَّمَ لَ{هُ|هَا} مُدِيرُ الْمَدْرَسَةِ وِسَامَ \"{الْبَطَلُ|الْبَطَلَةُ} {الصَّغِيرُ|الصَّغِيرَةُ}\" تَقْدِيرًا لِشَجَاعَتِ{هِ|هَا} وَجَمَالِ رُوح{ِهِ|ِهَا}.", imageSrc: "" },
+                { text: "عَادَ{|تْ} [NAME] إِلَى الْبَيْتِ مُسْرِع{ًا|َةً}، وَحَكَ{ى|تْ} لِوَالِدَت{ِهِ|ِهَا} بِفَخْرٍ كَيْفَ أَنَّ الْمَدْرَسَةَ لَيْسَتْ مُجَرَّدَ دُرُوسٍ، بَلْ هِيَ مَكَانٌ لِلْمُغَامَرَةِ وَمُسَاعَدَةِ الْآخَرِينَ.", imageSrc: "" },
+                { text: "وَضَعَ{|تْ} [NAME] وِسَام{َهُ|َهَا} اللَّامِعَ بِجَانِبِ سَرِير{ِهِ|ِهَا}، وَأَغْلَقَ{|تْ} عَيْنَيْ{هِ|هَا} وَه{ُوَ|ِيَ} {يَ|تَ}تَشَوَّقُ لِيَوْمٍ دِرَاسِيٍّ جَدِيدٍ مَلِيءٍ بِالْمُفَاجَآتِ السَّعِيدَةِ.", imageSrc: "" },
+            ];
+            const schFolder = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
+            const schBase = `${schFolder}/generated/theme_school_hero`;
+            const schArt = {
+                generatedCover: `${schBase}/page-00.png`,
+                generatedImages: Array.from({ length: 13 }, (_, i) => `${schBase}/page-${String(i + 1).padStart(2, '0')}.png`),
+                generatedPortrait: `${schBase}/page-99.png`,
+            };
+            const schTheme = settings.themes.find((t) => t.id === 'school_hero');
+            if (!schTheme) {
+                settings.themes.push({
+                    id: 'school_hero', emoji: '🏫',
+                    label: 'بطل المدرسة', desc: 'مساعدة الآخرين ونشر اللطف والألوان في المدرسة',
+                    ready: true, pages: SCHOOL_PAGES, ...schArt,
+                });
+                settings.markModified('themes');
+                await settings.save();
+            }
+            else if (!schTheme.ready || !schTheme.generatedCover ||
+                JSON.stringify(schTheme.pages || []) !== JSON.stringify(SCHOOL_PAGES)) {
+                schTheme.ready = true;
+                schTheme.pages = SCHOOL_PAGES;
+                Object.assign(schTheme, schArt);
+                settings.markModified('themes');
+                await settings.save();
+            }
+            // Around the World — 13 pages, artwork generated with Sara.
+            const WORLD_PAGES = [
+                { text: "بَيْنَمَا كَانَ{|تْ} [NAME] {يُقَلِّبُ|تُقَلِّبُ} كُرَةً أَرْضِيَّةً قَدِيمَةً فِي غُرْفَتِ{هِ|هَا}، أَضَاءَتْ خَرِيطَةُ الْعَالَمِ بِنُورٍ ذَهَبِيٍّ سَاطِعٍ وَفَتَحَتْ بَوَّابَةً سِحْرِيَّةً سَحَبَتْ{هُ|هَا} إِلَى أُولَى مَحَطَّاتِ{هِ|هَا}!", imageSrc: "" },
+                { text: "وَجَدَ{|تْ} [NAME] نَفْسَ{هُ|هَا} {يَقِفُ|تَقِفُ} فَوْقَ سُورِ الصِّينِ الْعَظِيمِ وَسْطَ الْجِبَالِ الْخَضْرَاءِ، وَاسْتَقْبَلَ{هُ|هَا} أَطْفَالٌ يَحْمِلُونَ تِنِّيناً وَرَقِيّاً مُلَوَّناً يَطِيرُ فِي السَّمَاءِ.", imageSrc: "" },
+                { text: "بِلَمْسَةٍ سِحْرِيَّةٍ، انْتَقَلَ{|تْ} [NAME] إِلَى الرِّمَالِ الذَّهَبِيَّةِ أَمَامَ أَهْرَامَاتِ الْجِيزَةِ الْعَظِيمَةِ، حَيْثُ الْتَقَ{ى|تْ} بِجَمَلٍ لَطِيفٍ اسْمُهُ مِشْمِشْ.", imageSrc: "" },
+                { text: "أَشَارَ الْجَمَلُ مِشْمِشْ إِلَى طَرِيقَيْنِ: \"يَا بَطَل{|ةَ}! هَلْ نَرْكَبُ الْمِنْطَادَ الْمُلَوَّنَ لِنَطِيرَ فَوْقَ بُرْجِ إِيفِل فِي بَارِيس، أَمْ نَغُوصُ فِي غَابَاتِ الْأَمَازُون الْخَضْرَاءِ؟\" اِخْتَرْ{|ي} وِجْهَتَ{كَ|كِ} بِذَكَاءٍ يَا [NAME]!", imageSrc: "" },
+                { text: "اِخْتَارَ{|تْ} [NAME] رُكُوبَ الْمِنْطَادِ الْمُلَوَّنِ {وَطَارَ|وَطَارَتْ} فَوْقَ بَارِيس، {وَرَأَى|وَرَأَتْ} بُرْجَ إِيفِل الشَّاهِقَ مِنَ الْأَعْلَى وَهُوَ يَلْمَعُ تَحْتَ أَشِعَّةِ الشَّمْسِ.", imageSrc: "" },
+                { text: "هَبَطَ الْمِنْطَادُ بِلُطْفٍ فِي غَابَاتِ الْأَمَازُون الْكَثِيفَةِ، حَيْثُ الْتَقَ{ى|تْ} [NAME] بِبَبَّغَاوَاتٍ مُلَوَّنَةٍ وَفَرَاشَاتٍ بِحَجْمِ كَفِّ الْيَدِ تَسِيرُ مَعَ{هُ|هَا} فِي الطَّرِيقِ.", imageSrc: "" },
+                { text: "تَحَوَّلَ الطَّقْسُ فَجْأَةً إِلَى بَارِدٍ جِدّاً، فَوَجَدَ{|تْ} [NAME] نَفْسَ{هُ|هَا} فِي الْقُطْبِ الشَّمَالِيِّ {يَرْتَدِي|تَرْتَدِي} مِعْطَفاً دَافِئاً {وَيَلْعَبُ|وَتَلْعَبُ} مَعَ الدِّبَبَةِ الْقُطْبِيَّةِ تَحْتَ أَضْوَاءِ السَّمَاءِ الْخَضْرَاءِ وَالْبَنَفْسَجِيَّةِ.", imageSrc: "" },
+                { text: "وَصَلَ{|تْ} [NAME] إِلَى شَاطِئٍ مُشْمِسٍ فِي الْيَابَانِ مَلِيءٍ بِأَشْجَارِ السَّاكُورَا الْوَرْدِيَّةِ. يَا بَطَل{|ةَ}! هَلْ {يُمْكِنُكَ|يُمْكِنُكِ} الْعُثُورُ عَلَى الْبُوصَلَةِ الذَّهَبِيَّةِ الصَّغِيرَةِ الْمَخْفِيَّةِ بَيْنَ الْأَصْدَافِ عَلَى الشَّاطِئِ؟", imageSrc: "" },
+                { text: "فِي كُلِّ بَلَدٍ زَارَ{هُ|تْهُ} [NAME]، {تَعَلَّمَ|تَعَلَّمَتْ} كَلِمَةً جَدِيدَةً بِلُغَتِهَا: \"شُكْراً\"، \"أَهْلاً\"، وَ\"أُحِبُّكَ\"، {وَاكْتَشَفَ|وَاكْتَشَفَتْ} أَنَّ الِابْتِسَامَةَ يَفْهَمُهَا كُلُّ أَطْفَالِ الْعَالَمِ.", imageSrc: "" },
+                { text: "جَمَعَ{|تْ} [NAME] فِي حَقِيبَتِ{هِ|هَا} رِيشَةً مُلَوَّنَةً مِنَ الْأَمَازُون، وَحَجَراً مِنَ الْأَهْرَامَاتِ، وَزَهْرَةَ سَاكُورَا مِنَ الْيَابَانِ لِتُذَكِّرَ{هُ|هَا} بِهَذِهِ الرِّحْلَةِ الْعَظِيمَةِ.", imageSrc: "" },
+                { text: "رَغْمَ جَمَالِ كُلِّ بِلَادِ الْعَالَمِ، {شَعَرَ|شَعَرَتْ} [NAME] بِالشَّوْقِ لِبَيْتِ{هِ|هَا} وَأَهْلِ{هِ|هَا}، {وَتَذَكَّرَ|وَتَذَكَّرَتْ} أَنَّ أَجْمَلَ مَكَانٍ فِي الْعَالَمِ هُوَ الْوَطَنُ.", imageSrc: "" },
+                { text: "أَغْمَضَ{|تْ} [NAME] عَيْنَيْ{هِ|هَا} وَدَارَتِ الْكُرَةُ الْأَرْضِيَّةُ بِبُطْءٍ، لِ{يَعُودَ|تَعُودَ} بِنُعُومَةٍ إِلَى غُرْفَتِ{هِ|هَا} الْهَادِئَةِ.", imageSrc: "" },
+                { text: "فَتَحَ{|تْ} [NAME] عَيْنَيْ{هِ|هَا} {وَنَظَرَ|وَنَظَرَتْ} إِلَى خَرِيطَةِ الْعَالَمِ الْمُعَلَّقَةِ عَلَى حَائِطِ{هِ|هَا}، {وَهُوَ يَعْلَمُ|وَهِيَ تَعْلَمُ} أَنَّ الْعَقْلَ الْمُنْفَتِحَ وَالْقَلْبَ الْمُحِبَّ يَجْعَلَانِ{هُ|هَا} {صَدِيقاً|صَدِيقَةً} لِكُلِّ أَطْفَالِ الْعَالَمِ.", imageSrc: "" },
+            ];
+            const wldFolder = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
+            const wldBase = `${wldFolder}/generated/theme_world_adventure`;
+            const wldArt = {
+                generatedCover: `${wldBase}/page-00.png`,
+                generatedImages: Array.from({ length: 13 }, (_, i) => `${wldBase}/page-${String(i + 1).padStart(2, '0')}.png`),
+                generatedPortrait: `${wldBase}/page-99.png`,
+            };
+            const wldTheme = settings.themes.find((t) => t.id === 'world_adventure');
+            if (!wldTheme) {
+                settings.themes.push({
+                    id: 'world_adventure', emoji: '🌍',
+                    label: 'مغامرة حول العالم', desc: 'رحلة سحرية بين بلاد العالم وأصدقائه',
+                    ready: true, pages: WORLD_PAGES, ...wldArt,
+                });
+                settings.markModified('themes');
+                await settings.save();
+            }
+            else if (!wldTheme.ready || !wldTheme.generatedCover ||
+                JSON.stringify(wldTheme.pages || []) !== JSON.stringify(WORLD_PAGES)) {
+                wldTheme.ready = true;
+                wldTheme.pages = WORLD_PAGES;
+                Object.assign(wldTheme, wldArt);
+                settings.markModified('themes');
+                await settings.save();
+            }
+            // Deep Sea — part 2 of سلسلة البحر. Artwork generated with Julia, the
+            // same child as part 1 so the series keeps one face.
+            const SEA2_PAGES = [
+                { text: "أَثْنَاءَ لَعِبِ [NAME] عَلَى الشَّاطِئِ، عَثَرَ{|تْ} عَلَى صَدَفَةٍ زَرْقَاءَ تَلْمَعُ. وَبِمُجَرَّدِ أَنْ وَضَعَ{هَا|تْهَا} عَلَى أُذُنِ{هِ|هَا}، ظَهَرَتْ غَوَّاصَةٌ صَغِيرَةٌ شَفَّافَةٌ تُنَادِي{هِ|هَا} لِرِحْلَةٍ اسْتِكْشَافِيَّةٍ!", imageSrc: "" },
+                { text: "غَاصَ{|تْ} [NAME] بِالْغَوَّاصَةِ إِلَى أَعْمَاقِ الْمُحِيطِ، حَيْثُ رَأَ{ى|تْ} الشِّعَابَ الْمَرْجَانِيَّةَ الْمُلَوَّنَةَ وَالْأَسْمَاكَ الَّتِي تُضِيءُ مِثْلَ الْمَصَابِيحِ الصَّغِيرَةِ.", imageSrc: "" },
+                { text: "الْتَقَ{ى|تْ} بِالدُّلْفِينِ بُوبُو، الَّذِي أَخْبَرَ{هُ|هَا} أَنَّ اللُّؤْلُؤَةَ الْمُضِيئَةَ الَّتِي تُنِيرُ الْمُحِيطَ فِي اللَّيْلِ قَدِ اخْتَفَتْ تَحْتَ الصُّخُورِ.", imageSrc: "" },
+                { text: "قَالَ الدُّلْفِينُ بُوبُو: \"يَا بَطَل{|ةَ}! هَلْ نَرْكَبُ عَلَى ظَهْرِ الدُّلْفِينِ السَّرِيعِ لِنَتَجَاوَزَ التَّيَّارَاتِ الْمَائِيَّةَ، أَمْ نُرَافِقُ السُّلَحْفَاةَ الْحَكِيمَةَ لِتَدُلَّنَا عَلَى الطَّرِيقِ الْآمِنِ؟\" اِخْتَرْ{|ي} طَرِيقَ{كَ|كِ} بِذَكَاءٍ يَا [NAME]!", imageSrc: "" },
+                { text: "اِخْتَارَ{|تْ} [NAME] مُرَافَقَةَ السُّلَحْفَاةِ الْحَكِيمَةِ، الَّتِي أَخَذَتْ{هُ|هَا} عَبْرَ وَادِي الشِّعَابِ الْمَرْجَانِيَّةِ الْجَمِيلَةِ وَعَلَّمَتْ{هُ|هَا} كَيْفَ {يَسْبَحُ|تَسْبَحُ} بِهُدُوءٍ.", imageSrc: "" },
+                { text: "وَصَلُوا إِلَى مَكَانِ اللُّؤْلُؤَةِ الْمُحْتَجَزَةِ بَيْنَ الصُّخُورِ. اِسْتَخْدَمَ{|تْ} [NAME] ذِرَاعَ الْغَوَّاصَةِ الْآلِيَّةَ بِذَكَاءٍ وَحَذَرٍ لِإِخْرَاجِ اللُّؤْلُؤَةِ دُونَ إِيذَاءِ الْكَائِنَاتِ الْحَيَّةِ.", imageSrc: "" },
+                { text: "وَضَعَ{|تْ} [NAME] اللُّؤْلُؤَةَ فِي مَكَانِهَا، وَفَجْأَةً أَضَاءَتِ الْأَعْمَاقُ كُلُّهَا بِأَنْوَارٍ زَرْقَاءَ وَوَرْدِيَّةٍ فِي مَنْظَرٍ سَاحِرٍ!", imageSrc: "" },
+                { text: "أَقَامَتْ كَائِنَاتُ الْبَحْرِ احْتِفَالاً مُلَوَّناً شُكْراً لِذَكَاءِ [NAME] وَشَجَاعَتِ{هِ|هَا}. يَا بَطَل{|ةَ}! هَلْ {يُمْكِنُكَ|يُمْكِنُكِ} الْعُثُورُ عَلَى الصَّدَفَةِ الْوَرْدِيَّةِ الْمُضِيئَةِ الْمَخْفِيَّةِ بَيْنَ الشِّعَابِ الْمَرْجَانِيَّةِ؟", imageSrc: "" },
+                { text: "سَاعَدَ{|تْ} [NAME] الْأَسْمَاكَ الصَّغِيرَةَ فِي جَمْعِ الْأَكْيَاسِ الْبِلَاسْتِيكِيَّةِ الْعَالِقَةِ بِالشِّعَابِ الْمَرْجَانِيَّةِ لِ{يُحَافِظَ|تُحَافِظَ} عَلَى نَظَافَةِ بَيْتِهَا الْمَائِيِّ.", imageSrc: "" },
+                { text: "تَعَلَّمَ{|تْ} [NAME] كَيْفَ {يَتَوَاصَلُ|تَتَوَاصَلُ} مَعَ الدَّلَافِينِ وَالْحِيتَانِ بِالْإِشَارَاتِ وَالْأَصْوَاتِ النَّغَمِيَّةِ اللَّطِيفَةِ.", imageSrc: "" },
+                { text: "أَهْدَا{هُ|هَا} مَلِكُ الْبِحَارِ قِلَادَةً صَدَفِيَّةً نَاصِعَةً، تُذَكِّرُ{هُ|هَا} دَائِماً بِأَنَّ{هُ|هَا} {صَدِيقٌ|صَدِيقَةٌ} لِلْمُحِيطِ {وَحَامٍ|وَحَامِيَةٌ} لِبِيئَتِهِ.", imageSrc: "" },
+                { text: "طَفَتِ الْغَوَّاصَةُ الشَّفَّافَةُ بِنُعُومَةٍ نَحْوَ السَّطْحِ، وَبَدَأَ صَخَبُ الْمِيَاهِ يَهْدَأُ تَدْرِيجِيّاً.", imageSrc: "" },
+                { text: "فَتَحَ{|تْ} [NAME] عَيْنَيْ{هِ|هَا} لِ{يَجِدَ|تَجِدَ} نَفْسَ{هُ جَالِساً|هَا جَالِسَةً} عَلَى رِمَالِ الشَّاطِئِ وَبِجَانِبِ{هِ|هَا} صَدَفَتُ{هُ|هَا} الزَّرْقَاءُ، {وَهُوَ يَعْلَمُ|وَهِيَ تَعْلَمُ} أَنَّ الْحِفَاظَ عَلَى نَظَافَةِ الطَّبِيعَةِ مَسْؤُولِيَّةُ كُلِّ بَطَلٍ حَقِيقِيٍّ.", imageSrc: "" },
+            ];
+            const seaFolder = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
+            const seaBase = `${seaFolder}/generated/theme_deep_sea`;
+            const seaArt = {
+                generatedCover: `${seaBase}/page-00.png`,
+                generatedImages: Array.from({ length: 13 }, (_, i) => `${seaBase}/page-${String(i + 1).padStart(2, '0')}.png`),
+                generatedPortrait: `${seaBase}/page-99.png`,
+            };
+            const seaSeries = { series: 'sea', seriesName: 'سلسلة البحر', seriesPart: 2 };
+            const seaTheme = settings.themes.find((t) => t.id === 'deep_sea');
+            if (!seaTheme) {
+                settings.themes.push({
+                    id: 'deep_sea', emoji: '🐬',
+                    label: 'مغامرة في أعماق البحار', desc: 'غواصة شفافة، دلفين، ولؤلؤة تُنير المحيط',
+                    ready: true, pages: SEA2_PAGES, ...seaArt, ...seaSeries,
+                });
+                settings.markModified('themes');
+                await settings.save();
+            }
+            else if (!seaTheme.ready || !seaTheme.generatedCover || seaTheme.seriesPart !== 2 ||
+                JSON.stringify(seaTheme.pages || []) !== JSON.stringify(SEA2_PAGES)) {
+                seaTheme.ready = true;
+                seaTheme.pages = SEA2_PAGES;
+                Object.assign(seaTheme, seaArt, seaSeries);
+                settings.markModified('themes');
+                await settings.save();
+            }
+            // ── Newer stories, seeded from one table ────────────────────────────
+            // The blocks above each restate a story's 13 Arabic pages inline. That
+            // text already lives in the locale file the print pipeline reads, so
+            // these rows take it from there instead: a new story needs one line here
+            // rather than another twenty-five-line copy.
+            // The three school stories are one age progression — الروضة ثم اليوم
+            // الأول ثم الصف الأول — so they carry series numbers and a family can buy
+            // them in order as the child grows.
+            // رمضان → العيد: the fanoos and the crescent pendant carry across both parts.
+            const MOON = (part) => ({ series: 'moon', seriesName: 'سلسلة الهلال', seriesPart: part });
+            const SCHOOL = (part) => ({ series: 'school', seriesName: 'سلسلة المدرسة', seriesPart: part });
+            const NEW_STORIES = [
+                { id: 'little_chef', emoji: '🍳', label: 'الشيف الصغير', desc: 'يوم في المطبخ: نظافة وترتيب ووجبة يصنعها بنفسه' },
+                { id: 'castle_guardian', emoji: '🏰', label: 'مغامرة حارس القلعة', desc: 'قلعة تاريخية، لغز قديم، ووسام حارس التاريخ' },
+                { id: 'little_engineer', emoji: '🛠️', label: 'عالم البناء والهندسة', desc: 'مخطط وأدوات وبيت شجري للأصدقاء الصغار' },
+                { id: 'happy_kindergarten', emoji: '🧸', label: 'الروضة السعيدة', desc: 'أول يوم في الروضة: ألوان وحكايات وأصدقاء جدد', ...SCHOOL(1) },
+                { id: 'first_day_school', emoji: '🎒', label: 'اليوم الأول بالمدرسة', desc: 'معلمة لطيفة، أصدقاء جدد، ونجم نشيط', ...SCHOOL(2) },
+                { id: 'first_grade', emoji: '✏️', label: 'مغامرة في الصف الأول', desc: 'حروف وكلمات وقراءة أولى بثقة', ...SCHOOL(3) },
+                { id: 'future_hero', emoji: '🚀', label: 'مغامرة بطل المستقبل', desc: 'تجربة المهن: مهندس، طبيب، معلّم' },
+                { id: 'ramadan_first', emoji: '🌙', label: 'رمضان الأول', desc: 'هلال وفانوس وأول صيام ومسحراتي وعيد', ...MOON(1) },
+                { id: 'eid_first', emoji: '🎁', label: 'عيد الأول', desc: 'ثياب العيد، والعيدية، وفرح يُقسَّم', ...MOON(2) },
+                { id: 'big_brother', emoji: '👶', label: 'أخ كبير', desc: 'خبر جديد، ودبٌّ يُهدى، وقلبٌ يكبر' },
+            ];
+            const newFolder = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
+            let newDirty = false;
+            for (const row of NEW_STORIES) {
+                const pages = (0, BookBuilder_1.arabicStoryPages)(row.id).map((text) => ({ text, imageSrc: '' }));
+                // No text means the locale entry is missing — skip rather than publish
+                // a theme that would render blank pages to a customer.
+                if (pages.length === 0)
+                    continue;
+                const base = `${newFolder}/generated/theme_${row.id}`;
+                const art = {
+                    generatedCover: `${base}/page-00.png`,
+                    generatedImages: Array.from({ length: 13 }, (_, i) => `${base}/page-${String(i + 1).padStart(2, '0')}.png`),
+                    generatedPortrait: `${base}/page-99.png`,
+                };
+                const existing = settings.themes.find((t) => t.id === row.id);
+                if (!existing) {
+                    settings.themes.push({ ...row, ready: true, pages, ...art });
+                    newDirty = true;
+                }
+                else if (!existing.ready || !existing.generatedCover ||
+                    existing.seriesPart !== row.seriesPart ||
+                    JSON.stringify(existing.pages || []) !== JSON.stringify(pages)) {
+                    existing.ready = true;
+                    existing.pages = pages;
+                    Object.assign(existing, art, {
+                        series: row.series, seriesName: row.seriesName, seriesPart: row.seriesPart,
+                    });
+                    newDirty = true;
+                }
+            }
+            if (newDirty) {
+                settings.markModified('themes');
+                await settings.save();
+            }
             // Pirate Treasure — premium theme (scene template + voweled/gendered text
             // in code). Heal an existing entry (attach the photoreal demo images +
             // real text + mark ready) or seed it fresh.
@@ -422,9 +748,16 @@ const getPublicSettings = async (_req, res) => {
         const filtered = {
             bookPackages: settings.bookPackages,
             themes: settings.themes.filter((t) => t.ready === true),
+            demoCards: settings.demoCards || {},
             homeStats: settings.homeStats || SiteSettings_1.DEFAULT_HOME_STATS,
             allowSkipPhoto: !!settings.allowSkipPhoto,
             aiModeEnabled: !!settings.aiModeEnabled,
+            // Whether the wizard should offer card payment at all. True only once a
+            // hosted checkout exists to send the customer to — BookPod's link, or
+            // Stripe. Offering a card button with nothing behind it is worse than not
+            // offering one, so the wizard reads this rather than hardcoding a flag.
+            onlinePayment: !!(process.env.BOOKPOD_PAYMENT_URL || '').trim() || !!process.env.STRIPE_SECRET_KEY,
+            onlinePaymentProvider: (process.env.BOOKPOD_PAYMENT_URL || '').trim() ? 'bookpod' : (process.env.STRIPE_SECRET_KEY ? 'stripe' : null),
         };
         res.json({ success: true, settings: filtered });
     }
@@ -436,15 +769,21 @@ exports.getPublicSettings = getPublicSettings;
 // @route PUT /api/admin/settings
 const updateSettings = async (req, res) => {
     try {
-        const { bookPackages, themes, homeStats, allowSkipPhoto, aiModeEnabled } = req.body;
+        const { bookPackages, themes, homeStats, allowSkipPhoto, aiModeEnabled, demoCards } = req.body;
         let settings = await SiteSettings_1.default.findOne();
         if (!settings) {
-            settings = new SiteSettings_1.default({ bookPackages, themes, homeStats, allowSkipPhoto, aiModeEnabled });
+            settings = new SiteSettings_1.default({ bookPackages, themes, homeStats, allowSkipPhoto, aiModeEnabled, demoCards });
         }
         else {
             if (bookPackages) {
                 settings.bookPackages = bookPackages;
                 settings.markModified('bookPackages');
+            }
+            if (demoCards && typeof demoCards === 'object') {
+                // Merge rather than replace: the dashboard sends only the card it just
+                // toggled, and a whole-object write would clear every other card.
+                settings.demoCards = { ...(settings.demoCards || {}), ...demoCards };
+                settings.markModified('demoCards');
             }
             if (themes) {
                 settings.themes = themes;
@@ -487,6 +826,51 @@ exports.getAllOrders = getAllOrders;
 // @desc  Manually mark an order paid (if needed) and kick the BookBuilder.
 //        This is the pre-Stripe escape hatch — use only after confirming the
 //        customer paid by another channel.
+/**
+ * Confirm that a customer's payment arrived, WITHOUT building or printing.
+ *
+ * BookPod takes the card payment on their own page, but they have no webhook
+ * and no way to look a payment up by reference before a print job exists — and
+ * the customer pays before the book is built. So somebody sees the payment in
+ * the BookPod account and says so here.
+ *
+ * Deliberately separate from the build: "Send to BookPod" also marks an order
+ * paid, which is the wrong tool for a card payment because it immediately
+ * spends money on generation and a print run. This only records the money.
+ *
+ * One-way, like PaymentPoller: it moves pending → paid and nothing else. An
+ * order that is already paid is left alone rather than re-stamped, so a second
+ * click cannot overwrite who confirmed it the first time.
+ */
+const confirmOrderPayment = async (req, res) => {
+    try {
+        const order = await Order_1.default.findById(req.params.id);
+        if (!order) {
+            res.status(404).json({ success: false, message: 'الطلب غير موجود' });
+            return;
+        }
+        if (order.paymentStatus === 'paid') {
+            res.json({ success: true, alreadyPaid: true, order });
+            return;
+        }
+        if (order.paymentStatus === 'refunded') {
+            res.status(409).json({ success: false, message: 'هذا الطلب مسترجع — لا يمكن تأكيد دفعه.' });
+            return;
+        }
+        const admin = req.user;
+        order.paymentStatus = 'paid';
+        order.paidAt = new Date();
+        order.paidConfirmedBy = String(admin?.email || admin?._id || 'admin');
+        await order.save();
+        console.log(`[admin] order ${order._id} marked paid by ${order.paidConfirmedBy}`);
+        res.json({ success: true, order });
+    }
+    catch (err) {
+        console.error('[confirmOrderPayment]', err?.message || err);
+        res.status(500).json({ success: false, message: err?.message || 'تعذّر تأكيد الدفع.' });
+    }
+};
+exports.confirmOrderPayment = confirmOrderPayment;
 const buildOrderBook = async (req, res) => {
     try {
         const order = await Order_1.default.findById(req.params.id);
@@ -510,22 +894,37 @@ const buildOrderBook = async (req, res) => {
         // buildOnly = generate + prepare the print files but DON'T submit to BookPod,
         // so the admin can review the book before the billable send.
         const buildOnly = req.body?.buildOnly === true;
-        // Run synchronously so the admin sees success/failure in the response.
-        // If the book is ALREADY built (images generated), don't regenerate — just
-        // (re)submit the existing files to BookPod (unless buildOnly). Errors here
-        // are surfaced (not swallowed) so a failure is visible, not a false success.
-        let updated;
-        if (order.illustrationsStatus === 'ready') {
-            // Already built: buildOnly rebuilds the print files (so a review reflects
-            // the current images) without submitting; otherwise (re)submit to BookPod.
-            updated = buildOnly
-                ? await (0, BookBuilder_1.reRenderPrintFilesForOrder)(String(order._id))
-                : await (0, BookBuilder_1.submitOrderToBookPod)(String(order._id));
-        }
-        else {
-            updated = await (0, BookBuilder_1.buildBookForOrder)(String(order._id), !buildOnly);
-        }
-        res.json({ success: true, order: updated });
+        const id = String(order._id);
+        // A full build is 15 AI images plus a PDF render — minutes of work. It used
+        // to be awaited on this request, so the connection was dropped long before
+        // it finished: the browser saw net::ERR_FAILED and reported it as a CORS
+        // error (a killed request carries no Access-Control-Allow-Origin header),
+        // even though the build was often still running server-side.
+        //
+        // Now we ACK immediately and run in the background; the dashboard polls
+        // /orders/:id/build-status and shows real progress. Failures are recorded
+        // on the order (illustrationsStatus='failed' + illustrationsError) rather
+        // than being lost with the dropped connection.
+        const run = async () => {
+            if (order.illustrationsStatus === 'ready') {
+                // Already built: buildOnly rebuilds the print files (so a review reflects
+                // the current images) without submitting; otherwise (re)submit to BookPod.
+                return buildOnly ? (0, BookBuilder_1.reRenderPrintFilesForOrder)(id) : (0, BookBuilder_1.submitOrderToBookPod)(id);
+            }
+            return (0, BookBuilder_1.buildBookForOrder)(id, !buildOnly);
+        };
+        run().catch(async (err) => {
+            console.error(`buildOrderBook failed for ${id}:`, err);
+            try {
+                await Order_1.default.findByIdAndUpdate(id, {
+                    illustrationsStatus: 'failed',
+                    illustrationsError: err.message?.slice(0, 500) || 'unknown error',
+                    buildStage: 'فشل',
+                });
+            }
+            catch { /* already logged */ }
+        });
+        res.status(202).json({ success: true, started: true, orderId: id });
     }
     catch (err) {
         console.error('buildOrderBook failed:', err);
@@ -533,6 +932,30 @@ const buildOrderBook = async (req, res) => {
     }
 };
 exports.buildOrderBook = buildOrderBook;
+// @route GET /api/admin/orders/:id/build-status
+// @desc  Lightweight poll target for the dashboard's build progress bar.
+const getOrderBuildStatus = async (req, res) => {
+    try {
+        const order = await Order_1.default.findById(req.params.id)
+            .select('illustrationsStatus illustrationsError buildProgress buildStage bookpodStatus');
+        if (!order) {
+            res.status(404).json({ success: false, message: 'order not found' });
+            return;
+        }
+        res.json({
+            success: true,
+            status: order.illustrationsStatus,
+            progress: order.buildProgress ?? 0,
+            stage: order.buildStage || '',
+            error: order.illustrationsError || '',
+            bookpodStatus: order.bookpodStatus || '',
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+exports.getOrderBuildStatus = getOrderBuildStatus;
 // @route POST /api/admin/orders/:id/rerender-files
 // @desc  Rebuild the print-ready PDFs from an order's ALREADY-generated images.
 //        Free (no AI generation) and never re-submits to BookPod — used to bring
@@ -587,6 +1010,20 @@ const submitOrderColoring = async (req, res) => {
     }
 };
 exports.submitOrderColoring = submitOrderColoring;
+// @route POST /api/admin/check-payments
+// @desc  Ask BookPod who has paid, right now, instead of waiting for the timer.
+//        Read-only against BookPod; only ever moves our orders pending → paid.
+const checkPayments = async (_req, res) => {
+    try {
+        const result = await (0, PaymentPoller_1.pollPaymentsOnce)();
+        res.json({ success: !result.error, ...result });
+    }
+    catch (err) {
+        console.error('checkPayments failed:', err);
+        res.status(500).json({ success: false, message: err?.message || 'فشل التحقق من الدفعات' });
+    }
+};
+exports.checkPayments = checkPayments;
 // @route POST /api/admin/print-book
 // @desc  Build a print-ready PDF (cover + interior) for a showcase/preview book
 //        from the admin book viewer's "Download" button. Not tied to a paid order
@@ -620,6 +1057,19 @@ const printBook = async (req, res) => {
     }
 };
 exports.printBook = printBook;
+/**
+ * Record a send. Best-effort by design: the print job has already been placed
+ * and paid for by the time this runs, so a logging failure must never turn a
+ * successful submission into an error for the admin.
+ */
+async function recordPrintJob(entry) {
+    try {
+        await PrintJob_1.default.create(entry);
+    }
+    catch (err) {
+        console.warn('[recordPrintJob] not saved:', err?.message || err);
+    }
+}
 // @route POST /api/admin/print-book/submit
 // @desc  Build a showcase/preview book and SUBMIT it to BookPod for printing,
 //        using shipping details from the viewer's form. BILLABLE — reached only
@@ -640,6 +1090,19 @@ const printBookSubmit = async (req, res) => {
             res.status(502).json({ success: false, message: 'تم تجهيز الملفات لكن BookPod لم يقبل الطلب — تحقق من الإعدادات/السجلات' });
             return;
         }
+        await recordPrintJob({
+            source: 'theme',
+            title: `${childName || ''} — ${theme}`.trim(),
+            reference: theme,
+            coverPath,
+            interiorPages: (imagePaths || []).length,
+            quantity: 1,
+            coverSource: 'generated',
+            bookpodJobId: result.jobId ? String(result.jobId) : undefined,
+            shippingName: shipping.fullName,
+            shippingPhone: shipping.phone,
+            submittedBy: String(req.user?.email || ''),
+        });
         res.json({ success: true, jobId: result.jobId });
     }
     catch (err) {
@@ -679,27 +1142,76 @@ const generatePreviewIllustrations = async (req, res) => {
             return;
         }
         const childName = req.body?.childName || theme.label || 'الطفل';
+        // Which child the demo artwork depicts. This used to be fixed to
+        // PREVIEW_REFERENCE_PHOTO, so every theme's demo showed the same real
+        // child — and publishing a theme meant publishing that child's face, with
+        // no way to swap it short of an env var and a redeploy. The sibling
+        // photoreal/coloring endpoints already accepted an override; this one
+        // didn't, which is the only reason it was hard to change.
+        const referencePhoto = req.body?.referencePhoto || PREVIEW_REFERENCE_PHOTO;
         // Pull the text from the theme's pages (text entries only).
         const textPages = (theme.pages || [])
             .filter((p) => p && (p.text || typeof p === 'string'))
             .map((p) => substituteName(p.text || p, childName));
-        const generatedImages = [];
-        for (let i = 0; i < PREVIEW_IMAGE_PAGES; i++) {
-            const pageText = textPages[i] || textPages[textPages.length - 1] || `${childName} ${theme.label}`;
-            const prompt = (0, promptBuilder_1.buildIllustrationPrompt)({
-                pageText,
-                childName,
-                childAge: '5',
-                childGender: 'male',
-                theme: themeId,
-                language: 'ar',
-                pageNumber: i + 1,
-            });
-            const stored = await (0, ImageGenerator_1.generateIllustration)(prompt, PREVIEW_REFERENCE_PHOTO, {
+        // `only: 'cover'` redoes just the front cover and keeps the existing pages.
+        // A cover can be wrong while the 13 interiors are fine — that is exactly
+        // what happened to deep_sea — and redoing all 15 to fix one costs 15x.
+        const ONLY_VALUES = ['all', 'pages', 'cover', 'page', 'portrait'];
+        if (req.body?.only && !ONLY_VALUES.includes(req.body.only)) {
+            res.status(400).json({ success: false, message: `unknown only='${req.body.only}' — expected ${ONLY_VALUES.join(', ')}` });
+            return;
+        }
+        const coverOnly = req.body?.only === 'cover';
+        // The mirror image: redo the 13 interiors and keep the cover and portrait.
+        // Needed when a prompt fix applies to the pages but the cover came out well
+        // — regenerating it too would reroll a good image for nothing, since the
+        // model gives a different picture from the same prompt every time.
+        const pagesOnly = req.body?.only === 'pages';
+        // `only: 'page'` + `pageIndex` redoes ONE interior page. A single bad page
+        // in an otherwise good book is the common case, and redoing 13 to fix it
+        // costs 13x and rerolls twelve images that were already right.
+        const singlePage = req.body?.only === 'page' ? Number(req.body?.pageIndex) : 0;
+        // The back-cover portrait alone. Without this, `only: 'portrait'` fell
+        // through every guard and quietly regenerated all 13 pages as well —
+        // an unknown `only` value costing 13x instead of erroring.
+        const portraitOnly = req.body?.only === 'portrait';
+        const basePages = themeId.replace(/_(real|photoreal|cartoon|pr|hd)$/, '');
+        const sceneTplPages = sceneTemplates_1.SCENE_TEMPLATES[themeId] || sceneTemplates_1.SCENE_TEMPLATES[basePages];
+        const generatedImages = (coverOnly || singlePage || portraitOnly) ? [...(theme.generatedImages || [])] : [];
+        for (let i = 0; !coverOnly && !portraitOnly && i < PREVIEW_IMAGE_PAGES; i++) {
+            if (singlePage && i !== singlePage - 1)
+                continue;
+            // Prefer the theme's hand-written pageScenes, through the SAME call the
+            // printed book makes (BookBuilder). This path used to prompt from the
+            // Arabic page TEXT instead, so every scene prompt — the pinned outfit,
+            // the pinned characters, "no other people in frame" — was written,
+            // committed, and never sent. The demo pages were generated a completely
+            // different way from the book they advertise, and no amount of editing
+            // the scenes changed them.
+            //
+            // Falls back to the old text-derived prompt for themes with no template.
+            const pageScene = sceneTplPages?.pageScenes?.[i];
+            const prompt = pageScene
+                ? (0, sceneTemplates_1.buildScenePrompt)('page', pageScene, childName, 'male', {
+                    medal: (sceneTplPages.medalPages || []).includes(i + 1),
+                })
+                : (0, promptBuilder_1.buildIllustrationPrompt)({
+                    pageText: textPages[i] || textPages[textPages.length - 1] || `${childName} ${theme.label}`,
+                    childName,
+                    childAge: '5',
+                    childGender: 'male',
+                    theme: themeId,
+                    language: 'ar',
+                    pageNumber: i + 1,
+                });
+            const stored = await (0, ImageGenerator_1.generateIllustration)(prompt, referencePhoto, {
                 storyId: `theme_${themeId}`,
                 pageNumber: i + 1,
             });
-            generatedImages.push(stored.objectPath);
+            if (singlePage)
+                generatedImages[i] = stored.objectPath;
+            else
+                generatedImages.push(stored.objectPath);
         }
         // Persist the body images immediately so a later portrait/cover hiccup
         // can't waste the 13 we already paid for.
@@ -712,32 +1224,50 @@ const generatePreviewIllustrations = async (req, res) => {
             `warm smile, looking at the camera, soft cinematic studio lighting, gentle bokeh background in the ${theme.label} theme, ` +
             `rich vibrant saturated colors, professional CGI render quality. Centered. No text, no watermark.`;
         try {
-            const portrait = await (0, ImageGenerator_1.generateIllustration)(portraitPrompt, PREVIEW_REFERENCE_PHOTO, {
+            if (coverOnly || pagesOnly || singlePage)
+                throw new Error('__skip_portrait__');
+            const portraitFinal = sceneTplPages?.portraitScene
+                ? (0, sceneTemplates_1.buildScenePrompt)('portrait', sceneTplPages.portraitScene, childName, 'male')
+                : portraitPrompt;
+            const portrait = await (0, ImageGenerator_1.generateIllustration)(portraitFinal, referencePhoto, {
                 storyId: `theme_${themeId}`,
                 pageNumber: 99,
             });
             theme.generatedPortrait = portrait.objectPath;
         }
         catch (e) {
-            console.warn('[generatePreview] portrait failed:', e.message);
+            if (e.message !== '__skip_portrait__')
+                console.warn('[generatePreview] portrait failed:', e.message);
         }
         // Full-scene front cover — the hero kid inside the themed world (Taletoons
         // style). Uses concrete per-theme background objects (zoo => animals,
         // school => classroom/blackboard, space => planets/rocket, etc.).
-        const coverPrompt = (0, promptBuilder_1.buildCoverPrompt)({
-            childName,
-            childGender: 'male',
-            theme: themeId,
-        });
+        // Prefer the theme's own hand-written coverScene — the very same prompt the
+        // printed book and the customer's cover preview use, so the demo cover
+        // actually looks like the book it is advertising.
+        //
+        // buildCoverPrompt reads coverBackground(), whose map is keyed by the OLD
+        // short theme ids (ocean, dinosaurs, pirates…). Every newer id —
+        // deep_sea, ocean_adventure, toy_city, first_grade and the rest — misses
+        // and silently falls through to the generic "magical sparkles" case, which
+        // is how a Deep Sea book got a cover of rainbows, an owl and storybooks.
+        const baseThemeId = themeId.replace(/_(real|photoreal|cartoon|pr|hd)$/, '');
+        const sceneTpl = sceneTemplates_1.SCENE_TEMPLATES[themeId] || sceneTemplates_1.SCENE_TEMPLATES[baseThemeId];
+        const coverPrompt = sceneTpl?.coverScene
+            ? (0, sceneTemplates_1.buildScenePrompt)('cover', sceneTpl.coverScene, childName, 'male')
+            : (0, promptBuilder_1.buildCoverPrompt)({ childName, childGender: 'male', theme: themeId });
         try {
-            const cover = await (0, ImageGenerator_1.generateIllustration)(coverPrompt, PREVIEW_REFERENCE_PHOTO, {
+            if (pagesOnly || singlePage || portraitOnly)
+                throw new Error('__skip_cover__');
+            const cover = await (0, ImageGenerator_1.generateIllustration)(coverPrompt, referencePhoto, {
                 storyId: `theme_${themeId}`,
                 pageNumber: 0,
             });
             theme.generatedCover = cover.objectPath;
         }
         catch (e) {
-            console.warn('[generatePreview] cover failed:', e.message);
+            if (e.message !== '__skip_cover__')
+                console.warn('[generatePreview] cover failed:', e.message);
         }
         settings.markModified('themes');
         await settings.save();
@@ -921,4 +1451,370 @@ const generatePhotorealPreview = async (req, res) => {
     }
 };
 exports.generatePhotorealPreview = generatePhotorealPreview;
+/**
+ * Re-impose a supplied PDF onto a chosen trim size and store it, print-ready.
+ *
+ * For books the owner already has as a finished file — their own titles, a
+ * public-domain work, or a customer's manuscript they print as a service. The
+ * generated Magic Fanoos books do not come through here; PrintService lays
+ * those out from scratch.
+ *
+ * Deliberately does no rights checking: it cannot. Whether a given PDF may be
+ * reprinted is the owner's call, and the dashboard says so next to the upload.
+ */
+const importBookPdf = async (req, res) => {
+    try {
+        const file = req.file;
+        if (!file?.buffer?.length) {
+            res.status(400).json({ success: false, message: 'لم يتم استلام ملف PDF.' });
+            return;
+        }
+        if (file.mimetype && !String(file.mimetype).includes('pdf')) {
+            res.status(400).json({ success: false, message: 'الملف ليس PDF.' });
+            return;
+        }
+        const widthMm = Number(req.body?.widthMm) || 150;
+        const heightMm = Number(req.body?.heightMm) || 220;
+        const bleedMm = req.body?.bleedMm !== undefined ? Number(req.body.bleedMm) : 3;
+        const title = String(req.body?.title || 'book').trim().replace(/[^\w\u0600-\u06FF-]+/g, '_').slice(0, 60) || 'book';
+        const result = await (0, BookImportService_1.reimposePdf)(file.buffer, { widthMm, heightMm, bleedMm });
+        const stamp = `${Date.now()}_${title}_${widthMm}x${heightMm}`;
+        const objectPath = (0, StorageService_1.pdfFolderPath)('imported', `${stamp}.pdf`);
+        const stored = await (0, StorageService_1.uploadBuffer)(result.pdf, objectPath, 'application/pdf');
+        // BookPod's create-book takes cover and interior as separate files, so split
+        // now — the send button later just points at these two paths.
+        let coverPath;
+        let interiorPath;
+        let interiorPages = 0;
+        try {
+            const split = await (0, BookImportService_1.splitCoverInterior)(result.pdf);
+            coverPath = (0, StorageService_1.pdfFolderPath)('imported', `${stamp}_cover.pdf`);
+            interiorPath = (0, StorageService_1.pdfFolderPath)('imported', `${stamp}_interior.pdf`);
+            await (0, StorageService_1.uploadBuffer)(split.cover, coverPath, 'application/pdf');
+            await (0, StorageService_1.uploadBuffer)(split.interior, interiorPath, 'application/pdf');
+            interiorPages = split.interiorPages;
+        }
+        catch (e) {
+            // A one-page PDF cannot be split. The re-imposed file is still useful on
+            // its own, so return it and let the dashboard hide the send button.
+            console.warn('[importBookPdf] split skipped:', e?.message || e);
+        }
+        res.json({
+            success: true,
+            url: stored.signedUrl,
+            objectPath,
+            pageCount: result.pageCount,
+            sourceWidthMm: result.sourceWidthMm,
+            sourceHeightMm: result.sourceHeightMm,
+            widthMm, heightMm, bleedMm,
+            coverPath, interiorPath, interiorPages,
+            fitScale: result.fitScale,
+            // The dashboard warns on this: different proportions mean the margins
+            // move, which the owner should see before sending it to print.
+            aspectChanged: result.aspectChanged,
+        });
+    }
+    catch (err) {
+        const raw = String(err?.message || err);
+        console.error('[importBookPdf]', raw);
+        // pdf-lib's parse errors are English and internal ("Can't embed page with
+        // missing Contents"). Say what the owner can act on instead.
+        const damaged = /embed|missing|parse|Invalid PDF|stream|xref|encrypt/i.test(raw);
+        res.status(damaged ? 400 : 500).json({
+            success: false,
+            message: damaged
+                ? 'تعذّر قراءة ملف PDF — قد يكون تالفاً أو محمياً بكلمة مرور. جرّب تصديره من جديد ثم أعد المحاولة.'
+                : 'فشل تجهيز الملف.',
+            detail: raw.slice(0, 200),
+        });
+    }
+};
+exports.importBookPdf = importBookPdf;
+/**
+ * Send an already-imported book to BookPod as a real print job.
+ *
+ * Separate from the import on purpose: importing is free and repeatable, this
+ * spends money and produces physical copies, so it is its own deliberate act
+ * with its own confirmation in the dashboard.
+ *
+ * Self-pickup by default — the owner printing their own stock collects from
+ * BookPod, which needs only a name and phone rather than a delivery address.
+ */
+const submitImportedBook = async (req, res) => {
+    try {
+        if (!(0, BookPodService_1.isBookPodConfigured)()) {
+            res.status(503).json({ success: false, message: 'BookPod غير مهيأ — لم يتم ضبط بيانات الدخول.' });
+            return;
+        }
+        const { coverPath, interiorPath, title, quantity, widthMm, heightMm, name, phone, email, isColoring } = req.body || {};
+        if (!coverPath || !interiorPath) {
+            res.status(400).json({ success: false, message: 'ينقص ملف الغلاف أو الداخل — أعد استيراد الكتاب أولاً.' });
+            return;
+        }
+        if (!String(name || '').trim() || !String(phone || '').trim()) {
+            res.status(400).json({ success: false, message: 'أدخل اسم المستلم ورقم الهاتف.' });
+            return;
+        }
+        const qty = Math.max(1, Math.min(Number(quantity) || 1, 500));
+        const job = await (0, BookPodService_1.submitPrintJob)({
+            // Unique per submission: BookPod rejects a repeated reference, and this
+            // is also what PaymentPoller matches on.
+            externalId: `import_${Date.now()}`,
+            title: String(title || 'Imported book').slice(0, 120),
+            isColoring: !!isColoring,
+            // Imported books are the owner's own files; Arabic is the common case
+            // here and is what their existing catalogue uses.
+            readingDirection: 'right',
+            widthCm: (Number(widthMm) || 150) / 10,
+            heightCm: (Number(heightMm) || 220) / 10,
+            bleed: true,
+            coverPath: String(coverPath),
+            interiorPath: String(interiorPath),
+            quantity: qty,
+            shipping: {
+                name: String(name).trim(),
+                phone: String(phone).trim(),
+                email: String(email || '').trim() || undefined,
+                method: 'pickup',
+            },
+        });
+        await recordPrintJob({
+            source: 'imported',
+            title: String(title || 'Imported book').slice(0, 120),
+            reference: String(interiorPath).split('/').pop(),
+            coverPath: String(coverPath),
+            interiorPath: String(interiorPath),
+            quantity: qty,
+            widthMm: Number(widthMm) || undefined,
+            heightMm: Number(heightMm) || undefined,
+            // Which cover actually went is the question that could not be answered
+            // when a send looked wrong: page 1 of the book, or one supplied instead.
+            coverSource: (0, ImportedCoverService_1.coverSourceFor)(String(coverPath)),
+            bookpodJobId: job.jobId ? String(job.jobId) : undefined,
+            bookpodBookId: job.bookId ? String(job.bookId) : undefined,
+            shippingName: String(name).trim(),
+            shippingPhone: String(phone).trim(),
+            submittedBy: String(req.user?.email || ''),
+        });
+        res.json({ success: true, jobId: job.jobId, bookId: job.bookId, status: job.status, quantity: qty });
+    }
+    catch (err) {
+        console.error('[submitImportedBook]', err?.message || err);
+        res.status(500).json({ success: false, message: err?.message || 'فشل الإرسال إلى BookPod.' });
+    }
+};
+exports.submitImportedBook = submitImportedBook;
+/**
+ * Design a cover for an imported book.
+ *
+ * The importer's "cover" is page 1 of the supplied PDF, which for a manuscript
+ * exported from Word is a page of body text. This generates real cover art from
+ * what the owner says the book is about and lays it out as a wraparound (back +
+ * spine + front) at the book's own trim — one paid image (~$0.039).
+ */
+const designImportedCover = async (req, res) => {
+    try {
+        const { title, subject, author, widthMm, heightMm, interiorPages, rtl } = req.body || {};
+        if (!String(title || '').trim()) {
+            res.status(400).json({ success: false, message: 'أدخل عنوان الكتاب أولاً.' });
+            return;
+        }
+        const pages = Number(interiorPages);
+        if (!Number.isFinite(pages) || pages < 1) {
+            res.status(400).json({ success: false, message: 'عدد صفحات الكتاب غير معروف — استورد الملف أولاً.' });
+            return;
+        }
+        const result = await (0, ImportedCoverService_1.buildImportedCover)({
+            title: String(title).trim(),
+            subject: String(subject || '').trim() || undefined,
+            author: String(author || '').trim() || undefined,
+            widthMm: Number(widthMm) || 150,
+            heightMm: Number(heightMm) || 220,
+            interiorPages: pages,
+            rtl: rtl !== false,
+        });
+        // Prefer the flat render of the FINISHED layout — it shows the title, the
+        // spine and where the fold lands, which the raw art does not.
+        res.json({
+            success: true,
+            ...result,
+            previewUrl: (0, PrintService_1.publicProxyUrl)(result.previewPath || result.artPath),
+        });
+    }
+    catch (err) {
+        console.error('[designImportedCover]', err?.message || err);
+        res.status(500).json({ success: false, message: err?.message || 'تعذّر تصميم الغلاف.' });
+    }
+};
+exports.designImportedCover = designImportedCover;
+/**
+ * Use the owner's OWN cover for an imported book.
+ *
+ * The importer takes page 1 of the supplied PDF, and designImportedCover draws
+ * one — but neither helps when the owner already HAS the cover, which for a
+ * real title is the normal case: a designer made it, and it is the only cover
+ * that may legitimately go on that book.
+ *
+ * A PDF is taken as-is: it is already the artwork the printer should receive,
+ * and re-laying it out would only degrade it. An IMAGE is composed into the
+ * same wraparound the designer produces (back + spine + front, title typeset),
+ * because a bare JPEG is not a print file.
+ */
+const uploadImportedCover = async (req, res) => {
+    try {
+        const file = req.file;
+        if (!file?.buffer?.length) {
+            res.status(400).json({ success: false, message: 'لم يتم استلام ملف الغلاف.' });
+            return;
+        }
+        const { title, author, widthMm, heightMm, interiorPages, rtl } = req.body || {};
+        const mime = String(file.mimetype || '');
+        const stamp = Date.now();
+        if (mime.includes('pdf')) {
+            const info = await (0, BookImportService_1.inspectPdf)(file.buffer);
+            const coverPath = (0, StorageService_1.pdfFolderPath)('imported', `${stamp}_own-cover.pdf`);
+            await (0, StorageService_1.uploadBuffer)(file.buffer, coverPath, 'application/pdf');
+            res.json({
+                success: true,
+                coverPath,
+                source: 'upload-pdf',
+                pageCount: info.pageCount,
+                widthMm: info.sourceWidthMm,
+                heightMm: info.sourceHeightMm,
+                // Said plainly rather than silently accepted: a printer expects ONE
+                // sheet, and a multi-page upload is usually a whole book by mistake.
+                warning: info.pageCount > 1
+                    ? `الملف يحتوي ${info.pageCount} صفحات — يُرسل كما هو، وعادةً يكون الغلاف صفحة واحدة.`
+                    : undefined,
+            });
+            return;
+        }
+        if (!mime.startsWith('image/')) {
+            res.status(400).json({ success: false, message: 'الغلاف يجب أن يكون PDF أو صورة.' });
+            return;
+        }
+        const pages = Number(interiorPages);
+        if (!Number.isFinite(pages) || pages < 1) {
+            res.status(400).json({ success: false, message: 'عدد صفحات الكتاب غير معروف — استورد الملف أولاً.' });
+            return;
+        }
+        const ext = mime.includes('png') ? 'png' : 'jpg';
+        const artPath = (0, StorageService_1.pdfFolderPath)('imported', `${stamp}_own-cover-art.${ext}`);
+        await (0, StorageService_1.uploadBuffer)(file.buffer, artPath, mime);
+        const result = await (0, ImportedCoverService_1.composeImportedCover)(artPath, {
+            // The owner's own artwork is printed AS THEY GAVE IT. Typesetting our
+            // title over a cover somebody already designed does not leave it their
+            // cover any more, which is the whole reason they uploaded one.
+            mode: 'asis',
+            title: String(title || '').trim() || 'Imported book',
+            author: String(author || '').trim() || undefined,
+            widthMm: Number(widthMm) || 150,
+            heightMm: Number(heightMm) || 220,
+            interiorPages: pages,
+            rtl: rtl !== 'false' && rtl !== false,
+        });
+        res.json({ success: true, ...result, source: 'upload-image', previewUrl: (0, PrintService_1.publicProxyUrl)(result.previewPath || artPath) });
+    }
+    catch (err) {
+        console.error('[uploadImportedCover]', err?.message || err);
+        res.status(500).json({ success: false, message: err?.message || 'تعذّر رفع الغلاف.' });
+    }
+};
+exports.uploadImportedCover = uploadImportedCover;
+/** The most recent books sent to the printer, newest first. */
+const listPrintJobs = async (req, res) => {
+    try {
+        const limit = Math.min(Math.max(Number(req.query.limit) || 30, 1), 200);
+        const jobs = await PrintJob_1.default.find({}).sort({ createdAt: -1 }).limit(limit).lean();
+        res.json({ success: true, count: jobs.length, jobs });
+    }
+    catch (err) {
+        console.error('[listPrintJobs]', err?.message || err);
+        res.status(500).json({ success: false, message: err?.message || 'تعذّر جلب سجل الإرسال.' });
+    }
+};
+exports.listPrintJobs = listPrintJobs;
+/**
+ * Which demo books are complete enough to send to the printer.
+ *
+ * Answers from STORAGE rather than the theme record: the seed writes the
+ * expected object paths before anything is generated, so a book can read as
+ * ready while its images 404 — and a print run is real money. Nineteen books is
+ * also too many to check by opening every page.
+ */
+const getPrintReadiness = async (_req, res) => {
+    try {
+        const settings = await SiteSettings_1.default.findOne();
+        if (!settings) {
+            res.status(404).json({ success: false, message: 'settings not found' });
+            return;
+        }
+        // Only themes that are meant to be a full story — a theme with no scenes has
+        // no 13 pages to be missing.
+        const themes = (settings.themes || [])
+            .filter((t) => !!sceneTemplates_1.SCENE_TEMPLATES[t.id]?.pageScenes?.length)
+            .map((t) => ({ id: t.id, label: t.label }));
+        const books = await (0, PrintReadiness_1.checkThemes)(themes);
+        const ready = books.filter((b) => b.ready);
+        res.json({
+            success: true,
+            total: books.length,
+            readyCount: ready.length,
+            books: books.sort((a, b) => Number(b.ready) - Number(a.ready) || a.id.localeCompare(b.id)),
+        });
+    }
+    catch (err) {
+        console.error('[getPrintReadiness]', err?.message || err);
+        res.status(500).json({ success: false, message: err?.message || 'تعذّر فحص جاهزية الكتب.' });
+    }
+};
+exports.getPrintReadiness = getPrintReadiness;
+/**
+ * List and delete the files produced by the book importer.
+ *
+ * Deletion is hard-fenced to the `imported/` prefix. The same bucket holds
+ * every generated book, every customer's uploaded photo and every print file,
+ * so an endpoint that took arbitrary object paths would be one bad request away
+ * from destroying work that cannot be regenerated. Anything outside the fence
+ * is refused, not merely discouraged.
+ */
+const IMPORTED_PREFIX = () => (0, StorageService_1.pdfFolderPath)('imported') + '/';
+const listImportedFiles = async (_req, res) => {
+    try {
+        const files = await (0, StorageService_1.listObjects)(IMPORTED_PREFIX());
+        res.json({ success: true, files, prefix: IMPORTED_PREFIX() });
+    }
+    catch (err) {
+        console.error('[listImportedFiles]', err?.message || err);
+        res.status(500).json({ success: false, message: err?.message || 'فشل جلب الملفات.' });
+    }
+};
+exports.listImportedFiles = listImportedFiles;
+const deleteImportedFiles = async (req, res) => {
+    try {
+        const paths = Array.isArray(req.body?.paths) ? req.body.paths.map(String) : [];
+        if (paths.length === 0) {
+            res.status(400).json({ success: false, message: 'لم تحدد أي ملف للحذف.' });
+            return;
+        }
+        const fence = IMPORTED_PREFIX();
+        const outside = paths.filter((p) => !p.startsWith(fence) || p.includes('..'));
+        if (outside.length > 0) {
+            res.status(400).json({
+                success: false,
+                message: 'الحذف مسموح فقط داخل مجلد الكتب المستوردة.',
+                refused: outside,
+            });
+            return;
+        }
+        for (const p of paths)
+            await (0, StorageService_1.deleteObject)(p);
+        res.json({ success: true, deleted: paths.length });
+    }
+    catch (err) {
+        console.error('[deleteImportedFiles]', err?.message || err);
+        res.status(500).json({ success: false, message: err?.message || 'فشل الحذف.' });
+    }
+};
+exports.deleteImportedFiles = deleteImportedFiles;
 //# sourceMappingURL=adminController.js.map

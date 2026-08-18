@@ -22,6 +22,22 @@ const createCheckout = async (req, res) => {
             res.status(404).json({ success: false, message: 'القصة غير موجودة' });
             return;
         }
+        // Every package illustrates the child, and the illustrator needs a reference
+        // photo — ImageGenerator throws "childPhotoUrl is empty" on the first page
+        // otherwise. Without this check the customer pays first and the build dies
+        // afterwards, which is exactly what happened to order 57E628CB: paid, then
+        // failed at 0% and sat there. Refuse the order instead of taking money for a
+        // book that cannot be produced. This is the backstop for the dashboard's
+        // "allow ordering without a photo" flag, which would otherwise reintroduce
+        // the same guaranteed failure the moment it is switched on.
+        if (!String(story.childPhotoUrl || '').trim()) {
+            res.status(400).json({
+                success: false,
+                message: 'نحتاج صورة الطفل لإنشاء الرسومات — ارجع إلى الخطوة الأولى وأضف صورة قبل إتمام الطلب.',
+                code: 'CHILD_PHOTO_REQUIRED',
+            });
+            return;
+        }
         // Resolve the price SERVER-SIDE from the chosen package so the client can't
         // tamper with it. Persist the package on the story — it decides the
         // generation style (color book vs line-art coloring book) after payment.
@@ -40,7 +56,8 @@ const createCheckout = async (req, res) => {
             storyId,
             shippingAddress,
             totalPrice,
-            currency: 'SAR',
+            currency: 'ILS',
+            paymentMethod: paymentMethod === 'cash' ? 'cash' : 'card',
             paymentStatus: 'pending',
         });
         // Cash on delivery / self-pickup — no online payment. The order is placed
@@ -48,6 +65,24 @@ const createCheckout = async (req, res) => {
         // delivery confirmation) marks it paid via /admin/orders/:id/build.
         if (paymentMethod === 'cash') {
             res.json({ success: true, order, checkoutUrl: null, paymentMethod: 'cash' });
+            return;
+        }
+        // ── BookPod hosted checkout ────────────────────────────────────────────
+        // The customer pays on BookPod's own page, so card details never reach this
+        // server and the store stays out of PCI scope. Their API has no endpoint
+        // that mints a payment link, so the URL they give us is configured once and
+        // the order's id rides along as the reference — the same id BookPod echoes
+        // back as external_id, which is how PaymentPoller already matches a payment
+        // to an order without a webhook.
+        //
+        // Unset until BookPod supplies the link; the wizard hides card payment
+        // entirely in that case, so nobody can reach this branch by accident.
+        const bookPodPayUrl = (process.env.BOOKPOD_PAYMENT_URL || '').trim();
+        if (bookPodPayUrl) {
+            const sep = bookPodPayUrl.includes('?') ? '&' : '?';
+            const checkoutUrl = `${bookPodPayUrl}${sep}reference=${encodeURIComponent(String(order._id))}` +
+                `&amount=${encodeURIComponent(String(totalPrice))}`;
+            res.json({ success: true, order, checkoutUrl, paymentMethod: 'card', provider: 'bookpod' });
             return;
         }
         if (!stripe) {
@@ -62,8 +97,8 @@ const createCheckout = async (req, res) => {
             line_items: [
                 {
                     price_data: {
-                        currency: 'sar',
-                        // SAR is a 2-decimal currency → amount is in halalas.
+                        currency: 'ils',
+                        // ILS is a 2-decimal currency → amount is in agorot.
                         unit_amount: Math.round(totalPrice * 100),
                         product_data: {
                             name: `كتاب ${story.childName} — ${story.theme}`,
@@ -154,7 +189,9 @@ const getMyOrders = async (req, res) => {
     try {
         const userId = req.user._id;
         const orders = await Order_1.default.find({ userId })
-            .populate('storyId', 'childName theme coverImageUrl status')
+            // bookPackage lives on the Story, and the order-details view shows it —
+            // without it here the customer's "الباقة" row rendered as a dash.
+            .populate('storyId', 'childName theme coverImageUrl status bookPackage')
             .sort({ createdAt: -1 });
         res.json({ success: true, orders });
     }

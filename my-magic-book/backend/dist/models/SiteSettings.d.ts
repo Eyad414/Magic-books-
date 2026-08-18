@@ -7,6 +7,21 @@ export interface IBookPackage {
     desc: string;
     /** Admin toggle: when true the package is hidden from customers (Step 2 & 3). */
     hidden?: boolean;
+    /**
+     * Per-language overrides, same shape the themes use. `label`/`desc` hold the
+     * Arabic the owner types in the dashboard; without these an English or
+     * Hebrew customer kept seeing the built-in translation and never the rename.
+     */
+    titles?: {
+        ar?: string;
+        en?: string;
+        he?: string;
+    };
+    descriptions?: {
+        ar?: string;
+        en?: string;
+        he?: string;
+    };
 }
 export interface ITheme {
     id: string;
@@ -31,6 +46,14 @@ export interface ITheme {
     pages?: any[];
     /** Admin-controlled gate: only `ready` themes are shown in the customer wizard. */
     ready: boolean;
+    /**
+     * Stories that belong together as a numbered set ("الجزء ١/٢"). `series` is
+     * the shared key, `seriesPart` the order within it. A series with only one
+     * ready part shows no badge — a lone "part 1" reads like a mistake.
+     */
+    series?: string;
+    seriesName?: string;
+    seriesPart?: number;
     /** Cached Nano-Banana preview images (GCS object paths), one per body image page. */
     generatedImages?: string[];
     /** Cached Nano-Banana back-cover portrait (GCS object path). */
@@ -57,9 +80,24 @@ export interface IHomeStats {
     readyStories: string;
     rating: string;
 }
+/**
+ * Per-card visibility for the built-in demo books. Those cards are hardcoded in
+ * the frontend and have no Story document, so their "show on the home page" /
+ * "show on the Stories page" toggles need somewhere to live. Keyed by the
+ * card's `key` (e.g. 'lora-toycity').
+ *
+ * Demo books built from a REAL child's photo (Lora, Sara, Julia) default to
+ * hidden on both surfaces — publishing a real child's face has to be a
+ * deliberate click, never a default.
+ */
+export interface IDemoCardVisibility {
+    home?: boolean;
+    stories?: boolean;
+}
 export interface ISiteSettings extends Document {
     bookPackages: IBookPackage[];
     themes: ITheme[];
+    demoCards?: Record<string, IDemoCardVisibility>;
     homeStats?: IHomeStats;
     /** Wizard step 1: show the "no photo" button so a customer can order without
      *  uploading a child photo. Off by default — the photo is required. */

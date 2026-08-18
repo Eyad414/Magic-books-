@@ -294,6 +294,13 @@ export default function AdminDashboard() {
 
   // Admin-only: download the print-ready files (cover + interior PDFs) so they
   // can be archived or sent to a print shop manually.
+  const loadPrintJobs = async () => {
+    try {
+      const res = await adminApi.getPrintJobs(30);
+      if (res.success) setPrintJobs(res.jobs);
+    } catch { /* the log is informational; a failure here changes nothing */ }
+  };
+
   const loadReadiness = async () => {
     if (readinessBusy) return;
     setReadinessBusy(true);
@@ -302,6 +309,7 @@ export default function AdminDashboard() {
       const res = await adminApi.getPrintReadiness();
       if (res.success) {
         setReadiness(res);
+        loadPrintJobs();
         toast.success(
           t('admin.readiness_done', '{{ready}} من {{total}} كتاب جاهز للإرسال', { ready: res.readyCount, total: res.total }),
           { id: toastId },
@@ -920,6 +928,10 @@ export default function AdminDashboard() {
   // theme's folder, which is slower than a page render should be.
   const [readiness, setReadiness] = useState<any>(null);
   const [readinessBusy, setReadinessBusy] = useState(false);
+  // A log of what was actually sent to the printer. Demo books and imported
+  // PDFs kept no record at all, so when the boxes arrive there was nothing to
+  // match them against — and when a send looked wrong, nothing to audit.
+  const [printJobs, setPrintJobs] = useState<any[] | null>(null);
   // Free-text search over the ORDERS list. The card shows a short id like
   // #C496F510, which is the handle used to talk about an order — but there was
   // no way to look one up by it, so finding a specific order meant scrolling
@@ -2302,6 +2314,36 @@ export default function AdminDashboard() {
                           )}
                         </div>
                       ))}
+                    </div>
+                  )}
+
+                  {/* What was actually SENT. Customer orders carry their BookPod
+                      job on the order card; demo books and imported PDFs kept
+                      nothing, so a print run left no trace anywhere. */}
+                  {printJobs && printJobs.length > 0 && (
+                    <div className="mt-4 pt-3 border-t border-white/10">
+                      <p className="font-arabic text-white/70 text-[11px] font-bold mb-1.5">
+                        📦 {t('admin.sent_log_title', 'آخر ما أُرسل للطباعة')}
+                      </p>
+                      <div className="space-y-1">
+                        {printJobs.slice(0, 8).map((j: any) => (
+                          <div key={j._id} className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-arabic text-white/60">
+                            <span className="text-white/35" dir="ltr">{new Date(j.createdAt).toLocaleDateString()}</span>
+                            <span className="text-white/85 truncate max-w-[45%]">{j.title}</span>
+                            {j.bookpodJobId && (
+                              <span className="px-1.5 py-0.5 rounded bg-magic-500/20 text-magic-200" dir="ltr">#{j.bookpodJobId}</span>
+                            )}
+                            {j.quantity > 1 && <span className="text-white/40">× {j.quantity}</span>}
+                            {j.coverSource && (
+                              <span className="text-white/40">
+                                {j.coverSource === 'page-1'
+                                  ? t('admin.sent_cover_page1', 'الغلاف: الصفحة ١')
+                                  : t('admin.sent_cover_own', 'الغلاف: ملف منفصل')}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

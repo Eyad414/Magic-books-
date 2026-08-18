@@ -54,12 +54,22 @@ const OrderSchema = new mongoose_1.Schema({
     storyId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Story', required: true },
     shippingAddress: { type: ShippingAddressSchema, required: true },
     totalPrice: { type: Number, required: true },
-    currency: { type: String, default: 'SAR' },
+    // The store sells in Israel and always has: a 70 here has always meant 70
+    // shekels. It was labelled SAR from an early Saudi-market assumption, so
+    // every order card read "70 SAR" for a price nobody ever charged in riyals.
+    currency: { type: String, default: 'ILS' },
+    paymentMethod: { type: String, enum: ['cash', 'card'], default: 'card' },
     paymentStatus: {
         type: String,
         enum: ['pending', 'paid', 'failed', 'refunded'],
         default: 'pending',
     },
+    // Who confirmed a payment by hand, and when. BookPod has no webhook and no
+    // lookup for a reference that has no print job yet, so a card payment is
+    // confirmed by a person reading their BookPod account. That is fine, but it
+    // must leave a trace: "why is this order paid" needs an answer later.
+    paidAt: { type: Date },
+    paidConfirmedBy: { type: String },
     stripeSessionId: { type: String },
     stripePaymentIntentId: { type: String },
     illustrationsStatus: {
@@ -68,6 +78,8 @@ const OrderSchema = new mongoose_1.Schema({
         default: 'pending',
     },
     illustrationsError: { type: String },
+    buildProgress: { type: Number, default: 0 },
+    buildStage: { type: String },
     bookPdfUrl: { type: String },
     printCoverUrl: { type: String },
     printInteriorUrl: { type: String },

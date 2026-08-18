@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.COST_PER_IMAGE_USD = void 0;
 exports.imagesGeneratedSoFar = imagesGeneratedSoFar;
+exports.generateImageFromPrompt = generateImageFromPrompt;
 exports.generateIllustration = generateIllustration;
 const storage_1 = require("@google-cloud/storage");
 const StorageService_1 = require("./StorageService");
@@ -72,6 +73,45 @@ async function generateContentRetrying(request) {
  *
  * Cost: ~$0.039 per image as of late 2025. Only ever called from BookBuilder.
  */
+/**
+ * Generate an image from a prompt ALONE, with no reference photo.
+ *
+ * generateIllustration always sends the child's photo, because a personalised
+ * book's whole point is that the child is in it. An IMPORTED book has no child
+ * — it is somebody's finished manuscript — so its cover has nothing to
+ * reference and that function refuses ("childPhotoUrl is empty"). Same model,
+ * same retry and storage behaviour, minus the reference part.
+ */
+async function generateImageFromPrompt(prompt, opts = {}) {
+    const MAX_ATTEMPTS = 3;
+    let imgPart = null;
+    let lastDiag = '';
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        const promptText = attempt === 1 ? prompt : `${prompt}\n\nOutput an IMAGE only. Do not reply with text.`;
+        const response = await generateContentRetrying({
+            model: MODEL,
+            contents: [{ role: 'user', parts: [{ text: promptText }] }],
+        });
+        const parts = response.candidates?.[0]?.content?.parts ?? [];
+        imgPart = parts.find((p) => p.inlineData?.data);
+        if (imgPart?.inlineData?.data)
+            break;
+        lastDiag =
+            `attempt ${attempt}: finishReason=${response.candidates?.[0]?.finishReason ?? 'unknown'}`;
+        console.warn(`[ImageGenerator] no image (${lastDiag}), retrying...`);
+    }
+    if (!imgPart?.inlineData?.data) {
+        throw new Error(`Gemini returned no image after ${MAX_ATTEMPTS} attempts. ${lastDiag}`);
+    }
+    const imgBuffer = Buffer.from(imgPart.inlineData.data, 'base64');
+    const contentType = imgPart.inlineData.mimeType || 'image/png';
+    const ext = contentType.includes('jpeg') ? 'jpg' : 'png';
+    const objectPath = (0, StorageService_1.pdfFolderPath)(opts.folder || 'generated', opts.filename || `${Date.now()}.${ext}`);
+    _imagesGenerated += 1;
+    console.log(`[ImageGenerator] image #${_imagesGenerated} → ${objectPath} ` +
+        `(~$${exports.COST_PER_IMAGE_USD.toFixed(3)}, session total ~$${(_imagesGenerated * exports.COST_PER_IMAGE_USD).toFixed(2)})`);
+    return (0, StorageService_1.uploadBuffer)(imgBuffer, objectPath, contentType);
+}
 async function generateIllustration(prompt, childPhotoUrl, opts = {}) {
     const { mimeType, base64 } = await fetchReferenceImage(childPhotoUrl);
     // Gemini occasionally answers with text instead of an image (finishReason STOP).

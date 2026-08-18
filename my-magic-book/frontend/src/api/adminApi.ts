@@ -31,6 +31,12 @@ export const adminApi = {
     return response.data;
   },
 
+  /** Log of books sent to the printer (demo books and imported PDFs). */
+  getPrintJobs: async (limit = 30) => {
+    const response = await axiosInstance.get('/admin/print-jobs', { params: { limit } });
+    return response.data;
+  },
+
   getSettings: async () => {
     const response = await axiosInstance.get('/admin/settings');
     return response.data;

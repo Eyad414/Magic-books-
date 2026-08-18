@@ -5,7 +5,65 @@
 // Needs RESEND_API_KEY. Sender defaults to Resend's shared onboarding domain,
 // which can send to the address you registered with Resend (our admin inbox).
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.sendPasswordReset = sendPasswordReset;
 exports.sendAdminNotification = sendAdminNotification;
+/**
+ * Send a customer their password-reset link.
+ *
+ * Unlike the contact form, this goes to a CUSTOMER's address, and that matters:
+ * Resend's shared `onboarding@resend.dev` sender may only deliver to the
+ * address the Resend account was registered with. Until a real domain is
+ * verified in Resend and RESEND_FROM points at it, every reset mail to a
+ * customer is rejected — so this reports whether it actually sent, and the
+ * caller logs a loud warning. The HTTP response stays deliberately vague
+ * either way (see forgotPassword) so nobody can probe which emails exist.
+ */
+async function sendPasswordReset(data) {
+    const from = process.env.RESEND_FROM || 'Magic Fanoos <onboarding@resend.dev>';
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey || apiKey === 'your_resend_api_key') {
+        console.warn('⚠️ Resend not configured — password reset link NOT emailed.');
+        console.log(`[Mailer] reset link for ${data.to}: ${data.resetUrl}`);
+        return false;
+    }
+    const greeting = data.name ? `مرحباً ${data.name}` : 'مرحباً';
+    const text = `${greeting},
+
+وصلنا طلب لإعادة تعيين كلمة المرور لحسابك في الفانوس السحري.
+
+افتح هذا الرابط لاختيار كلمة مرور جديدة (صالح لمدة ساعة واحدة):
+${data.resetUrl}
+
+إذا لم تطلب ذلك، تجاهل هذه الرسالة — كلمة مرورك لم تتغير.`;
+    const html = `
+    <div style="font-family: Arial, sans-serif; direction: rtl; text-align: right; padding: 24px; max-width: 560px; margin: 0 auto; background-color: #fafafa; border: 1px solid #eee; border-radius: 8px;">
+      <h2 style="color: #6d28d9; margin-top: 0;">🔑 إعادة تعيين كلمة المرور</h2>
+      <p style="color: #333; line-height: 1.7;">${greeting}، وصلنا طلب لإعادة تعيين كلمة المرور لحسابك في <strong>الفانوس السحري</strong>.</p>
+      <p style="text-align: center; margin: 28px 0;">
+        <a href="${data.resetUrl}" style="background-color: #6d28d9; color: #fff; text-decoration: none; padding: 12px 28px; border-radius: 6px; display: inline-block; font-weight: bold;">اختيار كلمة مرور جديدة</a>
+      </p>
+      <p style="color: #666; font-size: 13px;">الرابط صالح لمدة ساعة واحدة. إذا لم تطلب ذلك، تجاهل هذه الرسالة — كلمة مرورك لم تتغير.</p>
+      <p style="font-size: 11px; color: #999; margin-top: 24px; border-top: 1px solid #eee; padding-top: 10px;">الفانوس السحري · magicfanoos.com</p>
+    </div>
+  `;
+    try {
+        const res = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ from, to: [data.to], subject: 'إعادة تعيين كلمة المرور — الفانوس السحري', text, html }),
+        });
+        if (!res.ok) {
+            const body = await res.text().catch(() => '');
+            throw new Error(`Resend API ${res.status}: ${body.slice(0, 300)}`);
+        }
+        console.log(`[Mailer] password reset sent to ${data.to}`);
+        return true;
+    }
+    catch (error) {
+        console.error('❌ Resend Error: password reset email failed:', error);
+        return false;
+    }
+}
 async function sendAdminNotification(data) {
     const adminEmail = process.env.CONTACT_TO || 'eyadat720@gmail.com';
     const from = process.env.RESEND_FROM || 'Magic Fanoos <onboarding@resend.dev>';

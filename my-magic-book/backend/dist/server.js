@@ -6,9 +6,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // Load .env FIRST — before any import whose module-level code reads process.env
 // (e.g. the Stripe client in orderController is created at import time).
 require("dotenv/config");
+const crypto_1 = require("crypto");
+const mongoose_1 = __importDefault(require("mongoose"));
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const db_1 = require("./config/db");
+const PaymentPoller_1 = require("./services/PaymentPoller");
 const resetAdmin_1 = require("./utils/resetAdmin");
 // Routes
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
@@ -27,6 +30,9 @@ const PORT = process.env.PORT || 5001;
 // Connect Database, then run the one-shot admin reset if RESET_ADMIN_PASSWORD is set
 (0, db_1.connectDB)().then(() => {
     (0, resetAdmin_1.maybeResetAdmin)();
+    // BookPod has no webhook, so we ask it who paid. Starts only after the DB is
+    // up — the poller reads Orders on its first tick.
+    (0, PaymentPoller_1.startPaymentPolling)();
 });
 // Middleware
 // In production, set CORS_ORIGINS to a comma-separated allowlist
@@ -68,6 +74,37 @@ app.get('/api/health', async (req, res) => {
         },
         // Which story scene-templates this build knows about (confirms deploys).
         stories: Object.keys(sceneTemplates_1.SCENE_TEMPLATES),
+        // Fingerprint of the actual scene PROMPTS. The list above only names the
+        // stories, so it stays identical when a prompt is rewritten — and firing a
+        // regeneration at a server still running the old prompt spends real money
+        // to reproduce the bug it was meant to fix. This changes whenever any
+        // prompt does, so a deploy can be confirmed before paying for images.
+        scenesHash: (0, crypto_1.createHash)('sha1').update(JSON.stringify(sceneTemplates_1.SCENE_TEMPLATES)).digest('hex').slice(0, 12),
+        // Mail config — booleans and the FROM address only, never the API key.
+        // A password-reset request answers the same way whether or not it sent
+        // anything (so nobody can test which emails are registered), which also
+        // means a silent misconfiguration looks exactly like success from outside.
+        // This is the one place the setup can be checked without reading the host's
+        // logs. `sharedSender` is the important one: Resend's onboarding address
+        // only delivers to the address the Resend account was registered with, so
+        // while it is true, mail to a CUSTOMER is rejected.
+        mail: {
+            configured: !!process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 'your_resend_api_key',
+            from: process.env.RESEND_FROM || 'Magic Fanoos <onboarding@resend.dev>',
+            sharedSender: !(process.env.RESEND_FROM || '').includes('@') ||
+                (process.env.RESEND_FROM || '').includes('resend.dev'),
+            frontendUrl: (process.env.FRONTEND_URL || 'https://magicfanoos.com').replace(/\/$/, ''),
+        },
+        // The exact commit this server is running, from Render's own env var.
+        // scenesHash only moves when a PROMPT changes, so a fix anywhere else —
+        // the build path, a controller — deploys with no outward sign at all, and
+        // the only way to tell was to pay for a build and watch what happened.
+        commit: (process.env.RENDER_GIT_COMMIT || '').slice(0, 7) || 'local',
+        // Which database this server is actually on — the NAME only, no host and
+        // no credentials. Two deploys pointed at different databases once, and it
+        // was invisible from outside: both answered every request perfectly well,
+        // just about different data.
+        db: mongoose_1.default.connection?.name || 'not connected',
     };
     // Diagnostic: ?probe=upscale actually calls the Imagen upscaler once (cached 5
     // min) so we can see the real HTTP status/error from this host's identity.

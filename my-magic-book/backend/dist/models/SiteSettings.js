@@ -46,6 +46,8 @@ const SiteSettingsSchema = new mongoose_1.Schema({
         {
             id: { type: String, required: true },
             label: { type: String, required: true },
+            titles: { ar: String, en: String, he: String },
+            descriptions: { ar: String, en: String, he: String },
             price: { type: Number, required: true },
             emoji: { type: String, required: true },
             desc: { type: String, required: true },
@@ -62,6 +64,11 @@ const SiteSettingsSchema = new mongoose_1.Schema({
             descriptions: { type: mongoose_1.Schema.Types.Mixed, default: undefined },
             pages: { type: mongoose_1.Schema.Types.Mixed, default: [] },
             ready: { type: Boolean, default: false },
+            // Series grouping — must be declared here, not just on ITheme, or
+            // Mongoose drops them silently on save.
+            series: { type: String, default: undefined },
+            seriesName: { type: String, default: undefined },
+            seriesPart: { type: Number, default: undefined },
             generatedImages: { type: [String], default: undefined },
             generatedPortrait: { type: String, default: undefined },
             generatedCover: { type: String, default: undefined },
@@ -81,6 +88,7 @@ const SiteSettingsSchema = new mongoose_1.Schema({
         readyStories: { type: String, default: exports.DEFAULT_HOME_STATS.readyStories },
         rating: { type: String, default: exports.DEFAULT_HOME_STATS.rating },
     },
+    demoCards: { type: mongoose_1.Schema.Types.Mixed, default: {} },
     allowSkipPhoto: { type: Boolean, default: false },
     aiModeEnabled: { type: Boolean, default: false },
 }, { timestamps: true });
