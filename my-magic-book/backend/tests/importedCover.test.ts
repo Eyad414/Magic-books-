@@ -75,3 +75,49 @@ describe('wraparound layout', () => {
     expect(html).toContain('width: 24mm');
   });
 });
+
+/**
+ * A cover the owner supplies is THEIR cover. Typesetting our title over it, or
+ * reusing its front art as an invented back, does not leave it their cover any
+ * more — which is the whole reason they uploaded one.
+ */
+describe('an uploaded cover is used as given', () => {
+  const base = {
+    artSrc: 'data:image/png;base64,AAAA',
+    title: 'A TITLE THAT MUST NOT APPEAR',
+    author: 'AN AUTHOR',
+    widthMm: 330,
+    heightMm: 226,
+    panelWmm: 153,
+    spineMm: 24,
+    rtl: true,
+  };
+
+  it('prints a finished wraparound across the whole sheet, untouched', () => {
+    const html = coverHtml({ ...base, mode: 'asis', artIsWraparound: true });
+    expect(html).not.toContain('class="panel');
+    expect(html).not.toContain('class="spine"');
+    expect(html).not.toContain('A TITLE THAT MUST NOT APPEAR');
+    expect(html).toContain(`size: ${base.widthMm}mm ${base.heightMm}mm`);
+  });
+
+  it('puts a front-only cover on the front panel with nothing written on it', () => {
+    const html = coverHtml({ ...base, mode: 'asis', artIsWraparound: false });
+    expect(html).toContain('class="panel front"');
+    expect(html).not.toContain('>A TITLE THAT MUST NOT APPEAR<');
+    expect(html).not.toContain('>AN AUTHOR<');
+  });
+
+  it('leaves the back plain rather than passing off the front art as a back', () => {
+    const html = coverHtml({ ...base, mode: 'asis', artIsWraparound: false });
+    expect(html).toContain('back plain');
+    // The branded layout DOES reuse the art on the back — that is ours to design.
+    expect(coverHtml({ ...base, mode: 'branded' })).not.toContain('back plain');
+  });
+
+  it('still typesets the title on art we generated ourselves', () => {
+    const html = coverHtml({ ...base, mode: 'branded' });
+    expect(html).toContain('>A TITLE THAT MUST NOT APPEAR<');
+    expect(html).toContain('>AN AUTHOR<');
+  });
+});

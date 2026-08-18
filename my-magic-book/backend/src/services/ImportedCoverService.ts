@@ -31,12 +31,26 @@ export interface ImportedCoverInput {
   interiorPages: number;
   /** Arabic/Hebrew books open on the right, so the front panel sits there. */
   rtl?: boolean;
+  /**
+   * 'branded' lays the art out as OUR cover: title and author typeset on the
+   * front, title down the spine, darkened art on the back. Right for art we
+   * generated, wrong for a cover the owner supplies — they already designed it,
+   * and printing our title over theirs is not their cover any more.
+   *
+   * 'asis' prints their artwork and nothing else. A WIDE image is taken as a
+   * finished wraparound and spans the whole sheet; a TALL one is taken as a
+   * front-only cover and fills the front panel, with a plain dark spine and
+   * back rather than an invented design.
+   */
+  mode?: 'branded' | 'asis';
 }
 
 export interface ImportedCoverResult {
   coverPath: string;
   /** Flat PNG of the finished layout, for showing in the dashboard. */
   previewPath?: string;
+  /** True when the supplied art was taken as a finished wraparound. */
+  artIsWraparound?: boolean;
   artPath: string;
   scene: string;
   widthMm: number;
@@ -114,22 +128,36 @@ export function coverHtml(o: {
   panelWmm: number;
   spineMm: number;
   rtl: boolean;
+  mode?: 'branded' | 'asis';
+  /** True when the supplied art is already a full wraparound (back+spine+front). */
+  artIsWraparound?: boolean;
 }): string {
+  const asis = o.mode === 'asis';
+  // A finished wraparound is printed across the whole sheet untouched — no
+  // panels, no overlay, nothing of ours on top of it.
+  if (asis && o.artIsWraparound) {
+    return `<!DOCTYPE html><html><head><meta charset="utf-8"/><style>
+      @page { size: ${o.widthMm}mm ${o.heightMm}mm; margin: 0; }
+      html, body { margin: 0; width: ${o.widthMm}mm; height: ${o.heightMm}mm; background: #0a1628; }
+      img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    </style></head><body><img src="${o.artSrc}"/></body></html>`;
+  }
   const dir = o.rtl ? 'rtl' : 'ltr';
-  const spineText = o.spineMm >= 8 ? `<div class="spine-text" dir="${dir}">${escapeHtml(o.title)}</div>` : '';
+  const spineText = !asis && o.spineMm >= 8 ? `<div class="spine-text" dir="${dir}">${escapeHtml(o.title)}</div>` : '';
   const front = `
     <div class="panel front">
       <img class="art" src="${o.artSrc}" />
-      <div class="scrim"></div>
-      <div class="titles" dir="${dir}">
+      ${asis ? '' : '<div class="scrim"></div>'}
+      ${asis ? '' : `<div class="titles" dir="${dir}">
         <div class="title">${escapeHtml(o.title)}</div>
         ${o.author ? `<div class="author">${escapeHtml(o.author)}</div>` : ''}
-      </div>
+      </div>`}
     </div>`;
   // The back is the same art, heavily darkened — one piece of art wrapping the
   // book reads as designed, where a blank back reads as unfinished.
-  const back = `
-    <div class="panel back">
+  const back = asis
+    ? `<div class="panel back plain"></div>`
+    : `<div class="panel back">
       <img class="art" src="${o.artSrc}" />
       <div class="scrim back-scrim"></div>
     </div>`;
@@ -154,6 +182,7 @@ export function coverHtml(o: {
     .scrim { position: absolute; inset: 0;
              background: linear-gradient(to bottom, rgba(4,10,24,.72) 0%, rgba(4,10,24,.15) 45%, rgba(4,10,24,.55) 100%); }
     .back-scrim { background: rgba(4,10,24,.72); }
+    .plain { background: #0a1628; }
     .titles { position: absolute; top: ${Math.round(o.heightMm * 0.07)}mm; inset-inline: ${Math.round(o.panelWmm * 0.09)}mm; text-align: center; }
     .title { color: #fff; font-weight: 800; font-size: ${Math.max(16, Math.round(o.panelWmm * 0.13))}pt;
              line-height: 1.25; text-shadow: 0 2px 12px rgba(0,0,0,.55); }
@@ -206,6 +235,14 @@ export async function composeImportedCover(
   const up = await upscaleForPrint(cropped, { px: 2048 });
   const artSrc = `data:${up.mime};base64,${up.buffer.toString('base64')}`;
 
+  // Is the supplied art already a full wraparound? A front-only cover is taller
+  // than it is wide; a wraparound is roughly twice as wide as one panel. Judged
+  // from the image itself rather than asked, because the owner should not have
+  // to know the word "wraparound" to hand over a cover they already have.
+  const meta = await sharp(cropped).metadata();
+  const artAspect = (meta.width || 1) / (meta.height || 1);
+  const artIsWraparound = artAspect > 1.2;
+
   const spineMm = spineWidthMm(input.interiorPages);
   const panelWmm = input.widthMm + BLEED_MM;
   const widthMm = 2 * input.widthMm + 2 * BLEED_MM + spineMm;
@@ -220,6 +257,8 @@ export async function composeImportedCover(
       panelWmm,
       spineMm,
     rtl: input.rtl !== false,
+    mode: input.mode || 'branded',
+    artIsWraparound,
   });
   const pdf = await renderPrintPdf(html, widthMm, heightMm);
 
@@ -240,7 +279,16 @@ export async function composeImportedCover(
     console.warn(`[ImportedCover] preview render skipped: ${err?.message || err}`);
   }
 
-  return { coverPath, previewPath, artPath, scene: input.scene || '', widthMm, heightMm, spineMm };
+  return {
+    coverPath,
+    previewPath,
+    artPath,
+    scene: input.scene || '',
+    widthMm,
+    heightMm,
+    spineMm,
+    artIsWraparound,
+  };
 }
 
 export async function buildImportedCover(input: ImportedCoverInput): Promise<ImportedCoverResult> {
@@ -249,7 +297,7 @@ export async function buildImportedCover(input: ImportedCoverInput): Promise<Imp
     folder: 'imported',
     filename: `${Date.now()}_cover-art.png`,
   });
-  return composeImportedCover(art.objectPath, { ...input, scene });
+  return composeImportedCover(art.objectPath, { ...input, scene, mode: 'branded' });
 }
 
 /**

@@ -491,6 +491,11 @@ export default function AdminDashboard() {
     setImportBusy(true);
     setImportResult(null);
     setImportJob(null);
+    // A cover belongs to the book it was chosen for. Without this the next
+    // import silently inherited the previous book's cover — both the review
+    // download and the send would have used it.
+    setImportCover(null);
+    setImportSubject('');
     const toastId = toast.loading(t('admin.import_working', 'جاري تجهيز الملف للطباعة...'));
     try {
       const res = await adminApi.importBook(importFile, {

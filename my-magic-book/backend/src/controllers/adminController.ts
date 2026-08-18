@@ -1591,6 +1591,10 @@ export const uploadImportedCover = async (req: Request, res: Response): Promise<
     const artPath = pdfFolderPath('imported', `${stamp}_own-cover-art.${ext}`);
     await uploadBuffer(file.buffer, artPath, mime);
     const result = await composeImportedCover(artPath, {
+      // The owner's own artwork is printed AS THEY GAVE IT. Typesetting our
+      // title over a cover somebody already designed does not leave it their
+      // cover any more, which is the whole reason they uploaded one.
+      mode: 'asis',
       title: String(title || '').trim() || 'Imported book',
       author: String(author || '').trim() || undefined,
       widthMm: Number(widthMm) || 150,
