@@ -997,10 +997,23 @@ const NO_MEDAL_TEXT =
 function forColoring(scene: string): string {
   let out = (scene || '')
     // Everything from the first wardrobe/lighting/consistency clause onward.
+    // The wardrobe clause has been written several ways as prompts were fixed:
+    // ", wearing X — the SAME outfit", "THE CHILD wears X", and the companion
+    // clauses that say an animal or robot wears nothing. Each spelling has to
+    // be cut here, or full-colour instructions leak into LINE-ART prompts.
     .split(/,\s*wearing\b/i)[0]
+    .split(/\b(?:THE CHILD|the child)\s+wears\b/)[0]
+    .split(/\b(?:the\s+)?[a-z' -]*\s*wears NO clothing\b/i)[0]
     .split(/\.\s*(?:the|his|her)\s+[a-z' -]+\s+is ALWAYS\b/i)[0]
     .split(/the child is lit by/i)[0]
-    .split(/never the clothes from the reference photo/i)[0]
+    .split(/(?:never the clothes from|Take ONLY the face)/i)[0]
+    .split(/Photographic depth of field/i)[0]
+    // Photographic direction can also LEAD a scene or sit mid-sentence, where a
+    // split leaves it in place. Line art has no depth of field and no letterbox
+    // to worry about, so these are removed wherever they appear.
+    .replace(/(?:PHOTOREALISTIC PHOTOGRAPH|REAL PHOTOGRAPH)[^.]*\.?/gi, '')
+    .replace(/,?\s*shallow depth of field/gi, '')
+    .replace(/,?\s*real skin texture[^,.]*/gi, '')
     .replace(/\s+/g, ' ')
     .replace(/[,.;\s]+$/, '')
     .trim();
