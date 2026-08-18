@@ -119,6 +119,36 @@ async function reuseApprovedCover(
   return cover.objectPath;
 }
 
+/**
+ * The 13 page texts for a template-built book, or null when this theme has none.
+ *
+ * Text and ARTWORK come from different places and it was wrong to gate one on
+ * the other. A photoreal variant like space_real has hand-written scenes but no
+ * pageTexts — its story text is typed by the owner in the dashboard and lives on
+ * the story itself. Requiring template.pageTexts sent those orders down the
+ * fallback path, so the customer received CGI cartoon art while the demo book
+ * they chose from was photoreal. Sold one thing, delivered another.
+ *
+ * Order of preference: the customer's language from the locale, then the
+ * template, then the pages typed for that theme. Null if any page has no text
+ * at all, so a book can never be printed with blank pages.
+ */
+function templateStoryTexts(story: any, template: any, loc: any): string[] | null {
+  const typed: string[] = (story.templatePages || [])
+    .filter((p: any) => p?.type === 'text')
+    .map((p: any) => String(p?.content || ''));
+
+  const texts: string[] = [];
+  for (let i = 0; i < ILLUSTRATION_PAGES; i++) {
+    const raw = loc?.pages?.[i] ?? template?.pageTexts?.[i] ?? typed[i] ?? '';
+    if (!String(raw).trim()) return null;
+    // Both token styles appear across these sources: [NAME] with {he|she}
+    // gender forms in the locales, {{name}} in the dashboard-typed pages.
+    texts.push(substituteName(resolveTokens(raw, story.childName, story.childGender), story.childName));
+  }
+  return texts;
+}
+
 /** Neutral personalized title for a "write with AI" story — never the theme name. */
 function aiStoryTitle(story: any): string {
   const tmpl = loadLocale((story as any).language || 'ar')?.storybook?.ai_story_title || 'قصة [NAME] السحرية';
@@ -187,7 +217,13 @@ export async function buildBookForOrder(orderId: string, submitToBookPod = true)
       pageTexts = col.images.map(() => '');
       coverImageUrl = proxyUrl(col.cover);
       storyTitle = `${story.childName} — كتاب تلوين`;
-    } else if (story.mode !== 'ai' && template?.pageScenes && template?.pageTexts && template?.coverScene && template?.portraitScene) {
+    } else if (
+      story.mode !== 'ai' &&
+      template?.pageScenes?.length === ILLUSTRATION_PAGES &&
+      template?.coverScene &&
+      template?.portraitScene &&
+      templateStoryTexts(story, template, localizedStory(story.theme, (story as any).language || 'ar'))
+    ) {
       // PHOTOREAL story book — the theme's FIXED (ready) story, this customer's face.
       // AI-mode stories skip this (mode!=='ai' guard): they must use the customer's
       // own generated text + illustrations derived from it, not the theme template.
@@ -204,6 +240,8 @@ export async function buildBookForOrder(orderId: string, submitToBookPod = true)
       const objectPaths: string[] = [];
       pageTexts = [];
       const loc = localizedStory(story.theme, (story as any).language || 'ar');
+      // Non-null: the branch condition already built these successfully.
+      const resolvedTexts = templateStoryTexts(story, template, loc) as string[];
       for (let i = 0; i < ILLUSTRATION_PAGES; i++) {
         const medal = (template.medalPages || []).includes(i + 1);
         const img = await generateIllustration(
@@ -211,7 +249,7 @@ export async function buildBookForOrder(orderId: string, submitToBookPod = true)
           childPhoto, { storyId: sid, pageNumber: i + 1 }
         );
         objectPaths.push(img.objectPath);
-        pageTexts.push(resolveTokens(loc?.pages?.[i] ?? template.pageTexts[i], story.childName, story.childGender));
+        pageTexts.push(resolvedTexts[i]);
         await reportProgress(
           String(order._id),
           5 + ((i + 1) / ILLUSTRATION_PAGES) * 70,
