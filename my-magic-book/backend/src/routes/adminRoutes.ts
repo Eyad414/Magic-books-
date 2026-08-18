@@ -5,6 +5,7 @@ import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam
   submitImportedBook,
   designImportedCover,
   uploadImportedCover,
+  getPrintReadiness,
   listImportedFiles,
   deleteImportedFiles, listMessages, deleteMessage, getCustomerByEmail, checkPayments } from '../controllers/adminController';
 import { protect, adminOnly } from '../utils/authMiddleware';
@@ -37,6 +38,8 @@ router.get('/messages', listMessages);
 router.delete('/messages/:id', deleteMessage);
 router.get('/customer', getCustomerByEmail);
 
+// Which demo books have every image a printer needs — checked against storage.
+router.get('/print-readiness', getPrintReadiness);
 router.get('/settings', getSettings);
 router.put('/settings', updateSettings);
 router.post('/themes/:themeId/generate-illustrations', generatePreviewIllustrations);

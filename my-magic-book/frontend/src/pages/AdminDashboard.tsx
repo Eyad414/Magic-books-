@@ -294,6 +294,28 @@ export default function AdminDashboard() {
 
   // Admin-only: download the print-ready files (cover + interior PDFs) so they
   // can be archived or sent to a print shop manually.
+  const loadReadiness = async () => {
+    if (readinessBusy) return;
+    setReadinessBusy(true);
+    const toastId = toast.loading(t('admin.readiness_checking', 'جاري فحص الكتب في المخزن...'));
+    try {
+      const res = await adminApi.getPrintReadiness();
+      if (res.success) {
+        setReadiness(res);
+        toast.success(
+          t('admin.readiness_done', '{{ready}} من {{total}} كتاب جاهز للإرسال', { ready: res.readyCount, total: res.total }),
+          { id: toastId },
+        );
+      } else {
+        toast.error(res.message || 'فشل الفحص', { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || 'فشل الفحص', { id: toastId });
+    } finally {
+      setReadinessBusy(false);
+    }
+  };
+
   const handleSaveFolder = (order: any, kind: 'story' | 'coloring' = 'story') => {
     // Rebuild the link from the stored object path so old localhost-based URLs
     // (built before RENDER_EXTERNAL_URL) still resolve against the live API.
@@ -892,6 +914,12 @@ export default function AdminDashboard() {
   // Free-text search over الكتب الجاهزة — the list is long enough that
   // scrolling for one book is slower than typing its name.
   const [bookSearch, setBookSearch] = useState('');
+  // "Which books can I actually send to the printer?" — answered from storage,
+  // because the theme record lists the object paths it EXPECTS and reads as
+  // complete before anything is generated. Loaded on demand: it lists every
+  // theme's folder, which is slower than a page render should be.
+  const [readiness, setReadiness] = useState<any>(null);
+  const [readinessBusy, setReadinessBusy] = useState(false);
   // Free-text search over the ORDERS list. The card shows a short id like
   // #C496F510, which is the handle used to talk about an order — but there was
   // no way to look one up by it, so finding a specific order meant scrolling
@@ -2218,6 +2246,64 @@ export default function AdminDashboard() {
                     placeholder={t('admin.book_search_ph', 'ابحث باسم الطفل أو الموضوع…')}
                     className="magic-input !py-2 text-sm ps-9"
                   />
+                </div>
+
+                {/* ── Print readiness. Before paying for a print run, the one
+                       question that matters is which books actually have every
+                       image. The theme record cannot answer it: the seed writes
+                       the expected paths, so a book reads as complete before
+                       anything is generated. This asks storage. ── */}
+                <div className="mb-6 p-4 rounded-2xl bg-emerald-500/[0.07] border-2 border-emerald-400/30">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                    <h3 className="font-arabic font-black text-emerald-300 text-base flex items-center gap-2">
+                      <Package className="w-4 h-4" /> {t('admin.readiness_title', 'جاهزية الكتب للطباعة')}
+                      {readiness && (
+                        <span className="font-arabic text-white/70 text-sm font-normal">
+                          — {t('admin.readiness_count', '{{ready}} من {{total}} جاهز', { ready: readiness.readyCount, total: readiness.total })}
+                        </span>
+                      )}
+                    </h3>
+                    <button
+                      onClick={loadReadiness}
+                      disabled={readinessBusy}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 text-emerald-200 border border-emerald-400/30 hover:bg-emerald-500/25 font-arabic text-sm font-bold disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${readinessBusy ? 'animate-spin' : ''}`} />
+                      {readinessBusy ? t('admin.readiness_checking_btn', 'جاري الفحص…') : t('admin.readiness_check', 'افحص الآن')}
+                    </button>
+                  </div>
+                  <p className="font-arabic text-white/45 text-[11px] leading-relaxed mb-2">
+                    {t('admin.readiness_desc', 'يفحص الصور الموجودة فعلاً في المخزن (١٣ صفحة + غلاف + صورة ختامية) — لا الأسماء المسجلة في القصة.')}
+                  </p>
+
+                  {!readiness ? (
+                    <p className="font-arabic text-white/35 text-xs">{t('admin.readiness_idle', 'اضغط «افحص الآن» لعرض القائمة.')}</p>
+                  ) : (
+                    <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
+                      {readiness.books.map((b: any) => (
+                        <div
+                          key={b.id}
+                          className={`px-2.5 py-1.5 rounded-xl border text-[11px] font-arabic flex items-center gap-2 ${
+                            b.ready
+                              ? 'bg-emerald-500/10 border-emerald-400/25 text-emerald-100'
+                              : 'bg-amber-500/10 border-amber-400/30 text-amber-100'
+                          }`}
+                        >
+                          {b.ready ? <CheckCircle className="w-3.5 h-3.5 shrink-0 text-emerald-400" /> : <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-400" />}
+                          <span className="flex-1 truncate">{b.label || b.id}</span>
+                          {b.ready ? (
+                            <span className="text-emerald-300/70 shrink-0">{t('admin.readiness_ok', 'جاهز')}</span>
+                          ) : (
+                            // The gaps by number — "11 of 13" does not say which
+                            // page to regenerate.
+                            <span className="text-amber-300/80 shrink-0 max-w-[55%] truncate" title={b.missing.join(' · ')}>
+                              {b.missing.join(' · ')}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* What the public actually sees right now, so the owner does not

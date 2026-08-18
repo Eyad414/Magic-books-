@@ -969,7 +969,16 @@
     "confirm_payment_ask": "تأكيد أن الزبون دفع {{amount}} لهذا الطلب؟ لن يتم بناء الكتاب أو إرساله للطباعة الآن.",
     "payment_confirmed": "تم تأكيد الدفع ✅ الطلب جاهز للبناء",
     "already_paid": "هذا الطلب مدفوع بالفعل",
-    "confirm_payment_failed": "تعذّر تأكيد الدفع"
+    "confirm_payment_failed": "تعذّر تأكيد الدفع",
+    "readiness_title": "جاهزية الكتب للطباعة",
+    "readiness_check": "افحص الآن",
+    "readiness_checking_btn": "جاري الفحص…",
+    "readiness_checking": "جاري فحص الكتب في المخزن...",
+    "readiness_done": "{{ready}} من {{total}} كتاب جاهز للإرسال",
+    "readiness_count": "{{ready}} من {{total}} جاهز",
+    "readiness_ok": "جاهز",
+    "readiness_idle": "اضغط «افحص الآن» لعرض القائمة.",
+    "readiness_desc": "يفحص الصور الموجودة فعلاً في المخزن (١٣ صفحة + غلاف + صورة ختامية) — لا الأسماء المسجلة في القصة."
   },
   "title_page": {
     "presents": "يُقدّم لـ",

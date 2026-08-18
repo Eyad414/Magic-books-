@@ -969,7 +969,16 @@
     "confirm_payment_ask": "לאשר שהלקוח שילם {{amount}} עבור ההזמנה? הספר לא ייבנה ולא יישלח להדפסה כעת.",
     "payment_confirmed": "התשלום אושר ✅ ההזמנה מוכנה לבנייה",
     "already_paid": "ההזמנה כבר שולמה",
-    "confirm_payment_failed": "לא הצלחנו לאשר את התשלום"
+    "confirm_payment_failed": "לא הצלחנו לאשר את התשלום",
+    "readiness_title": "מוכנות להדפסה",
+    "readiness_check": "בדוק עכשיו",
+    "readiness_checking_btn": "בודק…",
+    "readiness_checking": "בודק את הספרים באחסון…",
+    "readiness_done": "{{ready}} מתוך {{total}} ספרים מוכנים לשליחה",
+    "readiness_count": "{{ready}} מתוך {{total}} מוכנים",
+    "readiness_ok": "מוכן",
+    "readiness_idle": "לחצו „בדוק עכשיו” לרשימה.",
+    "readiness_desc": "בודק את התמונות שקיימות באחסון בפועל (13 עמודים + כריכה + דיוקן אחורי) — לא את הנתיבים שרשומים בסיפור."
   },
   "title_page": {
     "presents": "מוגש ל",

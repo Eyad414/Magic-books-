@@ -969,7 +969,16 @@
     "confirm_payment_ask": "Confirm the customer paid {{amount}} for this order? The book will not be built or sent to print now.",
     "payment_confirmed": "Payment confirmed ✅ the order is ready to build",
     "already_paid": "This order is already paid",
-    "confirm_payment_failed": "Couldn't confirm the payment"
+    "confirm_payment_failed": "Couldn't confirm the payment",
+    "readiness_title": "Print readiness",
+    "readiness_check": "Check now",
+    "readiness_checking_btn": "Checking…",
+    "readiness_checking": "Checking the books in storage…",
+    "readiness_done": "{{ready}} of {{total}} books ready to send",
+    "readiness_count": "{{ready}} of {{total}} ready",
+    "readiness_ok": "ready",
+    "readiness_idle": "Press “Check now” to see the list.",
+    "readiness_desc": "Checks the images that actually exist in storage (13 pages + cover + back portrait) — not the paths recorded on the story."
   },
   "title_page": {
     "presents": "Presented to",

@@ -25,6 +25,12 @@ export const adminApi = {
     const response = await axiosInstance.delete(`/admin/team/${id}`);
     return response.data;
   },
+  /** Which demo books have every image a printer needs (checked in storage). */
+  getPrintReadiness: async () => {
+    const response = await axiosInstance.get('/admin/print-readiness', { timeout: 3 * 60 * 1000 });
+    return response.data;
+  },
+
   getSettings: async () => {
     const response = await axiosInstance.get('/admin/settings');
     return response.data;

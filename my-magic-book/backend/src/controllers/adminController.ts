@@ -12,6 +12,7 @@ import { swapFace } from '../services/FaceSwapService';
 import { buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, COLORING_PAGES, SCENE_TEMPLATES } from '../services/sceneTemplates';
 import { inspectPdf, reimposePdf, splitCoverInterior } from '../services/BookImportService';
 import { buildImportedCover, composeImportedCover } from '../services/ImportedCoverService';
+import { checkThemes, type ThemeReadiness } from '../services/PrintReadiness';
 import { publicProxyUrl } from '../services/PrintService';
 import { uploadBuffer, pdfFolderPath, listObjects, deleteObject } from '../services/StorageService';
 import { submitPrintJob, isBookPodConfigured } from '../services/BookPodService';
@@ -1653,6 +1654,42 @@ export const uploadImportedCover = async (req: Request, res: Response): Promise<
   } catch (err: any) {
     console.error('[uploadImportedCover]', err?.message || err);
     res.status(500).json({ success: false, message: err?.message || 'تعذّر رفع الغلاف.' });
+  }
+};
+
+
+/**
+ * Which demo books are complete enough to send to the printer.
+ *
+ * Answers from STORAGE rather than the theme record: the seed writes the
+ * expected object paths before anything is generated, so a book can read as
+ * ready while its images 404 — and a print run is real money. Nineteen books is
+ * also too many to check by opening every page.
+ */
+export const getPrintReadiness = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const settings = await SiteSettings.findOne();
+    if (!settings) {
+      res.status(404).json({ success: false, message: 'settings not found' });
+      return;
+    }
+    // Only themes that are meant to be a full story — a theme with no scenes has
+    // no 13 pages to be missing.
+    const themes = (settings.themes || [])
+      .filter((t: any) => !!(SCENE_TEMPLATES as any)[t.id]?.pageScenes?.length)
+      .map((t: any) => ({ id: t.id, label: t.label }));
+
+    const books = await checkThemes(themes);
+    const ready = books.filter((b: ThemeReadiness) => b.ready);
+    res.json({
+      success: true,
+      total: books.length,
+      readyCount: ready.length,
+      books: books.sort((a: ThemeReadiness, b: ThemeReadiness) => Number(b.ready) - Number(a.ready) || a.id.localeCompare(b.id)),
+    });
+  } catch (err: any) {
+    console.error('[getPrintReadiness]', err?.message || err);
+    res.status(500).json({ success: false, message: err?.message || 'تعذّر فحص جاهزية الكتب.' });
   }
 };
 
