@@ -11,6 +11,10 @@ export interface IUser extends Document {
     /** How many times this account has signed in. "Last seen" alone cannot tell
      *  a customer who keeps coming back from one who logged in once. */
     loginCount?: number;
+    /** Last authenticated request from this account — what "online now" reads.
+     *  Written at most once a minute, so browsing costs one small write, not one
+     *  per request. */
+    lastSeenAt?: Date;
     /** Timestamps of free cover previews this account generated. Each one costs
      *  real Gemini credit, so the quota counts the entries made since the user's
      *  most recent PAID order (see coverPreviewController). Trimmed to the last

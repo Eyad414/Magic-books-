@@ -994,7 +994,7 @@
     "send_needs_fields": "اسم الطفل واسم المستلم ورقم الهاتف مطلوبة",
     "tab_customers": "العملاء",
     "customers_load": "تحديث",
-    "customers_idle": "اضغط «تحديث» لعرض العملاء.",
+    "customers_idle": "جارٍ التحميل…",
     "cust_total": "حساب",
     "cust_new7": "جديد هذا الأسبوع",
     "cust_returning": "رجعوا أكثر من مرة",
@@ -1006,7 +1006,11 @@
     "cust_last_login": "آخر دخول",
     "cust_never": "لم يدخل بعد",
     "cust_logins": "مرات الدخول",
-    "cust_active30": "دخلوا خلال ٣٠ يوم"
+    "cust_active30": "دخلوا خلال ٣٠ يوم",
+    "cust_online": "متصل الآن",
+    "cust_logins_today": "دخلوا اليوم",
+    "cust_last_seen": "آخر نشاط",
+    "cust_online_hint": "«متصل الآن» = صاحب حساب فتح الموقع خلال آخر ٥ دقائق. الزائر بدون حساب لا يُحسب هنا. التحديث تلقائي كل ٣٠ ثانية."
   },
   "title_page": {
     "presents": "يُقدّم لـ",

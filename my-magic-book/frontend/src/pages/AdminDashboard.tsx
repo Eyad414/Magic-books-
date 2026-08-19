@@ -328,6 +328,14 @@ export default function AdminDashboard() {
     }
   };
 
+  useEffect(() => {
+    if (tab !== 'customers') return;
+    loadCustomers();
+    const id = setInterval(loadCustomers, 30_000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
+
   const loadCustomers = async () => {
     try {
       const res = await adminApi.getCustomers();
@@ -1546,21 +1554,28 @@ export default function AdminDashboard() {
                   </button>
                 </div>
 
+                <p className="font-arabic text-white/35 text-[11px] mb-3">
+                  {t('admin.cust_online_hint', '«متصل الآن» = صاحب حساب فتح الموقع خلال آخر ٥ دقائق. الزائر بدون حساب لا يُحسب هنا. التحديث تلقائي كل ٣٠ ثانية.')}
+                </p>
+
                 {!customers ? (
-                  <p className="font-arabic text-white/40 text-sm">{t('admin.customers_idle', 'اضغط «تحديث» لعرض العملاء.')}</p>
+                  <p className="font-arabic text-white/40 text-sm">{t('admin.customers_idle', 'جارٍ التحميل…')}</p>
                 ) : (
                   <>
                     {/* The four numbers worth knowing before reading any row. */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
                       {[
+                        { v: customers.summary.online, l: t('admin.cust_online', 'متصل الآن'), live: true },
+                        { v: customers.summary.loginsToday, l: t('admin.cust_logins_today', 'دخلوا اليوم') },
                         { v: customers.summary.total, l: t('admin.cust_total', 'حساب') },
-                        { v: customers.summary.newLast7, l: t('admin.cust_new7', 'جديد هذا الأسبوع') },
-                        { v: customers.summary.activeLast30, l: t('admin.cust_active30', 'دخلوا خلال ٣٠ يوم') },
                         { v: customers.summary.buyers, l: t('admin.cust_buyers', 'دفعوا فعلاً') },
                       ].map((k) => (
-                        <div key={k.l} className="glass-card p-3 text-center">
-                          <div className="font-arabic font-black text-gold-500 text-2xl" dir="ltr">{k.v}</div>
-                          <div className="font-arabic text-white/45 text-[11px] mt-0.5">{k.l}</div>
+                        <div key={k.l} className={`glass-card p-3 text-center ${k.live && k.v > 0 ? 'border-emerald-400/40' : ''}`}>
+                          <div className={`font-arabic font-black text-2xl ${k.live && k.v > 0 ? 'text-emerald-400' : 'text-gold-500'}`} dir="ltr">{k.v}</div>
+                          <div className="font-arabic text-white/45 text-[11px] mt-0.5 flex items-center justify-center gap-1">
+                            {k.live && k.v > 0 && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+                            {k.l}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1571,6 +1586,7 @@ export default function AdminDashboard() {
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
+                                {c.online && <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" title={t('admin.cust_online', 'متصل الآن')} />}
                                 <span className="font-arabic font-bold text-white text-sm truncate">{c.name || '—'}</span>
                                 {c.role === 'admin' && (
                                   <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 text-[10px] font-arabic">{t('admin.cust_admin', 'مدير')}</span>
@@ -1597,6 +1613,14 @@ export default function AdminDashboard() {
                               {t('admin.cust_last_login', 'آخر دخول')}:{' '}
                               {c.lastLoginAt ? new Date(c.lastLoginAt).toLocaleDateString() : t('admin.cust_never', 'لم يدخل بعد')}
                             </span>
+                            {c.lastSeenAt && (
+                              <span className={c.online ? 'text-emerald-300/80' : ''}>
+                                {t('admin.cust_last_seen', 'آخر نشاط')}:{' '}
+                                {c.online
+                                  ? t('admin.cust_online', 'متصل الآن')
+                                  : new Date(c.lastSeenAt).toLocaleString()}
+                              </span>
+                            )}
                             {/* Counting started the day this was added, so a
                                 zero means "not since then", not "never". */}
                             {c.loginCount > 0 && <span>{t('admin.cust_logins', 'مرات الدخول')}: {c.loginCount}</span>}

@@ -994,7 +994,7 @@
     "send_needs_fields": "שם הילד, שם המקבל וטלפון הם שדות חובה",
     "tab_customers": "לקוחות",
     "customers_load": "רענון",
-    "customers_idle": "לחץ «רענון» כדי להציג לקוחות.",
+    "customers_idle": "טוען…",
     "cust_total": "חשבונות",
     "cust_new7": "חדשים השבוע",
     "cust_returning": "חזרו",
@@ -1006,7 +1006,11 @@
     "cust_last_login": "כניסה אחרונה",
     "cust_never": "טרם נכנס",
     "cust_logins": "כניסות",
-    "cust_active30": "נכנסו ב-30 יום"
+    "cust_active30": "נכנסו ב-30 יום",
+    "cust_online": "מחובר עכשיו",
+    "cust_logins_today": "נכנסו היום",
+    "cust_last_seen": "פעילות אחרונה",
+    "cust_online_hint": "«מחובר עכשיו» = בעל חשבון שהשתמש באתר ב-5 הדקות האחרונות. מבקר ללא חשבון אינו נספר. מתרענן כל 30 שניות."
   },
   "title_page": {
     "presents": "מוגש ל",

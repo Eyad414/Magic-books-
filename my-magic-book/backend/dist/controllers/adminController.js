@@ -1823,9 +1823,11 @@ exports.sendReadyThemeBook = sendReadyThemeBook;
  * so "how many accounts do we have, and are any of them returning?" had no
  * answer short of opening the database.
  */
+/** How recently an account must have made a request to count as "online". */
+const ONLINE_WINDOW_MS = 5 * 60 * 1000;
 const listCustomers = async (_req, res) => {
     try {
-        const users = await User_1.default.find({}).select('name email role phone location createdAt lastLoginAt loginCount').sort({ createdAt: -1 }).lean();
+        const users = await User_1.default.find({}).select('name email role phone location createdAt lastLoginAt loginCount lastSeenAt').sort({ createdAt: -1 }).lean();
         const orders = await Order_1.default.find({}).select('userId totalPrice currency paymentStatus createdAt').lean();
         const spend = new Map();
         for (const o of orders) {
@@ -1852,6 +1854,8 @@ const listCustomers = async (_req, res) => {
                 phone: u.phone,
                 createdAt: u.createdAt,
                 lastLoginAt: u.lastLoginAt,
+                lastSeenAt: u.lastSeenAt,
+                online: !!u.lastSeenAt && Date.now() - new Date(u.lastSeenAt).getTime() < ONLINE_WINDOW_MS,
                 loginCount: u.loginCount || 0,
                 orders: s.orders,
                 paidOrders: s.paid,
@@ -1860,10 +1864,20 @@ const listCustomers = async (_req, res) => {
             };
         });
         const since = (days) => new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
         res.json({
             success: true,
             summary: {
                 total: customers.length,
+                // Customers only: the dashboard refreshes this every 30 seconds, so an
+                // admin reading the page would otherwise always see themselves as one
+                // of the people online.
+                // Signed-in accounts only, too — a visitor browsing without an account
+                // is invisible here, which would need page analytics, not the database.
+                online: customers.filter((c) => c.online && c.role !== 'admin').length,
+                loginsToday: customers.filter((c) => c.lastLoginAt && new Date(c.lastLoginAt) >= startOfToday).length,
+                activeToday: customers.filter((c) => c.lastSeenAt && new Date(c.lastSeenAt) >= startOfToday).length,
                 admins: customers.filter((c) => c.role === 'admin').length,
                 newLast7: customers.filter((c) => new Date(c.createdAt) >= since(7)).length,
                 newLast30: customers.filter((c) => new Date(c.createdAt) >= since(30)).length,
