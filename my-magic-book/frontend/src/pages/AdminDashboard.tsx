@@ -337,6 +337,7 @@ export default function AdminDashboard() {
 
   const loadCustomers = async () => {
     try {
+      adminApi.getVisits(1).then((r) => r.success && setVisits(r.visits)).catch(() => { /* the list is extra */ });
       const res = await adminApi.getCustomers();
       if (res.success) setCustomers(res);
     } catch (err: any) {
@@ -966,6 +967,8 @@ export default function AdminDashboard() {
   const [printJobs, setPrintJobs] = useState<any[] | null>(null);
   // Who signed up and who came back — the dash could show orders but never people.
   const [customers, setCustomers] = useState<any | null>(null);
+  // Who actually came to the site today — named where they signed in.
+  const [visits, setVisits] = useState<any[] | null>(null);
   // Sending a demo book is a real, paid print run, so it is deliberate: pick a
   // book, fill in who it ships to, confirm.
   const [sendBook, setSendBook] = useState<{ id: string; label?: string } | null>(null);
@@ -1572,6 +1575,44 @@ export default function AdminDashboard() {
                         buyers: customers.summary.buyers,
                       })}
                     </p>
+
+                    {/* Who came today. A name appears only when that browser
+                        is signed in — the rest stay as what they did, not who
+                        they are. */}
+                    {visits && visits.length > 0 && (
+                      <div className="mt-5 pt-4 border-t border-white/10">
+                        <p className="font-arabic text-white/70 text-[11px] font-bold mb-2">
+                          👣 {t('admin.visits_title', 'زيارات اليوم')}
+                        </p>
+                        <div className="space-y-1.5">
+                          {visits.slice(0, 12).map((v: any, i: number) => (
+                            <div key={i} className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] font-arabic text-white/55">
+                              <span className="text-white/35" dir="ltr">
+                                {new Date(v.lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                              {v.who ? (
+                                <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-200">
+                                  {v.who.name || v.who.email}
+                                </span>
+                              ) : (
+                                <span className="px-1.5 py-0.5 rounded bg-white/10 text-white/50">
+                                  {t('admin.visits_anon', 'زائر بدون حساب')}
+                                </span>
+                              )}
+                              <span className="text-white/40">{t('admin.visits_from', 'من')}: {v.source}</span>
+                              <span className="text-white/40">
+                                {t('admin.visits_pages', '{{n}} صفحة', { n: v.views })}
+                              </span>
+                              {v.paths?.length > 0 && (
+                                <span className="text-white/30 truncate max-w-[45%]" dir="ltr" title={v.paths.join(' → ')}>
+                                  {v.paths.slice(-3).join(' → ')}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="space-y-2">
                       {customers.customers.map((c: any) => (

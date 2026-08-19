@@ -1022,7 +1022,11 @@
     "coloring_rebuild": "تلوين ↻",
     "coloring_build_help": "يولّد كتاب التلوين من مشاهد هذه القصة نفسها — بدون كتابة أي مشهد",
     "coloring_failed": "فشل توليد كتاب التلوين",
-    "view_coloring_short": "عرض التلوين"
+    "view_coloring_short": "عرض التلوين",
+    "visits_title": "زيارات اليوم",
+    "visits_anon": "زائر بدون حساب",
+    "visits_from": "من",
+    "visits_pages": "{{n}} صفحة"
   },
   "title_page": {
     "presents": "يُقدّم لـ",

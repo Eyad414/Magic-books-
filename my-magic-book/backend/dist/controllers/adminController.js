@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteImportedFiles = exports.listImportedFiles = exports.getPrintReadiness = exports.listPrintJobs = exports.refreshPrintJobStatuses = exports.listCustomers = exports.trackVisit = exports.sendReadyThemeBook = exports.uploadImportedCover = exports.designImportedCover = exports.submitImportedBook = exports.importBookPdf = exports.generatePhotorealPreview = exports.generateColoringPreview = exports.generatePreviewIllustrations = exports.printBookSubmit = exports.printBook = exports.checkPayments = exports.submitOrderColoring = exports.reRenderOrderColoring = exports.reRenderOrderFiles = exports.getOrderBuildStatus = exports.buildOrderBook = exports.confirmOrderPayment = exports.getAllOrders = exports.updateSettings = exports.getPublicSettings = exports.getSettings = exports.getTeam = exports.removeAdmin = exports.addAdmin = exports.deleteStory = exports.updateStory = exports.getAllStories = exports.getCustomerByEmail = exports.deleteMessage = exports.listMessages = void 0;
+exports.deleteImportedFiles = exports.listImportedFiles = exports.getPrintReadiness = exports.listPrintJobs = exports.refreshPrintJobStatuses = exports.listCustomers = exports.listVisits = exports.trackVisit = exports.sendReadyThemeBook = exports.uploadImportedCover = exports.designImportedCover = exports.submitImportedBook = exports.importBookPdf = exports.generatePhotorealPreview = exports.generateColoringPreview = exports.generatePreviewIllustrations = exports.printBookSubmit = exports.printBook = exports.checkPayments = exports.submitOrderColoring = exports.reRenderOrderColoring = exports.reRenderOrderFiles = exports.getOrderBuildStatus = exports.buildOrderBook = exports.confirmOrderPayment = exports.getAllOrders = exports.updateSettings = exports.getPublicSettings = exports.getSettings = exports.getTeam = exports.removeAdmin = exports.addAdmin = exports.deleteStory = exports.updateStory = exports.getAllStories = exports.getCustomerByEmail = exports.deleteMessage = exports.listMessages = void 0;
 const User_1 = __importDefault(require("../models/User"));
 const Story_1 = __importDefault(require("../models/Story"));
 const Order_1 = __importDefault(require("../models/Order"));
@@ -1840,6 +1840,16 @@ exports.sendReadyThemeBook = sendReadyThemeBook;
  * so "how many accounts do we have, and are any of them returning?" had no
  * answer short of opening the database.
  */
+/** The site someone arrived from, without the page they were on. */
+function hostOf(referrer) {
+    try {
+        const host = new URL(referrer).hostname.replace(/^www\./, '');
+        return host.includes('magicfanoos') ? '' : host;
+    }
+    catch {
+        return '';
+    }
+}
 /**
  * Record a visit. Called once per browser session from the public site.
  *
@@ -1856,8 +1866,18 @@ const trackVisit = async (req, res) => {
             return;
         }
         const day = new Date().toISOString().slice(0, 10);
-        const landing = String(req.body?.path || '').slice(0, 120) || undefined;
-        await Visit_1.default.updateOne({ visitorId, day }, { $inc: { views: 1 }, $setOnInsert: { landing } }, { upsert: true });
+        const path = String(req.body?.path || '').slice(0, 120) || undefined;
+        // Host only. The full referrer URL can carry someone's search terms, or
+        // their own profile page — neither is any of our business.
+        const source = hostOf(String(req.body?.referrer || '')) || undefined;
+        const userId = String(req.body?.userId || '').match(/^[0-9a-f]{24}$/i) ? req.body.userId : undefined;
+        await Visit_1.default.updateOne({ visitorId, day }, {
+            $inc: { views: 1 },
+            $setOnInsert: { landing: path, source },
+            // Last twenty pages is plenty to see what someone was after.
+            ...(path ? { $push: { paths: { $each: [path], $slice: -20 } } } : {}),
+            ...(userId ? { $set: { userId } } : {}),
+        }, { upsert: true });
         res.json({ success: true });
     }
     catch (err) {
@@ -1867,6 +1887,43 @@ const trackVisit = async (req, res) => {
     }
 };
 exports.trackVisit = trackVisit;
+/**
+ * Today's visits, one row per browser.
+ *
+ * A visitor has a name only when they have signed in on that browser — that
+ * is the one honest way to know who someone is. For everyone else this shows
+ * what they did, not who they are: where they came from, what they opened,
+ * how many pages. Nothing here fingerprints a person or reads their address.
+ */
+const listVisits = async (req, res) => {
+    try {
+        const days = Math.min(Math.max(Number(req.query.days) || 1, 1), 30);
+        const from = new Date(Date.now() - (days - 1) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        const rows = await Visit_1.default.find({ day: { $gte: from } })
+            .sort({ updatedAt: -1 })
+            .limit(200)
+            .populate('userId', 'name email')
+            .lean();
+        res.json({
+            success: true,
+            visits: rows.map((v) => ({
+                day: v.day,
+                views: v.views,
+                landing: v.landing,
+                paths: v.paths || [],
+                source: v.source || 'مباشر',
+                firstSeen: v.createdAt,
+                lastSeen: v.updatedAt,
+                who: v.userId ? { name: v.userId.name, email: v.userId.email } : null,
+            })),
+        });
+    }
+    catch (err) {
+        console.error('[listVisits]', err?.message || err);
+        res.status(500).json({ success: false, message: err?.message || 'تعذّر جلب الزيارات.' });
+    }
+};
+exports.listVisits = listVisits;
 /** How recently an account must have made a request to count as "online". */
 const ONLINE_WINDOW_MS = 5 * 60 * 1000;
 const listCustomers = async (_req, res) => {

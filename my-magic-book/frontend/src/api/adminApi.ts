@@ -47,6 +47,12 @@ export const adminApi = {
     return response.data;
   },
 
+  /** Today's visits: what each browser did, named only if it signed in. */
+  getVisits: async (days = 1) => {
+    const response = await axiosInstance.get('/admin/visits', { params: { days } });
+    return response.data;
+  },
+
   /** Accounts, sign-ins, and what each person actually ordered. */
   getCustomers: async () => {
     const response = await axiosInstance.get('/admin/customers');

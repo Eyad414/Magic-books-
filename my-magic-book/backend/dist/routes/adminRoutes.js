@@ -38,6 +38,8 @@ router.get('/print-jobs', adminController_1.listPrintJobs);
 router.post('/print-jobs/refresh', adminController_1.refreshPrintJobStatuses);
 // Accounts, sign-ins and what each person actually bought.
 router.get('/customers', adminController_1.listCustomers);
+// Today's visits: what each browser did, and a name only if it signed in.
+router.get('/visits', adminController_1.listVisits);
 // BILLABLE: prints and ships one finished demo book.
 router.post('/print-readiness/send', adminController_1.sendReadyThemeBook);
 router.get('/settings', adminController_1.getSettings);

@@ -1833,6 +1833,17 @@ export const sendReadyThemeBook = async (req: Request, res: Response): Promise<v
  * answer short of opening the database.
  */
 
+
+/** The site someone arrived from, without the page they were on. */
+function hostOf(referrer: string): string {
+  try {
+    const host = new URL(referrer).hostname.replace(/^www\./, '');
+    return host.includes('magicfanoos') ? '' : host;
+  } catch {
+    return '';
+  }
+}
+
 /**
  * Record a visit. Called once per browser session from the public site.
  *
@@ -1849,10 +1860,21 @@ export const trackVisit = async (req: Request, res: Response): Promise<void> => 
       return;
     }
     const day = new Date().toISOString().slice(0, 10);
-    const landing = String(req.body?.path || '').slice(0, 120) || undefined;
+    const path = String(req.body?.path || '').slice(0, 120) || undefined;
+    // Host only. The full referrer URL can carry someone's search terms, or
+    // their own profile page — neither is any of our business.
+    const source = hostOf(String(req.body?.referrer || '')) || undefined;
+    const userId = String(req.body?.userId || '').match(/^[0-9a-f]{24}$/i) ? req.body.userId : undefined;
+
     await Visit.updateOne(
       { visitorId, day },
-      { $inc: { views: 1 }, $setOnInsert: { landing } },
+      {
+        $inc: { views: 1 },
+        $setOnInsert: { landing: path, source },
+        // Last twenty pages is plenty to see what someone was after.
+        ...(path ? { $push: { paths: { $each: [path], $slice: -20 } } } : {}),
+        ...(userId ? { $set: { userId } } : {}),
+      },
       { upsert: true },
     );
     res.json({ success: true });
@@ -1860,6 +1882,44 @@ export const trackVisit = async (req: Request, res: Response): Promise<void> => 
     // Counting must never break a page load.
     console.warn('[trackVisit]', err?.message || err);
     res.json({ success: false });
+  }
+};
+
+
+/**
+ * Today's visits, one row per browser.
+ *
+ * A visitor has a name only when they have signed in on that browser — that
+ * is the one honest way to know who someone is. For everyone else this shows
+ * what they did, not who they are: where they came from, what they opened,
+ * how many pages. Nothing here fingerprints a person or reads their address.
+ */
+export const listVisits = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const days = Math.min(Math.max(Number(req.query.days) || 1, 1), 30);
+    const from = new Date(Date.now() - (days - 1) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const rows = await Visit.find({ day: { $gte: from } })
+      .sort({ updatedAt: -1 })
+      .limit(200)
+      .populate('userId', 'name email')
+      .lean();
+
+    res.json({
+      success: true,
+      visits: rows.map((v: any) => ({
+        day: v.day,
+        views: v.views,
+        landing: v.landing,
+        paths: v.paths || [],
+        source: v.source || 'مباشر',
+        firstSeen: v.createdAt,
+        lastSeen: v.updatedAt,
+        who: v.userId ? { name: v.userId.name, email: v.userId.email } : null,
+      })),
+    });
+  } catch (err: any) {
+    console.error('[listVisits]', err?.message || err);
+    res.status(500).json({ success: false, message: err?.message || 'تعذّر جلب الزيارات.' });
   }
 };
 

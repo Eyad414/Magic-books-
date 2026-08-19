@@ -8,6 +8,7 @@ import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam
   getPrintReadiness,
   listPrintJobs,
   listCustomers,
+  listVisits,
   refreshPrintJobStatuses,
   sendReadyThemeBook,
   listImportedFiles,
@@ -51,6 +52,8 @@ router.get('/print-jobs', listPrintJobs);
 router.post('/print-jobs/refresh', refreshPrintJobStatuses);
 // Accounts, sign-ins and what each person actually bought.
 router.get('/customers', listCustomers);
+// Today's visits: what each browser did, and a name only if it signed in.
+router.get('/visits', listVisits);
 // BILLABLE: prints and ships one finished demo book.
 router.post('/print-readiness/send', sendReadyThemeBook);
 router.get('/settings', getSettings);

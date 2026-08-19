@@ -1022,7 +1022,11 @@
     "coloring_rebuild": "צביעה ↻",
     "coloring_build_help": "בונה את חוברת הצביעה מהסצנות של הסיפור עצמו",
     "coloring_failed": "בניית חוברת הצביעה נכשלה",
-    "view_coloring_short": "צפייה בצביעה"
+    "view_coloring_short": "צפייה בצביעה",
+    "visits_title": "ביקורים היום",
+    "visits_anon": "מבקר ללא חשבון",
+    "visits_from": "מ־",
+    "visits_pages": "{{n}} עמודים"
   },
   "title_page": {
     "presents": "מוגש ל",

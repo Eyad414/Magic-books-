@@ -19,8 +19,20 @@ export interface IVisit extends Document {
   views: number;
   /** Where they landed first that day — tells you what is bringing people in. */
   landing?: string;
-  /** Set once the visitor signs in, so visits can be tied to sign-ups. */
-  registered?: boolean;
+  /** Pages seen that day, in order, capped. Answers "what were they after". */
+  paths?: string[];
+  /**
+   * Which site sent them: instagram, google, tiktok… Taken from the referrer's
+   * HOST only, never the full URL — the path of the page someone came from can
+   * carry their search terms or their own identity.
+   */
+  source?: string;
+  /**
+   * The account, once this browser signs in. This is the only way a visitor
+   * gets a name: they tell us who they are by logging in. Nothing here tries
+   * to identify a visitor who does not.
+   */
+  userId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,7 +43,9 @@ const VisitSchema = new Schema<IVisit>(
     day: { type: String, required: true },
     views: { type: Number, default: 1 },
     landing: { type: String },
-    registered: { type: Boolean, default: false },
+    paths: { type: [String], default: undefined },
+    source: { type: String },
+    userId: { type: Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true },
 );

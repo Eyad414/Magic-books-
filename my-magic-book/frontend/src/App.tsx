@@ -24,9 +24,11 @@ import RequireAuth from './components/common/RequireAuth';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { publicApi } from './api/publicApi';
+import { useAuth } from './context/AuthContext';
 
 export default function App() {
   const { i18n } = useTranslation();
+  const { user, isLoading } = useAuth();
 
   useEffect(() => {
     // Determine the direction
@@ -43,6 +45,7 @@ export default function App() {
   // number of people, not who they are. Admin pages are skipped so the owner
   // reading the dashboard does not inflate their own visitor count.
   useEffect(() => {
+    if (isLoading) return;
     if (window.location.pathname.startsWith('/admin')) return;
     const today = new Date().toISOString().slice(0, 10);
     if (localStorage.getItem('mmb_counted') === today) return;
@@ -55,10 +58,15 @@ export default function App() {
     // visit lost to a dropped request was lost for the rest of the day —
     // the browser would never try again.
     publicApi
-      .trackVisit(visitorId, window.location.pathname)
+      // Where they came from (the site, never the page they were on), and who
+      // they are — but only when they are signed in on this browser. A visitor
+      // who has not told us who they are stays anonymous.
+      .trackVisit(visitorId, window.location.pathname, document.referrer, user?.id)
       .then(() => localStorage.setItem('mmb_counted', today))
       .catch(() => { /* try again on the next page load */ });
-  }, []);
+    // Waits for auth so a signed-in visit carries its account rather than
+    // landing anonymously a moment before the session resolves.
+  }, [isLoading, user?.id]);
 
   return (
     <>

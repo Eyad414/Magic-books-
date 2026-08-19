@@ -1022,7 +1022,11 @@
     "coloring_rebuild": "colouring ↻",
     "coloring_build_help": "Builds the colouring book from this story’s own scenes — nothing to write",
     "coloring_failed": "Colouring build failed",
-    "view_coloring_short": "view colouring"
+    "view_coloring_short": "view colouring",
+    "visits_title": "today’s visits",
+    "visits_anon": "visitor with no account",
+    "visits_from": "from",
+    "visits_pages": "{{n}} pages"
   },
   "title_page": {
     "presents": "Presented to",
