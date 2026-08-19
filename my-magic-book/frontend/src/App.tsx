@@ -51,8 +51,13 @@ export default function App() {
       visitorId = (crypto.randomUUID?.() || String(Math.random()).slice(2)) as string;
       localStorage.setItem('mmb_visitor', visitorId);
     }
-    localStorage.setItem('mmb_counted', today);
-    publicApi.trackVisit(visitorId, window.location.pathname).catch(() => { /* never block a page load */ });
+    // Mark it counted only once the server has it. Marking first meant a
+    // visit lost to a dropped request was lost for the rest of the day —
+    // the browser would never try again.
+    publicApi
+      .trackVisit(visitorId, window.location.pathname)
+      .then(() => localStorage.setItem('mmb_counted', today))
+      .catch(() => { /* try again on the next page load */ });
   }, []);
 
   return (
