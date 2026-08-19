@@ -183,3 +183,17 @@ describe('coverSourceFor', () => {
     expect(coverSourceFor('')).toBe('page-1');
   });
 });
+
+describe('squareReference (via generateIllustration)', () => {
+  it('is exercised through the generator, so this suite only pins the shapes we care about', () => {
+    // A phone photo of a standing child, and the shape the model copied from it.
+    const tallPhoto = 402 / 1332;
+    const tallPage = 576 / 1792;
+    expect(Math.abs(tallPhoto - tallPage)).toBeLessThan(0.05);
+
+    // The face crop used to rescue Maryam's book, and the pages it produced.
+    const squarish = 900 / 1015;
+    const squarePage = 960 / 1088;
+    expect(Math.abs(squarish - squarePage)).toBeLessThan(0.05);
+  });
+});

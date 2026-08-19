@@ -1,3 +1,4 @@
+import sharp from 'sharp';
 import { Storage } from '@google-cloud/storage';
 import { uploadBuffer, pdfFolderPath, StoredObject } from './StorageService';
 import { backendOrder, clientFor, markBackendDepleted } from './genaiClient';
@@ -184,6 +185,31 @@ export async function generateIllustration(
  * Supports both `gs://` URIs (read directly from the bucket via the SDK) and
  * plain https URLs (the wizard's signed URLs or the Cloudinary demo image).
  */
+
+/**
+ * The model copies the SHAPE of the reference photo.
+ *
+ * A phone photo of a child standing up can be 402x1332 — and every page then
+ * came back 576x1792, a tall strip. Every layout in the book is square, so the
+ * square crop showed the middle band and the face was simply gone: on Maryam's
+ * cover you saw a jumper. Padding the reference onto a square canvas costs
+ * nothing, loses no part of the photo, and the pages come back square.
+ */
+async function squareReference(buf: Buffer): Promise<Buffer> {
+  const meta = await sharp(buf).metadata();
+  const w = meta.width || 0;
+  const h = meta.height || 0;
+  if (!w || !h) return buf;
+  const ratio = w / h;
+  // Anything close to square already produces a usable page.
+  if (ratio > 0.85 && ratio < 1.18) return buf;
+  const side = Math.max(w, h);
+  return sharp(buf)
+    .resize(side, side, { fit: 'contain', background: { r: 255, g: 255, b: 255 } })
+    .jpeg({ quality: 95 })
+    .toBuffer();
+}
+
 async function fetchReferenceImage(url: string): Promise<{ mimeType: string; base64: string }> {
   if (!url) {
     throw new Error('childPhotoUrl is empty — Gemini needs a reference photo.');
@@ -195,15 +221,17 @@ async function fetchReferenceImage(url: string): Promise<{ mimeType: string; bas
     const slash = without.indexOf('/');
     const bucketName = without.slice(0, slash);
     const objectPath = without.slice(slash + 1);
-    const [buf] = await storage.bucket(bucketName).file(objectPath).download();
-    const mimeType = guessMimeFromPath(objectPath);
+    const [raw] = await storage.bucket(bucketName).file(objectPath).download();
+    const buf = await squareReference(raw);
+    const mimeType = buf === raw ? guessMimeFromPath(objectPath) : 'image/jpeg';
     return { mimeType, base64: buf.toString('base64') };
   }
 
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Reference photo fetch failed: ${res.status} ${res.statusText} (${url})`);
-  const mimeType = res.headers.get('content-type') || guessMimeFromPath(url);
-  const buf = Buffer.from(await res.arrayBuffer());
+  const raw = Buffer.from(await res.arrayBuffer());
+  const buf = await squareReference(raw);
+  const mimeType = buf === raw ? (res.headers.get('content-type') || guessMimeFromPath(url)) : 'image/jpeg';
   return { mimeType, base64: buf.toString('base64') };
 }
 
