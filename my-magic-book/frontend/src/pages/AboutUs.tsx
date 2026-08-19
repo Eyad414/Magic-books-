@@ -157,6 +157,34 @@ export default function AboutUs() {
 
       <ScrollIndicator />
 
+      {/* Follow us */}
+      <section className="px-4 sm:px-6 lg:px-8 mb-20">
+        <div className="max-w-3xl mx-auto glass-card p-8 sm:p-10 text-center">
+          <h2 className="font-arabic font-bold text-white text-2xl mb-3">{t('about.follow_title')}</h2>
+          <p className="font-arabic text-white/50 mb-7">{t('about.follow_desc')}</p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {socials.map((s) => (
+              <a
+                key={s.label}
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={s.label}
+                className="group flex items-center gap-3 px-5 py-3 rounded-2xl bg-white/5 border border-white/10 text-white/70 hover:text-gold-500 hover:border-gold-500/40 hover:-translate-y-0.5 transition-all"
+              >
+                <span className="text-white/50 group-hover:text-gold-500 transition-colors">{s.icon}</span>
+                <span className="text-start leading-tight">
+                  <span className="block font-arabic font-bold text-sm">{s.label}</span>
+                  <span className="block text-xs text-white/40" dir="ltr">{s.handle}</span>
+                </span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <ScrollIndicator />
+
       {/* Team */}
       <section className="px-4 sm:px-6 lg:px-8 mb-20">
         <div className="max-w-5xl mx-auto">
@@ -230,34 +258,6 @@ export default function AboutUs() {
       <ScrollIndicator />
       
       <FAQ />
-
-      <ScrollIndicator />
-
-      {/* Follow us */}
-      <section className="px-4 sm:px-6 lg:px-8 mb-20">
-        <div className="max-w-3xl mx-auto glass-card p-8 sm:p-10 text-center">
-          <h2 className="font-arabic font-bold text-white text-2xl mb-3">{t('about.follow_title')}</h2>
-          <p className="font-arabic text-white/50 mb-7">{t('about.follow_desc')}</p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            {socials.map((s) => (
-              <a
-                key={s.label}
-                href={s.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={s.label}
-                className="group flex items-center gap-3 px-5 py-3 rounded-2xl bg-white/5 border border-white/10 text-white/70 hover:text-gold-500 hover:border-gold-500/40 hover:-translate-y-0.5 transition-all"
-              >
-                <span className="text-white/50 group-hover:text-gold-500 transition-colors">{s.icon}</span>
-                <span className="text-start leading-tight">
-                  <span className="block font-arabic font-bold text-sm">{s.label}</span>
-                  <span className="block text-xs text-white/40" dir="ltr">{s.handle}</span>
-                </span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
 
       <ScrollIndicator />
 
