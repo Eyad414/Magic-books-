@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Heart, Mail, Phone, MapPin } from 'lucide-react';
+import { Heart, Mail, Phone } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export default function Footer() {
@@ -119,10 +119,6 @@ export default function Footer() {
               <li className="flex items-center gap-3 text-white/50 text-sm font-arabic">
                 <Phone className="w-4 h-4 text-gold-500 flex-shrink-0" />
                 <span dir="ltr">+972 58 550 2072</span>
-              </li>
-              <li className="flex items-center gap-3 text-white/50 text-sm font-arabic">
-                <MapPin className="w-4 h-4 text-gold-500 flex-shrink-0" />
-                <span>Jerusalem</span>
               </li>
             </ul>
           </div>
