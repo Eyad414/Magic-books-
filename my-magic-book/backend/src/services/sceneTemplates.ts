@@ -1015,6 +1015,15 @@ function forColoring(scene: string): string {
     .replace(/(?:PHOTOREALISTIC PHOTOGRAPH|REAL PHOTOGRAPH)[^.]*\.?/gi, '')
     .replace(/,?\s*shallow depth of field/gi, '')
     .replace(/,?\s*real skin texture[^,.]*/gi, '')
+    // Camera and lighting direction survived every other stripper and still
+    // reads as a brief for a photograph: the kindergarten cover came back as an
+    // actual photo of a child, inside a prompt that says CARTOON twice.
+    .replace(/,?\s*close(?:-| )?(?:up)? to camera/gi, '')
+    .replace(/,?\s*(?:warmly|softly|brightly|beautifully) lit/gi, '')
+    // Cutting a clause mid-sentence can leave a dangling conjunction or a
+    // doubled comma behind — "clearly visible and, beaming".
+    .replace(/\s+and\s*,/g, ',')
+    .replace(/,\s*,+/g, ',')
     .replace(/\s+/g, ' ')
     .replace(/[,.;\s]+$/, '')
     .trim();
@@ -1043,9 +1052,18 @@ export function resolveColoringScenes(template: any): {
   const scenes: string[] = [];
   for (let i = 0; i < COLORING_PAGES; i++) scenes.push(derived[i % derived.length]);
 
+  // A story's cover scene is mostly framing — "close to camera, face large" —
+  // and once the photographic direction is stripped for line art there can be
+  // almost nothing left to draw. World Adventure reduced to "the child, face
+  // large, clearly visible, smiling with excitement": no world, no travel, no
+  // scene, and the model filled the gap by copying the reference photo's style
+  // and returning an actual photograph. Below this length, use the first page
+  // instead — it always describes something happening.
+  const MIN_COVER_SCENE = 80;
+  const strippedCover = forColoring(template.coverScene || '');
   const cover =
     (template.coloringCoverScene || '').trim() ||
-    forColoring(template.coverScene || '') ||
+    (strippedCover.length >= MIN_COVER_SCENE ? strippedCover : '') ||
     derived[0];
   const back =
     (template.coloringBackCoverScene || '').trim() ||
