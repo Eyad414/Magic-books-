@@ -14,6 +14,7 @@ import { inspectPdf, reimposePdf, splitCoverInterior } from '../services/BookImp
 import { coverSourceFor, buildImportedCover, composeImportedCover } from '../services/ImportedCoverService';
 import { checkThemes, loadThemeArtwork, type ThemeReadiness } from '../services/PrintReadiness';
 import PrintJob from '../models/PrintJob';
+import Visit from '../models/Visit';
 import { publicProxyUrl } from '../services/PrintService';
 import { uploadBuffer, pdfFolderPath, listObjects, deleteObject } from '../services/StorageService';
 import { submitPrintJob, isBookPodConfigured, fetchOurJobStatuses } from '../services/BookPodService';
@@ -1817,6 +1818,37 @@ export const sendReadyThemeBook = async (req: Request, res: Response): Promise<v
  * so "how many accounts do we have, and are any of them returning?" had no
  * answer short of opening the database.
  */
+
+/**
+ * Record a visit. Called once per browser session from the public site.
+ *
+ * Anonymous by construction: the id is generated in the browser, and nothing
+ * here reads the request's address or user agent. A visitor who never signs up
+ * still counts — which is the point, since an account is the last step of a
+ * visit, not the first.
+ */
+export const trackVisit = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const visitorId = String(req.body?.visitorId || '').slice(0, 64).trim();
+    if (!visitorId) {
+      res.status(400).json({ success: false });
+      return;
+    }
+    const day = new Date().toISOString().slice(0, 10);
+    const landing = String(req.body?.path || '').slice(0, 120) || undefined;
+    await Visit.updateOne(
+      { visitorId, day },
+      { $inc: { views: 1 }, $setOnInsert: { landing } },
+      { upsert: true },
+    );
+    res.json({ success: true });
+  } catch (err: any) {
+    // Counting must never break a page load.
+    console.warn('[trackVisit]', err?.message || err);
+    res.json({ success: false });
+  }
+};
+
 /** How recently an account must have made a request to count as "online". */
 const ONLINE_WINDOW_MS = 5 * 60 * 1000;
 
@@ -1862,10 +1894,23 @@ export const listCustomers = async (_req: Request, res: Response): Promise<void>
     const since = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 1000);
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
+
+    // Visitors: everyone who opened the site, account or not.
+    const dayKey = (d: Date) => d.toISOString().slice(0, 10);
+    const today = dayKey(new Date());
+    const weekAgo = dayKey(since(7));
+    const [visitorsToday, visitorsLast7, viewsTodayAgg] = await Promise.all([
+      Visit.countDocuments({ day: today }),
+      Visit.distinct('visitorId', { day: { $gte: weekAgo } }).then((ids) => ids.length),
+      Visit.aggregate([{ $match: { day: today } }, { $group: { _id: null, v: { $sum: '$views' } } }]),
+    ]);
     res.json({
       success: true,
       summary: {
         total: customers.length,
+        visitorsToday,
+        visitorsLast7,
+        viewsToday: viewsTodayAgg[0]?.v || 0,
         // Customers only: the dashboard refreshes this every 30 seconds, so an
         // admin reading the page would otherwise always see themselves as one
         // of the people online.

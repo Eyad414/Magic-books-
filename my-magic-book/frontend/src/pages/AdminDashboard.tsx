@@ -1571,9 +1571,11 @@ export default function AdminDashboard() {
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
                       {[
                         { v: customers.summary.online, l: t('admin.cust_online', 'متصل الآن'), live: true },
-                        { v: customers.summary.loginsToday, l: t('admin.cust_logins_today', 'دخلوا اليوم') },
+                        // Everyone who opened the site, account or not — the
+                        // number the other three cannot see.
+                        { v: customers.summary.visitorsToday ?? 0, l: t('admin.cust_visitors_today', 'زائر اليوم') },
+                        { v: customers.summary.visitorsLast7 ?? 0, l: t('admin.cust_visitors_7', 'زائر هذا الأسبوع') },
                         { v: customers.summary.total, l: t('admin.cust_total', 'حساب') },
-                        { v: customers.summary.buyers, l: t('admin.cust_buyers', 'دفعوا فعلاً') },
                       ].map((k) => (
                         <div key={k.l} className={`glass-card p-3 text-center ${k.live && k.v > 0 ? 'border-emerald-400/40' : ''}`}>
                           <div className={`font-arabic font-black text-2xl ${k.live && k.v > 0 ? 'text-emerald-400' : 'text-gold-500'}`} dir="ltr">{k.v}</div>
@@ -1584,6 +1586,14 @@ export default function AdminDashboard() {
                         </div>
                       ))}
                     </div>
+
+                    <p className="font-arabic text-white/45 text-[11px] mb-3">
+                      {t('admin.cust_secondline', '{{views}} فتحة صفحة اليوم · {{logins}} دخلوا اليوم · {{buyers}} دفعوا فعلاً', {
+                        views: customers.summary.viewsToday ?? 0,
+                        logins: customers.summary.loginsToday,
+                        buyers: customers.summary.buyers,
+                      })}
+                    </p>
 
                     <div className="space-y-2">
                       {customers.customers.map((c: any) => (

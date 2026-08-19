@@ -23,6 +23,7 @@ import RequireAuth from './components/common/RequireAuth';
 
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { publicApi } from './api/publicApi';
 
 export default function App() {
   const { i18n } = useTranslation();
@@ -36,6 +37,23 @@ export default function App() {
     // Apply language-specific class to body/html for font styling
     document.documentElement.className = `lang-${i18n.language.split('-')[0]}`;
   }, [i18n.language]);
+
+  // Count the visit once per browser, per day. The id is made up here and never
+  // leaves this device except as an opaque string — the dashboard wants a
+  // number of people, not who they are. Admin pages are skipped so the owner
+  // reading the dashboard does not inflate their own visitor count.
+  useEffect(() => {
+    if (window.location.pathname.startsWith('/admin')) return;
+    const today = new Date().toISOString().slice(0, 10);
+    if (localStorage.getItem('mmb_counted') === today) return;
+    let visitorId = localStorage.getItem('mmb_visitor');
+    if (!visitorId) {
+      visitorId = (crypto.randomUUID?.() || String(Math.random()).slice(2)) as string;
+      localStorage.setItem('mmb_visitor', visitorId);
+    }
+    localStorage.setItem('mmb_counted', today);
+    publicApi.trackVisit(visitorId, window.location.pathname).catch(() => { /* never block a page load */ });
+  }, []);
 
   return (
     <>

@@ -100,6 +100,22 @@ export declare const uploadImportedCover: (req: Request, res: Response) => Promi
  * whose artwork is incomplete rather than paying to print a gap.
  */
 export declare const sendReadyThemeBook: (req: Request, res: Response) => Promise<void>;
+/**
+ * Who signed up, who came back, and who actually bought something.
+ *
+ * The dashboard could show orders and books but never the people behind them,
+ * so "how many accounts do we have, and are any of them returning?" had no
+ * answer short of opening the database.
+ */
+/**
+ * Record a visit. Called once per browser session from the public site.
+ *
+ * Anonymous by construction: the id is generated in the browser, and nothing
+ * here reads the request's address or user agent. A visitor who never signs up
+ * still counts — which is the point, since an account is the last step of a
+ * visit, not the first.
+ */
+export declare const trackVisit: (req: Request, res: Response) => Promise<void>;
 export declare const listCustomers: (_req: Request, res: Response) => Promise<void>;
 /**
  * Ask BookPod what actually happened to the jobs we sent, and write it down.

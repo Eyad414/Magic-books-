@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteImportedFiles = exports.listImportedFiles = exports.getPrintReadiness = exports.listPrintJobs = exports.refreshPrintJobStatuses = exports.listCustomers = exports.sendReadyThemeBook = exports.uploadImportedCover = exports.designImportedCover = exports.submitImportedBook = exports.importBookPdf = exports.generatePhotorealPreview = exports.generateColoringPreview = exports.generatePreviewIllustrations = exports.printBookSubmit = exports.printBook = exports.checkPayments = exports.submitOrderColoring = exports.reRenderOrderColoring = exports.reRenderOrderFiles = exports.getOrderBuildStatus = exports.buildOrderBook = exports.confirmOrderPayment = exports.getAllOrders = exports.updateSettings = exports.getPublicSettings = exports.getSettings = exports.getTeam = exports.removeAdmin = exports.addAdmin = exports.deleteStory = exports.updateStory = exports.getAllStories = exports.getCustomerByEmail = exports.deleteMessage = exports.listMessages = void 0;
+exports.deleteImportedFiles = exports.listImportedFiles = exports.getPrintReadiness = exports.listPrintJobs = exports.refreshPrintJobStatuses = exports.listCustomers = exports.trackVisit = exports.sendReadyThemeBook = exports.uploadImportedCover = exports.designImportedCover = exports.submitImportedBook = exports.importBookPdf = exports.generatePhotorealPreview = exports.generateColoringPreview = exports.generatePreviewIllustrations = exports.printBookSubmit = exports.printBook = exports.checkPayments = exports.submitOrderColoring = exports.reRenderOrderColoring = exports.reRenderOrderFiles = exports.getOrderBuildStatus = exports.buildOrderBook = exports.confirmOrderPayment = exports.getAllOrders = exports.updateSettings = exports.getPublicSettings = exports.getSettings = exports.getTeam = exports.removeAdmin = exports.addAdmin = exports.deleteStory = exports.updateStory = exports.getAllStories = exports.getCustomerByEmail = exports.deleteMessage = exports.listMessages = void 0;
 const User_1 = __importDefault(require("../models/User"));
 const Story_1 = __importDefault(require("../models/Story"));
 const Order_1 = __importDefault(require("../models/Order"));
@@ -52,6 +52,7 @@ const BookImportService_1 = require("../services/BookImportService");
 const ImportedCoverService_1 = require("../services/ImportedCoverService");
 const PrintReadiness_1 = require("../services/PrintReadiness");
 const PrintJob_1 = __importDefault(require("../models/PrintJob"));
+const Visit_1 = __importDefault(require("../models/Visit"));
 const PrintService_1 = require("../services/PrintService");
 const StorageService_1 = require("../services/StorageService");
 const BookPodService_1 = require("../services/BookPodService");
@@ -1823,6 +1824,33 @@ exports.sendReadyThemeBook = sendReadyThemeBook;
  * so "how many accounts do we have, and are any of them returning?" had no
  * answer short of opening the database.
  */
+/**
+ * Record a visit. Called once per browser session from the public site.
+ *
+ * Anonymous by construction: the id is generated in the browser, and nothing
+ * here reads the request's address or user agent. A visitor who never signs up
+ * still counts — which is the point, since an account is the last step of a
+ * visit, not the first.
+ */
+const trackVisit = async (req, res) => {
+    try {
+        const visitorId = String(req.body?.visitorId || '').slice(0, 64).trim();
+        if (!visitorId) {
+            res.status(400).json({ success: false });
+            return;
+        }
+        const day = new Date().toISOString().slice(0, 10);
+        const landing = String(req.body?.path || '').slice(0, 120) || undefined;
+        await Visit_1.default.updateOne({ visitorId, day }, { $inc: { views: 1 }, $setOnInsert: { landing } }, { upsert: true });
+        res.json({ success: true });
+    }
+    catch (err) {
+        // Counting must never break a page load.
+        console.warn('[trackVisit]', err?.message || err);
+        res.json({ success: false });
+    }
+};
+exports.trackVisit = trackVisit;
 /** How recently an account must have made a request to count as "online". */
 const ONLINE_WINDOW_MS = 5 * 60 * 1000;
 const listCustomers = async (_req, res) => {
@@ -1866,10 +1894,22 @@ const listCustomers = async (_req, res) => {
         const since = (days) => new Date(Date.now() - days * 24 * 60 * 60 * 1000);
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
+        // Visitors: everyone who opened the site, account or not.
+        const dayKey = (d) => d.toISOString().slice(0, 10);
+        const today = dayKey(new Date());
+        const weekAgo = dayKey(since(7));
+        const [visitorsToday, visitorsLast7, viewsTodayAgg] = await Promise.all([
+            Visit_1.default.countDocuments({ day: today }),
+            Visit_1.default.distinct('visitorId', { day: { $gte: weekAgo } }).then((ids) => ids.length),
+            Visit_1.default.aggregate([{ $match: { day: today } }, { $group: { _id: null, v: { $sum: '$views' } } }]),
+        ]);
         res.json({
             success: true,
             summary: {
                 total: customers.length,
+                visitorsToday,
+                visitorsLast7,
+                viewsToday: viewsTodayAgg[0]?.v || 0,
                 // Customers only: the dashboard refreshes this every 30 seconds, so an
                 // admin reading the page would otherwise always see themselves as one
                 // of the people online.

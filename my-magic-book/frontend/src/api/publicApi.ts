@@ -14,6 +14,12 @@ export interface StoryChatResult {
 }
 
 export const publicApi = {
+  /** Count this visit. Anonymous — see backend models/Visit. */
+  trackVisit: async (visitorId: string, path: string) => {
+    const res = await api.post('/public/visit', { visitorId, path });
+    return res.data;
+  },
+
   getSettings: async () => {
     const res = await api.get('/public/settings');
     return res.data;
