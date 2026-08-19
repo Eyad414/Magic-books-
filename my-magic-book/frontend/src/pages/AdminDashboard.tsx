@@ -347,6 +347,9 @@ export default function AdminDashboard() {
 
   const loadPrintJobs = async () => {
     try {
+      // Ask the printer first: a stored status is only true for as long as
+      // nobody at BookPod touches the job.
+      await adminApi.refreshPrintJobs().catch(() => { /* stale is better than nothing */ });
       const res = await adminApi.getPrintJobs(30);
       if (res.success) setPrintJobs(res.jobs);
     } catch { /* the log is informational; a failure here changes nothing */ }
@@ -1317,7 +1320,9 @@ export default function AdminDashboard() {
                                 {payLabel(order)}
                               </StatusBadge>
                               {/* BookPod production status: sent (in production) vs not yet sent */}
-                              {order.bookpodStatus === 'submitted' ? (
+                              {order.bookpodStatus === 'cancelled' ? (
+                                <StatusBadge tone="red" icon={AlertCircle}>{t('admin.bookpod_cancelled', 'أُلغي في المطبعة — يحتاج إرسالاً جديداً')}</StatusBadge>
+                              ) : order.bookpodStatus === 'submitted' ? (
                                 <StatusBadge tone="magic" icon={Package}>{t('admin.bookpod_in_production', 'قيد الإنتاج')}</StatusBadge>
                               ) : (
                                 <StatusBadge tone="neutral" icon={Clock}>{t('admin.bookpod_pending', 'بانتظار الإرسال')}</StatusBadge>

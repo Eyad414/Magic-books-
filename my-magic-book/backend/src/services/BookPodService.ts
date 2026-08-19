@@ -102,6 +102,38 @@ export async function fetchOrderPayments(): Promise<Map<string, BookPodOrderPaym
   }
 }
 
+
+/**
+ * The current status of every print job we placed, keyed by BookPod order
+ * number.
+ *
+ * A submission records the status it had the moment it was accepted and then
+ * never hears again — four jobs went from "waiting for payment" to CANCELLED
+ * overnight while the dashboard still showed them in production. Same tenant
+ * caveat as fetchOrderPayments: the endpoint returns everyone's orders, so we
+ * filter to our own source before reading anything.
+ */
+export async function fetchOurJobStatuses(): Promise<Map<string, { status: string; payment?: string }>> {
+  const { baseUrl, headers } = cfg();
+  const ours = (process.env.BOOKPOD_ORDER_SOURCE || 'eyad').toLowerCase();
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 60_000);
+  try {
+    const res = await fetch(`${baseUrl}/api/v1/orders`, { headers, signal: ctrl.signal });
+    if (!res.ok) throw new Error(`BookPod orders failed: ${res.status}`);
+    const rows = (await res.json()) as any[];
+    const out = new Map<string, { status: string; payment?: string }>();
+    for (const r of Array.isArray(rows) ? rows : []) {
+      if (String(r?.order_source || '').toLowerCase() !== ours) continue;
+      if (r?.order_no === undefined || r?.order_no === null) continue;
+      out.set(String(r.order_no), { status: String(r.status || ''), payment: r.payment ?? undefined });
+    }
+    return out;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export function isBookPodConfigured(): boolean {
   return !!(process.env.BOOKPOD_USER_ID && process.env.BOOKPOD_TOKEN);
 }

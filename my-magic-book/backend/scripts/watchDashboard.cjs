@@ -40,6 +40,11 @@ async function main() {
     printjobs: await newestOf('printjobs'),
   };
   // Payment is a change to an existing row, not a new one, so it needs its own memory.
+  // Printer-side status per job, so a change is reported once, not every tick.
+  const jobStatus = new Map(
+    (await db.collection('printjobs').find({ bookpodJobId: { $ne: null } }, { projection: { bookpodJobId: 1, bookpodStatus: 1 } }).toArray())
+      .map((j) => [String(j.bookpodJobId), j.bookpodStatus]),
+  );
   const paid = new Map(
     (await db.collection('orders').find({}, { projection: { paymentStatus: 1 } }).toArray())
       .map((o) => [String(o._id), o.paymentStatus]),
@@ -76,6 +81,17 @@ async function main() {
       for (const msg of await db.collection('contactmessages').find({ createdAt: { $gt: seen.contactmessages } }).sort({ createdAt: 1 }).toArray()) {
         say(`✉️ رسالة من ${msg.name || '؟'} — ${msg.subject || 'بدون عنوان'}: ${String(msg.message || '').replace(/\s+/g, ' ').slice(0, 80)}`);
         seen.contactmessages = msg.createdAt;
+      }
+
+      // A job can change at the printer long after it was sent — four went to
+      // CANCELLED overnight while the dashboard still showed them in production.
+      for (const j of await db.collection('printjobs').find({ bookpodJobId: { $ne: null } }).toArray()) {
+        const key = String(j.bookpodJobId);
+        const last = jobStatus.get(key);
+        if (last !== undefined && last !== j.bookpodStatus) {
+          say(`🖨️ حالة الطباعة #${key} تغيّرت: ${last} → ${j.bookpodStatus} — ${j.title}`);
+        }
+        jobStatus.set(key, j.bookpodStatus);
       }
 
       for (const j of await db.collection('printjobs').find({ createdAt: { $gt: seen.printjobs } }).sort({ createdAt: 1 }).toArray()) {

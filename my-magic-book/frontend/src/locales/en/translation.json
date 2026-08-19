@@ -1010,7 +1010,8 @@
     "cust_online": "online now",
     "cust_logins_today": "signed in today",
     "cust_last_seen": "last active",
-    "cust_online_hint": "“Online now” = an account that used the site in the last 5 minutes. Visitors without an account are not counted. Refreshes every 30s."
+    "cust_online_hint": "“Online now” = an account that used the site in the last 5 minutes. Visitors without an account are not counted. Refreshes every 30s.",
+    "bookpod_cancelled": "cancelled at the printer — needs resending"
   },
   "title_page": {
     "presents": "Presented to",

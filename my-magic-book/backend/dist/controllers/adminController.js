@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteImportedFiles = exports.listImportedFiles = exports.getPrintReadiness = exports.listPrintJobs = exports.listCustomers = exports.sendReadyThemeBook = exports.uploadImportedCover = exports.designImportedCover = exports.submitImportedBook = exports.importBookPdf = exports.generatePhotorealPreview = exports.generateColoringPreview = exports.generatePreviewIllustrations = exports.printBookSubmit = exports.printBook = exports.checkPayments = exports.submitOrderColoring = exports.reRenderOrderColoring = exports.reRenderOrderFiles = exports.getOrderBuildStatus = exports.buildOrderBook = exports.confirmOrderPayment = exports.getAllOrders = exports.updateSettings = exports.getPublicSettings = exports.getSettings = exports.getTeam = exports.removeAdmin = exports.addAdmin = exports.deleteStory = exports.updateStory = exports.getAllStories = exports.getCustomerByEmail = exports.deleteMessage = exports.listMessages = void 0;
+exports.deleteImportedFiles = exports.listImportedFiles = exports.getPrintReadiness = exports.listPrintJobs = exports.refreshPrintJobStatuses = exports.listCustomers = exports.sendReadyThemeBook = exports.uploadImportedCover = exports.designImportedCover = exports.submitImportedBook = exports.importBookPdf = exports.generatePhotorealPreview = exports.generateColoringPreview = exports.generatePreviewIllustrations = exports.printBookSubmit = exports.printBook = exports.checkPayments = exports.submitOrderColoring = exports.reRenderOrderColoring = exports.reRenderOrderFiles = exports.getOrderBuildStatus = exports.buildOrderBook = exports.confirmOrderPayment = exports.getAllOrders = exports.updateSettings = exports.getPublicSettings = exports.getSettings = exports.getTeam = exports.removeAdmin = exports.addAdmin = exports.deleteStory = exports.updateStory = exports.getAllStories = exports.getCustomerByEmail = exports.deleteMessage = exports.listMessages = void 0;
 const User_1 = __importDefault(require("../models/User"));
 const Story_1 = __importDefault(require("../models/Story"));
 const Order_1 = __importDefault(require("../models/Order"));
@@ -1897,6 +1897,48 @@ const listCustomers = async (_req, res) => {
     }
 };
 exports.listCustomers = listCustomers;
+/**
+ * Ask BookPod what actually happened to the jobs we sent, and write it down.
+ *
+ * Read-only against BookPod — this never submits anything. It exists because
+ * a job's status is captured once, at submission, and then goes stale: six
+ * orders were showing "in production" in the dashboard while every one of them
+ * had been cancelled at the printer.
+ */
+const refreshPrintJobStatuses = async (_req, res) => {
+    try {
+        const live = await (0, BookPodService_1.fetchOurJobStatuses)();
+        const changes = [];
+        for (const job of await PrintJob_1.default.find({ bookpodJobId: { $ne: null } })) {
+            const now = live.get(String(job.bookpodJobId));
+            if (!now || now.status === job.bookpodStatus)
+                continue;
+            changes.push({ job: String(job.bookpodJobId), from: job.bookpodStatus, to: now.status });
+            job.bookpodStatus = now.status;
+            await job.save();
+        }
+        // The order card reads its own field, so it has to be told too — otherwise
+        // the log tells the truth and the card next to it does not.
+        let ordersUpdated = 0;
+        for (const order of await Order_1.default.find({ bookpodJobId: { $ne: null } })) {
+            const now = live.get(String(order.bookpodJobId));
+            if (!now)
+                continue;
+            const mapped = now.status === 'CANCELLED' ? 'cancelled' : 'submitted';
+            if (order.bookpodStatus === mapped)
+                continue;
+            order.bookpodStatus = mapped;
+            await order.save();
+            ordersUpdated += 1;
+        }
+        res.json({ success: true, checked: live.size, changes, ordersUpdated });
+    }
+    catch (err) {
+        console.error('[refreshPrintJobStatuses]', err?.message || err);
+        res.status(500).json({ success: false, message: err?.message || 'تعذّر تحديث حالات الطباعة.' });
+    }
+};
+exports.refreshPrintJobStatuses = refreshPrintJobStatuses;
 /** The most recent books sent to the printer, newest first. */
 const listPrintJobs = async (req, res) => {
     try {

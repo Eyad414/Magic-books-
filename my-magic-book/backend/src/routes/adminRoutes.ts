@@ -8,6 +8,7 @@ import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam
   getPrintReadiness,
   listPrintJobs,
   listCustomers,
+  refreshPrintJobStatuses,
   sendReadyThemeBook,
   listImportedFiles,
   deleteImportedFiles, listMessages, deleteMessage, getCustomerByEmail, checkPayments } from '../controllers/adminController';
@@ -46,6 +47,8 @@ router.get('/print-readiness', getPrintReadiness);
 // A log of every book sent to the printer — demo books and imported ones kept
 // no record at all before this.
 router.get('/print-jobs', listPrintJobs);
+// Read-only against BookPod: asks what happened to what we already sent.
+router.post('/print-jobs/refresh', refreshPrintJobStatuses);
 // Accounts, sign-ins and what each person actually bought.
 router.get('/customers', listCustomers);
 // BILLABLE: prints and ships one finished demo book.

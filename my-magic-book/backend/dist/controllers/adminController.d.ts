@@ -101,6 +101,15 @@ export declare const uploadImportedCover: (req: Request, res: Response) => Promi
  */
 export declare const sendReadyThemeBook: (req: Request, res: Response) => Promise<void>;
 export declare const listCustomers: (_req: Request, res: Response) => Promise<void>;
+/**
+ * Ask BookPod what actually happened to the jobs we sent, and write it down.
+ *
+ * Read-only against BookPod — this never submits anything. It exists because
+ * a job's status is captured once, at submission, and then goes stale: six
+ * orders were showing "in production" in the dashboard while every one of them
+ * had been cancelled at the printer.
+ */
+export declare const refreshPrintJobStatuses: (_req: Request, res: Response) => Promise<void>;
 /** The most recent books sent to the printer, newest first. */
 export declare const listPrintJobs: (req: Request, res: Response) => Promise<void>;
 /**

@@ -16,7 +16,7 @@ import { checkThemes, loadThemeArtwork, type ThemeReadiness } from '../services/
 import PrintJob from '../models/PrintJob';
 import { publicProxyUrl } from '../services/PrintService';
 import { uploadBuffer, pdfFolderPath, listObjects, deleteObject } from '../services/StorageService';
-import { submitPrintJob, isBookPodConfigured } from '../services/BookPodService';
+import { submitPrintJob, isBookPodConfigured, fetchOurJobStatuses } from '../services/BookPodService';
 
 // The kid photo (already in the bucket) used as the reference face for ADMIN
 // PREVIEW generation only. Real customer orders use the customer's own photo.
@@ -1889,6 +1889,48 @@ export const listCustomers = async (_req: Request, res: Response): Promise<void>
   } catch (err: any) {
     console.error('[listCustomers]', err?.message || err);
     res.status(500).json({ success: false, message: err?.message || 'تعذّر جلب قائمة العملاء.' });
+  }
+};
+
+
+/**
+ * Ask BookPod what actually happened to the jobs we sent, and write it down.
+ *
+ * Read-only against BookPod — this never submits anything. It exists because
+ * a job's status is captured once, at submission, and then goes stale: six
+ * orders were showing "in production" in the dashboard while every one of them
+ * had been cancelled at the printer.
+ */
+export const refreshPrintJobStatuses = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const live = await fetchOurJobStatuses();
+    const changes: { job: string; from?: string; to: string }[] = [];
+
+    for (const job of await PrintJob.find({ bookpodJobId: { $ne: null } })) {
+      const now = live.get(String(job.bookpodJobId));
+      if (!now || now.status === job.bookpodStatus) continue;
+      changes.push({ job: String(job.bookpodJobId), from: job.bookpodStatus, to: now.status });
+      job.bookpodStatus = now.status;
+      await job.save();
+    }
+
+    // The order card reads its own field, so it has to be told too — otherwise
+    // the log tells the truth and the card next to it does not.
+    let ordersUpdated = 0;
+    for (const order of await Order.find({ bookpodJobId: { $ne: null } })) {
+      const now = live.get(String(order.bookpodJobId));
+      if (!now) continue;
+      const mapped = now.status === 'CANCELLED' ? 'cancelled' : 'submitted';
+      if (order.bookpodStatus === mapped) continue;
+      order.bookpodStatus = mapped;
+      await order.save();
+      ordersUpdated += 1;
+    }
+
+    res.json({ success: true, checked: live.size, changes, ordersUpdated });
+  } catch (err: any) {
+    console.error('[refreshPrintJobStatuses]', err?.message || err);
+    res.status(500).json({ success: false, message: err?.message || 'تعذّر تحديث حالات الطباعة.' });
   }
 };
 

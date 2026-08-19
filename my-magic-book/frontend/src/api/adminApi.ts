@@ -53,6 +53,12 @@ export const adminApi = {
     return response.data;
   },
 
+  /** Ask BookPod what happened to jobs already sent. Read-only — sends nothing. */
+  refreshPrintJobs: async () => {
+    const response = await axiosInstance.post('/admin/print-jobs/refresh');
+    return response.data;
+  },
+
   /** Log of books sent to the printer (demo books and imported PDFs). */
   getPrintJobs: async (limit = 30) => {
     const response = await axiosInstance.get('/admin/print-jobs', { params: { limit } });
