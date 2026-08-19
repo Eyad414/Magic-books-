@@ -1021,7 +1021,8 @@
     "coloring_build": "חוברת צביעה",
     "coloring_rebuild": "צביעה ↻",
     "coloring_build_help": "בונה את חוברת הצביעה מהסצנות של הסיפור עצמו",
-    "coloring_failed": "בניית חוברת הצביעה נכשלה"
+    "coloring_failed": "בניית חוברת הצביעה נכשלה",
+    "view_coloring_short": "צפייה בצביעה"
   },
   "title_page": {
     "presents": "מוגש ל",

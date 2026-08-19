@@ -83,6 +83,17 @@ export default function StoryBookPage() {
           if (matchedTheme?.generatedCover) {
             setGeneratedCover(matchedTheme.generatedCover);
           }
+          // A theme keeps its colouring book beside its story artwork. Without
+          // this the viewer had the theme but not its colouring pages, so
+          // ?view=coloring silently fell through to the story book.
+          if (matchedTheme?.coloringImages?.length) {
+            setStoryData((prev: any) => ({
+              ...(prev || { theme: storyId, childName: '', bookPackage: 'color' }),
+              coloringCover: matchedTheme.coloringCover,
+              coloringImages: matchedTheme.coloringImages,
+              coloringBackCover: matchedTheme.coloringBackCover,
+            }));
+          }
         }
       } else {
         const res = await storyApi.getMyStories();

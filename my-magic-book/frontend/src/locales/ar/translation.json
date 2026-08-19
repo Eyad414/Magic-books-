@@ -1021,7 +1021,8 @@
     "coloring_build": "كتاب تلوين",
     "coloring_rebuild": "تلوين ↻",
     "coloring_build_help": "يولّد كتاب التلوين من مشاهد هذه القصة نفسها — بدون كتابة أي مشهد",
-    "coloring_failed": "فشل توليد كتاب التلوين"
+    "coloring_failed": "فشل توليد كتاب التلوين",
+    "view_coloring_short": "عرض التلوين"
   },
   "title_page": {
     "presents": "يُقدّم لـ",

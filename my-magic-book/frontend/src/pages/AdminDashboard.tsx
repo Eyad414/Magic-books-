@@ -2228,6 +2228,18 @@ export default function AdminDashboard() {
                       {/* Build the colouring version of THIS story: same
                           sixteen scenes, drawn as line art. Nothing to write —
                           the story already says what happens on each page. */}
+                      {/* Only offered once there is something to open — the
+                          build button below is what creates it. */}
+                      {!!theme.coloringImages?.length && (
+                        <Link
+                          to={`/book/${theme.id}?view=coloring`}
+                          target="_blank"
+                          className="flex items-center gap-1 px-2 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-200 rounded-lg font-arabic text-xs transition-colors border border-amber-500/20"
+                        >
+                          <Eye className="w-3.5 h-3.5" /> {t('admin.view_coloring_short', 'عرض التلوين')}
+                        </Link>
+                      )}
+
                       <button
                         onClick={() => handleGenerateColoringFor(theme)}
                         disabled={generatingThemeId === theme.id}
