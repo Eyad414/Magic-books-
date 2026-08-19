@@ -438,6 +438,40 @@ export default function AdminDashboard() {
     }
   };
 
+  /**
+   * Build the colouring version of a story. There is nothing to author: the
+   * scenes are the story's own, drawn as line art, so this is one confirm and
+   * one wait.
+   */
+  const handleGenerateColoringFor = async (theme: any) => {
+    if (!window.confirm(t('admin.coloring_cost_confirm', 'سيتم توليد ١٨ صورة (~$0.70). هل تريد المتابعة؟'))) return;
+    setGeneratingThemeId(theme.id);
+    const toastId = toast.loading('🖍️ ' + t('admin.generating', 'جاري التوليد...'));
+    try {
+      const res = await adminApi.generateThemeColoring(theme.id, {});
+      if (res.success) {
+        toast.success(
+          t('admin.coloring_done', 'تم توليد كتاب التلوين — {{n}} صورة، بتكلفة ~${{c}}.', {
+            n: res.imageCount ?? 0, c: res.estimatedCostUsd ?? '0',
+          }),
+          { id: toastId, duration: 8000 },
+        );
+        setSettings((prev: any) => ({
+          ...prev,
+          themes: prev.themes.map((th: any) => th.id === theme.id
+            ? { ...th, coloringCover: res.coloringCover, coloringImages: res.coloringImages, coloringBackCover: res.coloringBackCover }
+            : th),
+        }));
+      } else {
+        toast.error(res.message || t('admin.coloring_failed', 'فشل توليد كتاب التلوين'), { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || t('admin.coloring_failed', 'فشل توليد كتاب التلوين'), { id: toastId });
+    } finally {
+      setGeneratingThemeId(null);
+    }
+  };
+
   const handleGenerateTheme = async (themeId: string, force = false) => {
     setGeneratingThemeId(themeId);
     const toastId = toast.loading('🎨 جاري توليد الصور بالذكاء الاصطناعي... (قد يستغرق دقيقتين)');
@@ -2189,6 +2223,20 @@ export default function AdminDashboard() {
                         className="flex items-center gap-1 px-2 py-1 bg-gold-500/20 hover:bg-gold-500/30 text-gold-500 rounded-lg font-arabic text-xs transition-colors border border-gold-500/30"
                       >
                         <BookOpen className="w-3.5 h-3.5" /> {t('admin.edit_short', 'تعديل')}
+                      </button>
+
+                      {/* Build the colouring version of THIS story: same
+                          sixteen scenes, drawn as line art. Nothing to write —
+                          the story already says what happens on each page. */}
+                      <button
+                        onClick={() => handleGenerateColoringFor(theme)}
+                        disabled={generatingThemeId === theme.id}
+                        title={t('admin.coloring_build_help', 'يولّد كتاب التلوين من مشاهد هذه القصة نفسها')}
+                        className="flex items-center gap-1 px-2 py-1 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 rounded-lg font-arabic text-xs transition-colors border border-amber-500/30 disabled:opacity-50"
+                      >
+                        🖍️ {theme.coloringCover
+                          ? t('admin.coloring_rebuild', 'تلوين ↻')
+                          : t('admin.coloring_build', 'كتاب تلوين')}
                       </button>
 
                       {/* Generate AI photos */}

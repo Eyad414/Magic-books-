@@ -72,6 +72,10 @@ export interface ITheme {
     coloringScenes?: string[];
     coloringCoverScene?: string;
     coloringBackCoverScene?: string;
+    /** A story's colouring artwork, separate from its story artwork. */
+    coloringCover?: string;
+    coloringImages?: string[];
+    coloringBackCover?: string;
 }
 /** Editable "trust" counters shown on the home hero (admin-controlled). */
 export interface IHomeStats {

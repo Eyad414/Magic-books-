@@ -1017,7 +1017,11 @@
     "bookpod_cancelled": "בוטל בדפוס — נדרשת שליחה מחדש",
     "cust_visitors_today": "מבקרים היום",
     "cust_visitors_7": "מבקרים השבוע",
-    "cust_secondline": "{{views}} פתיחות עמוד היום · {{logins}} נכנסו היום · {{buyers}} שילמו בפועל"
+    "cust_secondline": "{{views}} פתיחות עמוד היום · {{logins}} נכנסו היום · {{buyers}} שילמו בפועל",
+    "coloring_build": "חוברת צביעה",
+    "coloring_rebuild": "צביעה ↻",
+    "coloring_build_help": "בונה את חוברת הצביעה מהסצנות של הסיפור עצמו",
+    "coloring_failed": "בניית חוברת הצביעה נכשלה"
   },
   "title_page": {
     "presents": "מוגש ל",

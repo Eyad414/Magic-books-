@@ -80,6 +80,11 @@ const SiteSettingsSchema = new mongoose_1.Schema({
             coloringScenes: { type: [String], default: undefined },
             coloringCoverScene: { type: String, default: undefined },
             coloringBackCoverScene: { type: String, default: undefined },
+            // A story's colouring artwork, kept apart from its story artwork so a
+            // colouring build can never overwrite the pages customers see.
+            coloringCover: { type: String, default: undefined },
+            coloringImages: { type: [String], default: undefined },
+            coloringBackCover: { type: String, default: undefined },
         },
     ],
     homeStats: {

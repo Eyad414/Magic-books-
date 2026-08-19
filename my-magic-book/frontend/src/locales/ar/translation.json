@@ -1017,7 +1017,11 @@
     "bookpod_cancelled": "أُلغي في المطبعة — يحتاج إرسالاً جديداً",
     "cust_visitors_today": "زائر اليوم",
     "cust_visitors_7": "زائر هذا الأسبوع",
-    "cust_secondline": "{{views}} فتحة صفحة اليوم · {{logins}} دخلوا اليوم · {{buyers}} دفعوا فعلاً"
+    "cust_secondline": "{{views}} فتحة صفحة اليوم · {{logins}} دخلوا اليوم · {{buyers}} دفعوا فعلاً",
+    "coloring_build": "كتاب تلوين",
+    "coloring_rebuild": "تلوين ↻",
+    "coloring_build_help": "يولّد كتاب التلوين من مشاهد هذه القصة نفسها — بدون كتابة أي مشهد",
+    "coloring_failed": "فشل توليد كتاب التلوين"
   },
   "title_page": {
     "presents": "يُقدّم لـ",

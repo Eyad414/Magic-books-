@@ -250,7 +250,12 @@ export const adminApi = {
     return response.data;
   },
 
-  generateThemeColoring: async (themeId: string, opts: { coloringScenes: string[]; coloringCoverScene?: string; coloringBackCoverScene?: string; referencePhoto?: string; childName?: string; childGender?: 'male' | 'female' }) => {
+  /**
+   * Build a story's colouring version. Everything is optional now: with an
+   * empty body the server derives the scenes from the story itself, which is
+   * how the dashboard calls it.
+   */
+  generateThemeColoring: async (themeId: string, opts: { coloringScenes?: string[]; coloringCoverScene?: string; coloringBackCoverScene?: string; referencePhoto?: string; childName?: string; childGender?: 'male' | 'female'; coverOnly?: boolean } = {}) => {
     const response = await axiosInstance.post(
       `/admin/themes/${themeId}/generate-coloring`,
       opts,

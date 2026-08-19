@@ -13,6 +13,7 @@ import { buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPromp
 import { inspectPdf, reimposePdf, splitCoverInterior } from '../services/BookImportService';
 import { coverSourceFor, buildImportedCover, composeImportedCover } from '../services/ImportedCoverService';
 import { checkThemes, loadThemeArtwork, type ThemeReadiness } from '../services/PrintReadiness';
+import { resolveColoringScenes, getSceneTemplate } from '../services/sceneTemplates';
 import PrintJob from '../models/PrintJob';
 import Visit from '../models/Visit';
 import { publicProxyUrl } from '../services/PrintService';
@@ -1279,61 +1280,74 @@ export const generateColoringPreview = async (req: Request, res: Response): Prom
     const theme: any = settings.themes.find((t: any) => t.id === themeId);
     if (!theme) { res.status(404).json({ success: false, message: `theme ${themeId} not found` }); return; }
 
-    // Scenes: prefer the ones sent in the request (just typed), else saved ones.
+    // Scenes come from the STORY itself. Colouring books used to be written by
+    // hand in the dashboard — sixteen lines per book — which is why only four
+    // themes ever had one. The story already describes sixteen scenes; drawing
+    // them as line art is the whole job.
+    const derived = resolveColoringScenes(getSceneTemplate(themeId));
     const scenes: string[] = ((req.body?.coloringScenes && req.body.coloringScenes.length)
-      ? req.body.coloringScenes : theme.coloringScenes) || [];
+      ? req.body.coloringScenes
+      : theme.coloringScenes?.length ? theme.coloringScenes : derived?.scenes) || [];
     const cleanScenes = scenes.map((s: string) => (s || '').trim()).filter(Boolean);
     if (cleanScenes.length < 1) {
-      res.status(400).json({ success: false, message: 'Add the page scenes before generating.' });
+      res.status(400).json({ success: false, message: 'هذه القصة لا تحتوي مشاهد لاشتقاق كتاب التلوين منها.' });
       return;
     }
-    const coverScene: string = req.body?.coloringCoverScene || theme.coloringCoverScene || `exploring ${theme.label}`;
-    const backScene: string = req.body?.coloringBackCoverScene || theme.coloringBackCoverScene || 'waving goodbye happily';
+    const coverScene: string = req.body?.coloringCoverScene || theme.coloringCoverScene
+      || derived?.cover || `exploring ${theme.label}`;
+    const backScene: string = req.body?.coloringBackCoverScene || theme.coloringBackCoverScene
+      || derived?.back || 'waving goodbye happily';
+    // The cover alone is enough to show the book on the shop page: one image
+    // instead of eighteen, for a card rather than a whole book.
+    const coverOnly = req.body?.coverOnly === true;
     const referencePhoto: string = req.body?.referencePhoto || PREVIEW_REFERENCE_PHOTO;
     const childName: string = req.body?.childName || theme.label || 'الطفل';
     const childGender: 'male' | 'female' = req.body?.childGender === 'female' ? 'female' : 'male';
 
-    // Persist the scenes + mark as coloring so they survive.
-    theme.coloringScenes = scenes;
+    // Remember what was drawn, but never turn a story into a colouring theme:
+    // the story keeps its own artwork and gains a colouring version alongside.
+    theme.coloringScenes = cleanScenes;
     theme.coloringCoverScene = coverScene;
     theme.coloringBackCoverScene = backScene;
-    theme.isColoring = true;
+    // Its own folder, so colouring pages cannot overwrite the story's.
+    const folder = `theme_${themeId}_coloring`;
 
     // 1) colored front cover
     const cover = await generateIllustration(
       buildColoringCoverPrompt(coverScene, childName, childGender),
-      referencePhoto, { storyId: `theme_${themeId}`, pageNumber: 0 });
+      referencePhoto, { storyId: folder, pageNumber: 0 });
 
     // 2) 16 line-art pages
     const generatedImages: string[] = [];
-    for (let i = 0; i < COLORING_PAGES; i++) {
+    for (let i = 0; coverOnly ? false : i < COLORING_PAGES; i++) {
       const scene = cleanScenes[i] || cleanScenes[cleanScenes.length - 1];
       const img = await generateIllustration(
         buildScenePrompt('page', scene, childName, childGender, { coloring: true }),
-        referencePhoto, { storyId: `theme_${themeId}`, pageNumber: i + 1 });
+        referencePhoto, { storyId: folder, pageNumber: i + 1 });
       generatedImages.push(img.objectPath);
     }
 
     // 3) colored back cover
-    const back = await generateIllustration(
+    const back = coverOnly ? null : await generateIllustration(
       buildColoringBackCoverPrompt(backScene, childName, childGender),
-      referencePhoto, { storyId: `theme_${themeId}`, pageNumber: 98 });
+      referencePhoto, { storyId: folder, pageNumber: 98 });
 
-    theme.generatedCover = cover.objectPath;
-    theme.generatedImages = generatedImages;
-    theme.generatedPortrait = back.objectPath;
+    // Stored beside the story's artwork, not on top of it.
+    theme.coloringCover = cover.objectPath;
+    if (generatedImages.length) theme.coloringImages = generatedImages;
+    if (back) theme.coloringBackCover = back.objectPath;
     settings.markModified('themes');
     await settings.save();
 
-    const imageCount = generatedImages.length + 2;
+    const imageCount = generatedImages.length + (back ? 2 : 1);
     res.json({
       success: true,
       cached: false,
       imageCount,
       estimatedCostUsd: Number((imageCount * COST_PER_IMAGE_USD).toFixed(2)),
-      generatedCover: theme.generatedCover,
-      generatedImages: theme.generatedImages,
-      generatedPortrait: theme.generatedPortrait,
+      coloringCover: theme.coloringCover,
+      coloringImages: theme.coloringImages,
+      coloringBackCover: theme.coloringBackCover,
     });
   } catch (err: any) {
     console.error('[generateColoringPreview]', err);

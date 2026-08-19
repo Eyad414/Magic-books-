@@ -1017,7 +1017,11 @@
     "bookpod_cancelled": "cancelled at the printer — needs resending",
     "cust_visitors_today": "visitors today",
     "cust_visitors_7": "visitors this week",
-    "cust_secondline": "{{views}} page opens today · {{logins}} signed in today · {{buyers}} actually paid"
+    "cust_secondline": "{{views}} page opens today · {{logins}} signed in today · {{buyers}} actually paid",
+    "coloring_build": "colouring book",
+    "coloring_rebuild": "colouring ↻",
+    "coloring_build_help": "Builds the colouring book from this story’s own scenes — nothing to write",
+    "coloring_failed": "Colouring build failed"
   },
   "title_page": {
     "presents": "Presented to",
