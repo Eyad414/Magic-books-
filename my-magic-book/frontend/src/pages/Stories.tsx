@@ -95,6 +95,13 @@ export default function Stories() {
     toast.success(isFav ? t('stories_page.remove_from_favorites') : t('stories_page.add_to_favorites'));
   };
 
+  // Colouring is a format, not a catalogue: any story theme can be ordered as
+  // one, so this lists the stories themselves rather than a parallel set.
+  const colorableThemes = useMemo(
+    () => Object.values(themes).filter((th: any) => th && !th.isColoring && th.id),
+    [themes],
+  );
+
   const handleStartStory = (e: React.MouseEvent) => {
     e.preventDefault();
     resetProgress();
@@ -180,6 +187,40 @@ export default function Stories() {
               </div>
             );
           })}
+        </div>
+
+        {/* Every story is also a colouring book.
+            Not a separate catalogue: the pages ARE the story the customer
+            picks, drawn as line art with their own child in them — so listing
+            twenty more cards would be listing the same twenty stories twice. */}
+        <div className="mt-14 glass-card p-8 sm:p-10">
+          <div className="text-center">
+            <div className="text-4xl mb-3">🖍️</div>
+            <h2 className="font-arabic font-bold text-white text-2xl mb-2">
+              {t('stories_page.coloring_title', 'كل قصة متوفرة ككتاب تلوين')}
+            </h2>
+            <p className="font-arabic text-white/55 max-w-2xl mx-auto">
+              {t('stories_page.coloring_desc', 'نفس القصة اللي بتختارها — مرسومة خطوط، ووجه طفلك بكل صفحة. ١٦ صفحة يلوّنها بإيده.')}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-2 mt-6">
+            {colorableThemes.map((th) => (
+              <span
+                key={th.id}
+                className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-white/70 font-arabic text-xs"
+              >
+                {th.emoji} {t(`step2.theme_${th.id}`, { defaultValue: th.label })}
+              </span>
+            ))}
+          </div>
+
+          <div className="text-center mt-7">
+            <span className="font-arabic text-gold-500 font-black text-2xl" dir="ltr">₪60</span>
+            <span className="font-arabic text-white/45 text-sm mr-2">
+              {t('stories_page.coloring_price_note', 'للكتاب — أو ضمن الباقة الشاملة')}
+            </span>
+          </div>
         </div>
 
         {/* Bottom CTA */}
