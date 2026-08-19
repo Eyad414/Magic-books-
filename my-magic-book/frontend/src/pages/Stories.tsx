@@ -204,14 +204,27 @@ export default function Stories() {
             </p>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-2 mt-6">
+          {/* Every story now has a colouring cover of its own, so this shows
+              the books rather than a list of names. */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3 mt-7">
             {colorableThemes.map((th) => (
-              <span
-                key={th.id}
-                className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-white/70 font-arabic text-xs"
-              >
-                {th.emoji} {t(`step2.theme_${th.id}`, { defaultValue: th.label })}
-              </span>
+              <div key={th.id} className="group">
+                <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-white/5 border border-white/10 group-hover:border-gold-500/40 transition-colors">
+                  {th.coloringCover ? (
+                    <img
+                      src={toDisplayUrl(th.coloringCover)}
+                      alt={th.label}
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-3xl">{th.emoji}</div>
+                  )}
+                </div>
+                <p className="font-arabic text-white/60 text-[11px] text-center mt-1.5 leading-snug">
+                  {t(`step2.theme_${th.id}`, { defaultValue: th.label })}
+                </p>
+              </div>
             ))}
           </div>
 
