@@ -967,8 +967,9 @@ function faceClause(childName: string, childGender: 'male' | 'female'): string {
 
 const PHOTOREAL_TAIL =
   'Real natural skin texture and hair, soft warm cinematic lighting, shot like a real professional DSLR ' +
-  'photograph, shallow depth of field, sharp focus on the face. Photorealistic — looks like a REAL photo, ' +
-  'NOT a cartoon, NOT a 3D render, NOT an illustration.';
+  'photograph, shallow depth of field, sharp focus on the face. EVERY person in the frame — the child and ' +
+  'anyone with them — is a REAL child photographed in real life. Photorealistic — looks like a REAL photo, ' +
+  'NOT a cartoon, NOT a 3D render, NOT an illustration, NOT a painting.';
 
 const NO_TEXT = 'No text, no letters, no numbers, no signs, no watermark.';
 const NO_MEDAL_TEXT =
@@ -1091,7 +1092,7 @@ export function buildScenePrompt(
       `${PHOTOREAL_TAIL} ${COLOR_GRADE} Centered, square 1:1. ${NO_TEXT}`;
   } else {
     p =
-      `Ultra-photorealistic, lifelike children's book illustration photograph. ${base}. ` +
+      `Ultra-photorealistic, lifelike children's book PAGE PHOTOGRAPH. ${base}. ` +
       `Scene: the ${child} ${scene}. ${PHOTOREAL_TAIL} ${COLOR_GRADE} Square 1:1. ${NO_TEXT}`;
   }
   if (opts.medal) p += ' ' + NO_MEDAL_TEXT;
