@@ -1099,8 +1099,26 @@ export function buildScenePrompt(
   return p;
 }
 
+/**
+ * The shop sells four colouring books as their own themes — «كتاب تلوين:
+ * حديقة الحيوانات» and friends. Those ids have no template of their own: the
+ * colouring scenes live on the STORY they are drawn from. Without this map the
+ * lookup returned nothing, the build fell through to the generic fallback, and
+ * a customer who picked a colouring book received a full-colour story instead.
+ */
+const COLORING_THEME_SOURCE: Record<string, string> = {
+  zoo_coloring: 'zoo_adventure',
+  space_coloring: 'space_real',
+  school_coloring: 'school_hero',
+};
+
+/** Is this theme itself a colouring book, whatever package was chosen? */
+export function isColoringTheme(themeId: string): boolean {
+  return /_coloring$/i.test(String(themeId || '')) || themeId in COLORING_THEME_SOURCE;
+}
+
 export function getSceneTemplate(themeId: string): SceneTemplate | undefined {
-  return SCENE_TEMPLATES[themeId];
+  return SCENE_TEMPLATES[COLORING_THEME_SOURCE[themeId] || themeId];
 }
 
 /** Creative FULL-COLOR cartoon cover for a coloring book (the only colored page). */
@@ -1125,8 +1143,13 @@ export function buildColoringCoverPrompt(scene: string, childName: string, child
  * quietly received a normal story book. Pro was fixed to derive its scenes from
  * the theme's own pages; this is the same fix for the package sold on its own.
  */
-export function wantsColoringBook(bookPackage: string | undefined, template: any): boolean {
-  return bookPackage === 'coloring' && !!resolveColoringScenes(template);
+export function wantsColoringBook(
+  bookPackage: string | undefined,
+  template: any,
+  themeId?: string,
+): boolean {
+  const asked = bookPackage === 'coloring' || isColoringTheme(themeId || '');
+  return asked && !!resolveColoringScenes(template);
 }
 
 /** Creative FULL-COLOR cartoon BACK cover for a coloring book (after page 16). */

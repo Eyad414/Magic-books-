@@ -195,7 +195,7 @@ export async function buildBookForOrder(orderId: string, submitToBookPod = true)
     // structure). We re-run its exact scenes/text with THIS customer's photo as
     // the face reference — same story, swapped kid — in the photoreal style.
     const template = getSceneTemplate(story.theme);
-    const wantsColoring = wantsColoringBook(story.bookPackage, template);
+    const wantsColoring = wantsColoringBook(story.bookPackage, template, story.theme);
 
     let imageUrls: string[];
     let pageTexts: string[];

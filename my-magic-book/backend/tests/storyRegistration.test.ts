@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import { SCENE_TEMPLATES, resolveTokens, wantsColoringBook } from '../src/services/sceneTemplates';
+import { SCENE_TEMPLATES, resolveTokens, wantsColoringBook, getSceneTemplate } from '../src/services/sceneTemplates';
 
 /**
  * Adding a story means registering it in FOUR places. Miss the frontend
@@ -166,5 +166,24 @@ describe('wantsColoringBook', () => {
   it('refuses a theme with nothing to derive from', () => {
     expect(wantsColoringBook('coloring', { pageScenes: [] })).toBe(false);
     expect(wantsColoringBook('coloring', undefined)).toBe(false);
+  });
+});
+
+describe('colouring themes sold as their own story', () => {
+  it('finds the story template behind a colouring theme', () => {
+    // These ids have no template of their own; the scenes live on the story.
+    expect(getSceneTemplate('zoo_coloring')).toBe(SCENE_TEMPLATES.zoo_adventure);
+    expect(getSceneTemplate('space_coloring')).toBe(SCENE_TEMPLATES.space_real);
+    expect(getSceneTemplate('school_coloring')).toBe(SCENE_TEMPLATES.school_hero);
+  });
+
+  it('builds a colouring book for a colouring theme whatever the package says', () => {
+    expect(wantsColoringBook('color', getSceneTemplate('zoo_coloring'), 'zoo_coloring')).toBe(true);
+    expect(wantsColoringBook(undefined, getSceneTemplate('space_coloring'), 'space_coloring')).toBe(true);
+  });
+
+  it('leaves ordinary story themes alone', () => {
+    expect(wantsColoringBook('color', SCENE_TEMPLATES.zoo_adventure, 'zoo_adventure')).toBe(false);
+    expect(getSceneTemplate('zoo_adventure')).toBe(SCENE_TEMPLATES.zoo_adventure);
   });
 });
