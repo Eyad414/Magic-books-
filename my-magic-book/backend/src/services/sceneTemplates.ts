@@ -1114,6 +1114,20 @@ export function buildColoringCoverPrompt(scene: string, childName: string, child
   );
 }
 
+
+/**
+ * Should this order build a COLOURING book rather than a story book?
+ *
+ * The colouring-only package used to demand hand-written `coloringScenes` and
+ * `coloringCoverScene`, which only 4 of 21 themes have. Every other theme fell
+ * through to the story branch, so a customer who paid 60₪ for «دفتر تلوين»
+ * quietly received a normal story book. Pro was fixed to derive its scenes from
+ * the theme's own pages; this is the same fix for the package sold on its own.
+ */
+export function wantsColoringBook(bookPackage: string | undefined, template: any): boolean {
+  return bookPackage === 'coloring' && !!resolveColoringScenes(template);
+}
+
 /** Creative FULL-COLOR cartoon BACK cover for a coloring book (after page 16). */
 export function buildColoringBackCoverPrompt(scene: string, childName: string, childGender: 'male' | 'female'): string {
   const child = childGender === 'female' ? 'girl' : 'boy';

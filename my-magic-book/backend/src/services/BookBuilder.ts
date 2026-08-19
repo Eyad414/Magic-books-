@@ -5,7 +5,7 @@ import { buildBookHtml, BookData } from './HtmlTemplateBuilder';
 import { generateBookPdf } from './PdfGenerator';
 import { uploadBuffer, pdfFolderPath, copyObject } from './StorageService';
 import { splitStoryIntoPages, buildIllustrationPrompt, buildFallbackCoverPrompt, buildFallbackPortraitPrompt, NO_TEXT_RULE, type FallbackArtStyle } from './promptBuilder';
-import { getSceneTemplate, buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, resolveTokens, resolveGender, resolveColoringScenes, COLORING_PAGES } from './sceneTemplates';
+import { getSceneTemplate, buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, resolveTokens, resolveGender, resolveColoringScenes, wantsColoringBook, COLORING_PAGES } from './sceneTemplates';
 import { coverPreviewSlug, findPreviewCover } from './coverPreviewKey';
 import { describeCoverScene } from './CoverConcept';
 import { printAndSubmitForOrder, printAndSubmitColoringForOrder, buildColoringPrintForOrder, buildPrintFilesForStory, PrintBuildOpts } from './PrintOrchestrator';
@@ -195,7 +195,7 @@ export async function buildBookForOrder(orderId: string, submitToBookPod = true)
     // structure). We re-run its exact scenes/text with THIS customer's photo as
     // the face reference — same story, swapped kid — in the photoreal style.
     const template = getSceneTemplate(story.theme);
-    const wantsColoring = story.bookPackage === 'coloring' && !!template?.coloringScenes && !!template?.coloringCoverScene;
+    const wantsColoring = wantsColoringBook(story.bookPackage, template);
 
     let imageUrls: string[];
     let pageTexts: string[];

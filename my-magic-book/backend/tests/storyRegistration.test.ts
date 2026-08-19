@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import { SCENE_TEMPLATES, resolveTokens } from '../src/services/sceneTemplates';
+import { SCENE_TEMPLATES, resolveTokens, wantsColoringBook } from '../src/services/sceneTemplates';
 
 /**
  * Adding a story means registering it in FOUR places. Miss the frontend
@@ -141,5 +141,30 @@ describe('locale parity', () => {
     const have = new Set(leaves(locale(lng)));
     const missing = base.filter((k) => !have.has(k));
     expect(missing, `missing ${missing.length} key(s) in ${lng}, e.g. ${missing.slice(0, 8).join(', ')}`).toEqual([]);
+  });
+});
+
+describe('wantsColoringBook', () => {
+  it('builds a colouring book for a theme that only has story scenes', () => {
+    // zoo has no hand-written colouring scenes; before the fix this order
+    // silently produced a story book instead of the colouring book paid for.
+    expect(wantsColoringBook('coloring', SCENE_TEMPLATES.zoo_adventure)).toBe(true);
+  });
+
+  it('builds one for every theme that can be ordered', () => {
+    const themes = Object.keys(SCENE_TEMPLATES).filter((id) => SCENE_TEMPLATES[id]?.pageScenes?.length);
+    const cannot = themes.filter((id) => !wantsColoringBook('coloring', SCENE_TEMPLATES[id]));
+    expect(cannot).toEqual([]);
+  });
+
+  it('leaves other packages alone', () => {
+    expect(wantsColoringBook('color', SCENE_TEMPLATES.zoo_adventure)).toBe(false);
+    expect(wantsColoringBook('pro', SCENE_TEMPLATES.zoo_adventure)).toBe(false);
+    expect(wantsColoringBook(undefined, SCENE_TEMPLATES.zoo_adventure)).toBe(false);
+  });
+
+  it('refuses a theme with nothing to derive from', () => {
+    expect(wantsColoringBook('coloring', { pageScenes: [] })).toBe(false);
+    expect(wantsColoringBook('coloring', undefined)).toBe(false);
   });
 });
