@@ -681,7 +681,12 @@
     },
     "coloring_title": "Every story comes as a colouring book too",
     "coloring_desc": "The same story you pick — drawn as line art, with your child’s face on every page. 16 pages to colour in.",
-    "coloring_price_note": "per book — or inside the full bundle"
+    "coloring_price_note": "per book — or inside the full bundle",
+    "modal_swap": "This story — with {{name}} as the hero",
+    "modal_your_child": "your child",
+    "modal_swap_desc": "One photo of their face, their name on every page — printed and delivered",
+    "modal_cta_theme": "Make this story for your child",
+    "modal_price_hint": "from ₪40 · printed ₪130"
   },
   "policy": {
     "title": "Policies and Terms",

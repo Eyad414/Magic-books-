@@ -26,7 +26,7 @@ export default function Stories() {
   const [selected, setSelected] = useState<Card | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
   const { t, i18n } = useTranslation();
-  const { resetProgress } = useStoryProgress();
+  const { resetProgress, setStoryConfig } = useStoryProgress();
   const navigate = useNavigate();
   // Favourites are per-account (guest bucket when logged out).
   const { user } = useAuth();
@@ -108,6 +108,19 @@ export default function Stories() {
     navigate('/create');
   };
 
+  /**
+   * Start the wizard on the story the customer was just reading.
+   *
+   * Every route out of this page used to land on an empty wizard, so someone
+   * who fell for the pirate story had to find it again in a grid of twenty —
+   * and the moment they liked it was already gone.
+   */
+  const startWithTheme = (themeId: string) => {
+    resetProgress();
+    setStoryConfig({ theme: themeId });
+    navigate('/create');
+  };
+
   const previewPages = useMemo(() => {
     if (!selected) return [];
     return buildThemePreview({
@@ -180,7 +193,8 @@ export default function Stories() {
                     </div>
                   </div>
 
-                  <button onClick={handleStartStory} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-l from-gold-500 to-gold-600 text-dark-900 font-arabic font-bold text-sm hover:shadow-gold-glow transition-all">
+                  {/* Starts on THIS story, not an empty wizard. */}
+                  <button onClick={() => startWithTheme(card.themeId)} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-l from-gold-500 to-gold-600 text-dark-900 font-arabic font-bold text-sm hover:shadow-gold-glow transition-all">
                     ✨ {t('stories_page.start_creating')}
                   </button>
                 </div>
@@ -267,10 +281,27 @@ export default function Stories() {
             <div className="my-6 flex justify-center">
               <FlipbookPreview pages={previewPages} language={i18n.language as any} />
             </div>
-            <div className="flex justify-center mt-4">
-              <button onClick={handleStartStory} className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-l from-gold-500 to-gold-600 text-dark-900 font-arabic font-bold text-lg hover:shadow-gold-glow hover:-translate-y-1 transition-all">
-                {t('stories_page.modal_cta')}
-              </button>
+            {/* Closing the preview used to drop the reader on an empty
+                wizard. This keeps the story they just read, names it, and says
+                what it costs — the decision is made here, not two pages later. */}
+            <div className="mt-5 rounded-2xl border border-gold-500/30 bg-gradient-to-l from-gold-500/10 to-magic-500/10 p-5">
+              <p className="font-arabic text-white text-lg font-bold text-center">
+                {t('stories_page.modal_swap', 'هاي القصة… بس البطل يكون {{name}}', { name: t('stories_page.modal_your_child', 'طفلك') })}
+              </p>
+              <p className="font-arabic text-white/60 text-sm text-center mt-1.5">
+                {t('stories_page.modal_swap_desc', 'صورة وحدة لوجهه، واسمه بكل صفحة — وبيوصلك مطبوع')}
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-3 mt-4">
+                <button
+                  onClick={() => { setSelected(null); startWithTheme(selected.themeId); }}
+                  className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-l from-gold-500 to-gold-600 text-dark-900 font-arabic font-black text-lg hover:shadow-gold-glow hover:-translate-y-1 transition-all"
+                >
+                  ✨ {t('stories_page.modal_cta_theme', 'اصنع هذه القصة لطفلك')}
+                </button>
+                <span className="font-arabic text-white/50 text-sm">
+                  {t('stories_page.modal_price_hint', 'تبدأ من ₪40 · المطبوعة ₪130')}
+                </span>
+              </div>
             </div>
           </div>
         </div>
