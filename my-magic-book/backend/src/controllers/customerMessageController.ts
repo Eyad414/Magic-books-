@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import CustomerMessage from '../models/CustomerMessage';
 import User from '../models/User';
+import { sendCustomerMessageEmail } from '../utils/mailer';
 
 /* ── the shop's side ─────────────────────────────────────────────────────── */
 
@@ -15,7 +16,7 @@ export const sendMessageToCustomer = async (req: Request, res: Response): Promis
       res.status(400).json({ success: false, message: 'الرسالة فارغة' });
       return;
     }
-    const customer = await User.findById(req.params.userId).select('_id name').lean();
+    const customer = await User.findById(req.params.userId).select('_id name email').lean();
     if (!customer) {
       res.status(404).json({ success: false, message: 'العميل غير موجود' });
       return;
@@ -26,7 +27,19 @@ export const sendMessageToCustomer = async (req: Request, res: Response): Promis
       fromAdmin: true,
       storyId: req.body?.storyId || undefined,
     });
-    res.json({ success: true, message: { id: String(msg._id), createdAt: msg.createdAt } });
+    // Nudge them by email so they know to come and look. The message is saved
+    // either way — a mail failure must never cost the owner the message they
+    // just wrote — but the result is reported honestly rather than assumed.
+    const mail = (customer as any).email
+      ? await sendCustomerMessageEmail({ to: (customer as any).email, name: (customer as any).name, preview: body })
+      : { sent: false, reason: 'no-email' };
+
+    res.json({
+      success: true,
+      message: { id: String(msg._id), createdAt: msg.createdAt },
+      emailed: mail.sent,
+      emailReason: mail.sent ? undefined : mail.reason,
+    });
   } catch (err: any) {
     console.error('[sendMessageToCustomer]', err);
     res.status(500).json({ success: false, message: err.message || 'فشل الإرسال' });

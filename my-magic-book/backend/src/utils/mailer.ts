@@ -149,3 +149,74 @@ ${data.message}
     // Stay silent/logged so the API caller still gets a success response.
   }
 }
+
+/**
+ * Tell a customer the shop wrote to them.
+ *
+ * The message itself lives in their account; this is the nudge that gets them
+ * to go and read it, and it deliberately does NOT repeat the whole message —
+ * email is not the private channel, the account is.
+ *
+ * Same shared-sender limit as the password reset: until magicfanoos.com is
+ * verified in Resend and RESEND_FROM points at it, Resend rejects anything
+ * addressed to someone other than the account owner. The caller is told which
+ * happened so the dashboard can say so rather than implying an email went out.
+ */
+export async function sendCustomerMessageEmail(data: {
+  to: string;
+  name?: string;
+  preview: string;
+}): Promise<{ sent: boolean; reason?: string }> {
+  const from = process.env.RESEND_FROM || 'Magic Fanoos <onboarding@resend.dev>';
+  const apiKey = process.env.RESEND_API_KEY;
+  const url = `${process.env.FRONTEND_URL || 'https://magicfanoos.com'}/dashboard`;
+
+  if (!apiKey || apiKey === 'your_resend_api_key') {
+    return { sent: false, reason: 'not-configured' };
+  }
+
+  const greeting = data.name ? `مرحباً ${data.name}` : 'مرحباً';
+  // A short taste of the message, not the message. Enough to know it matters.
+  const preview = data.preview.length > 140 ? `${data.preview.slice(0, 140)}…` : data.preview;
+  const text = `${greeting},
+
+في رسالة جديدة إلك من الفانوس السحري:
+
+"${preview}"
+
+افتح حسابك لتقرأها وترد عليها:
+${url}`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; direction: rtl; text-align: right; padding: 24px; max-width: 560px; margin: 0 auto; background-color: #fafafa; border: 1px solid #eee; border-radius: 8px;">
+      <h2 style="color: #6d28d9; margin-top: 0;">✉️ رسالة جديدة إلك</h2>
+      <p style="color: #333; line-height: 1.7;">${greeting}، في رسالة جديدة إلك من <strong>الفانوس السحري</strong>:</p>
+      <blockquote style="margin: 18px 0; padding: 12px 16px; background: #fff; border-right: 4px solid #6d28d9; color: #444; line-height: 1.7;">${preview}</blockquote>
+      <p style="text-align: center; margin: 28px 0;">
+        <a href="${url}" style="background-color: #6d28d9; color: #fff; text-decoration: none; padding: 12px 28px; border-radius: 6px; display: inline-block; font-weight: bold;">افتح حسابك واقرأ الرسالة</a>
+      </p>
+      <p style="font-size: 11px; color: #999; margin-top: 24px; border-top: 1px solid #eee; padding-top: 10px;">الفانوس السحري · magicfanoos.com</p>
+    </div>
+  `;
+
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from, to: [data.to], subject: 'رسالة جديدة من الفانوس السحري', text, html }),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      // The shared sender refuses any recipient but the account owner. That is
+      // a configuration fact, not a bug, and the dashboard should say so.
+      const shared = !process.env.RESEND_FROM && /testing|verify a domain|own email/i.test(body);
+      console.warn(`[Mailer] customer message email failed (${res.status}): ${body.slice(0, 200)}`);
+      return { sent: false, reason: shared ? 'shared-sender' : `resend-${res.status}` };
+    }
+    console.log(`[Mailer] message notification sent to ${data.to}`);
+    return { sent: true };
+  } catch (error: any) {
+    console.error('❌ Resend Error: message notification failed:', error?.message || error);
+    return { sent: false, reason: 'network' };
+  }
+}

@@ -1019,7 +1019,16 @@ export default function AdminDashboard() {
       if (!res?.success) throw new Error(res?.message);
       setThread((prev) => [...(prev || []), { id: res.message.id, body: threadBody.trim(), fromAdmin: true, readAt: null, createdAt: res.message.createdAt }]);
       setThreadBody('');
-      toast.success(t('admin.msg_sent', 'تم الإرسال — بيشوفها لما يدخل حسابه ✅'), { id: toastId });
+      // Say which actually happened. "Sent" over an email Resend refused would
+      // leave the owner thinking the customer was told when they were not.
+      toast.success(
+        res.emailed
+          ? t('admin.msg_sent_mail', 'تم الإرسال — وصلته إيميل كمان ✅')
+          : res.emailReason === 'shared-sender'
+            ? t('admin.msg_sent_no_mail', 'تم الإرسال — بيشوفها بحسابه. الإيميل ما انبعت (لازم توثيق النطاق بـ Resend).')
+            : t('admin.msg_sent', 'تم الإرسال — بيشوفها لما يدخل حسابه ✅'),
+        { id: toastId, duration: res.emailed ? 4000 : 7000 },
+      );
     } catch (err: any) {
       toast.error(err?.response?.data?.message || err.message || t('admin.msg_failed', 'فشل الإرسال'), { id: toastId });
     } finally {
