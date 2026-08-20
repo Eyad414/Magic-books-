@@ -517,7 +517,9 @@
     "included_print": "Printed at a real press, not at home",
     "included_preview": "You see the whole book before it prints",
     "help_title": "A question before you finish?",
-    "help_desc": "Ask on WhatsApp — we answer quickly and can help you pick the right package."
+    "help_desc": "Ask on WhatsApp — we answer quickly and can help you pick the right package.",
+    "coupon_free_delivery": "Code applied — delivery is free 🚚",
+    "coupon_free_delivery_row": "free-delivery code"
   },
   "step4": {
     "err_pickup_location": "Please choose a pickup point",

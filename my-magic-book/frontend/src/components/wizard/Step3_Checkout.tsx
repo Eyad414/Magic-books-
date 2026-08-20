@@ -162,12 +162,33 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
   const [couponApplied, setCouponApplied] = useState(false);
   const [couponError, setCouponError] = useState('');
   const [discount, setDiscount] = useState(0);
+  const [couponType, setCouponType] = useState<'percent' | 'freeDelivery'>('percent');
+
+  /**
+   * The codes that work, in one place.
+   *
+   * `percent` takes off part of the book's price; `freeDelivery` waives the
+   * 30₪ instead — a different kind of offer, useful when the margin on a
+   * discount is too thin but the delivery can be absorbed.
+   *
+   * These live in the browser, so anyone who opens the page source can read
+   * them. That is fine for codes meant to be shared, and NOT fine for a code
+   * meant for one customer — for that they need to be checked on the server.
+   */
+  const COUPONS: Record<string, { type: 'percent' | 'freeDelivery'; value: number }> = {
+    MAGIC20: { type: 'percent', value: 20 },
+    MAGIC50: { type: 'percent', value: 50 },
+    FANOOS: { type: 'freeDelivery', value: 0 },
+  };
 
   const applyCoupon = () => {
     const code = couponCode.trim().toUpperCase();
-    if (code === 'MAGIC10') { setDiscount(10); setCouponApplied(true); setCouponError(''); }
-    else if (code === 'MAGIC20') { setDiscount(20); setCouponApplied(true); setCouponError(''); }
-    else { setCouponApplied(false); setDiscount(0); setCouponError(t('step3.coupon_invalid')); }
+    const found = COUPONS[code];
+    if (!found) { setCouponApplied(false); setDiscount(0); setCouponType('percent'); setCouponError(t('step3.coupon_invalid')); return; }
+    setCouponType(found.type);
+    setDiscount(found.type === 'percent' ? found.value : 0);
+    setCouponApplied(true);
+    setCouponError('');
   };
 
   // Price calculation (single book per order)
@@ -185,7 +206,8 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
   const addrSep = i18n.language?.startsWith('ar') ? '،' : ',';
   const basePrice = selectedPkg.price;
   const discountedBase = couponApplied ? Math.round(basePrice * (1 - discount / 100)) : basePrice;
-  const freeDelivery = isDigital || isPickup;
+  const couponFreeDelivery = couponApplied && couponType === 'freeDelivery';
+  const freeDelivery = isDigital || isPickup || couponFreeDelivery;
   const deliveryFee = freeDelivery ? 0 : 30;
   const totalPrice = discountedBase + deliveryFee;
 
@@ -425,25 +447,6 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
           </div>
         )}
 
-        {/* Someone stalling at checkout usually has one question. Answering it
-            here costs less than losing the order. */}
-        <div className="p-4 rounded-2xl bg-dark-700/60 border border-white/10 space-y-2">
-          <p className="font-arabic font-bold text-white text-sm flex items-center gap-2">
-            💬 {t('step3.help_title', 'عندك سؤال قبل ما تكمّل؟')}
-          </p>
-          <p className="font-arabic text-white/55 text-xs leading-relaxed">
-            {t('step3.help_desc', 'اسألنا على واتساب — منرد بسرعة، وبنساعدك تختار الباقة المناسبة.')}
-          </p>
-          <a
-            href="https://wa.me/972585502072"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#25D366]/15 text-[#25D366] border border-[#25D366]/30 font-arabic font-bold text-xs hover:bg-[#25D366]/25 transition-all"
-            dir="ltr"
-          >
-            058-550-2072
-          </a>
-        </div>
       </div>{/* form column — WhatsApp block was added without closing it, so
               the review column ended up nested inside the form and the grid
               stayed open, swallowing everything meant to sit below it. */}
@@ -549,7 +552,13 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
               </button>
             </div>
             {couponError && <p className="text-red-400 text-xs font-arabic mt-2">{couponError}</p>}
-            {couponApplied && <p className="text-green-400 text-xs font-arabic mt-2">{t('step3.coupon_success', 'تم تطبيق خصم {discount}%').replace('{discount}', String(discount))} ✨</p>}
+            {couponApplied && (
+              <p className="text-green-400 text-xs font-arabic mt-2">
+                {couponType === 'freeDelivery'
+                  ? t('step3.coupon_free_delivery', 'تم تطبيق الكود — التوصيل مجاني 🚚')
+                  : t('step3.coupon_success', 'تم تطبيق خصم {discount}%').replace('{discount}', String(discount))} ✨
+              </p>
+            )}
           </div>
 
           <div className="p-3 rounded-xl bg-gradient-to-l from-gold-500/20 to-gold-500/5 border border-gold-500/30 space-y-1.5">
@@ -568,7 +577,12 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
                 ⚠️ {t('step3.pkg_unavailable', 'الباقة التي اخترتها لم تعد متاحة، وتم اختيار «{{name}}» بدلاً منها. يمكنك الرجوع للخطوة السابقة لتغييرها.', { name: selectedPkg.label })}
               </p>
             )}
-            {couponApplied && <Row label={`${t('step5.discount', 'خصم')} ${discount}%`} value={`- ${basePrice - discountedBase} ₪`} />}
+            {couponApplied && couponType === 'percent' && (
+              <Row label={`${t('step5.discount', 'خصم')} ${discount}%`} value={`- ${basePrice - discountedBase} ₪`} />
+            )}
+            {couponFreeDelivery && (
+              <Row label={t('step3.coupon_free_delivery_row', 'كود التوصيل المجاني')} value={`- 30 ₪`} />
+            )}
             <Row label={t('step5.delivery_fee')} value={deliveryFee === 0 ? `${t('step3.free_delivery', 'مجاني')} 🎉` : `${deliveryFee} ₪`} />
             <div className="mt-2 flex items-center justify-between rounded-2xl bg-gradient-to-l from-gold-500/25 to-gold-500/10 border border-gold-500/50 px-4 py-3.5 shadow-lg shadow-gold-500/10">
               <span className="font-arabic font-black text-white text-lg">{t('step5.total')}</span>
