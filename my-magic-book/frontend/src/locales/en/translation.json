@@ -512,7 +512,10 @@
     "another_story_hint": "Want another book with a different theme? Create a new story as a separate order.",
     "create_another_story": "Create a new story",
     "create_another_confirm": "Start a new story? Your current book won't be ordered until you pay.",
-    "pkg_unavailable": "The package you chose is no longer available, so “{{name}}” was selected instead. Go back a step to change it."
+    "pkg_unavailable": "The package you chose is no longer available, so “{{name}}” was selected instead. Go back a step to change it.",
+    "included_pages": "13 pages + cover, with your child’s name and face",
+    "included_print": "Printed at a real press, not at home",
+    "included_preview": "You see the whole book before it prints"
   },
   "step4": {
     "err_pickup_location": "Please choose a pickup point",

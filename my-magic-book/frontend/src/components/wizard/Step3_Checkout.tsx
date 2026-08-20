@@ -437,15 +437,16 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
 
       <div className="space-y-3">
         {/* Story details + copies */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          <div className="p-3 rounded-xl bg-dark-700 border border-white/10 space-y-1.5">
-            <h3 className="font-arabic font-bold text-white text-xs mb-2 flex items-center gap-1.5">
+        <div className="grid grid-cols-1 gap-3">
+          <div className="p-4 rounded-2xl bg-gradient-to-b from-dark-700 to-dark-800 border border-gold-500/25 space-y-1.5 shadow-xl shadow-black/30">
+            <h3 className="font-arabic font-bold text-white text-xs mb-3 flex items-center gap-1.5">
               <span>📖</span> {t('step5.story_details_title')}
             </h3>
 
-            {/* Book-cover preview: the child's photo mocked up as a mini cover */}
-            <div className="flex items-center gap-2.5 mb-2 pb-2 border-b border-white/5">
-              <div className="relative w-12 h-16 rounded-lg overflow-hidden shrink-0 border border-gold-500/40 bg-dark-800 shadow-lg shadow-black/40">
+            {/* The book, big enough to want. This is the last thing a customer
+                looks at before paying, and it used to be a 12x16 thumbnail. */}
+            <div className="flex flex-col items-center gap-2.5 mb-3 pb-3 border-b border-white/5">
+              <div className="relative w-28 h-40 rounded-xl overflow-hidden shrink-0 border-2 border-gold-500/50 bg-dark-800 shadow-2xl shadow-gold-500/20 rotate-[-2deg] hover:rotate-0 transition-transform duration-500">
                 {coverPhoto ? (
                   <img src={coverPhoto} alt="" className="w-full h-full object-cover" />
                 ) : (
@@ -454,15 +455,15 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/10" />
                 {/* spine sheen */}
                 <div className="absolute inset-y-0 right-0 w-1 bg-gradient-to-l from-white/25 to-transparent" />
-                <div className="absolute top-1 left-1 text-xs drop-shadow">✨</div>
-                <div className="absolute inset-x-0 bottom-0 px-1 pb-1 text-center">
-                  <span className="font-arabic font-black text-white text-[9px] leading-tight drop-shadow block truncate">
+                <div className="absolute top-1.5 left-1.5 text-base drop-shadow">✨</div>
+                <div className="absolute inset-x-0 bottom-0 px-1.5 pb-2 text-center">
+                  <span className="font-arabic font-black text-white text-xs leading-tight drop-shadow block truncate">
                     {heroName || ''}
                   </span>
                 </div>
               </div>
-              <div className="min-w-0">
-                <p className="font-arabic font-black text-white text-xs leading-tight truncate">
+              <div className="min-w-0 text-center">
+                <p className="font-arabic font-black text-white text-sm leading-tight truncate">
                   {(t('step5.cover_preview_hero', 'كتاب {name}') as string).replace('{name}', heroName || '')}
                 </p>
                 <p className="font-arabic text-gold-500/80 text-[11px] mt-0.5">
@@ -472,7 +473,7 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
             </div>
 
             {/* Order review — all details in one compact wrapping row */}
-            <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] pt-0.5">
+            <div className="flex flex-col gap-1 text-[11px] pt-0.5">
               {[
                 { l: t('step5.story_hero'), v: heroName || '-' },
                 { l: t('step5.gender'), v: childDetails.childGender === 'female' ? t('step5.girl') : t('step5.boy') },
@@ -481,8 +482,8 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
                 { l: t('step5.language'), v: storyConfig?.language === 'en' ? t('step5.lang_en') : storyConfig?.language === 'he' ? t('step5.lang_he') : t('step5.lang_ar') },
                 { l: t('step5.package_type'), v: `${selectedPkg.emoji} ${selectedPkg.label}` },
               ].map((r, i) => (
-                <span key={i} className="font-arabic text-white/45 whitespace-nowrap">
-                  {r.l} <span className="text-white/90 font-bold">{r.v}</span>
+                <span key={i} className="font-arabic text-white/45 flex items-baseline justify-between gap-2">
+                  {r.l} <span className="text-white/90 font-bold text-left truncate">{r.v}</span>
                 </span>
               ))}
             </div>
@@ -553,10 +554,24 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
             )}
             {couponApplied && <Row label={`${t('step5.discount', 'خصم')} ${discount}%`} value={`- ${basePrice - discountedBase} ₪`} />}
             <Row label={t('step5.delivery_fee')} value={deliveryFee === 0 ? `${t('step3.free_delivery', 'مجاني')} 🎉` : `${deliveryFee} ₪`} />
-            <div className="mt-1 flex items-center justify-between rounded-xl bg-gold-500/15 border border-gold-500/40 px-3 py-2.5">
+            <div className="mt-2 flex items-center justify-between rounded-2xl bg-gradient-to-l from-gold-500/25 to-gold-500/10 border border-gold-500/50 px-4 py-3.5 shadow-lg shadow-gold-500/10">
               <span className="font-arabic font-black text-white text-lg">{t('step5.total')}</span>
-              <span className="font-arabic font-black text-gold-500 text-2xl drop-shadow-[0_0_10px_rgba(212,169,55,0.4)]">{totalPrice} ₪</span>
+              <span className="font-arabic font-black text-gold-500 text-3xl drop-shadow-[0_0_14px_rgba(212,169,55,0.5)]">{totalPrice} ₪</span>
             </div>
+
+            {/* What the number buys. A total on its own invites second
+                thoughts; the things it pays for answer them. */}
+            <ul className="pt-1 space-y-1">
+              {[
+                t('step3.included_pages', '١٣ صفحة + غلاف، باسم طفلك ووجهه'),
+                t('step3.included_print', 'طباعة مطبعة حقيقية — مش طباعة بيت'),
+                t('step3.included_preview', 'بتعاين الكتاب كامل قبل الطباعة'),
+              ].map((line, i) => (
+                <li key={i} className="flex items-start gap-1.5 font-arabic text-white/60 text-[11px] leading-relaxed">
+                  <span className="text-gold-500 shrink-0">✓</span> {line}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
