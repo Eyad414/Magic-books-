@@ -245,7 +245,13 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
         </div>
       </div>
 
-      {/* ── Shipping section ─────────────────────────────────────────── */}
+      {/* Two columns from lg up: what the customer has to FILL IN on the
+          start side, what they are BUYING beside it. Stacked before that,
+          form first — on a phone a summary above the fields just pushes the
+          work off screen. */}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] items-start">
+
+      {/* ── Shipping section — the side they type into ─────────────────── */}
       <div className="space-y-5">
         <div className="flex items-center gap-2 text-gold-500">
           <MapPin className="w-4 h-4" />
@@ -420,9 +426,10 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
         )}
       </div>
 
-      <div className="border-t border-white/10" />
-
-      {/* ── Order summary & payment section ──────────────────────────── */}
+      {/* The rule that used to separate these two stacked sections is now a
+          stray grid child — side by side, the columns are the separation. */}
+      {/* ── Order review — stays in view while the form is filled ─────── */}
+      <div className="space-y-3 lg:sticky lg:top-24">
       <div className="flex items-center gap-2 text-gold-500">
         <Package className="w-4 h-4" />
         <span className="font-arabic font-bold text-sm">{t('step5.title')}</span>
@@ -555,6 +562,8 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
 
         {/* Payment moved to step 4 — this step is details and review only. */}
       </div>
+      </div>{/* review column */}
+      </div>{/* two-column grid */}
 
       {/* Navigation */}
       <div className="flex gap-3">
