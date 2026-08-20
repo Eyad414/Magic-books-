@@ -986,6 +986,49 @@ export default function AdminDashboard() {
   // `${storyId|demoKey}:${surface}` while one publish toggle is in flight.
   const [visBusy, setVisBusy] = useState<string | null>(null);
 
+  // Sending a book into a customer's account: which book, and to whom.
+  const [giftBook, setGiftBook] = useState<any | null>(null);
+  const [giftUserId, setGiftUserId] = useState('');
+  const [giftNote, setGiftNote] = useState('');
+  const [giftBusy, setGiftBusy] = useState(false);
+
+  /** The customer list is loaded by its own tab, so fetch it if it is missing. */
+  const openGift = (b: any) => {
+    setGiftBook(b);
+    setGiftUserId('');
+    setGiftNote('');
+    if (!customers) loadCustomers();
+  };
+
+  const sendGift = async () => {
+    if (!giftBook || !giftUserId || giftBusy) return;
+    setGiftBusy(true);
+    const toastId = toast.loading(t('admin.gift_sending', 'جاري الإرسال...'));
+    try {
+      const res = await adminApi.sendBookToCustomer({
+        userId: giftUserId,
+        childName: giftBook.childName,
+        childGender: giftBook.childGender,
+        theme: giftBook.theme,
+        language: i18n.language,
+        // A colouring book's artwork lives in its own fields, and the customer's
+        // reader looks for it there — sending it as `cover`/`images` would show
+        // the line art as if it were a story.
+        ...(giftBook.isColoring
+          ? { coloringCover: giftBook.cover, coloringImages: giftBook.images, coloringBackCover: giftBook.back }
+          : { cover: giftBook.cover, images: giftBook.images, back: giftBook.back }),
+        note: giftNote,
+      });
+      if (!res?.success) throw new Error(res?.message);
+      toast.success(t('admin.gift_sent', 'تم إرسال الكتاب لحساب {{name}} ✅', { name: res.customer?.name || '' }), { id: toastId });
+      setGiftBook(null);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || t('admin.gift_failed', 'فشل الإرسال'), { id: toastId });
+    } finally {
+      setGiftBusy(false);
+    }
+  };
+
   /**
    * Every book in one list: the real stories customers/we generated, plus the
    * curated theme demos. They used to be two separate sections with different
@@ -2554,6 +2597,53 @@ export default function AdminDashboard() {
                   {/* Deliberately a second step: a print run costs money, so the
                       book, the name printed inside it and who collects it are
                       all confirmed before anything is sent. */}
+                  {/* Choose who gets the book. Sits above the print panel
+                      because it is the cheaper, more common action: no paper,
+                      no courier, nothing to undo at a printer. */}
+                  {giftBook && (
+                    <div className="mt-3 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-400/30">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-arabic text-emerald-100 text-xs font-bold">
+                          🎁 {t('admin.gift_panel_title', 'إرسال «{{book}}» لحساب عميل', { book: giftBook.themeLabel || giftBook.childName })}
+                        </p>
+                        <button onClick={() => setGiftBook(null)} className="text-white/40 hover:text-white/80 text-xs font-arabic">
+                          {t('common.cancel', 'إلغاء')}
+                        </button>
+                      </div>
+                      <div className="grid gap-1.5 sm:grid-cols-2 mb-2">
+                        <select
+                          value={giftUserId}
+                          onChange={(e) => setGiftUserId(e.target.value)}
+                          className="px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] font-arabic"
+                        >
+                          <option value="">{t('admin.gift_pick', 'اختر العميل…')}</option>
+                          {(customers?.customers || []).map((c: any) => (
+                            <option key={c._id || c.id} value={c._id || c.id} className="bg-[#0a1628]">
+                              {c.name} — {c.email}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          value={giftNote}
+                          onChange={(e) => setGiftNote(e.target.value)}
+                          placeholder={t('admin.gift_note', 'رسالة للعميل (اختياري)')}
+                          className="px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] font-arabic placeholder:text-white/30"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={sendGift}
+                        disabled={!giftUserId || giftBusy}
+                        className="w-full px-3 py-2 rounded-xl bg-emerald-500 text-[#0a1628] font-arabic font-bold text-xs disabled:opacity-40"
+                      >
+                        {giftBusy ? t('admin.gift_sending', 'جاري الإرسال...') : t('admin.gift_send', 'أرسل الكتاب لحسابه')}
+                      </button>
+                      <p className="font-arabic text-white/40 text-[10px] mt-1.5">
+                        {t('admin.gift_hint', 'الكتاب بيظهر بحسابه ويقدر يقرأه — بدون طلب وبدون دفع.')}
+                      </p>
+                    </div>
+                  )}
+
                   {sendBook && (
                     <div className="mt-3 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-400/30">
                       <div className="flex items-center justify-between mb-2">
@@ -2844,6 +2934,15 @@ export default function AdminDashboard() {
                               : <>🖨️ {t('admin.book_print', 'طباعة')}</>}
                           </button>
                         </div>
+
+                        {/* Put this book into a customer's account. */}
+                        <button
+                          type="button"
+                          onClick={() => openGift(b)}
+                          className="w-full flex items-center justify-center gap-1.5 px-2 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-xl font-arabic font-bold text-xs transition"
+                        >
+                          🎁 {t('admin.book_gift', 'أرسله لحساب عميل')}
+                        </button>
                       </div>
                     ))}
                   </div>

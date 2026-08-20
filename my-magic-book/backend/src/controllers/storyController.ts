@@ -152,6 +152,10 @@ const WEB_READABLE_PACKAGES = ['ebook', 'pro'];
 const WEB_READING_GATED_FROM = new Date('2026-08-07T00:00:00.000Z');
 
 function canReadOnline(story: any): boolean {
+  // A book the owner put into someone's account by hand. There is no order and
+  // no package to check, and gating it would hand a customer a gift they
+  // cannot open.
+  if (story.sentByAdmin) return true;
   if (WEB_READABLE_PACKAGES.includes(String(story.bookPackage || ''))) return true;
   const created = story.createdAt ? new Date(story.createdAt) : null;
   return !!created && created < WEB_READING_GATED_FROM;

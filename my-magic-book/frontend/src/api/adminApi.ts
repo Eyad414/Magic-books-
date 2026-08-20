@@ -59,6 +59,12 @@ export const adminApi = {
     return response.data;
   },
 
+  /** Put a book we made into a customer's own account. Sends nothing to print. */
+  sendBookToCustomer: async (payload: Record<string, any>) => {
+    const response = await axiosInstance.post('/admin/books/send-to-customer', payload);
+    return response.data;
+  },
+
   /** Ask BookPod what happened to jobs already sent. Read-only — sends nothing. */
   refreshPrintJobs: async () => {
     const response = await axiosInstance.post('/admin/print-jobs/refresh');

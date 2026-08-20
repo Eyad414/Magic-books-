@@ -52,6 +52,16 @@ export interface IStory extends Document {
   coloringImages?: string[];
   coloringCover?: string;
   coloringBackCover?: string;
+  /**
+   * The owner put this book into a customer's account by hand — a gift, a
+   * sample, a replacement for an order that went wrong. It was never bought,
+   * so it carries no price and no order, and it is always readable on the web:
+   * a book someone was given that they cannot open is not a gift.
+   */
+  sentByAdmin?: boolean;
+  sentAt?: Date;
+  /** Shown to the customer above the book, e.g. "هدية من الفانوس السحري". */
+  sentNote?: string;
   status: StoryStatus;
   // Step 3: Customization
   coverColor?: string;
@@ -93,6 +103,9 @@ const StorySchema = new Schema<IStory>(
     coloringImages: { type: [String], default: undefined },
     coloringCover: { type: String, default: undefined },
     coloringBackCover: { type: String, default: undefined },
+    sentByAdmin: { type: Boolean, default: false },
+    sentAt: { type: Date },
+    sentNote: { type: String },
     status: {
       type: String,
       enum: ['draft', 'generating', 'ready', 'ordered'],

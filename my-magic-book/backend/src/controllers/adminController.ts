@@ -2207,3 +2207,72 @@ export const deleteImportedFiles = async (req: Request, res: Response): Promise<
     res.status(500).json({ success: false, message: err?.message || 'فشل الحذف.' });
   }
 };
+
+/**
+ * POST /api/admin/books/send-to-customer
+ *
+ * Puts a book the owner made into a customer's own account, where it appears
+ * beside anything they bought and opens like their own book.
+ *
+ * The artwork is REFERENCED, never copied: the same GCS object paths are
+ * written onto a new Story owned by the customer. Copying the files would
+ * double the storage for every gift and leave two sets to keep in step; moving
+ * the original would take the book out of الكتب الجاهزة.
+ *
+ * It carries no price and no order, because nobody bought it.
+ */
+export const sendBookToCustomer = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const {
+      userId, childName, childGender, theme, language,
+      cover, images, back, coloringCover, coloringImages, coloringBackCover, note,
+    } = req.body || {};
+
+    const customer = await User.findById(userId).select('_id name email').lean();
+    if (!customer) {
+      res.status(404).json({ success: false, message: 'العميل غير موجود' });
+      return;
+    }
+
+    const pages: string[] = Array.isArray(images) ? images.filter(Boolean) : [];
+    const colPages: string[] = Array.isArray(coloringImages) ? coloringImages.filter(Boolean) : [];
+    // A book with no artwork would land in their account as blank pages.
+    if (!cover && !pages.length && !coloringCover && !colPages.length) {
+      res.status(400).json({ success: false, message: 'لا توجد صور لهذا الكتاب' });
+      return;
+    }
+
+    const story = await Story.create({
+      userId: customer._id,
+      childName: childName || 'الطفل',
+      // Required on every story, and a book card has no age to offer — it was
+      // never asked for one. The reader does not use it; the model does.
+      childAge: req.body?.childAge || '3-5',
+      childGender: childGender === 'female' ? 'female' : 'male',
+      theme: theme || 'custom',
+      language: language || 'ar',
+      status: 'ready',
+      generatedCover: cover || undefined,
+      generatedImages: pages.length ? pages : undefined,
+      generatedPortrait: back || undefined,
+      coloringCover: coloringCover || undefined,
+      coloringImages: colPages.length ? colPages : undefined,
+      coloringBackCover: coloringBackCover || undefined,
+      sentByAdmin: true,
+      sentAt: new Date(),
+      sentNote: (note || '').trim() || undefined,
+      // Never sold: a gift must not show up as money owed or money taken.
+      basePrice: 0,
+      totalPrice: 0,
+    });
+
+    res.json({
+      success: true,
+      storyId: String(story._id),
+      customer: { id: String(customer._id), name: customer.name, email: customer.email },
+    });
+  } catch (err: any) {
+    console.error('[sendBookToCustomer]', err);
+    res.status(500).json({ success: false, message: err.message || 'فشل الإرسال' });
+  }
+};

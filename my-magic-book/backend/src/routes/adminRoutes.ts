@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam, getSettings, updateSettings, getAllOrders, confirmOrderPayment, buildOrderBook, getOrderBuildStatus, reRenderOrderFiles, reRenderOrderColoring, submitOrderColoring, printBook, printBookSubmit, generatePreviewIllustrations, generatePhotorealPreview, generateColoringPreview,
+import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam, getSettings, updateSettings, getAllOrders, confirmOrderPayment, buildOrderBook, getOrderBuildStatus, reRenderOrderFiles, reRenderOrderColoring, submitOrderColoring, printBook, printBookSubmit, generatePreviewIllustrations, generatePhotorealPreview, generateColoringPreview, sendBookToCustomer,
   importBookPdf,
   submitImportedBook,
   designImportedCover,
@@ -61,6 +61,8 @@ router.put('/settings', updateSettings);
 router.post('/themes/:themeId/generate-illustrations', generatePreviewIllustrations);
 router.post('/themes/:themeId/generate-photoreal', generatePhotorealPreview);
 router.post('/themes/:themeId/generate-coloring', generateColoringPreview);
+// Put a book the owner made into a customer's own account.
+router.post('/books/send-to-customer', sendBookToCustomer);
 
 // Re-impose a supplied book PDF onto a chosen trim. 60MB: a scanned interior is
 // far heavier than the 10MB child photos the other upload route accepts.
