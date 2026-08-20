@@ -1027,7 +1027,9 @@
     "visits_anon": "מבקר ללא חשבון",
     "visits_from": "מ־",
     "visits_pages": "{{n}} עמודים",
-    "visits_returning": "חזר שוב"
+    "visits_returning": "חזר שוב",
+    "cust_visit_days": "ביקר ב-{{d}} ימים · {{v}} עמודים",
+    "cust_login_times": "כניסות אחרונות: {{list}}"
   },
   "title_page": {
     "presents": "מוגש ל",

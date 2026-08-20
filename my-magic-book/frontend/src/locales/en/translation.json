@@ -1027,7 +1027,9 @@
     "visits_anon": "visitor with no account",
     "visits_from": "from",
     "visits_pages": "{{n}} pages",
-    "visits_returning": "came back"
+    "visits_returning": "came back",
+    "cust_visit_days": "visited on {{d}} days · {{v}} pages",
+    "cust_login_times": "recent sign-ins: {{list}}"
   },
   "title_page": {
     "presents": "Presented to",

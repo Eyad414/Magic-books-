@@ -1946,8 +1946,24 @@ const ONLINE_WINDOW_MS = 5 * 60 * 1000;
 
 export const listCustomers = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const users = await User.find({}).select('name email role phone location createdAt lastLoginAt loginCount lastSeenAt').sort({ createdAt: -1 }).lean();
+    const users = await User.find({}).select('name email role phone location createdAt lastLoginAt loginCount lastSeenAt loginHistory').sort({ createdAt: -1 }).lean();
     const orders = await Order.find({}).select('userId totalPrice currency paymentStatus createdAt').lean();
+
+    // What each account did on the site, not just what it bought.
+    const visitRows = await Visit.find({ userId: { $ne: null } })
+      .select('userId day views device lang paths')
+      .lean();
+    const browsing = new Map<string, { days: number; views: number; device?: string; lang?: string; lastPages: string[] }>();
+    for (const v of visitRows) {
+      const key = String(v.userId);
+      const row = browsing.get(key) || { days: 0, views: 0, lastPages: [] };
+      row.days += 1;
+      row.views += v.views || 0;
+      row.device = v.device || row.device;
+      row.lang = v.lang || row.lang;
+      if (v.paths?.length) row.lastPages = v.paths.slice(-3);
+      browsing.set(key, row);
+    }
 
     const spend = new Map<string, { orders: number; paid: number; total: number; last?: Date }>();
     for (const o of orders) {
@@ -1976,6 +1992,13 @@ export const listCustomers = async (_req: Request, res: Response): Promise<void>
         lastSeenAt: u.lastSeenAt,
         online: !!u.lastSeenAt && Date.now() - new Date(u.lastSeenAt).getTime() < ONLINE_WINDOW_MS,
         loginCount: u.loginCount || 0,
+        // The last five sign-ins, newest first — enough to see a pattern.
+        recentLogins: (u.loginHistory || []).slice(-5).reverse(),
+        visitDays: browsing.get(String(u._id))?.days || 0,
+        pageViews: browsing.get(String(u._id))?.views || 0,
+        device: browsing.get(String(u._id))?.device,
+        lang: browsing.get(String(u._id))?.lang,
+        lastPages: browsing.get(String(u._id))?.lastPages || [],
         orders: s.orders,
         paidOrders: s.paid,
         totalSpent: s.total,

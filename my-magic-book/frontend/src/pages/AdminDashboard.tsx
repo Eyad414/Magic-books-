@@ -1684,6 +1684,33 @@ export default function AdminDashboard() {
                                   : new Date(c.lastSeenAt).toLocaleString()}
                               </span>
                             )}
+                            {/* What this account did on the site, not only what
+                                it bought — days here, pages read, and where. */}
+                            {c.visitDays > 0 && (
+                              <span>
+                                {t('admin.cust_visit_days', 'زار في {{d}} يوم · {{v}} صفحة', { d: c.visitDays, v: c.pageViews })}
+                              </span>
+                            )}
+                            {c.device && <span>{c.device === 'mobile' ? '📱' : '💻'}</span>}
+                            {c.lang && <span className="uppercase" dir="ltr">{c.lang}</span>}
+                            {c.lastPages?.length > 0 && (
+                              <span className="text-white/30 truncate max-w-[45%]" dir="ltr" title={c.lastPages.join(' → ')}>
+                                {c.lastPages.join(' → ')}
+                              </span>
+                            )}
+                            {c.recentLogins?.length > 1 && (
+                              <span
+                                className="text-white/35"
+                                title={c.recentLogins.map((d: string) => new Date(d).toLocaleString()).join('\n')}
+                              >
+                                {t('admin.cust_login_times', 'آخر الدخولات: {{list}}', {
+                                  list: c.recentLogins
+                                    .slice(0, 3)
+                                    .map((d: string) => new Date(d).toLocaleDateString())
+                                    .join(' · '),
+                                })}
+                              </span>
+                            )}
                             {/* Counting started the day this was added, so a
                                 zero means "not since then", not "never". */}
                             {c.loginCount > 0 && <span>{t('admin.cust_logins', 'مرات الدخول')}: {c.loginCount}</span>}

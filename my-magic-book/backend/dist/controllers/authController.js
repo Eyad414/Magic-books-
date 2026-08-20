@@ -58,8 +58,11 @@ const login = async (req, res) => {
             return;
         }
         const token = signToken(user._id.toString());
-        user.lastLoginAt = new Date();
+        const now = new Date();
+        user.lastLoginAt = now;
         user.loginCount = (user.loginCount || 0) + 1;
+        // Keep the last twenty, so the list cannot grow without bound.
+        user.loginHistory = [...(user.loginHistory || []), now].slice(-20);
         await user.save();
         res.json({
             success: true,

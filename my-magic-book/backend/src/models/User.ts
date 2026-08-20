@@ -13,6 +13,9 @@ export interface IUser extends Document {
   /** How many times this account has signed in. "Last seen" alone cannot tell
    *  a customer who keeps coming back from one who logged in once. */
   loginCount?: number;
+  /** The last twenty sign-ins. A count says how often someone comes back; the
+   *  times say when — evenings, weekends, right after a post went out. */
+  loginHistory?: Date[];
   /** Last authenticated request from this account — what "online now" reads.
    *  Written at most once a minute, so browsing costs one small write, not one
    *  per request. */
@@ -42,6 +45,7 @@ const UserSchema = new Schema<IUser>(
     location: { type: String, trim: true },
     lastLoginAt: { type: Date },
     loginCount: { type: Number, default: 0 },
+    loginHistory: { type: [Date], default: undefined },
     lastSeenAt: { type: Date },
     coverPreviews: { type: [Date], default: undefined },
     // `select: false`, like passwordHash: these must never ride along in a user

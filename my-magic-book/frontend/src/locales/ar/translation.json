@@ -1027,7 +1027,9 @@
     "visits_anon": "زائر بدون حساب",
     "visits_from": "من",
     "visits_pages": "{{n}} صفحة",
-    "visits_returning": "رجع مرة ثانية"
+    "visits_returning": "رجع مرة ثانية",
+    "cust_visit_days": "زار في {{d}} يوم · {{v}} صفحة",
+    "cust_login_times": "آخر الدخولات: {{list}}"
   },
   "title_page": {
     "presents": "يُقدّم لـ",
