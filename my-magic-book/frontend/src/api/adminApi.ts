@@ -65,6 +65,18 @@ export const adminApi = {
     return response.data;
   },
 
+  /** The inbox: one row per customer with a thread, newest first. */
+  getConversations: async () => {
+    const response = await axiosInstance.get('/admin/conversations');
+    return response.data;
+  },
+
+  /** Mark what the customer sent us as read. */
+  markThreadRead: async (userId: string) => {
+    const response = await axiosInstance.post(`/admin/customers/${userId}/messages/read`);
+    return response.data;
+  },
+
   /** Unread-message counts per customer, for the customers list. */
   getMessageCounts: async () => {
     const response = await axiosInstance.get('/admin/customer-messages');

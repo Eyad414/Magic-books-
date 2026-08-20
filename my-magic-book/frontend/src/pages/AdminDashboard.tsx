@@ -335,6 +335,17 @@ export default function AdminDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
+  // The messenger refreshes itself while it is open — a reply that arrives
+  // while the owner is looking at the inbox should appear there, not on the
+  // next manual reload.
+  useEffect(() => {
+    if (tab !== 'messages') return;
+    loadConversations();
+    const id = setInterval(loadConversations, 20_000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
+
   const loadCustomers = async () => {
     try {
       adminApi.getVisits(1)
@@ -997,6 +1008,33 @@ export default function AdminDashboard() {
   /** Unread counts per account, so a row can show that someone is waiting. */
   const [msgCounts, setMsgCounts] = useState<Record<string, any>>({});
 
+  // The messenger: every conversation on the left, the open one on the right.
+  const [convos, setConvos] = useState<any[] | null>(null);
+  const [openConvo, setOpenConvo] = useState<any | null>(null);
+
+  const loadConversations = async () => {
+    try {
+      const res = await adminApi.getConversations();
+      if (res?.success) setConvos(res.conversations);
+    } catch { setConvos([]); }
+  };
+
+  /** Open one conversation, and mark what they sent us as read. */
+  const openConversation = async (c: any) => {
+    setOpenConvo(c);
+    setThread(null);
+    setThreadFor({ _id: c.userId, id: c.userId, name: c.name });
+    setThreadBody('');
+    try {
+      const res = await adminApi.getCustomerThread(c.userId);
+      if (res?.success) setThread(res.messages);
+      if (c.waitingOnUs > 0) {
+        await adminApi.markThreadRead(c.userId);
+        setConvos((prev) => (prev || []).map((x) => (x.userId === c.userId ? { ...x, waitingOnUs: 0 } : x)));
+      }
+    } catch { setThread([]); }
+  };
+
   const openThread = async (c: any) => {
     const id = c._id || c.id;
     setThreadFor(threadFor && (threadFor._id || threadFor.id) === id ? null : c);
@@ -1019,6 +1057,9 @@ export default function AdminDashboard() {
       if (!res?.success) throw new Error(res?.message);
       setThread((prev) => [...(prev || []), { id: res.message.id, body: threadBody.trim(), fromAdmin: true, readAt: null, createdAt: res.message.createdAt }]);
       setThreadBody('');
+      // Keep the inbox in step: the row's preview and its ordering both just
+      // changed, and re-reading is cheaper than trying to patch them by hand.
+      if (tab === 'messages') loadConversations();
       // Say which actually happened. "Sent" over an email Resend refused would
       // leave the owner thinking the customer was told when they were not.
       toast.success(
@@ -1934,8 +1975,132 @@ export default function AdminDashboard() {
               </div>
             ) : tab === 'messages' ? (
               <div>
+                {/* The messenger: conversations with people who have an
+                    account. Kept above the contact-form list because these can
+                    be answered here — a contact-form message can only be read. */}
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-arabic font-bold text-white text-lg">
+                    💬 {t('admin.chats_title', 'محادثات العملاء')}
+                  </h3>
+                  {!!convos?.some((c) => c.waitingOnUs > 0) && (
+                    <span className="px-2 py-0.5 rounded-full bg-red-500 text-white text-[11px] font-bold font-arabic">
+                      {t('admin.chats_waiting', '{{n}} بانتظار ردك', { n: convos.filter((c) => c.waitingOnUs > 0).length })}
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid gap-3 lg:grid-cols-[300px_minmax(0,1fr)] mb-8">
+                  {/* Left: every conversation, newest first. */}
+                  <div className="space-y-1.5 max-h-[28rem] overflow-y-auto">
+                    {convos === null ? (
+                      <p className="font-arabic text-white/40 text-xs p-3">{t('common.loading', 'جاري التحميل…')}</p>
+                    ) : convos.length === 0 ? (
+                      <p className="font-arabic text-white/40 text-xs p-3">
+                        {t('admin.chats_none', 'ما في محادثات بعد. ابعت رسالة من تبويب العملاء لتبلّش وحدة.')}
+                      </p>
+                    ) : (
+                      convos.map((c) => (
+                        <button
+                          key={c.userId}
+                          type="button"
+                          onClick={() => openConversation(c)}
+                          className={`w-full text-right p-2.5 rounded-xl border transition ${
+                            openConvo?.userId === c.userId
+                              ? 'bg-gold-500/15 border-gold-500/40'
+                              : 'bg-white/5 border-white/10 hover:border-white/25'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="font-arabic font-bold text-white text-xs truncate">{c.name}</span>
+                            {c.waitingOnUs > 0 && (
+                              <span className="min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                                {c.waitingOnUs}
+                              </span>
+                            )}
+                            <span className="ms-auto font-arabic text-white/30 text-[10px] shrink-0">
+                              {new Date(c.lastAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <p className="font-arabic text-white/45 text-[11px] truncate mt-0.5">
+                            {c.lastFromAdmin ? `${t('admin.msg_you', 'أنت')}: ` : ''}{c.lastBody}
+                          </p>
+                        </button>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Right: the open conversation. */}
+                  <div className="glass-card p-3 flex flex-col min-h-[18rem]">
+                    {!openConvo ? (
+                      <p className="font-arabic text-white/35 text-xs m-auto">
+                        {t('admin.chats_pick', 'اختر محادثة لتقرأها وترد عليها')}
+                      </p>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10">
+                          <div className="min-w-0">
+                            <p className="font-arabic font-bold text-white text-sm truncate">{openConvo.name}</p>
+                            <p className="font-arabic text-white/35 text-[11px] truncate" dir="ltr">{openConvo.email}</p>
+                          </div>
+                          <button
+                            onClick={() => { setOpenConvo(null); setThread(null); }}
+                            className="text-white/40 hover:text-white/80 text-xs font-arabic"
+                          >
+                            {t('common.close', 'إغلاق')}
+                          </button>
+                        </div>
+
+                        <div className="flex-1 space-y-2 overflow-y-auto max-h-72 mb-2">
+                          {thread === null ? (
+                            <p className="font-arabic text-white/40 text-[11px]">{t('common.loading', 'جاري التحميل…')}</p>
+                          ) : (
+                            thread.map((m: any) => (
+                              <div
+                                key={m.id}
+                                className={`p-2 rounded-xl max-w-[85%] ${
+                                  m.fromAdmin
+                                    ? 'bg-gold-500/15 border border-gold-500/25 ms-auto'
+                                    : 'bg-white/10 me-auto'
+                                }`}
+                              >
+                                <p className="font-arabic text-white/85 text-[12px] whitespace-pre-wrap">{m.body}</p>
+                                <p className="font-arabic text-white/30 text-[10px] mt-1">
+                                  {new Date(m.createdAt).toLocaleString()}
+                                  {m.fromAdmin && (
+                                    <span className={m.readAt ? ' text-emerald-300/70' : ''}>
+                                      {' · '}{m.readAt ? t('admin.msg_read', 'قرأها ✓') : t('admin.msg_unread', 'لسا ما فتحها')}
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                            ))
+                          )}
+                        </div>
+
+                        <div className="flex gap-2">
+                          <input
+                            value={threadBody}
+                            onChange={(e) => setThreadBody(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter' && threadBody.trim()) sendThreadMessage(); }}
+                            placeholder={t('admin.msg_placeholder', 'اكتب رسالة لهالعميل…')}
+                            className="flex-1 px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-white text-xs font-arabic placeholder:text-white/30"
+                          />
+                          <button
+                            type="button"
+                            onClick={sendThreadMessage}
+                            disabled={!threadBody.trim() || threadBusy}
+                            className="px-4 py-2 rounded-xl bg-gold-500 text-[#0a1628] font-arabic font-bold text-xs disabled:opacity-40"
+                          >
+                            {threadBusy ? '…' : t('admin.msg_send', 'إرسال')}
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-arabic font-bold text-white text-lg">✉️ {t('admin.tab_messages', 'الرسائل')}</h3>
+                  <h3 className="font-arabic font-bold text-white text-lg">✉️ {t('admin.contact_form_title', 'رسائل نموذج التواصل')}</h3>
                   <span className="font-arabic text-white/50 text-sm">{messages.length}</span>
                 </div>
                 {messages.length === 0 ? (

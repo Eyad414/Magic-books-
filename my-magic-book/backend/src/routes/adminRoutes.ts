@@ -15,7 +15,7 @@ import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam
   deleteImportedFiles, listMessages, deleteMessage, getCustomerByEmail, checkPayments } from '../controllers/adminController';
 import { protect, adminOnly } from '../utils/authMiddleware';
 
-import { sendMessageToCustomer, getCustomerThread, messageCounts } from '../controllers/customerMessageController';
+import { sendMessageToCustomer, getCustomerThread, messageCounts, listConversations, markThreadRead } from '../controllers/customerMessageController';
 
 const router = Router();
 
@@ -67,6 +67,8 @@ router.post('/themes/:themeId/generate-coloring', generateColoringPreview);
 router.post('/books/send-to-customer', sendBookToCustomer);
 // Writing to one customer, and whether they have read it.
 router.get('/customer-messages', messageCounts);
+router.get('/conversations', listConversations);
+router.post('/customers/:userId/messages/read', markThreadRead);
 router.get('/customers/:userId/messages', getCustomerThread);
 router.post('/customers/:userId/message', sendMessageToCustomer);
 

@@ -93,6 +93,70 @@ export const messageCounts = async (_req: Request, res: Response): Promise<void>
   }
 };
 
+/**
+ * GET /api/admin/conversations
+ *
+ * The inbox: one row per customer who has a thread, newest first, with the
+ * last thing said and how much is waiting. Built as an aggregate rather than
+ * "fetch every message and group in the dashboard" — that would send the whole
+ * message history to the browser to render a list of names.
+ */
+export const listConversations = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const rows = await CustomerMessage.aggregate([
+      { $sort: { createdAt: -1 } },
+      { $group: {
+        _id: '$userId',
+        lastBody: { $first: '$body' },
+        lastAt: { $first: '$createdAt' },
+        lastFromAdmin: { $first: '$fromAdmin' },
+        total: { $sum: 1 },
+        waitingOnUs: { $sum: { $cond: [{ $and: [{ $eq: ['$fromAdmin', false] }, { $not: ['$readAt'] }] }, 1, 0] } },
+        unreadByThem: { $sum: { $cond: [{ $and: [{ $eq: ['$fromAdmin', true] }, { $not: ['$readAt'] }] }, 1, 0] } },
+      } },
+      { $sort: { lastAt: -1 } },
+      { $limit: 100 },
+    ]);
+
+    const users = await User.find({ _id: { $in: rows.map((r) => r._id) } })
+      .select('name email').lean();
+    const byId: Record<string, any> = {};
+    for (const u of users) byId[String(u._id)] = u;
+
+    res.json({
+      success: true,
+      conversations: rows.map((r) => ({
+        userId: String(r._id),
+        name: byId[String(r._id)]?.name || '—',
+        email: byId[String(r._id)]?.email || '',
+        lastBody: r.lastBody,
+        lastAt: r.lastAt,
+        lastFromAdmin: r.lastFromAdmin,
+        total: r.total,
+        waitingOnUs: r.waitingOnUs,
+        unreadByThem: r.unreadByThem,
+      })),
+      waiting: rows.reduce((a, r) => a + (r.waitingOnUs > 0 ? 1 : 0), 0),
+    });
+  } catch (err: any) {
+    console.error('[listConversations]', err);
+    res.status(500).json({ success: false, message: err.message || 'تعذّر جلب المحادثات' });
+  }
+};
+
+/** POST /api/admin/customers/:userId/messages/read — we have read their side. */
+export const markThreadRead = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const r = await CustomerMessage.updateMany(
+      { userId: req.params.userId, fromAdmin: false, readAt: { $exists: false } },
+      { $set: { readAt: new Date() } },
+    );
+    res.json({ success: true, marked: r.modifiedCount });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message || 'تعذّر' });
+  }
+};
+
 /* ── the customer's side ─────────────────────────────────────────────────── */
 
 /**
