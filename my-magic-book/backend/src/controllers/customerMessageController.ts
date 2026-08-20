@@ -21,10 +21,13 @@ export const sendMessageToCustomer = async (req: Request, res: Response): Promis
       res.status(404).json({ success: false, message: 'العميل غير موجود' });
       return;
     }
+    const admin = (req as any).user;
     const msg = await CustomerMessage.create({
       userId: customer._id,
       body,
       fromAdmin: true,
+      adminId: admin?._id,
+      adminName: admin?.name,
       storyId: req.body?.storyId || undefined,
     });
     // Nudge them by email so they know to come and look. The message is saved
@@ -61,6 +64,7 @@ export const getCustomerThread = async (req: Request, res: Response): Promise<vo
         id: String(m._id),
         body: m.body,
         fromAdmin: m.fromAdmin,
+        adminName: m.adminName || '',
         readAt: m.readAt || null,
         createdAt: m.createdAt,
       })),

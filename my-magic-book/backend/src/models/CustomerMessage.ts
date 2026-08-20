@@ -14,6 +14,14 @@ export interface ICustomerMessage extends Document {
   body: string;
   /** true = the shop wrote it, false = the customer replied. */
   fromAdmin: boolean;
+  /**
+   * WHICH admin wrote it. The inbox is shared by the whole team, so without
+   * this a reply is anonymous and nobody can tell their own answer from a
+   * colleague's — or see that two people answered the same person twice.
+   * The customer never sees it: to them the shop speaks with one voice.
+   */
+  adminId?: mongoose.Types.ObjectId;
+  adminName?: string;
   /** When the RECIPIENT opened it. Absent = still unread. */
   readAt?: Date;
   /** Optionally about a specific book — a gift, or an order being discussed. */
@@ -27,6 +35,8 @@ const CustomerMessageSchema = new Schema<ICustomerMessage>(
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     body: { type: String, required: true, trim: true },
     fromAdmin: { type: Boolean, required: true },
+    adminId: { type: Schema.Types.ObjectId, ref: 'User' },
+    adminName: { type: String },
     readAt: { type: Date },
     storyId: { type: Schema.Types.ObjectId, ref: 'Story' },
   },

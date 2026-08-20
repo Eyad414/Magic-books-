@@ -341,6 +341,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (tab !== 'messages') return;
     loadConversations();
+    if (!customers) loadCustomers();
     const id = setInterval(loadConversations, 20_000);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1011,6 +1012,18 @@ export default function AdminDashboard() {
   // The messenger: every conversation on the left, the open one on the right.
   const [convos, setConvos] = useState<any[] | null>(null);
   const [openConvo, setOpenConvo] = useState<any | null>(null);
+
+  // Starting a conversation with someone who has never written to us. The
+  // inbox only knows people with a thread, so the picker comes from the
+  // customer list instead.
+  const [newChatOpen, setNewChatOpen] = useState(false);
+
+  const startChatWith = (userId: string) => {
+    const c = (customers?.customers || []).find((x: any) => String(x._id || x.id) === String(userId));
+    if (!c) return;
+    setNewChatOpen(false);
+    openConversation({ userId: String(c._id || c.id), name: c.name, email: c.email, waitingOnUs: 0 });
+  };
 
   const loadConversations = async () => {
     try {
@@ -1982,12 +1995,40 @@ export default function AdminDashboard() {
                   <h3 className="font-arabic font-bold text-white text-lg">
                     💬 {t('admin.chats_title', 'محادثات العملاء')}
                   </h3>
-                  {!!convos?.some((c) => c.waitingOnUs > 0) && (
-                    <span className="px-2 py-0.5 rounded-full bg-red-500 text-white text-[11px] font-bold font-arabic">
-                      {t('admin.chats_waiting', '{{n}} بانتظار ردك', { n: convos.filter((c) => c.waitingOnUs > 0).length })}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {!!convos?.some((c) => c.waitingOnUs > 0) && (
+                      <span className="px-2 py-0.5 rounded-full bg-red-500 text-white text-[11px] font-bold font-arabic">
+                        {t('admin.chats_waiting', '{{n}} بانتظار ردك', { n: convos.filter((c) => c.waitingOnUs > 0).length })}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setNewChatOpen((v) => !v)}
+                      className="px-3 py-1.5 rounded-xl bg-gold-500/15 border border-gold-500/30 text-gold-300 font-arabic text-[11px] font-bold hover:bg-gold-500/25 transition"
+                    >
+                      ✚ {t('admin.chat_new', 'محادثة جديدة')}
+                    </button>
+                  </div>
                 </div>
+
+                {/* Write to anyone with an account, not only people who wrote
+                    to us first. */}
+                {newChatOpen && (
+                  <div className="mb-3 p-3 rounded-2xl bg-white/5 border border-white/10">
+                    <select
+                      defaultValue=""
+                      onChange={(e) => e.target.value && startChatWith(e.target.value)}
+                      className="w-full px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] font-arabic"
+                    >
+                      <option value="">{t('admin.chat_pick_customer', 'اختر عميل لتبدأ معه محادثة…')}</option>
+                      {(customers?.customers || []).map((c: any) => (
+                        <option key={c._id || c.id} value={c._id || c.id} className="bg-[#0a1628]">
+                          {c.name} — {c.email}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div className="grid gap-3 lg:grid-cols-[300px_minmax(0,1fr)] mb-8">
                   {/* Left: every conversation, newest first. */}
@@ -2065,6 +2106,11 @@ export default function AdminDashboard() {
                               >
                                 <p className="font-arabic text-white/85 text-[12px] whitespace-pre-wrap">{m.body}</p>
                                 <p className="font-arabic text-white/30 text-[10px] mt-1">
+                                  {/* Who on the team answered. The customer
+                                      never sees this — to them the shop is one
+                                      voice — but the team needs to tell their
+                                      own replies from a colleague's. */}
+                                  {m.fromAdmin && m.adminName ? `${m.adminName} · ` : ''}
                                   {new Date(m.createdAt).toLocaleString()}
                                   {m.fromAdmin && (
                                     <span className={m.readAt ? ' text-emerald-300/70' : ''}>
