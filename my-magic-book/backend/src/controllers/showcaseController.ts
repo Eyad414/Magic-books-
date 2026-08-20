@@ -15,14 +15,23 @@ import Story from '../models/Story';
  */
 async function publishedBooks(flag: 'showcase' | 'showcaseStories') {
   const stories = await Story.find({ [flag]: true })
-    .select('childName childGender theme language mode generatedCover generatedImages generatedPortrait homeTag createdAt')
+    .select(
+      'childName childGender theme language mode generatedCover generatedImages generatedPortrait ' +
+      // A colouring book is a book too, and its artwork lives in its own three
+      // fields. Left out of this projection, a child's colouring book was
+      // published by the owner and then dropped by the filter below as "no
+      // artwork" — ticked in the dashboard and invisible on the page.
+      'coloringCover coloringImages coloringBackCover homeTag createdAt',
+    )
     .sort({ createdAt: -1 })
     .limit(12)
     .lean();
 
   return stories
     // A book with no artwork would render as blank pages.
-    .filter((s: any) => s.generatedCover || (s.generatedImages || []).length)
+    .filter((s: any) =>
+      s.generatedCover || (s.generatedImages || []).length ||
+      s.coloringCover || (s.coloringImages || []).length)
     .map((s: any) => ({
       id: String(s._id),
       childName: s.childName,
@@ -33,6 +42,9 @@ async function publishedBooks(flag: 'showcase' | 'showcaseStories') {
       cover: s.generatedCover || '',
       images: s.generatedImages || [],
       portrait: s.generatedPortrait || '',
+      coloringCover: s.coloringCover || '',
+      coloringImages: s.coloringImages || [],
+      coloringBackCover: s.coloringBackCover || '',
       homeTag: s.homeTag || '',
     }));
 }

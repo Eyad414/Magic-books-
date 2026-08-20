@@ -50,6 +50,17 @@ export default function Stories() {
   }, []);
   const isVisible = (c: Card) => demoOnStoriesPage(c, vis);
 
+  // Colouring books made for a real child and published from the dashboard.
+  // The grid below shows what each STORY looks like as a colouring book; these
+  // show what a real one looks like with a real child's face in it, which is
+  // the thing a parent is actually deciding about.
+  const [kidColoring, setKidColoring] = useState<any[]>([]);
+  useEffect(() => {
+    publicApi.getStoriesPageBooks()
+      .then((res) => setKidColoring((res?.books || []).filter((b: any) => b.coloringCover)))
+      .catch(() => {});
+  }, []);
+
 
   const ft = useMemo(() => i18n.getFixedT(i18n.language), [i18n.language]);
   const nameL = (card: Card) => localizeName(card.name, i18n.language);
@@ -217,6 +228,35 @@ export default function Stories() {
               {t('stories_page.coloring_desc', 'نفس القصة اللي بتختارها — مرسومة خطوط، ووجه طفلك بكل صفحة. ١٦ صفحة يلوّنها بإيده.')}
             </p>
           </div>
+
+          {/* Real books first, when there are any. A generic cover shows the
+              idea; a real child's book shows the product. */}
+          {kidColoring.length > 0 && (
+            <div className="mt-7">
+              <p className="font-arabic text-gold-500 text-sm text-center mb-3">
+                {t('stories_page.coloring_real', 'كتب تلوين عملناها لأطفال حقيقيين')}
+              </p>
+              <div className="flex flex-wrap justify-center gap-4">
+                {kidColoring.map((b) => (
+                  <div key={b.id} className="w-40">
+                    <div className="aspect-square rounded-2xl overflow-hidden bg-white/5 border border-gold-500/30">
+                      <img
+                        src={toDisplayUrl(b.coloringCover)}
+                        alt={b.childName}
+                        loading="lazy"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <p className="font-arabic text-white/70 text-xs text-center mt-1.5">
+                      {localizeName(b.childName, i18n.language)}
+                      <span className="text-white/35"> · {b.coloringImages?.length || 0} </span>
+                      {t('stories_page.coloring_pages', 'صفحة')}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Every story now has a colouring cover of its own, so this shows
               the books rather than a list of names. */}

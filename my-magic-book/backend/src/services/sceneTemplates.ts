@@ -1131,6 +1131,11 @@ export function buildScenePrompt(
       `cheerful 5-year-old ${child} whose face, hairstyle and features clearly resemble the reference photo. ` +
       `The ${child}'s FACE is turned toward the viewer and fully visible — never from behind, never hidden, ` +
       `never cropped out — and is drawn large enough for a small child to recognise and colour. ` +
+      // Take the face from the photo, not the outfit that happens to be in it.
+      // The demo child is photographed in a baseball cap, and it walked into a
+      // page of a story that never mentioned one.
+      `Copy ONLY the face, hairstyle and features from the reference photo — never its clothing, and never ` +
+      `any hat or cap it shows: the ${child} wears NO hat and NO cap unless this scene names one. ` +
       `Scene: the ${child} ${scene}. The drawing is LARGE and FILLS the entire page edge to edge — the main ` +
       `character and the scene are big and centered, taking up almost the whole frame with only a thin border. ` +
       // Worded without the verb "colour": asking for a background a child "can
