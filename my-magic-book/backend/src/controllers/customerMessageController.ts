@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import CustomerMessage from '../models/CustomerMessage';
 import User from '../models/User';
-import { sendCustomerMessageEmail } from '../utils/mailer';
+import { sendCustomerMessageEmail, sendAdminNotification } from '../utils/mailer';
 
 /* ── the shop's side ─────────────────────────────────────────────────────── */
 
@@ -209,11 +209,26 @@ export const replyToShop = async (req: Request, res: Response): Promise<void> =>
       res.status(400).json({ success: false, message: 'الرسالة فارغة' });
       return;
     }
+    const user = (req as any).user;
     const msg = await CustomerMessage.create({
-      userId: (req as any).user._id,
+      userId: user._id,
       body,
       fromAdmin: false,
     });
+
+    // Tell the shop by email. A message that only appears in the dashboard is
+    // a message nobody sees until someone happens to open the dashboard, and a
+    // customer waiting on an answer does not know that is what they are
+    // waiting for. This one CAN be delivered today: it goes to the address the
+    // Resend account was registered with, which is the one address the shared
+    // sender is allowed to reach.
+    sendAdminNotification({
+      name: user.name || 'عميل',
+      email: user.email || '',
+      subject: 'رسالة جديدة من عميل في حسابه',
+      message: body,
+    }).catch((e) => console.error('[replyToShop] admin email failed:', e?.message || e));
+
     res.json({ success: true, message: { id: String(msg._id), createdAt: msg.createdAt } });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message || 'فشل الإرسال' });
