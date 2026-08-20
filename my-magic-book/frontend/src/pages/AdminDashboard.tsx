@@ -1096,6 +1096,15 @@ export default function AdminDashboard() {
         cover: th.coloringCover,
         back: th.coloringBackCover,
         images: th.coloringImages || [],
+        // Show a PAGE, not the cover. A colouring book's cover is full colour
+        // by design — it is the only coloured page in the book — so a row of
+        // colour covers is indistinguishable from a row of stories, which is
+        // the opposite of what this tab is being asked. The first line-art page
+        // says what the book is at a glance. Printing still uses `cover`.
+        thumb: th.coloringImages?.[0] || th.coloringCover,
+        // No pages behind the cover: this is artwork for a shop card, not a
+        // book anyone can print or colour, and it should not pretend otherwise.
+        coverOnly: !th.coloringImages?.length,
         emoji: '🖍️',
         date: '',
         isDemo: true,
@@ -2726,9 +2735,9 @@ export default function AdminDashboard() {
                     {g.books.map((b: any) => (
                       <div key={b.key} className="bg-dark-700/50 rounded-2xl border border-white/5 p-3 flex flex-col gap-2.5 hover:border-gold-500/30 transition-all">
                         <div className="flex items-center gap-2.5 min-w-0">
-                          {b.cover ? (
+                          {(b.thumb || b.cover) ? (
                             <img
-                              src={objectPathToUrl(b.cover)}
+                              src={objectPathToUrl(b.thumb || b.cover)}
                               alt=""
                               loading="lazy"
                               className="w-12 h-12 rounded-lg object-cover border border-white/10 shrink-0"
@@ -2744,6 +2753,13 @@ export default function AdminDashboard() {
                               {b.isDemo ? t('admin.book_demo', 'كتاب عرض') : t('admin.book_customer', 'كتاب عميل')}
                               {b.date ? ` · ${b.date}` : ''}{b.mode === 'ai' ? ' · AI' : ''}
                             </p>
+                            {/* Says out loud what the disabled print button only
+                                implies: there is a cover here and nothing else. */}
+                            {b.coverOnly && (
+                              <p className="font-arabic text-amber-400/80 text-[11px]">
+                                {t('admin.cover_only', 'غلاف فقط — بدون صفحات تلوين')}
+                              </p>
+                            )}
                           </div>
                         </div>
 
