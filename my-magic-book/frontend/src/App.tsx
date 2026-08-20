@@ -61,7 +61,14 @@ export default function App() {
       // Where they came from (the site, never the page they were on), and who
       // they are — but only when they are signed in on this browser. A visitor
       // who has not told us who they are stays anonymous.
-      .trackVisit(visitorId, window.location.pathname, document.referrer, user?.id)
+      .trackVisit(visitorId, window.location.pathname, {
+        referrer: document.referrer,
+        userId: user?.id,
+        lang: i18n.language.split('-')[0],
+        // The page reports its own width rather than the server reading a user
+        // agent — same answer, far less about the person.
+        device: window.innerWidth < 768 ? 'mobile' : 'desktop',
+      })
       .then(() => localStorage.setItem('mmb_counted', today))
       .catch(() => { /* try again on the next page load */ });
     // Waits for auth so a signed-in visit carries its account rather than

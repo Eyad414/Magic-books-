@@ -1026,7 +1026,8 @@
     "visits_title": "ביקורים היום",
     "visits_anon": "מבקר ללא חשבון",
     "visits_from": "מ־",
-    "visits_pages": "{{n}} עמודים"
+    "visits_pages": "{{n}} עמודים",
+    "visits_returning": "חזר שוב"
   },
   "title_page": {
     "presents": "מוגש ל",

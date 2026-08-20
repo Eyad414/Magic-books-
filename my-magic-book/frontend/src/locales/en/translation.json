@@ -1026,7 +1026,8 @@
     "visits_title": "today’s visits",
     "visits_anon": "visitor with no account",
     "visits_from": "from",
-    "visits_pages": "{{n}} pages"
+    "visits_pages": "{{n}} pages",
+    "visits_returning": "came back"
   },
   "title_page": {
     "presents": "Presented to",

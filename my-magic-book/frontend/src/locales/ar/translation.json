@@ -1026,7 +1026,8 @@
     "visits_title": "زيارات اليوم",
     "visits_anon": "زائر بدون حساب",
     "visits_from": "من",
-    "visits_pages": "{{n}} صفحة"
+    "visits_pages": "{{n}} صفحة",
+    "visits_returning": "رجع مرة ثانية"
   },
   "title_page": {
     "presents": "يُقدّم لـ",

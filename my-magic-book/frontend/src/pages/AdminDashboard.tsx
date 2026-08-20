@@ -337,7 +337,9 @@ export default function AdminDashboard() {
 
   const loadCustomers = async () => {
     try {
-      adminApi.getVisits(1).then((r) => r.success && setVisits(r.visits)).catch(() => { /* the list is extra */ });
+      adminApi.getVisits(1)
+        .then((r) => { if (r.success) { setVisits(r.visits); setVisitWeek(r.week || []); } })
+        .catch(() => { /* the list is extra */ });
       const res = await adminApi.getCustomers();
       if (res.success) setCustomers(res);
     } catch (err: any) {
@@ -969,6 +971,7 @@ export default function AdminDashboard() {
   const [customers, setCustomers] = useState<any | null>(null);
   // Who actually came to the site today — named where they signed in.
   const [visits, setVisits] = useState<any[] | null>(null);
+  const [visitWeek, setVisitWeek] = useState<any[] | null>(null);
   // Sending a demo book is a real, paid print run, so it is deliberate: pick a
   // book, fill in who it ships to, confirm.
   const [sendBook, setSendBook] = useState<{ id: string; label?: string } | null>(null);
@@ -1584,6 +1587,25 @@ export default function AdminDashboard() {
                         <p className="font-arabic text-white/70 text-[11px] font-bold mb-2">
                           👣 {t('admin.visits_title', 'زيارات اليوم')}
                         </p>
+
+                        {/* Seven days as bars — a spike or a dead week reads at
+                            a glance, which a list of rows never does. */}
+                        {visitWeek && visitWeek.length > 0 && (
+                          <div className="flex items-end gap-1.5 h-16 mb-3" dir="ltr">
+                            {visitWeek.map((d: any) => {
+                              const peak = Math.max(...visitWeek.map((x: any) => x.visitors), 1);
+                              return (
+                                <div key={d.day} className="flex-1 flex flex-col items-center gap-1" title={`${d.day}: ${d.visitors} زائر · ${d.views} صفحة`}>
+                                  <div
+                                    className="w-full rounded-t bg-gold-500/70"
+                                    style={{ height: `${Math.max((d.visitors / peak) * 44, 3)}px` }}
+                                  />
+                                  <span className="text-[9px] text-white/35">{d.day.slice(5)}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                         <div className="space-y-1.5">
                           {visits.slice(0, 12).map((v: any, i: number) => (
                             <div key={i} className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] font-arabic text-white/55">
@@ -1600,6 +1622,13 @@ export default function AdminDashboard() {
                                 </span>
                               )}
                               <span className="text-white/40">{t('admin.visits_from', 'من')}: {v.source}</span>
+                              {v.device && <span className="text-white/40">{v.device === 'mobile' ? '📱' : '💻'}</span>}
+                              {v.lang && <span className="text-white/35 uppercase" dir="ltr">{v.lang}</span>}
+                              {v.returning && (
+                                <span className="px-1.5 py-0.5 rounded bg-magic-500/20 text-magic-200">
+                                  {t('admin.visits_returning', 'رجع مرة ثانية')}
+                                </span>
+                              )}
                               <span className="text-white/40">
                                 {t('admin.visits_pages', '{{n}} صفحة', { n: v.views })}
                               </span>

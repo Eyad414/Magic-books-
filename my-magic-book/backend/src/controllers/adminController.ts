@@ -1865,12 +1865,17 @@ export const trackVisit = async (req: Request, res: Response): Promise<void> => 
     // their own profile page — neither is any of our business.
     const source = hostOf(String(req.body?.referrer || '')) || undefined;
     const userId = String(req.body?.userId || '').match(/^[0-9a-f]{24}$/i) ? req.body.userId : undefined;
+    const lang = String(req.body?.lang || '').slice(0, 5).toLowerCase() || undefined;
+    const device = req.body?.device === 'mobile' ? 'mobile' : req.body?.device === 'desktop' ? 'desktop' : undefined;
+    // Someone who came back on a later day is worth knowing about: it is the
+    // difference between traffic and interest.
+    const returning = (await Visit.countDocuments({ visitorId, day: { $ne: day } })) > 0;
 
     await Visit.updateOne(
       { visitorId, day },
       {
         $inc: { views: 1 },
-        $setOnInsert: { landing: path, source },
+        $setOnInsert: { landing: path, source, lang, device, returning },
         // Last twenty pages is plenty to see what someone was after.
         ...(path ? { $push: { paths: { $each: [path], $slice: -20 } } } : {}),
         ...(userId ? { $set: { userId } } : {}),
@@ -1904,14 +1909,27 @@ export const listVisits = async (req: Request, res: Response): Promise<void> => 
       .populate('userId', 'name email')
       .lean();
 
+    // The last seven days as a shape, so a spike or a dead week is visible
+    // without reading every row.
+    const weekFrom = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const week = await Visit.aggregate([
+      { $match: { day: { $gte: weekFrom } } },
+      { $group: { _id: '$day', visitors: { $sum: 1 }, views: { $sum: '$views' } } },
+      { $sort: { _id: 1 } },
+    ]);
+
     res.json({
       success: true,
+      week: week.map((d: any) => ({ day: d._id, visitors: d.visitors, views: d.views })),
       visits: rows.map((v: any) => ({
         day: v.day,
         views: v.views,
         landing: v.landing,
         paths: v.paths || [],
         source: v.source || 'مباشر',
+        lang: v.lang,
+        device: v.device,
+        returning: !!v.returning,
         firstSeen: v.createdAt,
         lastSeen: v.updatedAt,
         who: v.userId ? { name: v.userId.name, email: v.userId.email } : null,

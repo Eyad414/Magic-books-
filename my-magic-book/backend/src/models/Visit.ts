@@ -33,6 +33,13 @@ export interface IVisit extends Document {
    * to identify a visitor who does not.
    */
   userId?: mongoose.Types.ObjectId;
+  /** Which language the site was being read in — ar, en or he. */
+  lang?: string;
+  /** 'mobile' or 'desktop', reported by the page from its own screen width.
+   *  Deliberately not parsed from the user agent, which is far more telling. */
+  device?: string;
+  /** This browser has visited on an earlier day. */
+  returning?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -46,6 +53,9 @@ const VisitSchema = new Schema<IVisit>(
     paths: { type: [String], default: undefined },
     source: { type: String },
     userId: { type: Schema.Types.ObjectId, ref: 'User' },
+    lang: { type: String },
+    device: { type: String },
+    returning: { type: Boolean, default: false },
   },
   { timestamps: true },
 );
