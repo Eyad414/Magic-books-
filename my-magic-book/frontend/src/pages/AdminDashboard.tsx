@@ -1073,7 +1073,45 @@ export default function AdminDashboard() {
       };
     });
 
-    return [...real, ...demos].map((b) => ({
+    // The colouring books we have actually drawn. Their artwork lives on the
+    // STORY theme — coloringCover / coloringImages / coloringBackCover — which
+    // is neither a Story doc nor a showcase card, so neither list above could
+    // see them and twenty sets sat in storage with nothing in الكتب الجاهزة
+    // pointing at them. Cover-only sets are listed too: the cover is what the
+    // shop card shows, and canPrint already separates a cover from a book.
+    // Only the colouring THEMES already have a card of their own (زوو تلوين and
+    // friends). Every story theme has a card too, but that card is its story —
+    // excluding those would exclude every colouring book there is.
+    const cardedColoringThemes = new Set(
+      SHOWCASE_CARDS.filter((c) => c.themeId.includes('coloring')).map((c) => c.themeId),
+    );
+    const coloring = (settings?.themes || [])
+      .filter((th: any) => (th.coloringCover || th.coloringImages?.length) && !cardedColoringThemes.has(th.id))
+      .map((th: any) => ({
+        key: `coloring-${th.id}`,
+        isMine: true,
+        childName: t('admin.coloring_book', 'كتاب تلوين'),
+        theme: th.id,
+        themeLabel: label(th.id),
+        cover: th.coloringCover,
+        back: th.coloringBackCover,
+        images: th.coloringImages || [],
+        emoji: '🖍️',
+        date: '',
+        isDemo: true,
+        isColoring: true,
+        showcase: false,
+        showcaseStories: false,
+        homeTag: '',
+        // No showcase card and no Story doc means no key to store a publish
+        // flag against, and a toggle that saves nowhere is worse than no
+        // toggle. These are viewable and printable from here; publishing one
+        // means giving it a card first.
+        noPublish: true,
+        viewHref: `/coloring/${th.id}?name=${encodeURIComponent('باها')}`,
+      }));
+
+    return [...real, ...demos, ...coloring].map((b) => ({
       ...b,
       // The print build needs a cover, a back and at least one page.
       canPrint: !!b.cover && !!b.back && (b.images?.length ?? 0) > 0,
@@ -2709,9 +2747,9 @@ export default function AdminDashboard() {
                           </div>
                         </div>
 
-                        {/* Publish toggles — every book gets both, demo or not.
-                            Green = live on that public surface. */}
-                        <div className="grid grid-cols-2 gap-1.5">
+                        {/* Publish toggles — every book with somewhere to save
+                            the flag gets both. Green = live on that surface. */}
+                        <div className={`grid grid-cols-2 gap-1.5 ${b.noPublish ? 'hidden' : ''}`}>
                           {([
                             { surface: 'home' as const, on: !!b.showcase, icon: '🏠',
                               labelOn: t('admin.showcase_on', 'ظاهر في الرئيسية'),
