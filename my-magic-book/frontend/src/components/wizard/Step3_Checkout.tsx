@@ -444,25 +444,10 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
             058-550-2072
           </a>
         </div>
+      </div>{/* form column — WhatsApp block was added without closing it, so
+              the review column ended up nested inside the form and the grid
+              stayed open, swallowing everything meant to sit below it. */}
 
-        {/* Want another book? Create a separate story (its own order). */}
-        <div className="p-4 rounded-2xl bg-dark-700/60 border border-white/10 flex flex-col items-center justify-center text-center gap-2">
-          <span className="text-2xl">📚</span>
-          <p className="font-arabic text-white/60 text-[11px] leading-relaxed max-w-[90%]">
-            {t('step3.another_story_hint', 'تريد كتاباً آخر بموضوع مختلف؟ أنشئ قصة جديدة بطلب منفصل.')}
-          </p>
-          <button
-            type="button"
-            onClick={handleCreateAnotherStory}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-magic-500/20 text-magic-300 border border-magic-500/30 font-arabic font-bold text-xs hover:bg-magic-500/30 transition-all"
-          >
-            <Plus className="w-4 h-4" /> {t('step3.create_another_story', 'أنشئ قصة جديدة')}
-          </button>
-        </div>
-      </div>
-
-      {/* The rule that used to separate these two stacked sections is now a
-          stray grid child — side by side, the columns are the separation. */}
       {/* ── Order review — stays in view while the form is filled ─────── */}
       <div className="space-y-3 lg:sticky lg:top-24">
       <div className="flex items-center gap-2 text-gold-500">
@@ -526,8 +511,18 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
 
         </div>
 
+        {/* Payment moved to step 4 — this step is details and review only. */}
+      </div>{/* review column */}
+      </div>{/* two-column grid */}
+      </div>{/* extra closer removed from the tail, where it used to close the
+              grid from below the rows — which is why they rendered inside it */}
+
+      {/* Below the two columns, one full-width row each: the coupon, then
+          the price, then the offer of another book. In a 360px sidebar a
+          coupon field and a price breakdown both had to shrink to fit;
+          across the page neither has to. */}
         {/* Coupon + price summary */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="space-y-3">
           <div className="p-3 rounded-xl bg-dark-700 border border-white/10">
             <h3 className="font-arabic font-bold text-white text-xs mb-2 flex items-center gap-1.5">
               <Tag className="w-3.5 h-3.5 text-gold-500" /> {t('step3.coupon_placeholder', 'كود الخصم')}
@@ -596,10 +591,20 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
           </div>
         </div>
 
-        {/* Payment moved to step 4 — this step is details and review only. */}
-      </div>
-      </div>{/* review column */}
-      </div>{/* two-column grid */}
+        {/* Want another book? Create a separate story (its own order). */}
+        <div className="p-4 rounded-2xl bg-dark-700/60 border border-white/10 flex flex-col items-center justify-center text-center gap-2">
+          <span className="text-2xl">📚</span>
+          <p className="font-arabic text-white/60 text-[11px] leading-relaxed max-w-[90%]">
+            {t('step3.another_story_hint', 'تريد كتاباً آخر بموضوع مختلف؟ أنشئ قصة جديدة بطلب منفصل.')}
+          </p>
+          <button
+            type="button"
+            onClick={handleCreateAnotherStory}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-magic-500/20 text-magic-300 border border-magic-500/30 font-arabic font-bold text-xs hover:bg-magic-500/30 transition-all"
+          >
+            <Plus className="w-4 h-4" /> {t('step3.create_another_story', 'أنشئ قصة جديدة')}
+          </button>
+        </div>
 
       {/* Navigation */}
       <div className="flex gap-3">
