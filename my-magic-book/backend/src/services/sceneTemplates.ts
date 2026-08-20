@@ -1020,18 +1020,47 @@ function forColoring(scene: string): string {
     // actual photo of a child, inside a prompt that says CARTOON twice.
     .replace(/,?\s*close(?:-| )?(?:up)? to camera/gi, '')
     .replace(/,?\s*(?:warmly|softly|brightly|beautifully) lit/gi, '')
+    // Camera framing, which on a colouring page costs the child their face.
+    // These scenes were staged for a photograph: shot from behind, face thrown
+    // out of focus, child made tiny by the room. Drawn as line art that is a
+    // page with no face to recognise — the entire point of a personalised
+    // colouring book — so the framing goes and the action stays.
+    .replace(
+      /\b(?:WIDE ESTABLISHING SHOT|EXTREME CLOSE-?UP|CLOSE-?UP|CLOSE and warm|DYNAMIC LOW ANGLE|LOW ANGLE|OVER-THE-SHOULDER|MOTION SHOT|MEDIUM SHOT|WIDE SHOT|NIGHT INTERIOR)\b[^,]*,\s*/gi,
+      '',
+    )
+    .replace(/\bBALANCED COMPOSITION:\s*/gi, '')
+    .replace(/,?\s*the face soft and out of focus behind/gi, '')
+    .replace(/,?\s*seeing what the child sees/gi, '')
+    .replace(/,?\s*the child (?:small within it|made small by the space around them)/gi, '')
+    // Lighting is the other half of the photographer's brief and means nothing
+    // in black outlines on white.
+    .replace(/,?\s*(?:warm|soft|bright|golden|cool|crisp|long|natural)[a-z\- ]*light[^,]*/gi, '')
+    .replace(/,?\s*real fabric/gi, '')
+    // "NOT a cartoon, NOT an illustration" inside a prompt that asks for cartoon
+    // line art tells the model two opposite things. It leaks in when the
+    // photoreal preamble above is cut mid-sentence.
+    .replace(/,?\s*NOT an? [^,.;]+/gi, '')
     // Cutting a clause mid-sentence can leave a dangling conjunction or a
     // doubled comma behind — "clearly visible and, beaming".
     .replace(/\s+and\s*,/g, ',')
+    // Cutting a lighting clause can strand the preposition that introduced it:
+    // "the child in a warm pool of light in a dim scene" → "the child in a,".
+    .replace(/\b(?:in|at|on|with|under|through)\s+an?\s*,/gi, ',')
     .replace(/,\s*,+/g, ',')
+    .replace(/\s+,/g, ',')
+    .replace(/[;:]\s*/g, ', ')
     .replace(/\s+/g, ' ')
+    // Cutting a leading clause leaves the sentence starting on punctuation.
+    .replace(/^[\s,;:.—-]+/, '')
     .replace(/[,.;\s]+$/, '')
     .trim();
   // A very long remainder is still a whole paragraph; keep the opening action.
   if (out.length > 200) {
     const cut = out.slice(0, 200);
     const stop = Math.max(cut.lastIndexOf(', '), cut.lastIndexOf(' — '));
-    out = (stop > 90 ? cut.slice(0, stop) : cut).trim();
+    // Trailing punctuation again: the cut lands after the earlier cleanup ran.
+    out = (stop > 90 ? cut.slice(0, stop) : cut).replace(/[,.;\s]+$/, '').trim();
   }
   return out;
 }
@@ -1061,14 +1090,24 @@ export function resolveColoringScenes(template: any): {
   // instead — it always describes something happening.
   const MIN_COVER_SCENE = 80;
   const strippedCover = forColoring(template.coverScene || '');
+  // Before falling back to page one — which is always the ordinary "before"
+  // moment, a bedroom or a doorway — try the back-cover portrait. It puts the
+  // hero inside the story's world holding whatever the story is about, which is
+  // what a cover should show. Toy City is the case in point: its cover scene is
+  // written as "close to camera, face large … wearing a red hoodie", and the
+  // wardrobe cut takes the whole Toy City away with it.
   const cover =
     (template.coloringCoverScene || '').trim() ||
     (strippedCover.length >= MIN_COVER_SCENE ? strippedCover : '') ||
+    forColoring(template.portraitScene || '') ||
     derived[0];
-  const back =
+  let back =
     (template.coloringBackCoverScene || '').trim() ||
     forColoring(template.portraitScene || '') ||
     undefined;
+  // If the portrait was just promoted to the cover, the back cover would repeat
+  // it — the same drawing on both ends of the book.
+  if (back && back === cover) back = derived[derived.length - 1];
 
   return { scenes, cover, back };
 }
@@ -1090,8 +1129,15 @@ export function buildScenePrompt(
       `Black-and-white LINE ART coloring book page for young children, full-page composition. A clean, ` +
       `bold-outlined cartoon line drawing (NO color, NO shading, NO grey fills, pure white background) of a ` +
       `cheerful 5-year-old ${child} whose face, hairstyle and features clearly resemble the reference photo. ` +
+      `The ${child}'s FACE is turned toward the viewer and fully visible — never from behind, never hidden, ` +
+      `never cropped out — and is drawn large enough for a small child to recognise and colour. ` +
       `Scene: the ${child} ${scene}. The drawing is LARGE and FILLS the entire page edge to edge — the main ` +
       `character and the scene are big and centered, taking up almost the whole frame with only a thin border. ` +
+      // Worded without the verb "colour": asking for a background a child "can
+      // colour" reads as an instruction to colour it in, and the page came back
+      // with red and blue bricks.
+      `NO large empty white areas: extend this same scene out to every edge of the page — sky, ground and ` +
+      `background objects — every one of them drawn as plain black OUTLINES only, left unfilled. ` +
       `Thick clear bold black outlines, simple friendly shapes that are easy for a small child to color with ` +
       `crayons. Strictly black outlines on a white background — absolutely NO colors and NO grayscale shading. ` +
       `Square 1:1, fills the frame. ${NO_TEXT}`;
