@@ -424,6 +424,41 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
             </p>
           </div>
         )}
+
+        {/* Someone stalling at checkout usually has one question. Answering it
+            here costs less than losing the order. */}
+        <div className="p-4 rounded-2xl bg-dark-700/60 border border-white/10 space-y-2">
+          <p className="font-arabic font-bold text-white text-sm flex items-center gap-2">
+            💬 {t('step3.help_title', 'عندك سؤال قبل ما تكمّل؟')}
+          </p>
+          <p className="font-arabic text-white/55 text-xs leading-relaxed">
+            {t('step3.help_desc', 'اسألنا على واتساب — منرد بسرعة، وبنساعدك تختار الباقة المناسبة.')}
+          </p>
+          <a
+            href="https://wa.me/972585502072"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#25D366]/15 text-[#25D366] border border-[#25D366]/30 font-arabic font-bold text-xs hover:bg-[#25D366]/25 transition-all"
+            dir="ltr"
+          >
+            058-550-2072
+          </a>
+        </div>
+
+        {/* Want another book? Create a separate story (its own order). */}
+        <div className="p-4 rounded-2xl bg-dark-700/60 border border-white/10 flex flex-col items-center justify-center text-center gap-2">
+          <span className="text-2xl">📚</span>
+          <p className="font-arabic text-white/60 text-[11px] leading-relaxed max-w-[90%]">
+            {t('step3.another_story_hint', 'تريد كتاباً آخر بموضوع مختلف؟ أنشئ قصة جديدة بطلب منفصل.')}
+          </p>
+          <button
+            type="button"
+            onClick={handleCreateAnotherStory}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-magic-500/20 text-magic-300 border border-magic-500/30 font-arabic font-bold text-xs hover:bg-magic-500/30 transition-all"
+          >
+            <Plus className="w-4 h-4" /> {t('step3.create_another_story', 'أنشئ قصة جديدة')}
+          </button>
+        </div>
       </div>
 
       {/* The rule that used to separate these two stacked sections is now a
@@ -489,20 +524,6 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
             </div>
           </div>
 
-          {/* Want another book? Create a separate story (its own order). */}
-          <div className="p-3 rounded-xl bg-dark-700 border border-white/10 flex flex-col items-center justify-center text-center gap-2">
-            <span className="text-2xl">📚</span>
-            <p className="font-arabic text-white/60 text-[11px] leading-relaxed max-w-[90%]">
-              {t('step3.another_story_hint', 'تريد كتاباً آخر بموضوع مختلف؟ أنشئ قصة جديدة بطلب منفصل.')}
-            </p>
-            <button
-              type="button"
-              onClick={handleCreateAnotherStory}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-magic-500/20 text-magic-300 border border-magic-500/30 font-arabic font-bold text-xs hover:bg-magic-500/30 transition-all"
-            >
-              <Plus className="w-4 h-4" /> {t('step3.create_another_story', 'أنشئ قصة جديدة')}
-            </button>
-          </div>
         </div>
 
         {/* Coupon + price summary */}
