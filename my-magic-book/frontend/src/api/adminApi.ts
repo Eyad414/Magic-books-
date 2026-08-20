@@ -65,6 +65,24 @@ export const adminApi = {
     return response.data;
   },
 
+  /** Unread-message counts per customer, for the customers list. */
+  getMessageCounts: async () => {
+    const response = await axiosInstance.get('/admin/customer-messages');
+    return response.data;
+  },
+
+  /** The whole thread with one customer, including whether they read ours. */
+  getCustomerThread: async (userId: string) => {
+    const response = await axiosInstance.get(`/admin/customers/${userId}/messages`);
+    return response.data;
+  },
+
+  /** Write to one customer. They see it when they sign in. */
+  messageCustomer: async (userId: string, body: string, storyId?: string) => {
+    const response = await axiosInstance.post(`/admin/customers/${userId}/message`, { body, storyId });
+    return response.data;
+  },
+
   /** Ask BookPod what happened to jobs already sent. Read-only — sends nothing. */
   refreshPrintJobs: async () => {
     const response = await axiosInstance.post('/admin/print-jobs/refresh');

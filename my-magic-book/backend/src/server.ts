@@ -16,6 +16,7 @@ import orderRoutes from './routes/orderRoutes';
 import contactRoutes from './routes/contactRoutes';
 import adminRoutes from './routes/adminRoutes';
 import userRoutes from './routes/userRoutes';
+import messageRoutes from './routes/messageRoutes';
 import publicRoutes from './routes/publicRoutes';
 import uploadRoutes from './routes/uploadRoutes';
 import { envFlag } from './utils/envFlag';
@@ -128,6 +129,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/messages', messageRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/uploads', uploadRoutes);
 

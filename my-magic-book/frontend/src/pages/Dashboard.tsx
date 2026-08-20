@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useStoryProgress } from '../context/StoryProgressContext';
 import { storyApi } from '../api/storyApi';
+import { messageApi } from '../api/messageApi';
 import { orderApi } from '../api/orderApi';
 import { userApi } from '../api/userApi';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookOpen, Package, Plus, Clock, CheckCircle, Sparkles, User as UserIcon, Lock, Settings, ShieldAlert, Heart, Trash2, AlertTriangle, X, Eye, MapPin, Phone, Palette } from 'lucide-react';
+import { BookOpen, Package, Plus, Clock, CheckCircle, Sparkles, User as UserIcon, Lock, Settings, ShieldAlert, Heart, Trash2, AlertTriangle, X, Eye, MapPin, Phone, Palette, Mail } from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
 import Modal from '../components/common/Modal';
 import StatusBadge from '../components/common/StatusBadge';
@@ -37,8 +38,14 @@ export default function Dashboard() {
   const [stories, setStories] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
-  const [tab, setTab] = useState<'stories' | 'orders' | 'favorites' | 'profile' | 'settings'>('stories');
+  const [tab, setTab] = useState<'stories' | 'orders' | 'messages' | 'favorites' | 'profile' | 'settings'>('stories');
   const [detailsOrder, setDetailsOrder] = useState<any>(null);
+  // Messages from the shop. The count is fetched on load so the badge is there
+  // before the customer opens anything; opening the tab is what marks them read.
+  const [messages, setMessages] = useState<any[]>([]);
+  const [unread, setUnread] = useState(0);
+  const [reply, setReply] = useState('');
+  const [sendingReply, setSendingReply] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const { t, i18n } = useTranslation();
 
@@ -52,6 +59,16 @@ export default function Dashboard() {
   // Password form state
   const [passForm, setPassForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [isSavingPass, setIsSavingPass] = useState(false);
+
+  // Opening the tab is what reads them: fetch the thread, and the server marks
+  // the shop's messages read in the same call, which is what tells the owner
+  // the message landed.
+  useEffect(() => {
+    if (tab !== 'messages') return;
+    messageApi.getMy()
+      .then((r) => { setMessages(r?.messages || []); setUnread(0); })
+      .catch(() => {});
+  }, [tab]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) navigate('/login');
@@ -70,6 +87,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (isAuthenticated) {
+      // The badge, not the messages themselves — reading them is what marks
+      // them read, and that must be the customer's doing, not a page load.
+      messageApi.unread().then((r) => setUnread(r?.count || 0)).catch(() => {});
+
       Promise.all([storyApi.getMyStories(), orderApi.getMyOrders()])
         .then(([storiesRes, ordersRes]) => {
           setStories(storiesRes.stories || []);
@@ -174,6 +195,7 @@ export default function Dashboard() {
               {[
                 { id: 'stories', label: t('dashboard.tab_stories'), icon: BookOpen },
                 { id: 'orders', label: t('dashboard.tab_orders'), icon: Package },
+                { id: 'messages', label: t('dashboard.tab_messages', 'الرسائل'), icon: Mail, badge: unread },
                 { id: 'favorites', label: t('dashboard.tab_favorites'), icon: Heart },
                 { id: 'profile', label: t('dashboard.tab_profile'), icon: UserIcon },
                 { id: 'settings', label: t('dashboard.tab_settings'), icon: Settings },
@@ -189,6 +211,11 @@ export default function Dashboard() {
                 >
                   <t.icon className="w-4 h-4" />
                   {t.label}
+                  {!!(t as any).badge && (
+                    <span className="ms-auto min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center">
+                      {(t as any).badge}
+                    </span>
+                  )}
                 </button>
               ))}
 
@@ -298,6 +325,62 @@ export default function Dashboard() {
                   </div>
                 )}
               </>
+            ) : tab === 'messages' ? (
+              <div className="space-y-4">
+                {messages.length === 0 ? (
+                  <EmptyState
+                    emoji="✉️"
+                    title={t('dashboard.empty_messages_title', 'ما في رسائل')}
+                    desc={t('dashboard.empty_messages_desc', 'لما نبعتلك إشي رح يوصلك هون.')}
+                    cta={t('dashboard.empty_stories_cta')}
+                    onClick={handleStartStory}
+                  />
+                ) : (
+                  <div className="space-y-3">
+                    {messages.map((m) => (
+                      <div
+                        key={m.id}
+                        className={`glass-card p-4 ${m.fromAdmin ? 'border-r-4 border-gold-500' : 'opacity-80'}`}
+                      >
+                        <p className="font-arabic text-white/85 text-sm whitespace-pre-wrap">{m.body}</p>
+                        <p className="font-arabic text-white/35 text-[11px] mt-2">
+                          {m.fromAdmin ? t('dashboard.msg_from_shop', 'من الفانوس السحري') : t('dashboard.msg_from_you', 'أنت')}
+                          {' · '}
+                          {new Date(m.createdAt).toLocaleString(i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'he' ? 'he-IL' : 'en-US')}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="glass-card p-4">
+                  <textarea
+                    value={reply}
+                    onChange={(e) => setReply(e.target.value)}
+                    rows={3}
+                    placeholder={t('dashboard.msg_placeholder', 'اكتب رسالتك…')}
+                    className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-white text-sm font-arabic placeholder:text-white/30"
+                  />
+                  <button
+                    type="button"
+                    disabled={!reply.trim() || sendingReply}
+                    onClick={async () => {
+                      setSendingReply(true);
+                      try {
+                        const res = await messageApi.reply(reply.trim());
+                        if (res?.success) {
+                          setMessages((prev) => [...prev, { id: res.message.id, body: reply.trim(), fromAdmin: false, createdAt: res.message.createdAt }]);
+                          setReply('');
+                        }
+                      } catch { /* the box keeps what they typed */ }
+                      finally { setSendingReply(false); }
+                    }}
+                    className="mt-2 px-4 py-2 rounded-xl bg-gold-500 text-[#0a1628] font-arabic font-bold text-sm disabled:opacity-40"
+                  >
+                    {sendingReply ? t('dashboard.msg_sending', 'جاري الإرسال…') : t('dashboard.msg_send', 'إرسال')}
+                  </button>
+                </div>
+              </div>
             ) : tab === 'orders' ? (
               orders.length === 0 ? (
                 <EmptyState emoji="📦" title={t('dashboard.empty_orders_title')} desc={t('dashboard.empty_orders_desc')} cta={t('dashboard.empty_stories_cta')} onClick={handleStartStory} />

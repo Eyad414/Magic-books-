@@ -342,6 +342,9 @@ export default function AdminDashboard() {
         .catch(() => { /* the list is extra */ });
       const res = await adminApi.getCustomers();
       if (res.success) setCustomers(res);
+      adminApi.getMessageCounts()
+        .then((r) => { if (r?.success) setMsgCounts(r.byUser || {}); })
+        .catch(() => { /* the badge is extra */ });
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'تعذّر جلب قائمة العملاء');
     }
@@ -985,6 +988,44 @@ export default function AdminDashboard() {
   const [orderSearch, setOrderSearch] = useState('');
   // `${storyId|demoKey}:${surface}` while one publish toggle is in flight.
   const [visBusy, setVisBusy] = useState<string | null>(null);
+
+  // A thread with one customer, opened from their row in the customers list.
+  const [threadFor, setThreadFor] = useState<any | null>(null);
+  const [thread, setThread] = useState<any[] | null>(null);
+  const [threadBody, setThreadBody] = useState('');
+  const [threadBusy, setThreadBusy] = useState(false);
+  /** Unread counts per account, so a row can show that someone is waiting. */
+  const [msgCounts, setMsgCounts] = useState<Record<string, any>>({});
+
+  const openThread = async (c: any) => {
+    const id = c._id || c.id;
+    setThreadFor(threadFor && (threadFor._id || threadFor.id) === id ? null : c);
+    setThread(null);
+    setThreadBody('');
+    if (threadFor && (threadFor._id || threadFor.id) === id) return;
+    try {
+      const res = await adminApi.getCustomerThread(id);
+      if (res?.success) setThread(res.messages);
+    } catch { setThread([]); }
+  };
+
+  const sendThreadMessage = async () => {
+    if (!threadFor || !threadBody.trim() || threadBusy) return;
+    setThreadBusy(true);
+    const toastId = toast.loading(t('admin.msg_sending', 'جاري الإرسال...'));
+    try {
+      const id = threadFor._id || threadFor.id;
+      const res = await adminApi.messageCustomer(id, threadBody.trim());
+      if (!res?.success) throw new Error(res?.message);
+      setThread((prev) => [...(prev || []), { id: res.message.id, body: threadBody.trim(), fromAdmin: true, readAt: null, createdAt: res.message.createdAt }]);
+      setThreadBody('');
+      toast.success(t('admin.msg_sent', 'تم الإرسال — بيشوفها لما يدخل حسابه ✅'), { id: toastId });
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || t('admin.msg_failed', 'فشل الإرسال'), { id: toastId });
+    } finally {
+      setThreadBusy(false);
+    }
+  };
 
   // Sending a book into a customer's account: which book, and to whom.
   const [giftBook, setGiftBook] = useState<any | null>(null);
@@ -1805,6 +1846,77 @@ export default function AdminDashboard() {
                                 zero means "not since then", not "never". */}
                             {c.loginCount > 0 && <span>{t('admin.cust_logins', 'مرات الدخول')}: {c.loginCount}</span>}
                           </div>
+
+                          {/* Writing to this person, and whether they read it. */}
+                          <button
+                            type="button"
+                            onClick={() => openThread(c)}
+                            className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-arabic text-[11px] text-white/70 transition"
+                          >
+                            ✉️ {t('admin.cust_message', 'رسالة')}
+                            {!!msgCounts[c._id]?.waitingOnUs && (
+                              <span className="px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                                {msgCounts[c._id].waitingOnUs}
+                              </span>
+                            )}
+                            {!!msgCounts[c._id]?.unreadByThem && (
+                              <span
+                                className="px-1.5 rounded-full bg-amber-500/25 text-amber-200 text-[10px]"
+                                title={t('admin.cust_unread_by_them', 'أرسلتها ولسا ما فتحها')}
+                              >
+                                {t('admin.cust_not_opened', 'ما فتحها')}
+                              </span>
+                            )}
+                          </button>
+
+                          {threadFor && (threadFor._id || threadFor.id) === c._id && (
+                            <div className="mt-2 p-3 rounded-2xl bg-white/5 border border-white/10">
+                              {thread === null ? (
+                                <p className="font-arabic text-white/40 text-[11px]">{t('common.loading', 'جاري التحميل…')}</p>
+                              ) : thread.length === 0 ? (
+                                <p className="font-arabic text-white/40 text-[11px]">{t('admin.msg_none_yet', 'ما في رسائل مع هالعميل بعد.')}</p>
+                              ) : (
+                                <div className="space-y-2 max-h-56 overflow-y-auto mb-2">
+                                  {thread.map((m: any) => (
+                                    <div
+                                      key={m.id}
+                                      className={`p-2 rounded-xl ${m.fromAdmin ? 'bg-gold-500/10 border border-gold-500/20' : 'bg-white/10'}`}
+                                    >
+                                      <p className="font-arabic text-white/85 text-[12px] whitespace-pre-wrap">{m.body}</p>
+                                      <p className="font-arabic text-white/35 text-[10px] mt-1">
+                                        {m.fromAdmin ? t('admin.msg_you', 'أنت') : c.name}
+                                        {' · '}
+                                        {new Date(m.createdAt).toLocaleString()}
+                                        {m.fromAdmin && (
+                                          <span className={m.readAt ? ' text-emerald-300/70' : ' text-white/30'}>
+                                            {' · '}
+                                            {m.readAt
+                                              ? t('admin.msg_read', 'قرأها ✓')
+                                              : t('admin.msg_unread', 'لسا ما فتحها')}
+                                          </span>
+                                        )}
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              <textarea
+                                value={threadBody}
+                                onChange={(e) => setThreadBody(e.target.value)}
+                                rows={2}
+                                placeholder={t('admin.msg_placeholder', 'اكتب رسالة لهالعميل…')}
+                                className="w-full px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] font-arabic placeholder:text-white/30"
+                              />
+                              <button
+                                type="button"
+                                onClick={sendThreadMessage}
+                                disabled={!threadBody.trim() || threadBusy}
+                                className="mt-1.5 w-full px-3 py-1.5 rounded-xl bg-gold-500 text-[#0a1628] font-arabic font-bold text-[11px] disabled:opacity-40"
+                              >
+                                {threadBusy ? t('admin.msg_sending', 'جاري الإرسال...') : t('admin.msg_send', 'إرسال')}
+                              </button>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>

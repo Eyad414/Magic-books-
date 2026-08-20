@@ -15,6 +15,8 @@ import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam
   deleteImportedFiles, listMessages, deleteMessage, getCustomerByEmail, checkPayments } from '../controllers/adminController';
 import { protect, adminOnly } from '../utils/authMiddleware';
 
+import { sendMessageToCustomer, getCustomerThread, messageCounts } from '../controllers/customerMessageController';
+
 const router = Router();
 
 router.use(protect, adminOnly);
@@ -63,6 +65,10 @@ router.post('/themes/:themeId/generate-photoreal', generatePhotorealPreview);
 router.post('/themes/:themeId/generate-coloring', generateColoringPreview);
 // Put a book the owner made into a customer's own account.
 router.post('/books/send-to-customer', sendBookToCustomer);
+// Writing to one customer, and whether they have read it.
+router.get('/customer-messages', messageCounts);
+router.get('/customers/:userId/messages', getCustomerThread);
+router.post('/customers/:userId/message', sendMessageToCustomer);
 
 // Re-impose a supplied book PDF onto a chosen trim. 60MB: a scanned interior is
 // far heavier than the 10MB child photos the other upload route accepts.
