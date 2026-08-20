@@ -16,6 +16,7 @@ import { checkThemes, loadThemeArtwork, type ThemeReadiness } from '../services/
 import { resolveColoringScenes, getSceneTemplate } from '../services/sceneTemplates';
 import PrintJob from '../models/PrintJob';
 import Visit from '../models/Visit';
+import { resolveCoupon } from '../services/Pricing';
 import { publicProxyUrl } from '../services/PrintService';
 import { uploadBuffer, pdfFolderPath, listObjects, deleteObject } from '../services/StorageService';
 import { submitPrintJob, isBookPodConfigured, fetchOurJobStatuses } from '../services/BookPodService';
@@ -1938,6 +1939,26 @@ export const listVisits = async (req: Request, res: Response): Promise<void> => 
   } catch (err: any) {
     console.error('[listVisits]', err?.message || err);
     res.status(500).json({ success: false, message: err?.message || 'تعذّر جلب الزيارات.' });
+  }
+};
+
+
+/**
+ * Check a discount code. Public, because the checkout has to say whether a code
+ * works before the order exists — but the number it returns is only for
+ * display: the order recomputes everything from the same source.
+ */
+export const checkCoupon = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const coupon = await resolveCoupon(String(req.body?.code || ''));
+    if (!coupon) {
+      res.json({ success: false, message: 'الكود غير صالح أو منتهي.' });
+      return;
+    }
+    res.json({ success: true, code: coupon.code, type: coupon.type, value: coupon.value });
+  } catch (err: any) {
+    console.error('[checkCoupon]', err?.message || err);
+    res.status(500).json({ success: false, message: 'تعذّر التحقق من الكود.' });
   }
 };
 

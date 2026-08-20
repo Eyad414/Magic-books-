@@ -67,7 +67,7 @@ const Field = ({ id, label, placeholder, value, onChange, type = 'text', error }
 );
 
 export default function Step3_Checkout({ onNext, onPrev }: Props) {
-  const { progress, resetProgress, setShippingAddress } = useStoryProgress();
+  const { progress, resetProgress, setShippingAddress , setStoryConfig } = useStoryProgress();
   const { t, i18n } = useTranslation();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -163,32 +163,38 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
   const [couponError, setCouponError] = useState('');
   const [discount, setDiscount] = useState(0);
   const [couponType, setCouponType] = useState<'percent' | 'freeDelivery'>('percent');
+  const [couponChecking, setCouponChecking] = useState(false);
 
   /**
-   * The codes that work, in one place.
-   *
-   * `percent` takes off part of the book's price; `freeDelivery` waives the
-   * 30₪ instead — a different kind of offer, useful when the margin on a
-   * discount is too thin but the delivery can be absorbed.
-   *
-   * These live in the browser, so anyone who opens the page source can read
-   * them. That is fine for codes meant to be shared, and NOT fine for a code
-   * meant for one customer — for that they need to be checked on the server.
+   * The codes live on the server now. The browser only asks whether one works
+   * and shows the result — a code sitting in the page source could be read by
+   * anyone, and the discount it displayed was never the one charged, because
+   * the order was priced without it.
    */
-  const COUPONS: Record<string, { type: 'percent' | 'freeDelivery'; value: number }> = {
-    MAGIC20: { type: 'percent', value: 20 },
-    MAGIC50: { type: 'percent', value: 50 },
-    FANOOS: { type: 'freeDelivery', value: 0 },
-  };
-
-  const applyCoupon = () => {
+  const applyCoupon = async () => {
     const code = couponCode.trim().toUpperCase();
-    const found = COUPONS[code];
-    if (!found) { setCouponApplied(false); setDiscount(0); setCouponType('percent'); setCouponError(t('step3.coupon_invalid')); return; }
-    setCouponType(found.type);
-    setDiscount(found.type === 'percent' ? found.value : 0);
-    setCouponApplied(true);
-    setCouponError('');
+    if (!code) return;
+    setCouponChecking(true);
+    try {
+      const res = await publicApi.checkCoupon(code);
+      if (res?.success) {
+        setCouponType(res.type === 'freeDelivery' ? 'freeDelivery' : 'percent');
+        setDiscount(res.type === 'percent' ? res.value : 0);
+        setCouponApplied(true);
+        setCouponError('');
+        // Carried to step 4 — the order is priced from this code on the server.
+        setStoryConfig({ couponCode: code });
+      } else {
+        setCouponApplied(false); setDiscount(0); setCouponType('percent');
+        setStoryConfig({ couponCode: '' });
+        setCouponError(res?.message || t('step3.coupon_invalid'));
+      }
+    } catch {
+      setCouponApplied(false); setDiscount(0);
+      setCouponError(t('step3.coupon_invalid'));
+    } finally {
+      setCouponChecking(false);
+    }
   };
 
   // Price calculation (single book per order)
@@ -545,10 +551,10 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
               <button
                 type="button"
                 onClick={applyCoupon}
-                disabled={!couponCode.trim() || couponApplied}
+                disabled={!couponCode.trim() || couponApplied || couponChecking}
                 className="px-4 py-3 rounded-xl bg-gold-500/20 border border-gold-500/30 text-gold-500 font-arabic text-sm font-bold hover:bg-gold-500/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {couponApplied ? t('step3.coupon_applied_btn', 'مطبّق ✓') : t('step3.coupon_apply_btn', 'تطبيق')}
+                {couponApplied ? t('step3.coupon_applied_btn', 'مطبّق ✓') : couponChecking ? '…' : t('step3.coupon_apply_btn', 'تطبيق')}
               </button>
             </div>
             {couponError && <p className="text-red-400 text-xs font-arabic mt-2">{couponError}</p>}

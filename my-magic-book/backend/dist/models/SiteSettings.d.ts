@@ -98,9 +98,22 @@ export interface IDemoCardVisibility {
     home?: boolean;
     stories?: boolean;
 }
+/**
+ * A discount code. `percent` takes part of the book's price; `freeDelivery`
+ * waives the delivery fee instead — a different offer for when the margin on a
+ * discount is too thin but the delivery can be absorbed.
+ */
+export interface ICoupon {
+    code: string;
+    type: 'percent' | 'freeDelivery';
+    value: number;
+    active: boolean;
+}
+export declare const DEFAULT_COUPONS: ICoupon[];
 export interface ISiteSettings extends Document {
     bookPackages: IBookPackage[];
     themes: ITheme[];
+    coupons?: ICoupon[];
     demoCards?: Record<string, IDemoCardVisibility>;
     homeStats?: IHomeStats;
     /** Wizard step 1: show the "no photo" button so a customer can order without

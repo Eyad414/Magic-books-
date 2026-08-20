@@ -11,5 +11,7 @@ router.get('/stories-page-books', showcaseController_1.getStoriesPageBooks);
 router.post('/story-chat', aiController_1.storyChat);
 // Anonymous visit counter — see models/Visit.
 router.post('/visit', adminController_1.trackVisit);
+// Says whether a discount code works. The order still recomputes the price.
+router.post('/coupon', adminController_1.checkCoupon);
 exports.default = router;
 //# sourceMappingURL=publicRoutes.js.map

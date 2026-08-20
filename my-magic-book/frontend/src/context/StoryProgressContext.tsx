@@ -20,6 +20,8 @@ export interface StoryConfig {
   storyId?: string;
   /** How the customer chose to make the story. Defaults to 'template' (handwritten). */
   mode?: StoryMode;
+  /** The discount code the customer applied in step 3, carried to the order. */
+  couponCode?: string;
 }
 
 export interface BookCustomization {

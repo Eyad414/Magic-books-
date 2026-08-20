@@ -14,6 +14,12 @@ export interface StoryChatResult {
 }
 
 export const publicApi = {
+  /** Ask the server whether a discount code works. The order re-checks it. */
+  checkCoupon: async (code: string) => {
+    const res = await api.post('/public/coupon', { code });
+    return res.data;
+  },
+
   /** Count this visit. Anonymous — see backend models/Visit. */
   trackVisit: async (
     visitorId: string,

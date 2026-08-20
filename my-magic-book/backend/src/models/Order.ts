@@ -26,6 +26,11 @@ export interface IOrder extends Document {
   storyId: mongoose.Types.ObjectId;
   shippingAddress: IShippingAddress;
   totalPrice: number;
+  /** What the total is made of, so an order can be explained later. */
+  basePrice?: number;
+  discountAmount?: number;
+  deliveryFee?: number;
+  couponCode?: string;
   currency: string;
   paymentStatus: PaymentStatus;
   /** How the customer chose to pay. Cash/COD orders must not be shown as
@@ -80,6 +85,10 @@ const OrderSchema = new Schema<IOrder>(
     storyId: { type: Schema.Types.ObjectId, ref: 'Story', required: true },
     shippingAddress: { type: ShippingAddressSchema, required: true },
     totalPrice: { type: Number, required: true },
+    basePrice: { type: Number },
+    discountAmount: { type: Number, default: 0 },
+    deliveryFee: { type: Number, default: 0 },
+    couponCode: { type: String, uppercase: true, trim: true },
     // The store sells in Israel and always has: a 70 here has always meant 70
     // shekels. It was labelled SAR from an early Saudi-market assumption, so
     // every order card read "70 SAR" for a price nobody ever charged in riyals.

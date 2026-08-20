@@ -118,6 +118,12 @@ export declare const trackVisit: (req: Request, res: Response) => Promise<void>;
  * how many pages. Nothing here fingerprints a person or reads their address.
  */
 export declare const listVisits: (req: Request, res: Response) => Promise<void>;
+/**
+ * Check a discount code. Public, because the checkout has to say whether a code
+ * works before the order exists — but the number it returns is only for
+ * display: the order recomputes everything from the same source.
+ */
+export declare const checkCoupon: (req: Request, res: Response) => Promise<void>;
 export declare const listCustomers: (_req: Request, res: Response) => Promise<void>;
 /**
  * Ask BookPod what actually happened to the jobs we sent, and write it down.

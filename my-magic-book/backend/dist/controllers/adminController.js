@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteImportedFiles = exports.listImportedFiles = exports.getPrintReadiness = exports.listPrintJobs = exports.refreshPrintJobStatuses = exports.listCustomers = exports.listVisits = exports.trackVisit = exports.sendReadyThemeBook = exports.uploadImportedCover = exports.designImportedCover = exports.submitImportedBook = exports.importBookPdf = exports.generatePhotorealPreview = exports.generateColoringPreview = exports.generatePreviewIllustrations = exports.printBookSubmit = exports.printBook = exports.checkPayments = exports.submitOrderColoring = exports.reRenderOrderColoring = exports.reRenderOrderFiles = exports.getOrderBuildStatus = exports.buildOrderBook = exports.confirmOrderPayment = exports.getAllOrders = exports.updateSettings = exports.getPublicSettings = exports.getSettings = exports.getTeam = exports.removeAdmin = exports.addAdmin = exports.deleteStory = exports.updateStory = exports.getAllStories = exports.getCustomerByEmail = exports.deleteMessage = exports.listMessages = void 0;
+exports.deleteImportedFiles = exports.listImportedFiles = exports.getPrintReadiness = exports.listPrintJobs = exports.refreshPrintJobStatuses = exports.listCustomers = exports.checkCoupon = exports.listVisits = exports.trackVisit = exports.sendReadyThemeBook = exports.uploadImportedCover = exports.designImportedCover = exports.submitImportedBook = exports.importBookPdf = exports.generatePhotorealPreview = exports.generateColoringPreview = exports.generatePreviewIllustrations = exports.printBookSubmit = exports.printBook = exports.checkPayments = exports.submitOrderColoring = exports.reRenderOrderColoring = exports.reRenderOrderFiles = exports.getOrderBuildStatus = exports.buildOrderBook = exports.confirmOrderPayment = exports.getAllOrders = exports.updateSettings = exports.getPublicSettings = exports.getSettings = exports.getTeam = exports.removeAdmin = exports.addAdmin = exports.deleteStory = exports.updateStory = exports.getAllStories = exports.getCustomerByEmail = exports.deleteMessage = exports.listMessages = void 0;
 const User_1 = __importDefault(require("../models/User"));
 const Story_1 = __importDefault(require("../models/Story"));
 const Order_1 = __importDefault(require("../models/Order"));
@@ -54,6 +54,7 @@ const PrintReadiness_1 = require("../services/PrintReadiness");
 const sceneTemplates_2 = require("../services/sceneTemplates");
 const PrintJob_1 = __importDefault(require("../models/PrintJob"));
 const Visit_1 = __importDefault(require("../models/Visit"));
+const Pricing_1 = require("../services/Pricing");
 const PrintService_1 = require("../services/PrintService");
 const StorageService_1 = require("../services/StorageService");
 const BookPodService_1 = require("../services/BookPodService");
@@ -1941,6 +1942,26 @@ const listVisits = async (req, res) => {
     }
 };
 exports.listVisits = listVisits;
+/**
+ * Check a discount code. Public, because the checkout has to say whether a code
+ * works before the order exists — but the number it returns is only for
+ * display: the order recomputes everything from the same source.
+ */
+const checkCoupon = async (req, res) => {
+    try {
+        const coupon = await (0, Pricing_1.resolveCoupon)(String(req.body?.code || ''));
+        if (!coupon) {
+            res.json({ success: false, message: 'الكود غير صالح أو منتهي.' });
+            return;
+        }
+        res.json({ success: true, code: coupon.code, type: coupon.type, value: coupon.value });
+    }
+    catch (err) {
+        console.error('[checkCoupon]', err?.message || err);
+        res.status(500).json({ success: false, message: 'تعذّر التحقق من الكود.' });
+    }
+};
+exports.checkCoupon = checkCoupon;
 /** How recently an account must have made a request to count as "online". */
 const ONLINE_WINDOW_MS = 5 * 60 * 1000;
 const listCustomers = async (_req, res) => {

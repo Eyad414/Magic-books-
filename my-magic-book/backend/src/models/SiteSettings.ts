@@ -87,9 +87,28 @@ export interface IDemoCardVisibility {
   stories?: boolean;
 }
 
+/**
+ * A discount code. `percent` takes part of the book's price; `freeDelivery`
+ * waives the delivery fee instead — a different offer for when the margin on a
+ * discount is too thin but the delivery can be absorbed.
+ */
+export interface ICoupon {
+  code: string;
+  type: 'percent' | 'freeDelivery';
+  value: number;
+  active: boolean;
+}
+
+export const DEFAULT_COUPONS: ICoupon[] = [
+  { code: 'MAGIC20', type: 'percent', value: 20, active: true },
+  { code: 'MAGIC50', type: 'percent', value: 50, active: true },
+  { code: 'FANOOS', type: 'freeDelivery', value: 0, active: true },
+];
+
 export interface ISiteSettings extends Document {
   bookPackages: IBookPackage[];
   themes: ITheme[];
+  coupons?: ICoupon[];
   demoCards?: Record<string, IDemoCardVisibility>;
   homeStats?: IHomeStats;
   /** Wizard step 1: show the "no photo" button so a customer can order without
@@ -159,6 +178,15 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
       happyFamilies: { type: String, default: DEFAULT_HOME_STATS.happyFamilies },
       readyStories: { type: String, default: DEFAULT_HOME_STATS.readyStories },
       rating: { type: String, default: DEFAULT_HOME_STATS.rating },
+    },
+    coupons: {
+      type: [{
+        code: { type: String, required: true, uppercase: true, trim: true },
+        type: { type: String, enum: ['percent', 'freeDelivery'], default: 'percent' },
+        value: { type: Number, default: 0 },
+        active: { type: Boolean, default: true },
+      }],
+      default: DEFAULT_COUPONS,
     },
     demoCards: { type: Schema.Types.Mixed, default: {} },
     allowSkipPhoto: { type: Boolean, default: false },

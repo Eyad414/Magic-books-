@@ -33,8 +33,13 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DEFAULT_HOME_STATS = void 0;
+exports.DEFAULT_HOME_STATS = exports.DEFAULT_COUPONS = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
+exports.DEFAULT_COUPONS = [
+    { code: 'MAGIC20', type: 'percent', value: 20, active: true },
+    { code: 'MAGIC50', type: 'percent', value: 50, active: true },
+    { code: 'FANOOS', type: 'freeDelivery', value: 0, active: true },
+];
 exports.DEFAULT_HOME_STATS = {
     storiesCreated: '+500',
     happyFamilies: '+100',
@@ -92,6 +97,15 @@ const SiteSettingsSchema = new mongoose_1.Schema({
         happyFamilies: { type: String, default: exports.DEFAULT_HOME_STATS.happyFamilies },
         readyStories: { type: String, default: exports.DEFAULT_HOME_STATS.readyStories },
         rating: { type: String, default: exports.DEFAULT_HOME_STATS.rating },
+    },
+    coupons: {
+        type: [{
+                code: { type: String, required: true, uppercase: true, trim: true },
+                type: { type: String, enum: ['percent', 'freeDelivery'], default: 'percent' },
+                value: { type: Number, default: 0 },
+                active: { type: Boolean, default: true },
+            }],
+        default: exports.DEFAULT_COUPONS,
     },
     demoCards: { type: mongoose_1.Schema.Types.Mixed, default: {} },
     allowSkipPhoto: { type: Boolean, default: false },

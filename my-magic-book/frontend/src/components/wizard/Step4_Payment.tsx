@@ -73,6 +73,8 @@ export default function Step4_Payment({ onPrev }: Props) {
         totalPrice,
         paymentMethod,
         bookPackage: bookCustomization?.bookPackage,
+        // The server prices the order from this, not from totalPrice above.
+        couponCode: storyConfig?.couponCode,
       });
       // When an online gateway is live this carries the hosted payment URL —
       // BookPod's page included. The customer pays there, never here.

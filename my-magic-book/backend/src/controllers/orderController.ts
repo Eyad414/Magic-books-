@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import Order from '../models/Order';
 import Story from '../models/Story';
 import SiteSettings from '../models/SiteSettings';
+import { resolveCoupon, priceOrder } from '../services/Pricing';
 import { buildBookForOrder } from '../services/BookBuilder';
 
 const stripe = process.env.STRIPE_SECRET_KEY
@@ -13,7 +14,7 @@ const stripe = process.env.STRIPE_SECRET_KEY
 export const createCheckout = async (req: Request, res: Response): Promise<void> => {
   try {
     const user = (req as any).user;
-    const { storyId, shippingAddress, paymentMethod, bookPackage } = req.body;
+    const { storyId, shippingAddress, paymentMethod, bookPackage , couponCode } = req.body;
 
     const story = await Story.findById(storyId);
     if (!story) {
@@ -41,21 +42,38 @@ export const createCheckout = async (req: Request, res: Response): Promise<void>
     // Resolve the price SERVER-SIDE from the chosen package so the client can't
     // tamper with it. Persist the package on the story — it decides the
     // generation style (color book vs line-art coloring book) after payment.
-    let totalPrice = story.totalPrice || 99;
+    let basePrice = story.totalPrice || 99;
     if (bookPackage) {
       const settings = await SiteSettings.findOne();
       const pkg = (settings?.bookPackages || []).find((p: any) => p.id === bookPackage);
-      if (pkg) totalPrice = pkg.price;
+      if (pkg) basePrice = pkg.price;
       story.bookPackage = bookPackage;
-      story.totalPrice = totalPrice;
+      story.totalPrice = basePrice;
       await story.save();
     }
+
+    // The discount used to live only in the browser: a customer saw 50% off and
+    // was then charged full price, because the code never reached the server.
+    // It travels with the order now and is applied here, from the same list the
+    // checkout checked it against.
+    const coupon = await resolveCoupon(couponCode);
+    const price = priceOrder({
+      basePrice,
+      bookPackage: bookPackage || story.bookPackage,
+      deliveryMethod: shippingAddress?.deliveryMethod,
+      coupon,
+    });
+    const totalPrice = price.total;
 
     const order = await Order.create({
       userId: user._id,
       storyId,
       shippingAddress,
       totalPrice,
+      basePrice: price.basePrice,
+      discountAmount: price.discount,
+      deliveryFee: price.deliveryFee,
+      couponCode: price.couponCode,
       currency: 'ILS',
       paymentMethod: paymentMethod === 'cash' ? 'cash' : 'card',
       paymentStatus: 'pending',

@@ -20,6 +20,11 @@ export interface IOrder extends Document {
     storyId: mongoose.Types.ObjectId;
     shippingAddress: IShippingAddress;
     totalPrice: number;
+    /** What the total is made of, so an order can be explained later. */
+    basePrice?: number;
+    discountAmount?: number;
+    deliveryFee?: number;
+    couponCode?: string;
     currency: string;
     paymentStatus: PaymentStatus;
     /** How the customer chose to pay. Cash/COD orders must not be shown as
