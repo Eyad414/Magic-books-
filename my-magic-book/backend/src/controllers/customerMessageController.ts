@@ -1,7 +1,34 @@
 import { Request, Response } from 'express';
 import CustomerMessage from '../models/CustomerMessage';
 import User from '../models/User';
+import Story from '../models/Story';
 import { sendCustomerMessageEmail, sendAdminNotification } from '../utils/mailer';
+
+
+/**
+ * The book a message is about, shrunk to what a chat bubble needs. Sent with
+ * both sides of the conversation: a message saying "here is your book" is only
+ * useful if the book is one tap away from it.
+ */
+async function attachBooks(messages: any[]): Promise<Record<string, any>> {
+  const ids = messages.map((m) => m.storyId).filter(Boolean);
+  if (!ids.length) return {};
+  const stories = await Story.find({ _id: { $in: ids } })
+    .select('childName theme generatedCover coloringCover coloringImages')
+    .lean();
+  const byId: Record<string, any> = {};
+  for (const st of stories as any[]) {
+    const isColoring = !st.generatedCover && (st.coloringCover || st.coloringImages?.length);
+    byId[String(st._id)] = {
+      id: String(st._id),
+      childName: st.childName,
+      theme: st.theme,
+      cover: st.generatedCover || st.coloringCover || '',
+      isColoring: !!isColoring,
+    };
+  }
+  return byId;
+}
 
 /* ── the shop's side ─────────────────────────────────────────────────────── */
 
@@ -58,6 +85,7 @@ export const getCustomerThread = async (req: Request, res: Response): Promise<vo
     const messages = await CustomerMessage.find({ userId: req.params.userId })
       .sort({ createdAt: 1 })
       .lean();
+    const books = await attachBooks(messages);
     res.json({
       success: true,
       messages: messages.map((m: any) => ({
@@ -65,6 +93,7 @@ export const getCustomerThread = async (req: Request, res: Response): Promise<vo
         body: m.body,
         fromAdmin: m.fromAdmin,
         adminName: m.adminName || '',
+        book: m.storyId ? books[String(m.storyId)] || null : null,
         readAt: m.readAt || null,
         createdAt: m.createdAt,
       })),
@@ -172,6 +201,7 @@ export const getMyMessages = async (req: Request, res: Response): Promise<void> 
   try {
     const userId = (req as any).user._id;
     const messages = await CustomerMessage.find({ userId }).sort({ createdAt: 1 }).lean();
+    const books = await attachBooks(messages);
     await CustomerMessage.updateMany(
       { userId, fromAdmin: true, readAt: { $exists: false } },
       { $set: { readAt: new Date() } },
@@ -182,6 +212,7 @@ export const getMyMessages = async (req: Request, res: Response): Promise<void> 
         id: String(m._id),
         body: m.body,
         fromAdmin: m.fromAdmin,
+        book: m.storyId ? books[String(m.storyId)] || null : null,
         createdAt: m.createdAt,
       })),
     });

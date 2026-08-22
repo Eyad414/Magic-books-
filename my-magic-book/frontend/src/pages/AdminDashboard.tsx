@@ -2110,6 +2110,23 @@ export default function AdminDashboard() {
                                 }`}
                               >
                                 <p className="font-arabic text-white/85 text-[12px] whitespace-pre-wrap">{m.body}</p>
+                                {/* The book this message is about, if it came
+                                    with one. Saying "here is your book" is only
+                                    useful if the book is next to the words. */}
+                                {m.book && (
+                                  <Link
+                                    to={m.book.isColoring ? `/book/${m.book.id}?view=coloring` : `/book/${m.book.id}`}
+                                    className="mt-1.5 flex items-center gap-2 p-1.5 rounded-lg bg-black/20 border border-white/10 hover:border-gold-500/40 transition"
+                                  >
+                                    {m.book.cover && (
+                                      <img src={objectPathToUrl(m.book.cover)} alt="" className="w-8 h-8 rounded object-cover" />
+                                    )}
+                                    <span className="font-arabic text-white/70 text-[11px] truncate">
+                                      {m.book.isColoring ? '🖍️ ' : '📖 '}
+                                      {m.book.childName}
+                                    </span>
+                                  </Link>
+                                )}
                                 <p className="font-arabic text-white/30 text-[10px] mt-1">
                                   {/* Who on the team answered. The customer
                                       never sees this — to them the shop is one

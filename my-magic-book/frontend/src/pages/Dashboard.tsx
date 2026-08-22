@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useStoryProgress } from '../context/StoryProgressContext';
 import { storyApi } from '../api/storyApi';
 import { messageApi } from '../api/messageApi';
+import { toDisplayUrl } from '../api/mediaUrl';
 import { orderApi } from '../api/orderApi';
 import { userApi } from '../api/userApi';
 import { Link, useNavigate } from 'react-router-dom';
@@ -343,6 +344,21 @@ export default function Dashboard() {
                         className={`glass-card p-4 ${m.fromAdmin ? 'border-r-4 border-gold-500' : 'opacity-80'}`}
                       >
                         <p className="font-arabic text-white/85 text-sm whitespace-pre-wrap">{m.body}</p>
+                        {/* The book this message came with, one tap away. */}
+                        {m.book && (
+                          <Link
+                            to={m.book.isColoring ? `/book/${m.book.id}?view=coloring` : `/book/${m.book.id}`}
+                            className="mt-2 flex items-center gap-2 p-2 rounded-xl bg-white/5 border border-white/10 hover:border-gold-500/40 transition"
+                          >
+                            {m.book.cover && (
+                              <img src={toDisplayUrl(m.book.cover)} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                            )}
+                            <span className="font-arabic text-white/75 text-xs">
+                              {m.book.isColoring ? '🖍️ ' : '📖 '}
+                              {t('dashboard.msg_open_book', 'افتح الكتاب')}
+                            </span>
+                          </Link>
+                        )}
                         <p className="font-arabic text-white/35 text-[11px] mt-2">
                           {m.fromAdmin ? t('dashboard.msg_from_shop', 'من الفانوس السحري') : t('dashboard.msg_from_you', 'أنت')}
                           {' · '}
