@@ -4,6 +4,8 @@ import Story from '../models/Story';
 import Order from '../models/Order';
 import SiteSettings, { DEFAULT_HOME_STATS } from '../models/SiteSettings';
 import ContactMessage from '../models/ContactMessage';
+import CustomerMessage from '../models/CustomerMessage';
+import { sendCustomerMessageEmail } from '../utils/mailer';
 import { pollPaymentsOnce } from '../services/PaymentPoller';
 import { arabicStoryPages, buildBookForOrder, reRenderPrintFilesForOrder, submitOrderToBookPod, reRenderColoringForOrder, submitColoringForOrder, buildPreviewPrintFiles, submitPreviewToBookPod } from '../services/BookBuilder';
 import { generateIllustration, COST_PER_IMAGE_USD } from '../services/ImageGenerator';
@@ -2266,10 +2268,32 @@ export const sendBookToCustomer = async (req: Request, res: Response): Promise<v
       totalPrice: 0,
     });
 
+    // A book that appears in someone's account with no word about it is a
+    // surprise they may never notice. The note becomes a real message in their
+    // conversation — so it shows in الرسائل, carries the unread badge, and can
+    // be replied to — and it is tied to the book it is about.
+    const admin = (req as any).user;
+    const text = String(note || '').trim() || 'بعتنالك كتاب جديد على حسابك 🎁 افتحه من «قصصي».';
+    await CustomerMessage.create({
+      userId: customer._id,
+      body: text,
+      fromAdmin: true,
+      adminId: admin?._id,
+      adminName: admin?.name,
+      storyId: story._id,
+    });
+
+    const mail = (customer as any).email
+      ? await sendCustomerMessageEmail({ to: (customer as any).email, name: (customer as any).name, preview: text })
+      : { sent: false, reason: 'no-email' };
+
     res.json({
       success: true,
       storyId: String(story._id),
       customer: { id: String(customer._id), name: customer.name, email: customer.email },
+      messaged: true,
+      emailed: mail.sent,
+      emailReason: mail.sent ? undefined : mail.reason,
     });
   } catch (err: any) {
     console.error('[sendBookToCustomer]', err);

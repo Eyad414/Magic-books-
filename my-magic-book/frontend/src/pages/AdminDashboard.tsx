@@ -1124,7 +1124,12 @@ export default function AdminDashboard() {
         note: giftNote,
       });
       if (!res?.success) throw new Error(res?.message);
-      toast.success(t('admin.gift_sent', 'تم إرسال الكتاب لحساب {{name}} ✅', { name: res.customer?.name || '' }), { id: toastId });
+      toast.success(
+        res.emailed
+          ? t('admin.gift_sent_mail', 'تم إرسال الكتاب لحساب {{name}} — ووصلته رسالة وإيميل ✅', { name: res.customer?.name || '' })
+          : t('admin.gift_sent', 'تم إرسال الكتاب لحساب {{name}} — والرسالة بتظهرله بحسابه ✅', { name: res.customer?.name || '' }),
+        { id: toastId },
+      );
       setGiftBook(null);
     } catch (err: any) {
       toast.error(err?.response?.data?.message || err.message || t('admin.gift_failed', 'فشل الإرسال'), { id: toastId });
@@ -2958,7 +2963,7 @@ export default function AdminDashboard() {
                         <input
                           value={giftNote}
                           onChange={(e) => setGiftNote(e.target.value)}
-                          placeholder={t('admin.gift_note', 'رسالة للعميل (اختياري)')}
+                          placeholder={t('admin.gift_note', 'رسالة بتوصله مع الكتاب (اختياري)')}
                           className="px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] font-arabic placeholder:text-white/30"
                         />
                       </div>
@@ -2971,7 +2976,7 @@ export default function AdminDashboard() {
                         {giftBusy ? t('admin.gift_sending', 'جاري الإرسال...') : t('admin.gift_send', 'أرسل الكتاب لحسابه')}
                       </button>
                       <p className="font-arabic text-white/40 text-[10px] mt-1.5">
-                        {t('admin.gift_hint', 'الكتاب بيظهر بحسابه ويقدر يقرأه — بدون طلب وبدون دفع.')}
+                        {t('admin.gift_hint2', 'الكتاب بيظهر بحسابه ويقدر يقرأه — بدون طلب وبدون دفع. وبتوصله رسالة بالمحادثة كمان.')}
                       </p>
                     </div>
                   )}
