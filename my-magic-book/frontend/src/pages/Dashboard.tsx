@@ -65,7 +65,7 @@ export default function Dashboard() {
   // the shop's messages read in the same call, which is what tells the owner
   // the message landed.
   useEffect(() => {
-    if (tab !== 'messages') return;
+    if (tab !== 'messages' || user?.role === 'admin') return;
     messageApi.getMy()
       .then((r) => { setMessages(r?.messages || []); setUnread(0); })
       .catch(() => {});
@@ -90,7 +90,9 @@ export default function Dashboard() {
     if (isAuthenticated) {
       // The badge, not the messages themselves — reading them is what marks
       // them read, and that must be the customer's doing, not a page load.
-      messageApi.unread().then((r) => setUnread(r?.count || 0)).catch(() => {});
+      if (user?.role !== 'admin') {
+        messageApi.unread().then((r) => setUnread(r?.count || 0)).catch(() => {});
+      }
 
       Promise.all([storyApi.getMyStories(), orderApi.getMyOrders()])
         .then(([storiesRes, ordersRes]) => {
@@ -196,7 +198,14 @@ export default function Dashboard() {
               {[
                 { id: 'stories', label: t('dashboard.tab_stories'), icon: BookOpen },
                 { id: 'orders', label: t('dashboard.tab_orders'), icon: Package },
-                { id: 'messages', label: t('dashboard.tab_messages', 'الرسائل'), icon: Mail, badge: unread },
+                // A customer reads the shop here. An admin does not: they are
+                // the shop, and their own thread is a conversation with
+                // themselves — the real one lives in محادثات العملاء in the
+                // admin panel. Two message boxes for the same person is just
+                // somewhere to miss a message.
+                ...(user?.role === 'admin'
+                  ? []
+                  : [{ id: 'messages', label: t('dashboard.tab_messages', 'الرسائل'), icon: Mail, badge: unread }]),
                 { id: 'favorites', label: t('dashboard.tab_favorites'), icon: Heart },
                 { id: 'profile', label: t('dashboard.tab_profile'), icon: UserIcon },
                 { id: 'settings', label: t('dashboard.tab_settings'), icon: Settings },
