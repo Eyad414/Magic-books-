@@ -2649,8 +2649,28 @@ export default function AdminDashboard() {
                             </div>
 
                             {importCover && (
-                              <div className="flex items-center gap-2 pt-1">
-                                <img src={importCover.previewUrl} alt="" className="h-16 w-auto object-contain rounded-lg border border-white/15 bg-black/30" />
+                              <div className="pt-1">
+                                {/* The whole flat sheet, big enough to actually
+                                    check. It was a 64px thumbnail, which is no
+                                    way to judge a cover you are about to pay to
+                                    print — the fold, the spine text and the back
+                                    were all invisible. Click opens it full size. */}
+                                <a href={importCover.previewUrl} target="_blank" rel="noreferrer" className="block group">
+                                  <img
+                                    src={importCover.previewUrl}
+                                    alt=""
+                                    className="w-full max-h-72 object-contain rounded-xl border border-white/15 bg-black/40 group-hover:border-gold-500/50 transition"
+                                  />
+                                </a>
+                                {/* Which third is which. RTL books are laid out
+                                    front|spine|back, so the front is on the LEFT
+                                    of the flat sheet — the opposite of what most
+                                    people expect. */}
+                                <div className="flex mt-1 mb-2 text-center font-arabic text-[10px] text-white/45" dir="ltr">
+                                  <div className="flex-1">{importCover.rtl === false ? t('admin.cover_back', 'الظهر') : t('admin.cover_front', 'الوجه')}</div>
+                                  <div className="w-16 text-gold-400/70">{t('admin.cover_spine', 'الكعب')}</div>
+                                  <div className="flex-1">{importCover.rtl === false ? t('admin.cover_front', 'الوجه') : t('admin.cover_back', 'الظهر')}</div>
+                                </div>
                                 <div className="font-arabic text-emerald-300/90 text-[10px] leading-relaxed">
                                   {importCover.source === 'upload-pdf'
                                     ? t('admin.import_cover_ready_own', 'غلافك جاهز — سيُرسل كما هو بدل الصفحة الأولى.')

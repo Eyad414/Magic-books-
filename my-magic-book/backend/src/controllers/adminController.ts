@@ -1662,6 +1662,9 @@ export const designImportedCover = async (req: Request, res: Response): Promise<
     res.json({
       success: true,
       ...result,
+      // Which way round the flat sheet reads, so the dashboard can label the
+      // panels rather than leaving the owner to guess which end is the front.
+      rtl: rtl !== false,
       previewUrl: publicProxyUrl(result.previewPath || result.artPath),
     });
   } catch (err: any) {
@@ -1740,7 +1743,11 @@ export const uploadImportedCover = async (req: Request, res: Response): Promise<
       interiorPages: pages,
       rtl: rtl !== 'false' && rtl !== false,
     });
-    res.json({ success: true, ...result, source: 'upload-image', previewUrl: publicProxyUrl(result.previewPath || artPath) });
+    res.json({
+      success: true, ...result, source: 'upload-image',
+      rtl: rtl !== 'false' && rtl !== false,
+      previewUrl: publicProxyUrl(result.previewPath || artPath),
+    });
   } catch (err: any) {
     console.error('[uploadImportedCover]', err?.message || err);
     res.status(500).json({ success: false, message: err?.message || 'تعذّر رفع الغلاف.' });
