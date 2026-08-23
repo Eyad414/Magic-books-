@@ -1755,6 +1755,11 @@ export const uploadImportedCover = async (req: Request, res: Response): Promise<
 export const sendReadyThemeBook = async (req: Request, res: Response): Promise<void> => {
   const theme = String(req.body?.theme || '').trim();
   const childName = String(req.body?.childName || '').trim();
+  // Print choices, when the owner made them. Anything unrecognised falls back
+  // to the default for that kind of book rather than being passed to BookPod.
+  const printColor = req.body?.printColor === 'bw' ? 'bw' : req.body?.printColor === 'color' ? 'color' : undefined;
+  const sheetType = req.body?.sheetType === 'white110' ? 'white110' : req.body?.sheetType === 'chromo170' ? 'chromo170' : undefined;
+  const lamination = ['none', 'flat', 'matt'].includes(String(req.body?.lamination)) ? req.body.lamination : undefined;
   const adminEmail = String((req as any).user?.email || '');
   try {
     const ship = req.body?.shipping || {};
@@ -1791,6 +1796,7 @@ export const sendReadyThemeBook = async (req: Request, res: Response): Promise<v
         childName,
         childGender: req.body?.childGender === 'female' ? 'female' : 'male',
         language: String(req.body?.language || 'ar'),
+        printColor, sheetType, lamination,
         coverPath: art.coverPath,
         backPath: art.backPath,
         imagePaths: art.imagePaths,

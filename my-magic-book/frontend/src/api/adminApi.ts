@@ -39,6 +39,10 @@ export const adminApi = {
   sendReadyThemeBook: async (body: {
     theme: string;
     childName: string;
+    /** Print choices; omit to keep the default for this kind of book. */
+    printColor?: string;
+    sheetType?: string;
+    lamination?: string;
     childGender?: 'male' | 'female';
     language?: string;
     shipping: { fullName: string; phone: string; deliveryMethod?: 'delivery' | 'pickup'; pickupLocation?: string; city?: string; street?: string; buildingNo?: string; notes?: string };

@@ -33,7 +33,15 @@ export interface BookPodJobInput {
   externalId: string;        // our order id → reference_num1 (must be unique)
   title: string;
   author?: string;
-  isColoring: boolean;       // drives printcolor + sheettype
+  isColoring: boolean;       // drives printcolor + sheettype unless overridden
+  /**
+   * Print options the owner can choose per book. Left out, a colouring book
+   * prints black-and-white on plain paper and a story prints colour on coated
+   * stock — which is what every job has done so far.
+   */
+  printColor?: 'bw' | 'color';
+  sheetType?: 'white110' | 'chromo170';
+  lamination?: BookPodLamination;
   readingDirection: 'right' | 'left';
   widthCm: number;           // 22 (220 mm)
   heightCm: number;          // 22
@@ -256,9 +264,15 @@ export async function submitPrintJob(input: BookPodJobInput): Promise<BookPodJob
     title: input.title,
     author: input.author || 'Magic Fanoos',
     category: ['childrens', 'picture-book'],
-    printcolor: input.isColoring ? 'bw' : 'color',
-    sheettype: input.isColoring ? 'white110' : 'chromo170',
-    laminationtype: LAMINATION,
+    // Chosen per book when the owner said so, otherwise the long-standing
+    // default for that kind of book.
+    printcolor: input.printColor || (input.isColoring ? 'bw' : 'color'),
+    sheettype: input.sheetType || (input.isColoring ? 'white110' : 'chromo170'),
+    // Never allowed to become a value BookPod refuses — 'gloss' failed the
+    // create-book step and killed whole submissions before an order existed.
+    laminationtype: (BOOKPOD_LAMINATION_TYPES as readonly string[]).includes(String(input.lamination))
+      ? (input.lamination as BookPodLamination)
+      : LAMINATION,
     finishtype: 'soft',
     readingdirection: input.readingDirection,
     width: input.widthCm,

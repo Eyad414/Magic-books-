@@ -665,6 +665,8 @@ export async function submitPreviewToBookPod(
   input: {
     theme: string; childName: string; childGender?: 'male' | 'female'; language?: string;
     coverPath: string; backPath: string; imagePaths: string[]; childPhotoPath?: string; isColoring?: boolean;
+    // Print choices for this one book, passed straight to BookPod.
+    printColor?: 'bw' | 'color'; sheetType?: 'white110' | 'chromo170'; lamination?: 'none' | 'flat' | 'matt';
   },
   shipping: {
     fullName: string; phone: string; city?: string; street?: string; buildingNo?: string;
@@ -690,7 +692,13 @@ export async function submitPreviewToBookPod(
     userId: null,
     totalPrice: 0,
   };
-  return printAndSubmitForOrder(pseudoOrder, pseudoStory, reconstructPrintOpts(pseudoStory));
+  // The owner's per-book print choices ride on top of whatever this book type
+  // would have used by default.
+  const opts = reconstructPrintOpts(pseudoStory);
+  if (input.printColor) (opts as any).printColor = input.printColor;
+  if (input.sheetType) (opts as any).sheetType = input.sheetType;
+  if (input.lamination) (opts as any).lamination = input.lamination;
+  return printAndSubmitForOrder(pseudoOrder, pseudoStory, opts);
 }
 
 /**

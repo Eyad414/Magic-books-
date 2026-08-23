@@ -308,6 +308,11 @@ export default function AdminDashboard() {
       const res = await adminApi.sendReadyThemeBook({
         theme: sendBook.id,
         childName: childName.trim(),
+        // Only send a choice that was actually made; the server keeps the
+        // default for this book type when a field is absent.
+        ...(sendForm.printColor ? { printColor: sendForm.printColor } : {}),
+        ...(sendForm.sheetType ? { sheetType: sendForm.sheetType } : {}),
+        ...(sendForm.lamination ? { lamination: sendForm.lamination } : {}),
         shipping: { fullName: fullName.trim(), phone: phone.trim(), deliveryMethod: 'pickup', pickupLocation: 'القدس' },
       });
       if (res?.success) {
@@ -1001,7 +1006,12 @@ export default function AdminDashboard() {
   // Sending a demo book is a real, paid print run, so it is deliberate: pick a
   // book, fill in who it ships to, confirm.
   const [sendBook, setSendBook] = useState<{ id: string; label?: string } | null>(null);
-  const [sendForm, setSendForm] = useState({ childName: '', fullName: '', phone: '' });
+  const [sendForm, setSendForm] = useState({
+    childName: '', fullName: '', phone: '',
+    // Print choices. Empty means "whatever this kind of book normally uses",
+    // which is what every job before this used.
+    printColor: '', sheetType: '', lamination: '',
+  });
   const [sendBusy, setSendBusy] = useState(false);
   // Free-text search over the ORDERS list. The card shows a short id like
   // #C496F510, which is the handle used to talk about an order — but there was
@@ -3023,7 +3033,7 @@ export default function AdminDashboard() {
                             <button
                               onClick={() => {
                                 setSendBook({ id: b.id, label: b.label });
-                                setSendForm({ childName: '', fullName: '', phone: '' });
+                                setSendForm({ childName: '', fullName: '', phone: '', printColor: '', sheetType: '', lamination: '' });
                               }}
                               className="shrink-0 px-2 py-0.5 rounded-lg bg-emerald-500/25 text-emerald-100 border border-emerald-400/40 hover:bg-emerald-500/40 font-bold"
                             >
@@ -3121,6 +3131,41 @@ export default function AdminDashboard() {
                           dir="ltr"
                           className="px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] font-arabic placeholder:text-white/30"
                         />
+                      </div>
+
+                      {/* How this copy is printed. Left on «حسب نوع الكتاب» it
+                          behaves exactly as every job so far: a story in colour
+                          on coated stock, a colouring book black-and-white on
+                          plain paper. */}
+                      <div className="grid gap-1.5 sm:grid-cols-3 mb-2">
+                        <select
+                          value={sendForm.printColor}
+                          onChange={(e) => setSendForm({ ...sendForm, printColor: e.target.value })}
+                          className="px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] font-arabic"
+                        >
+                          <option value="" className="bg-[#0a1628]">{t('admin.print_color_default', 'الطباعة: حسب نوع الكتاب')}</option>
+                          <option value="color" className="bg-[#0a1628]">{t('admin.print_color', 'ملوّن')}</option>
+                          <option value="bw" className="bg-[#0a1628]">{t('admin.print_bw', 'أبيض وأسود')}</option>
+                        </select>
+                        <select
+                          value={sendForm.sheetType}
+                          onChange={(e) => setSendForm({ ...sendForm, sheetType: e.target.value })}
+                          className="px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] font-arabic"
+                        >
+                          <option value="" className="bg-[#0a1628]">{t('admin.paper_default', 'الورق: حسب نوع الكتاب')}</option>
+                          <option value="chromo170" className="bg-[#0a1628]">{t('admin.paper_chromo', 'كوشيه ١٧٠ غرام')}</option>
+                          <option value="white110" className="bg-[#0a1628]">{t('admin.paper_white', 'أبيض عادي ١١٠ غرام')}</option>
+                        </select>
+                        <select
+                          value={sendForm.lamination}
+                          onChange={(e) => setSendForm({ ...sendForm, lamination: e.target.value })}
+                          className="px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] font-arabic"
+                        >
+                          <option value="" className="bg-[#0a1628]">{t('admin.lam_default', 'الغلاف: الافتراضي')}</option>
+                          <option value="matt" className="bg-[#0a1628]">{t('admin.lam_matt', 'مطفي (مات)')}</option>
+                          <option value="flat" className="bg-[#0a1628]">{t('admin.lam_flat', 'لامع (flat)')}</option>
+                          <option value="none" className="bg-[#0a1628]">{t('admin.lam_none', 'بدون تغليف')}</option>
+                        </select>
                       </div>
                       <div className="flex items-center justify-between gap-2">
                         <p className="font-arabic text-amber-200/70 text-[10px]">

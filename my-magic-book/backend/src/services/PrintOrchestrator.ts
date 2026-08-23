@@ -11,6 +11,10 @@ import { isBookPodConfigured, submitPrintJob } from './BookPodService';
 
 export interface PrintBuildOpts {
   isColoring: boolean;
+  /** Print choices for this book; absent = the default for its type. */
+  printColor?: 'bw' | 'color';
+  sheetType?: 'white110' | 'chromo170';
+  lamination?: 'none' | 'flat' | 'matt';
   title: string;
   pageTexts?: string[]; // story interior texts (ignored for coloring)
   // Localized front/back matter (story books only).
@@ -98,6 +102,10 @@ export async function printAndSubmitForOrder(
     title: opts.title,
     author: 'Magic Fanoos',
     isColoring: opts.isColoring,
+    // Per-book print choices; undefined keeps the default for this book type.
+    printColor: opts.printColor,
+    sheetType: opts.sheetType,
+    lamination: opts.lamination,
     readingDirection: lang === 'en' ? 'left' : 'right', // ar/he are RTL
     widthCm: urls.trimMm / 10,
     heightCm: urls.trimMm / 10,
