@@ -1921,9 +1921,42 @@ export const listVisits = async (req: Request, res: Response): Promise<void> => 
       { $sort: { _id: 1 } },
     ]);
 
+    // What the visitors in this window actually did. Answering "how many came"
+    // was never the hard part — "what did they look at, and where did they
+    // stop" is, and it is the difference between a number and a decision.
+    const inWindow = await Visit.find({ day: { $gte: from } }).select('paths views day').lean();
+    const pageCount: Record<string, number> = {};
+    let multiPage = 0;
+    let totalViews = 0;
+    // A step counts once per VISITOR, not once per page view — otherwise
+    // someone refreshing the wizard looks like ten people reaching it.
+    const reached = { stories: 0, create: 0, checkout: 0 };
+    for (const v of inWindow as any[]) {
+      const paths: string[] = v.paths || [];
+      totalViews += v.views || 0;
+      if ((v.views || 0) > 1) multiPage++;
+      const seen = new Set(paths);
+      for (const p of seen) pageCount[p] = (pageCount[p] || 0) + 1;
+      if ([...seen].some((p) => p.startsWith('/stories'))) reached.stories++;
+      if ([...seen].some((p) => p.startsWith('/create'))) reached.create++;
+      if ([...seen].some((p) => /checkout|step-?3|step-?4/i.test(p))) reached.checkout++;
+    }
+    const topPages = Object.entries(pageCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([path, visitors]) => ({ path, visitors }));
+
     res.json({
       success: true,
       week: week.map((d: any) => ({ day: d._id, visitors: d.visitors, views: d.views })),
+      behaviour: {
+        visitors: inWindow.length,
+        views: totalViews,
+        multiPage,
+        pagesPerVisitor: inWindow.length ? Number((totalViews / inWindow.length).toFixed(1)) : 0,
+        topPages,
+        funnel: reached,
+      },
       visits: rows.map((v: any) => ({
         day: v.day,
         views: v.views,

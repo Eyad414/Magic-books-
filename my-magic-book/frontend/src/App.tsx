@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import MainLayout from './layouts/MainLayout';
 import Home from './pages/Home';
@@ -21,7 +21,7 @@ import AccessibilityWidget from './components/common/AccessibilityWidget';
 import AdminBookGuard from './components/common/AdminBookGuard';
 import RequireAuth from './components/common/RequireAuth';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { publicApi } from './api/publicApi';
 import { useAuth } from './context/AuthContext';
@@ -40,28 +40,37 @@ export default function App() {
     document.documentElement.className = `lang-${i18n.language.split('-')[0]}`;
   }, [i18n.language]);
 
-  // Count the visit once per browser, per day. The id is made up here and never
-  // leaves this device except as an opaque string — the dashboard wants a
-  // number of people, not who they are. Admin pages are skipped so the owner
-  // reading the dashboard does not inflate their own visitor count.
+  // Follow the visit, page by page. The id is made up here and never leaves
+  // this device except as an opaque string — the dashboard wants a number of
+  // people and what they looked at, not who they are. Admin pages are skipped
+  // so the owner reading the dashboard does not inflate their own numbers.
+  //
+  // This used to fire ONCE per browser per day and then stop, which is why
+  // every visitor in the dashboard appeared to open a single page and leave:
+  // that was not their behaviour, it was the only page we ever recorded. The
+  // server already counts views and appends paths on each call, so following
+  // the route is all that was missing.
+  const location = useLocation();
+  const lastPath = useRef<string | null>(null);
+
   useEffect(() => {
     if (isLoading) return;
-    if (window.location.pathname.startsWith('/admin')) return;
-    const today = new Date().toISOString().slice(0, 10);
-    if (localStorage.getItem('mmb_counted') === today) return;
+    const path = location.pathname;
+    if (path.startsWith('/admin')) return;
+    // React re-runs effects on re-render; only a genuine move counts.
+    if (lastPath.current === path) return;
+    lastPath.current = path;
+
     let visitorId = localStorage.getItem('mmb_visitor');
     if (!visitorId) {
       visitorId = (crypto.randomUUID?.() || String(Math.random()).slice(2)) as string;
       localStorage.setItem('mmb_visitor', visitorId);
     }
-    // Mark it counted only once the server has it. Marking first meant a
-    // visit lost to a dropped request was lost for the rest of the day —
-    // the browser would never try again.
     publicApi
       // Where they came from (the site, never the page they were on), and who
       // they are — but only when they are signed in on this browser. A visitor
       // who has not told us who they are stays anonymous.
-      .trackVisit(visitorId, window.location.pathname, {
+      .trackVisit(visitorId, path, {
         referrer: document.referrer,
         userId: user?.id,
         lang: i18n.language.split('-')[0],
@@ -69,11 +78,10 @@ export default function App() {
         // agent — same answer, far less about the person.
         device: window.innerWidth < 768 ? 'mobile' : 'desktop',
       })
-      .then(() => localStorage.setItem('mmb_counted', today))
-      .catch(() => { /* try again on the next page load */ });
+      .catch(() => { /* a lost page view is not worth retrying */ });
     // Waits for auth so a signed-in visit carries its account rather than
     // landing anonymously a moment before the session resolves.
-  }, [isLoading, user?.id]);
+  }, [isLoading, user?.id, location.pathname]);
 
   return (
     <>

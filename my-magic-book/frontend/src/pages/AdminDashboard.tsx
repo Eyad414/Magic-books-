@@ -350,7 +350,7 @@ export default function AdminDashboard() {
   const loadCustomers = async () => {
     try {
       adminApi.getVisits(1)
-        .then((r) => { if (r.success) { setVisits(r.visits); setVisitWeek(r.week || []); } })
+        .then((r) => { if (r.success) { setVisits(r.visits); setVisitWeek(r.week || []); setBehaviour(r.behaviour || null); } })
         .catch(() => { /* the list is extra */ });
       const res = await adminApi.getCustomers();
       if (res.success) setCustomers(res);
@@ -987,6 +987,8 @@ export default function AdminDashboard() {
   // Who actually came to the site today — named where they signed in.
   const [visits, setVisits] = useState<any[] | null>(null);
   const [visitWeek, setVisitWeek] = useState<any[] | null>(null);
+  /** What visitors looked at and where they stopped, not just how many came. */
+  const [behaviour, setBehaviour] = useState<any | null>(null);
   // Sending a demo book is a real, paid print run, so it is deliberate: pick a
   // book, fill in who it ships to, confirm.
   const [sendBook, setSendBook] = useState<{ id: string; label?: string } | null>(null);
@@ -1786,6 +1788,51 @@ export default function AdminDashboard() {
                         <p className="font-arabic text-white/70 text-[11px] font-bold mb-2">
                           👣 {t('admin.visits_title', 'زيارات اليوم')}
                         </p>
+
+                        {/* Where people stop. Counted once per VISITOR per
+                            step, so refreshing the wizard does not read as ten
+                            people reaching it. */}
+                        {behaviour && (
+                          <div className="mb-3 p-2.5 rounded-xl bg-white/5 border border-white/10">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
+                              {[
+                                { v: behaviour.visitors, l: t('admin.b_visitors', 'زائر') },
+                                { v: behaviour.views, l: t('admin.b_views', 'صفحة') },
+                                { v: behaviour.pagesPerVisitor, l: t('admin.b_per', 'صفحة/زائر') },
+                                { v: behaviour.multiPage, l: t('admin.b_multi', 'تصفّح أكثر من صفحة') },
+                              ].map((x, i) => (
+                                <div key={i} className="text-center">
+                                  <div className="font-arabic font-black text-white text-sm" dir="ltr">{x.v}</div>
+                                  <div className="font-arabic text-white/40 text-[10px]">{x.l}</div>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="flex items-center gap-1.5 mb-2" dir="rtl">
+                              {[
+                                { n: behaviour.visitors, l: t('admin.f_visit', 'زار') },
+                                { n: behaviour.funnel?.stories ?? 0, l: t('admin.f_stories', 'شاف القصص') },
+                                { n: behaviour.funnel?.create ?? 0, l: t('admin.f_create', 'بلّش قصة') },
+                                { n: behaviour.funnel?.checkout ?? 0, l: t('admin.f_checkout', 'وصل الدفع') },
+                              ].map((st, i) => (
+                                <div key={i} className="flex-1 text-center p-1.5 rounded-lg bg-black/20">
+                                  <div className="font-arabic font-black text-gold-400 text-sm" dir="ltr">{st.n}</div>
+                                  <div className="font-arabic text-white/45 text-[10px] leading-tight">{st.l}</div>
+                                </div>
+                              ))}
+                            </div>
+
+                            {behaviour.topPages?.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {behaviour.topPages.map((p: any) => (
+                                  <span key={p.path} className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 font-arabic text-[10px] text-white/55" dir="ltr">
+                                    {p.path} · {p.visitors}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
 
                         {/* Seven days as bars — a spike or a dead week reads at
                             a glance, which a list of rows never does. */}
