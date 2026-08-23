@@ -291,13 +291,36 @@ export async function composeImportedCover(
   };
 }
 
+/**
+ * A deliberately dull scene, used when the described one is refused. Art
+ * directed for a book about war or grief reads as violent or morbid to the
+ * image model, and it declines — leaving the owner with a 500 and no cover for
+ * a book that is perfectly ordinary to print.
+ */
+const SAFE_SCENE =
+  'a simple abstract geometric pattern in two muted colours on a plain background, '
+  + 'soft even light, no people, no objects, generous empty space at the top';
+
 export async function buildImportedCover(input: ImportedCoverInput): Promise<ImportedCoverResult> {
   const scene = await describeImportedCoverScene({ title: input.title, subject: input.subject });
-  const art = await generateImageFromPrompt(importedCoverArtPrompt(scene), {
+  const draw = (s: string) => generateImageFromPrompt(importedCoverArtPrompt(s), {
     folder: 'imported',
     filename: `${Date.now()}_cover-art.png`,
   });
-  return composeImportedCover(art.objectPath, { ...input, scene, mode: 'branded' });
+
+  let art;
+  let used = scene;
+  try {
+    art = await draw(scene);
+  } catch (err: any) {
+    // The model refusing a scene is not a server fault and should not read as
+    // one. Fall back to something it will always draw rather than failing the
+    // whole design.
+    console.warn(`[ImportedCover] scene refused (${err?.message || err}) — retrying with the neutral scene`);
+    used = SAFE_SCENE;
+    art = await draw(SAFE_SCENE);
+  }
+  return composeImportedCover(art.objectPath, { ...input, scene: used, mode: 'branded' });
 }
 
 /**

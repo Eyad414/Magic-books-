@@ -1668,8 +1668,18 @@ export const designImportedCover = async (req: Request, res: Response): Promise<
       previewUrl: publicProxyUrl(result.previewPath || result.artPath),
     });
   } catch (err: any) {
-    console.error('[designImportedCover]', err?.message || err);
-    res.status(500).json({ success: false, message: err?.message || 'تعذّر تصميم الغلاف.' });
+    const msg = String(err?.message || err);
+    console.error('[designImportedCover]', msg);
+    // "no image" means the model declined to draw it — a refusal, not a broken
+    // server, and the owner can do something about it. A bare 500 told them
+    // nothing and looked like the site was down.
+    const refused = /no image after|finishReason|blocked|safety/i.test(msg);
+    res.status(refused ? 502 : 500).json({
+      success: false,
+      message: refused
+        ? 'الذكاء الاصطناعي رفض يرسم غلاف لهذا الموضوع. جرّب توصيف مختلف بخانة «موضوع الكتاب»، أو ارفع صورة غلاف جاهزة.'
+        : msg || 'تعذّر تصميم الغلاف.',
+    });
   }
 };
 
