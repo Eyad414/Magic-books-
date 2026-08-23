@@ -265,6 +265,10 @@ export const adminApi = {
   },
 
   submitImportedBook: async (body: {
+    /** Print choices; omit to keep BookPod's default for this book. */
+    printColor?: string;
+    sheetType?: string;
+    lamination?: string;
     coverPath: string; interiorPath: string; title?: string; quantity?: number;
     widthMm?: number; heightMm?: number; name: string; phone: string; email?: string; isColoring?: boolean;
   }) => {

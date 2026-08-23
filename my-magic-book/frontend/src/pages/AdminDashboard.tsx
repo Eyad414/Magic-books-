@@ -541,7 +541,11 @@ export default function AdminDashboard() {
   const [importTrim, setImportTrim] = useState({ w: 150, h: 220 });
   const [importBusy, setImportBusy] = useState(false);
   const [importResult, setImportResult] = useState<any>(null);
-  const [importSend, setImportSend] = useState({ name: '', phone: '', qty: 1 });
+  const [importSend, setImportSend] = useState({
+    name: '', phone: '', qty: 1,
+    // Print choices for this submission; empty = BookPod's default for the book.
+    printColor: '', sheetType: '', lamination: '',
+  });
   const [importSending, setImportSending] = useState(false);
   const [importJob, setImportJob] = useState<any>(null);
   // A designed cover for an imported book: the importer's "cover" is page 1 of
@@ -672,6 +676,9 @@ export default function AdminDashboard() {
         heightMm: importResult.heightMm,
         name: importSend.name.trim(),
         phone: importSend.phone.trim(),
+        ...(importSend.printColor ? { printColor: importSend.printColor } : {}),
+        ...(importSend.sheetType ? { sheetType: importSend.sheetType } : {}),
+        ...(importSend.lamination ? { lamination: importSend.lamination } : {}),
       });
       if (res.success) {
         setImportJob(res);
@@ -2684,6 +2691,48 @@ export default function AdminDashboard() {
                             <div>
                               <label className="block font-arabic text-white/50 text-[10px] mb-1">{t('admin.import_qty', 'عدد النسخ')}</label>
                               <input type="number" min={1} value={importSend.qty} onChange={(e) => setImportSend({ ...importSend, qty: Math.max(1, Number(e.target.value) || 1) })} className="magic-input !py-1.5 !px-2 text-sm w-[70px] text-center" dir="ltr" />
+                            </div>
+
+                            {/* How this book is printed. The size already
+                                comes from the trim chosen above; these are the
+                                three BookPod also decides per book. Left on the
+                                default, nothing changes. */}
+                            <div>
+                              <label className="block font-arabic text-white/50 text-[10px] mb-1">{t('admin.print_color_label', 'الطباعة')}</label>
+                              <select
+                                value={importSend.printColor}
+                                onChange={(e) => setImportSend({ ...importSend, printColor: e.target.value })}
+                                className="magic-input !py-1.5 !px-2 text-sm"
+                              >
+                                <option value="" className="bg-[#0a1628]">{t('admin.print_default_short', 'الافتراضي')}</option>
+                                <option value="color" className="bg-[#0a1628]">{t('admin.print_color', 'ملوّن')}</option>
+                                <option value="bw" className="bg-[#0a1628]">{t('admin.print_bw', 'أبيض وأسود')}</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block font-arabic text-white/50 text-[10px] mb-1">{t('admin.paper_label', 'الورق')}</label>
+                              <select
+                                value={importSend.sheetType}
+                                onChange={(e) => setImportSend({ ...importSend, sheetType: e.target.value })}
+                                className="magic-input !py-1.5 !px-2 text-sm"
+                              >
+                                <option value="" className="bg-[#0a1628]">{t('admin.print_default_short', 'الافتراضي')}</option>
+                                <option value="chromo170" className="bg-[#0a1628]">{t('admin.paper_chromo', 'كوشيه ١٧٠ غرام')}</option>
+                                <option value="white110" className="bg-[#0a1628]">{t('admin.paper_white', 'أبيض عادي ١١٠ غرام')}</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block font-arabic text-white/50 text-[10px] mb-1">{t('admin.lam_label', 'الغلاف')}</label>
+                              <select
+                                value={importSend.lamination}
+                                onChange={(e) => setImportSend({ ...importSend, lamination: e.target.value })}
+                                className="magic-input !py-1.5 !px-2 text-sm"
+                              >
+                                <option value="" className="bg-[#0a1628]">{t('admin.print_default_short', 'الافتراضي')}</option>
+                                <option value="matt" className="bg-[#0a1628]">{t('admin.lam_matt', 'مطفي (مات)')}</option>
+                                <option value="flat" className="bg-[#0a1628]">{t('admin.lam_flat', 'لامع (flat)')}</option>
+                                <option value="none" className="bg-[#0a1628]">{t('admin.lam_none', 'بدون تغليف')}</option>
+                              </select>
                             </div>
                             <button
                               onClick={handleSendImported}

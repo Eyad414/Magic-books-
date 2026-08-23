@@ -1553,6 +1553,11 @@ export const submitImportedBook = async (req: Request, res: Response): Promise<v
       return;
     }
     const { coverPath, interiorPath, title, quantity, widthMm, heightMm, name, phone, email, isColoring } = req.body || {};
+    // Print choices for this submission. Anything unrecognised is dropped
+    // rather than passed on, so BookPod never sees a value it refuses.
+    const printColor = req.body?.printColor === 'bw' ? 'bw' : req.body?.printColor === 'color' ? 'color' : undefined;
+    const sheetType = req.body?.sheetType === 'white110' ? 'white110' : req.body?.sheetType === 'chromo170' ? 'chromo170' : undefined;
+    const lamination = ['none', 'flat', 'matt'].includes(String(req.body?.lamination)) ? req.body.lamination : undefined;
     if (!coverPath || !interiorPath) {
       res.status(400).json({ success: false, message: 'ينقص ملف الغلاف أو الداخل — أعد استيراد الكتاب أولاً.' });
       return;
@@ -1569,6 +1574,7 @@ export const submitImportedBook = async (req: Request, res: Response): Promise<v
       externalId: `import_${Date.now()}`,
       title: String(title || 'Imported book').slice(0, 120),
       isColoring: !!isColoring,
+      printColor, sheetType, lamination,
       // Imported books are the owner's own files; Arabic is the common case
       // here and is what their existing catalogue uses.
       readingDirection: 'right',
