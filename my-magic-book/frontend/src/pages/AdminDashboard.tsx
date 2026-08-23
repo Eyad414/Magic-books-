@@ -553,18 +553,24 @@ export default function AdminDashboard() {
   const [importCover, setImportCover] = useState<any>(null);
   const [importCoverBusy, setImportCoverBusy] = useState(false);
   const [importSubject, setImportSubject] = useState('');
+  // The name printed on the cover and sent to the printer. It used to be the
+  // PDF's filename, so a book uploaded as "scan_001.pdf" was called scan_001
+  // on its own cover.
+  const [importTitle, setImportTitle] = useState('');
+  const [importAuthor, setImportAuthor] = useState('');
 
   // Real print job, real money — separate from importing, which is free and
   // repeatable, and gated behind its own confirmation.
   const handleDesignImportedCover = async () => {
     if (!importResult?.interiorPages) return;
-    const title = importFile?.name?.replace(/\.pdf$/i, '') || 'Imported book';
+    const title = importTitle.trim() || importFile?.name?.replace(/\.pdf$/i, '') || 'Imported book';
     if (!window.confirm(t('admin.import_cover_confirm', 'تصميم غلاف جديد لهذا الكتاب؟ صورة واحدة مدفوعة (~$0.04).'))) return;
     setImportCoverBusy(true);
     const toastId = toast.loading(t('admin.import_cover_designing', 'جاري تصميم الغلاف...'));
     try {
       const res = await adminApi.designImportedCover({
         title,
+        author: importAuthor.trim() || undefined,
         subject: importSubject.trim() || undefined,
         widthMm: importResult.widthMm,
         heightMm: importResult.heightMm,
@@ -589,7 +595,7 @@ export default function AdminDashboard() {
     const toastId = toast.loading(t('admin.import_cover_uploading', 'جاري رفع الغلاف...'));
     try {
       const res = await adminApi.uploadImportedCover(file, {
-        title: importFile?.name?.replace(/\.pdf$/i, '') || 'Imported book',
+        title: importTitle.trim() || importFile?.name?.replace(/\.pdf$/i, '') || 'Imported book',
         widthMm: importResult.widthMm,
         heightMm: importResult.heightMm,
         interiorPages: importResult.interiorPages,
@@ -2611,6 +2617,33 @@ export default function AdminDashboard() {
                             <p className="font-arabic text-white/45 text-[10px] leading-relaxed">
                               {t('admin.import_cover_design_desc', 'اكتب موضوع الكتاب بكلماتك، ونصمّم غلافاً كاملاً (وجه + كعب + ظهر) بمقاس الكتاب. صورة واحدة مدفوعة (~$0.04).')}
                             </p>
+                            {/* The name is printed ON the cover and is what
+                                BookPod files the book under. Left empty it
+                                falls back to the PDF's filename, which is how
+                                a book ended up called after its scan. */}
+                            <div className="flex flex-wrap items-end gap-2 mb-2">
+                              <div className="flex-1 min-w-[180px]">
+                                <label className="block font-arabic text-white/50 text-[10px] mb-1">{t('admin.import_cover_title', 'اسم الكتاب (يُطبع على الغلاف)')}</label>
+                                <input
+                                  type="text"
+                                  value={importTitle}
+                                  onChange={(e) => setImportTitle(e.target.value)}
+                                  placeholder={importFile?.name?.replace(/\.pdf$/i, '') || t('admin.import_cover_title_ph', 'اسم الكتاب')}
+                                  className="magic-input !py-1.5 text-sm w-full"
+                                />
+                              </div>
+                              <div className="flex-1 min-w-[140px]">
+                                <label className="block font-arabic text-white/50 text-[10px] mb-1">{t('admin.import_cover_author', 'اسم المؤلف (اختياري)')}</label>
+                                <input
+                                  type="text"
+                                  value={importAuthor}
+                                  onChange={(e) => setImportAuthor(e.target.value)}
+                                  placeholder={t('admin.import_cover_author_ph', 'يظهر تحت الاسم على الغلاف')}
+                                  className="magic-input !py-1.5 text-sm w-full"
+                                />
+                              </div>
+                            </div>
+
                             <div className="flex flex-wrap items-end gap-2">
                               <div className="flex-1 min-w-[180px]">
                                 <label className="block font-arabic text-white/50 text-[10px] mb-1">{t('admin.import_cover_subject', 'موضوع الكتاب')}</label>
