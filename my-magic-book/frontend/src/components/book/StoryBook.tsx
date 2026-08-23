@@ -500,6 +500,7 @@ export default function StoryBook({
                 pageNumber={idx * 2 + 1}
                 text={personalize(page.text || '', childName, gender)}
                 childName={childName}
+                rtl={i18n.dir() === 'rtl'}
               />
               <StoryImagePage
                 pageNumber={idx * 2 + 2}
@@ -528,6 +529,7 @@ export default function StoryBook({
                     pageNumber={page.pageNumber}
                     text={personalize(activeText, childName, gender)}
                     childName={childName}
+                    rtl={i18n.dir() === 'rtl'}
                   />
                 );
               }

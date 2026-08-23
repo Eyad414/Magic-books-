@@ -8,6 +8,13 @@ interface StoryTextPageProps {
   pageNumber: number;
   text: string;        // already has child's name baked in
   childName: string;
+  /**
+   * The BOOK's direction, not the site's. An English story read while the site
+   * is in Arabic still has to run left-to-right — and even centred text is
+   * wrong without it: in an RTL paragraph the closing full stop of a Latin
+   * sentence jumps to the left, so "…the zoo." renders as ".…the zoo".
+   */
+  rtl?: boolean;
 }
 
 // Solid page colors cycled per page, Taletoons-style.
@@ -23,14 +30,15 @@ const SPARKLES = [
   { top: '88%', left: '70%', size: '0.7rem', delay: '2s' },
 ];
 
-export function StoryTextPage({ pageNumber, text, childName }: StoryTextPageProps) {
+export function StoryTextPage({ pageNumber, text, childName, rtl = true }: StoryTextPageProps) {
   const pageColor = PAGE_COLORS[Math.floor(pageNumber / 2) % PAGE_COLORS.length];
 
   return (
     <section
       className="book-page story-text-page"
       aria-label={`صفحة النص ${pageNumber}`}
-      style={{ ['--page-color' as any]: pageColor }}
+      dir={rtl ? 'rtl' : 'ltr'}
+      style={{ ['--page-color' as any]: pageColor, ['--stp-dir' as any]: rtl ? 'rtl' : 'ltr' }}
     >
       {/* Twinkling sparkles on the colored page */}
       {SPARKLES.map((s, i) => (
@@ -200,7 +208,7 @@ export function StoryTextPage({ pageNumber, text, childName }: StoryTextPageProp
           line-height: 2;
           color: #4a3206;
           font-weight: 700;
-          direction: rtl;
+          direction: var(--stp-dir, rtl);
           margin: 0;
           text-shadow: 0 1px 0 rgba(255,255,255,0.6);
         }

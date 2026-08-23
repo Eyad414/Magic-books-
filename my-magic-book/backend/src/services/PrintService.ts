@@ -473,8 +473,14 @@ function padToMultipleOf4(pages: string[]): string[] {
   return out;
 }
 
-function squareDoc(pagesHtml: string[]): string {
-  return `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8" />
+/**
+ * `rtl` decides the document's direction, and it matters even though every page
+ * is centred: in an RTL paragraph the bidi algorithm puts a Latin sentence's
+ * closing full stop on the LEFT — an English book printed "…zoo." came out
+ * ".…zoo" on every text page.
+ */
+function squareDoc(pagesHtml: string[], rtl = true): string {
+  return `<!DOCTYPE html><html lang="${rtl ? 'ar' : 'en'}" dir="${rtl ? 'rtl' : 'ltr'}"><head><meta charset="UTF-8" />
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&display=swap" rel="stylesheet" />
 <style>@page { size: ${PRINT_PAGE_MM}mm ${PRINT_PAGE_MM}mm; margin: 0; } ${SHARED_CSS}</style>
 </head><body>${pagesHtml.join('\n')}</body></html>`;
@@ -649,10 +655,11 @@ async function renderPagesBatched(
   widthMm = PRINT_PAGE_MM,
   heightMm = PRINT_PAGE_MM,
   batchSize = RENDER_BATCH_PAGES,
+  rtl = true,
 ): Promise<Buffer> {
   const pdfs: Buffer[] = [];
   for (let i = 0; i < pages.length; i += batchSize) {
-    pdfs.push(await renderPrintPdf(squareDoc(pages.slice(i, i + batchSize)), widthMm, heightMm));
+    pdfs.push(await renderPrintPdf(squareDoc(pages.slice(i, i + batchSize), rtl), widthMm, heightMm));
     logMem(`interior batch ${pdfs.length} (${Math.min(i + batchSize, pages.length)}/${pages.length} pages)`);
   }
   return mergePdfBuffers(pdfs);
@@ -847,7 +854,9 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
   }
   interior.push(copyrightPageHtml(qrSrc));
   const padded = padToMultipleOf4(interior);
-  const interiorPdf = await renderPagesBatched(padded);
+  // Same direction as the cover binding, which this input already carried and
+  // the interior never used.
+  const interiorPdf = await renderPagesBatched(padded, PRINT_PAGE_MM, PRINT_PAGE_MM, RENDER_BATCH_PAGES, input.rtl !== false);
   logMem('interior PDF rendered');
 
   const cover = await buildWraparoundCoverPdf({
