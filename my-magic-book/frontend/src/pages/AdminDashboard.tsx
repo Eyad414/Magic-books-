@@ -42,7 +42,7 @@ export default function AdminDashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState<'team' | 'pricing' | 'stories' | 'orders' | 'showcase' | 'messages' | 'customers'>('orders');
+  const [tab, setTab] = useState<'team' | 'pricing' | 'stories' | 'orders' | 'showcase' | 'messages' | 'customers' | 'visitors'>('orders');
   const [team, setTeam] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
@@ -326,6 +326,15 @@ export default function AdminDashboard() {
       setSendBusy(false);
     }
   };
+
+  // Visitors have their own page now, and their own fetch: opening it should
+  // not depend on having opened the customers tab first.
+  useEffect(() => {
+    if (tab !== 'visitors') return;
+    adminApi.getVisits(7)
+      .then((r) => { if (r.success) { setVisits(r.visits); setVisitWeek(r.week || []); setBehaviour(r.behaviour || null); } })
+      .catch(() => setVisits([]));
+  }, [tab]);
 
   useEffect(() => {
     if (tab !== 'customers') return;
@@ -1430,6 +1439,7 @@ export default function AdminDashboard() {
                 { id: 'orders', label: t('admin.tab_orders'), icon: Package },
                 { id: 'messages', label: t('admin.tab_messages', 'الرسائل'), icon: Mail },
                 { id: 'customers', label: t('admin.tab_customers', 'العملاء'), icon: Users },
+                { id: 'visitors', label: t('admin.tab_visitors', 'الزوار'), icon: Eye },
                 { id: 'showcase', label: t('admin.tab_showcase', 'الكتب الجاهزة'), icon: BookOpen },
                 { id: 'stories', label: t('admin.tab_stories'), icon: BookOpen },
                 { id: 'pricing', label: t('admin.tab_pricing'), icon: Settings },
@@ -1728,65 +1738,32 @@ export default function AdminDashboard() {
                   )}
                 </div>
               </div>
-            ) : tab === 'customers' ? (
+            ) : tab === 'visitors' ? (
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-arabic font-bold text-white text-lg">
-                    👥 {t('admin.tab_customers', 'العملاء')}
-                    {customers && <span className="text-white/40 text-sm font-normal"> — {customers.summary.total}</span>}
+                    👣 {t('admin.tab_visitors', 'الزوار')}
                   </h3>
-                  <button
-                    onClick={loadCustomers}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 text-white/80 border border-white/15 hover:bg-white/15 font-arabic text-sm font-bold"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    {t('admin.customers_load', 'تحديث')}
-                  </button>
+                  <span className="font-arabic text-white/40 text-xs">
+                    {t('admin.visitors_hint', 'مين دخل الموقع وشو تصفّح — بدون أسماء')}
+                  </span>
                 </div>
-
-                <p className="font-arabic text-white/35 text-[11px] mb-3">
-                  {t('admin.cust_online_hint', '«متصل الآن» = صاحب حساب فتح الموقع خلال آخر ٥ دقائق. الزائر بدون حساب لا يُحسب هنا. التحديث تلقائي كل ٣٠ ثانية.')}
-                </p>
-
-                {!customers ? (
-                  <p className="font-arabic text-white/40 text-sm">{t('admin.customers_idle', 'جارٍ التحميل…')}</p>
+                {/* Whoever came, whether or not they ever made an account. The
+                    customers tab answers "who signed up"; this answers "who
+                    walked in", and they are different questions. */}
+                {!visits ? (
+                  <p className="font-arabic text-white/40 text-sm py-8 text-center">
+                    {t('common.loading', 'جاري التحميل…')}
+                  </p>
+                ) : visits.length === 0 ? (
+                  <p className="font-arabic text-white/40 text-sm py-8 text-center">
+                    {t('admin.visitors_none', 'ما في زيارات مسجّلة بعد.')}
+                  </p>
                 ) : (
-                  <>
-                    {/* The four numbers worth knowing before reading any row. */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
-                      {[
-                        { v: customers.summary.online, l: t('admin.cust_online', 'متصل الآن'), live: true },
-                        // Everyone who opened the site, account or not — the
-                        // number the other three cannot see.
-                        { v: customers.summary.visitorsToday ?? 0, l: t('admin.cust_visitors_today', 'زائر اليوم') },
-                        { v: customers.summary.visitorsLast7 ?? 0, l: t('admin.cust_visitors_7', 'زائر هذا الأسبوع') },
-                        { v: customers.summary.total, l: t('admin.cust_total', 'حساب') },
-                      ].map((k) => (
-                        <div key={k.l} className={`glass-card p-3 text-center ${k.live && k.v > 0 ? 'border-emerald-400/40' : ''}`}>
-                          <div className={`font-arabic font-black text-2xl ${k.live && k.v > 0 ? 'text-emerald-400' : 'text-gold-500'}`} dir="ltr">{k.v}</div>
-                          <div className="font-arabic text-white/45 text-[11px] mt-0.5 flex items-center justify-center gap-1">
-                            {k.live && k.v > 0 && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
-                            {k.l}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <p className="font-arabic text-white/45 text-[11px] mb-3">
-                      {t('admin.cust_secondline', '{{views}} فتحة صفحة اليوم · {{logins}} دخلوا اليوم · {{buyers}} دفعوا فعلاً', {
-                        views: customers.summary.viewsToday ?? 0,
-                        logins: customers.summary.loginsToday,
-                        buyers: customers.summary.buyers,
-                      })}
-                    </p>
-
-                    {/* Who came today. A name appears only when that browser
-                        is signed in — the rest stay as what they did, not who
-                        they are. */}
-                    {visits && visits.length > 0 && (
+                  <div>
                       <div className="mt-5 pt-4 border-t border-white/10">
                         <p className="font-arabic text-white/70 text-[11px] font-bold mb-2">
-                          👣 {t('admin.visits_title', 'زيارات اليوم')}
+                          👣 {t('admin.visits_week', 'آخر ٧ أيام')}
                         </p>
 
                         {/* Where people stop. Counted once per VISITOR per
@@ -1887,7 +1864,64 @@ export default function AdminDashboard() {
                           ))}
                         </div>
                       </div>
-                    )}
+                  </div>
+                )}
+              </div>
+            ) : tab === 'customers' ? (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-arabic font-bold text-white text-lg">
+                    👥 {t('admin.tab_customers', 'العملاء')}
+                    {customers && <span className="text-white/40 text-sm font-normal"> — {customers.summary.total}</span>}
+                  </h3>
+                  <button
+                    onClick={loadCustomers}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 text-white/80 border border-white/15 hover:bg-white/15 font-arabic text-sm font-bold"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    {t('admin.customers_load', 'تحديث')}
+                  </button>
+                </div>
+
+                <p className="font-arabic text-white/35 text-[11px] mb-3">
+                  {t('admin.cust_online_hint', '«متصل الآن» = صاحب حساب فتح الموقع خلال آخر ٥ دقائق. الزائر بدون حساب لا يُحسب هنا. التحديث تلقائي كل ٣٠ ثانية.')}
+                </p>
+
+                {!customers ? (
+                  <p className="font-arabic text-white/40 text-sm">{t('admin.customers_idle', 'جارٍ التحميل…')}</p>
+                ) : (
+                  <>
+                    {/* The four numbers worth knowing before reading any row. */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
+                      {[
+                        { v: customers.summary.online, l: t('admin.cust_online', 'متصل الآن'), live: true },
+                        // Everyone who opened the site, account or not — the
+                        // number the other three cannot see.
+                        { v: customers.summary.visitorsToday ?? 0, l: t('admin.cust_visitors_today', 'زائر اليوم') },
+                        { v: customers.summary.visitorsLast7 ?? 0, l: t('admin.cust_visitors_7', 'زائر هذا الأسبوع') },
+                        { v: customers.summary.total, l: t('admin.cust_total', 'حساب') },
+                      ].map((k) => (
+                        <div key={k.l} className={`glass-card p-3 text-center ${k.live && k.v > 0 ? 'border-emerald-400/40' : ''}`}>
+                          <div className={`font-arabic font-black text-2xl ${k.live && k.v > 0 ? 'text-emerald-400' : 'text-gold-500'}`} dir="ltr">{k.v}</div>
+                          <div className="font-arabic text-white/45 text-[11px] mt-0.5 flex items-center justify-center gap-1">
+                            {k.live && k.v > 0 && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+                            {k.l}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <p className="font-arabic text-white/45 text-[11px] mb-3">
+                      {t('admin.cust_secondline', '{{views}} فتحة صفحة اليوم · {{logins}} دخلوا اليوم · {{buyers}} دفعوا فعلاً', {
+                        views: customers.summary.viewsToday ?? 0,
+                        logins: customers.summary.loginsToday,
+                        buyers: customers.summary.buyers,
+                      })}
+                    </p>
+
+                    {/* Who came today. A name appears only when that browser
+                        is signed in — the rest stay as what they did, not who
+                        they are. */}
 
                     <div className="space-y-2">
                       {customers.customers.map((c: any) => (
