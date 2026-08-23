@@ -2145,13 +2145,25 @@ export default function AdminDashboard() {
                           )}
                         </div>
 
-                        <div className="flex gap-2">
-                          <input
+                        <div className="flex gap-2 items-end">
+                          {/* A textarea, not an input: a message longer than a
+                              greeting has paragraphs in it, and a single-line
+                              input silently swallowed every line break — the
+                              first two real messages went out as one run-on
+                              blob. Enter still sends, shift+Enter breaks the
+                              line, and the box grows to three rows. */}
+                          <textarea
                             value={threadBody}
                             onChange={(e) => setThreadBody(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === 'Enter' && threadBody.trim()) sendThreadMessage(); }}
-                            placeholder={t('admin.msg_placeholder', 'اكتب رسالة لهالعميل…')}
-                            className="flex-1 px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-white text-xs font-arabic placeholder:text-white/30"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                if (threadBody.trim()) sendThreadMessage();
+                              }
+                            }}
+                            rows={3}
+                            placeholder={t('admin.msg_placeholder', 'اكتب رسالة لهالعميل… (shift+Enter لسطر جديد)')}
+                            className="flex-1 px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-white text-xs font-arabic placeholder:text-white/30 resize-y"
                           />
                           <button
                             type="button"
