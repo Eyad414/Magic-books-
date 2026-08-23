@@ -557,6 +557,10 @@ export default function AdminDashboard() {
   // PDF's filename, so a book uploaded as "scan_001.pdf" was called scan_001
   // on its own cover.
   const [importTitle, setImportTitle] = useState('');
+  // With a designed cover the book's first page is KEPT — the new cover wraps
+  // around the book rather than replacing a page of it. Ticked, page 1 is
+  // dropped instead, for a file whose first page is its old cover.
+  const [importDropFirst, setImportDropFirst] = useState(false);
   const [importAuthor, setImportAuthor] = useState('');
 
   // Real print job, real money — separate from importing, which is free and
@@ -629,7 +633,7 @@ export default function AdminDashboard() {
    * the split interior would drop it. So a custom cover ships the WHOLE file.
    */
   const importInterior = (): { path?: string; pages?: number; full: boolean } =>
-    importCover
+    importCover && !importDropFirst
       ? { path: importResult?.objectPath, pages: importResult?.pageCount, full: true }
       : { path: importResult?.interiorPath, pages: importResult?.interiorPages, full: false };
 
@@ -2598,7 +2602,9 @@ export default function AdminDashboard() {
                         <div className="mt-3 pt-3 border-t border-white/10 space-y-2">
                           <p className="font-arabic text-white/55 text-[11px]">
                             📦 {importCover
-                              ? t('admin.import_send_title_own', 'إرسال إلى BookPod للطباعة — غلافك، والداخل كل الصفحات ({{n}}), استلام من المطبعة.', { n: importInterior().pages })
+                              ? (importDropFirst
+                                  ? t('admin.import_send_title_own_drop', 'إرسال إلى BookPod للطباعة — غلافك، والداخل من الصفحة ٢ ({{n}} صفحة), استلام من المطبعة.', { n: importInterior().pages })
+                                  : t('admin.import_send_title_own', 'إرسال إلى BookPod للطباعة — غلافك، والداخل كل الصفحات ({{n}}), استلام من المطبعة.', { n: importInterior().pages }))
                               : t('admin.import_send_title', 'إرسال إلى BookPod للطباعة — الغلاف الصفحة ١، والداخل {{n}} صفحة، استلام من المطبعة.', { n: importResult.interiorPages })}
                           </p>
                           {/* Spelled out because it changes what gets printed:
@@ -2715,9 +2721,29 @@ export default function AdminDashboard() {
                                       {importCover.widthMm}×{importCover.heightMm}mm{importCover.spineMm ? ` · spine ${importCover.spineMm}mm` : ''}
                                     </span>
                                   )}
+                                  {/* The book's own first page. Kept by
+                                      default — a new cover wraps around the
+                                      book, it does not consume a page of it.
+                                      Tick only when page 1 IS the old cover. */}
+                                  <label className="mt-1.5 flex items-center gap-1.5 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={importDropFirst}
+                                      onChange={(e) => setImportDropFirst(e.target.checked)}
+                                      className="accent-gold-500"
+                                    />
+                                    <span className="font-arabic text-white/60 text-[10px]">
+                                      {t('admin.import_drop_first', 'احذف الصفحة الأولى من الداخل (إذا كانت الغلاف القديم)')}
+                                    </span>
+                                  </label>
+                                  <span className="block font-arabic text-white/35 text-[10px] mt-0.5">
+                                    {importDropFirst
+                                      ? t('admin.import_first_dropped', 'الداخل: من الصفحة ٢ فصاعداً')
+                                      : t('admin.import_first_kept', 'الداخل: كل الصفحات — الصفحة الأولى محفوظة')}
+                                  </span>
                                   <button
                                     onClick={() => setImportCover(null)}
-                                    className="mt-1 text-white/40 hover:text-white/70 underline"
+                                    className="mt-1 block text-white/40 hover:text-white/70 underline"
                                   >
                                     {t('admin.import_cover_clear', 'تراجع — استخدم الصفحة الأولى')}
                                   </button>
