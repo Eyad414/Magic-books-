@@ -52,8 +52,9 @@ export const adminApi = {
   },
 
   /** Today's visits: what each browser did, named only if it signed in. */
-  getVisits: async (days = 1) => {
-    const response = await axiosInstance.get('/admin/visits', { params: { days } });
+  /** `from`/`to` are YYYY-MM-DD and win over `days` when both are given. */
+  getVisits: async (days = 1, from?: string, to?: string) => {
+    const response = await axiosInstance.get('/admin/visits', { params: { days, from, to } });
     return response.data;
   },
 

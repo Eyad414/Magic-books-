@@ -334,12 +334,22 @@ export default function AdminDashboard() {
 
   // Visitors have their own page now, and their own fetch: opening it should
   // not depend on having opened the customers tab first.
+  // Which window the visitors page is showing. A preset covers the usual
+  // question; the two dates answer "how many came the day I posted the reel",
+  // which a rolling window cannot.
+  const [visitDays, setVisitDays] = useState(7);
+  const [visitFrom, setVisitFrom] = useState('');
+  const [visitTo, setVisitTo] = useState('');
+
   useEffect(() => {
     if (tab !== 'visitors') return;
-    adminApi.getVisits(7)
+    // A half-typed range would query nonsense, so only send both or neither.
+    const bothDates = visitFrom && visitTo;
+    setVisits(null);
+    adminApi.getVisits(visitDays, bothDates ? visitFrom : undefined, bothDates ? visitTo : undefined)
       .then((r) => { if (r.success) { setVisits(r.visits); setVisitWeek(r.week || []); setBehaviour(r.behaviour || null); } })
       .catch(() => setVisits([]));
-  }, [tab]);
+  }, [tab, visitDays, visitFrom, visitTo]);
 
   useEffect(() => {
     if (tab !== 'customers') return;
@@ -1774,6 +1784,68 @@ export default function AdminDashboard() {
                   <span className="font-arabic text-white/40 text-xs">
                     {t('admin.visitors_hint', 'مين دخل الموقع وشو تصفّح — بدون أسماء')}
                   </span>
+                </div>
+
+                {/* Which window to count. The presets answer the everyday
+                    question; the two dates answer "how many came the day I
+                    posted", which a rolling window never can. */}
+                <div className="flex flex-wrap items-end gap-2 mb-4 p-2.5 rounded-xl bg-white/5 border border-white/10">
+                  <div className="flex gap-1">
+                    {[
+                      { d: 1, l: t('admin.range_today', 'اليوم') },
+                      { d: 7, l: t('admin.range_7', '٧ أيام') },
+                      { d: 30, l: t('admin.range_30', '٣٠ يوم') },
+                    ].map((r) => (
+                      <button
+                        key={r.d}
+                        type="button"
+                        onClick={() => { setVisitFrom(''); setVisitTo(''); setVisitDays(r.d); }}
+                        className={`px-2.5 py-1.5 rounded-lg font-arabic text-[11px] border transition ${
+                          !visitFrom && visitDays === r.d
+                            ? 'bg-gold-500/20 border-gold-500/50 text-gold-300'
+                            : 'bg-white/5 border-white/10 text-white/55 hover:border-white/25'
+                        }`}
+                      >
+                        {r.l}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-end gap-1.5" dir="ltr">
+                    <div>
+                      <label className="block font-arabic text-white/40 text-[10px] mb-0.5">{t('admin.range_from', 'من')}</label>
+                      <input
+                        type="date"
+                        value={visitFrom}
+                        max={visitTo || undefined}
+                        onChange={(e) => setVisitFrom(e.target.value)}
+                        className="px-2 py-1 rounded-lg bg-white/10 border border-white/15 text-white text-[11px]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-arabic text-white/40 text-[10px] mb-0.5">{t('admin.range_to', 'إلى')}</label>
+                      <input
+                        type="date"
+                        value={visitTo}
+                        min={visitFrom || undefined}
+                        onChange={(e) => setVisitTo(e.target.value)}
+                        className="px-2 py-1 rounded-lg bg-white/10 border border-white/15 text-white text-[11px]"
+                      />
+                    </div>
+                    {(visitFrom || visitTo) && (
+                      <button
+                        type="button"
+                        onClick={() => { setVisitFrom(''); setVisitTo(''); }}
+                        className="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-white/50 font-arabic text-[11px] hover:border-white/25"
+                      >
+                        {t('admin.range_clear', 'مسح')}
+                      </button>
+                    )}
+                  </div>
+                  {visitFrom && !visitTo && (
+                    <span className="font-arabic text-amber-300/70 text-[10px]">
+                      {t('admin.range_need_both', 'اختر التاريخين لعرض الفترة')}
+                    </span>
+                  )}
                 </div>
                 {/* Whoever came, whether or not they ever made an account. The
                     customers tab answers "who signed up"; this answers "who

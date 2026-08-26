@@ -1933,9 +1933,17 @@ export const trackVisit = async (req: Request, res: Response): Promise<void> => 
  */
 export const listVisits = async (req: Request, res: Response): Promise<void> => {
   try {
-    const days = Math.min(Math.max(Number(req.query.days) || 1, 1), 30);
-    const from = new Date(Date.now() - (days - 1) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    const rows = await Visit.find({ day: { $gte: from } })
+    const days = Math.min(Math.max(Number(req.query.days) || 1, 1), 90);
+    // An explicit range wins over "last N days" — the dashboard lets the owner
+    // pick two dates, and "how many came on the day I posted the reel" is not a
+    // question a rolling window can answer.
+    const isDay = (v: any) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || ''));
+    const from = isDay(req.query.from)
+      ? String(req.query.from)
+      : new Date(Date.now() - (days - 1) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const to = isDay(req.query.to) ? String(req.query.to) : null;
+    const range: any = to ? { $gte: from, $lte: to } : { $gte: from };
+    const rows = await Visit.find({ day: range })
       .sort({ updatedAt: -1 })
       .limit(200)
       .populate('userId', 'name email')
@@ -1953,7 +1961,7 @@ export const listVisits = async (req: Request, res: Response): Promise<void> => 
     // What the visitors in this window actually did. Answering "how many came"
     // was never the hard part — "what did they look at, and where did they
     // stop" is, and it is the difference between a number and a decision.
-    const inWindow = await Visit.find({ day: { $gte: from } }).select('paths views day').lean();
+    const inWindow = await Visit.find({ day: range }).select('paths views day').lean();
     const pageCount: Record<string, number> = {};
     let multiPage = 0;
     let totalViews = 0;
