@@ -1917,20 +1917,39 @@ export default function AdminDashboard() {
                             {visitWeek.map((d: any) => {
                               const peak = Math.max(...visitWeek.map((x: any) => x.visitors), 1);
                               return (
-                                <div key={d.day} className="flex-1 flex flex-col items-center gap-1" title={`${d.day}: ${d.visitors} زائر · ${d.views} صفحة`}>
+                                // Clicking a bar asks "who came that day" — the
+                                // question the chart provokes and could not answer.
+                                <button
+                                  type="button"
+                                  key={d.day}
+                                  onClick={() => { setVisitFrom(d.day); setVisitTo(d.day); }}
+                                  className="flex-1 flex flex-col items-center gap-1 cursor-pointer"
+                                  title={`${d.day}: ${d.visitors} · ${d.views}`}
+                                >
                                   <div
-                                    className="w-full rounded-t bg-gold-500/70"
+                                    className={`w-full rounded-t transition ${
+                                      visitFrom === d.day && visitTo === d.day ? 'bg-gold-400' : 'bg-gold-500/70 hover:bg-gold-500'
+                                    }`}
                                     style={{ height: `${Math.max((d.visitors / peak) * 44, 3)}px` }}
                                   />
-                                  <span className="text-[9px] text-white/35">{d.day.slice(5)}</span>
-                                </div>
+                                  <span className={`text-[9px] ${visitFrom === d.day && visitTo === d.day ? 'text-gold-400 font-bold' : 'text-white/35'}`}>{d.day.slice(5)}</span>
+                                </button>
                               );
                             })}
                           </div>
                         )}
-                        <div className="space-y-1.5">
-                          {visits.slice(0, 12).map((v: any, i: number) => (
+                        {/* Every visit in the window, not the first twelve —
+                            with a scroll rather than a page that never ends. */}
+                        <p className="font-arabic text-white/45 text-[11px] mb-1.5">
+                          {t('admin.visits_count', '{{n}} زيارة', { n: visits.length })}
+                          {visits.length >= 200 && ` · ${t('admin.visits_capped', 'أول ٢٠٠')}`}
+                        </p>
+                        <div className="space-y-1.5 max-h-[26rem] overflow-y-auto pe-1">
+                          {visits.map((v: any, i: number) => (
                             <div key={i} className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] font-arabic text-white/55">
+                              {/* The day, then the time. Over a range the time
+                                  alone says nothing about which visit this was. */}
+                              <span className="text-white/45 font-bold" dir="ltr">{v.day}</span>
                               <span className="text-white/35" dir="ltr">
                                 {new Date(v.lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </span>

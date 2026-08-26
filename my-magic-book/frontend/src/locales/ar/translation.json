@@ -1141,7 +1141,9 @@
     "range_from": "من",
     "range_to": "إلى",
     "range_clear": "مسح",
-    "range_need_both": "اختر التاريخين لعرض الفترة"
+    "range_need_both": "اختر التاريخين لعرض الفترة",
+    "visits_count": "{{n}} زيارة",
+    "visits_capped": "أول ٢٠٠"
   },
   "title_page": {
     "presents": "يُقدّم لـ",

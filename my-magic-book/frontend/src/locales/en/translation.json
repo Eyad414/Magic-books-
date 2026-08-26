@@ -1047,7 +1047,7 @@
     "coloring_failed": "Colouring build failed",
     "view_coloring_short": "view colouring",
     "visits_title": "today’s visits",
-    "visits_anon": "visitor with no account",
+    "visits_anon": "Visitor without an account",
     "visits_from": "from",
     "visits_pages": "{{n}} pages",
     "visits_returning": "came back",
@@ -1141,7 +1141,9 @@
     "range_from": "From",
     "range_to": "To",
     "range_clear": "Clear",
-    "range_need_both": "Pick both dates to show the range"
+    "range_need_both": "Pick both dates to show the range",
+    "visits_count": "{{n}} visits",
+    "visits_capped": "first 200"
   },
   "title_page": {
     "presents": "Presented to",

@@ -1047,7 +1047,7 @@
     "coloring_failed": "בניית חוברת הצביעה נכשלה",
     "view_coloring_short": "צפייה בצביעה",
     "visits_title": "ביקורים היום",
-    "visits_anon": "מבקר ללא חשבון",
+    "visits_anon": "מבקר בלי חשבון",
     "visits_from": "מ־",
     "visits_pages": "{{n}} עמודים",
     "visits_returning": "חזר שוב",
@@ -1141,7 +1141,9 @@
     "range_from": "מ־",
     "range_to": "עד",
     "range_clear": "נקה",
-    "range_need_both": "בחר את שני התאריכים כדי להציג את הטווח"
+    "range_need_both": "בחר את שני התאריכים כדי להציג את הטווח",
+    "visits_count": "{{n}} ביקורים",
+    "visits_capped": "200 הראשונים"
   },
   "title_page": {
     "presents": "מוגש ל",
