@@ -1,12 +1,9 @@
-import { useState, useEffect } from 'react';
 import { Star, BookOpen, Heart, Award, Globe, Zap, Languages } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStoryProgress } from '../context/StoryProgressContext';
-import { publicApi } from '../api/publicApi';
+import { useSiteStats } from '../hooks/useSiteStats';
 
-// Same editable trust-counters the Home hero uses (admin → Pricing tab).
-const DEFAULT_STATS = { storiesCreated: '+500', happyFamilies: '+100', readyStories: '+20', rating: '5 ⭐' };
 
 function ScrollIndicator() {
   const { t } = useTranslation();
@@ -57,12 +54,10 @@ export default function AboutUs() {
   const { t } = useTranslation();
   const { resetProgress } = useStoryProgress();
   const navigate = useNavigate();
-  const [stats, setStats] = useState(DEFAULT_STATS);
-  useEffect(() => {
-    publicApi.getSettings()
-      .then((res) => { if (res?.settings?.homeStats) setStats({ ...DEFAULT_STATS, ...res.settings.homeStats }); })
-      .catch(() => {});
-  }, []);
+  // Counted from the database, exactly like the Home hero. This page used to
+  // read settings.homeStats — figures typed by hand — and so claimed "+300
+  // stories" and "+150 families" on the page after the hero said 39 and 12.
+  const stats = useSiteStats();
   
   const handleStartStory = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -154,7 +149,7 @@ export default function AboutUs() {
             { value: stats.storiesCreated, label: t('hero.stats_stories_created'), emoji: '📖' },
             { value: stats.happyFamilies, label: t('hero.stats_happy_families'), emoji: '👨‍👩‍👧‍👦' },
             { value: stats.readyStories, label: t('about.stats_themes'), emoji: '🌟' },
-            { value: '3', label: t('about.stats_languages'), emoji: '🌍' },
+            { value: stats.languages, label: t('about.stats_languages'), emoji: '🌍' },
           ].map((stat) => (
             <div key={stat.label} className="glass-card p-6 text-center">
               <div className="text-3xl mb-2">{stat.emoji}</div>

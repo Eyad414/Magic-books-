@@ -1,12 +1,8 @@
-import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useStoryProgress } from '../../context/StoryProgressContext';
-import { publicApi } from '../../api/publicApi';
-
-// Shown only until the live counts arrive — never instead of them.
-const DEFAULT_STATS = { storiesCreated: '—', happyFamilies: '—', readyStories: '—', rating: '5 ⭐' };
+import { useSiteStats } from '../../hooks/useSiteStats';
 
 export default function HeroSection() {
   const { t } = useTranslation();
@@ -16,23 +12,8 @@ export default function HeroSection() {
   // The counters under the hero. These used to be fixed strings — "+500
   // stories", "+100 families" — presented to a parent as fact. They are counted
   // from the database now: whatever the shop has actually done, and nothing
-  // more. Small is fine; untrue is not.
-  const [stats, setStats] = useState(DEFAULT_STATS);
-  useEffect(() => {
-    publicApi.getStats()
-      .then((res) => {
-        if (!res?.stats) return;
-        const { books, children, ready, languages } = res.stats;
-        setStats((prev) => ({
-          ...prev,
-          storiesCreated: String(books ?? '—'),
-          happyFamilies: String(children ?? '—'),
-          readyStories: String(ready ?? '—'),
-          rating: languages ? `${languages}` : prev.rating,
-        }));
-      })
-      .catch(() => { /* the page keeps its placeholders rather than a wrong number */ });
-  }, []);
+  // more. Small is fine; untrue is not. The About page reads the same hook.
+  const stats = useSiteStats();
 
   const handleStartStory = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -93,7 +74,7 @@ export default function HeroSection() {
                 { value: stats.storiesCreated, label: t('hero.stats_stories_created') },
                 { value: stats.happyFamilies, label: t('hero.stats_happy_families') },
                 { value: stats.readyStories, label: t('hero.stats_ready_stories') },
-                { value: stats.rating, label: t('hero.stats_rating') },
+                { value: stats.languages, label: t('hero.stats_rating') },
               ].map((stat) => (
                 <div key={stat.label} className="text-center">
                   <div className="font-arabic font-black text-gold-500 text-2xl" dir="ltr">{stat.value}</div>
