@@ -7,7 +7,7 @@ import { toDisplayUrl } from '../api/mediaUrl';
 import { orderApi } from '../api/orderApi';
 import { userApi } from '../api/userApi';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookOpen, Package, Plus, Clock, CheckCircle, Sparkles, User as UserIcon, Lock, Settings, ShieldAlert, Heart, Trash2, AlertTriangle, X, Eye, MapPin, Phone, Palette, Mail } from 'lucide-react';
+import { BookOpen, Package, Plus, Clock, CheckCircle, Sparkles, User as UserIcon, Lock, Settings, ShieldAlert, Heart, Trash2, AlertTriangle, X, Eye, MapPin, Phone, Palette, Mail, Download } from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
 import Modal from '../components/common/Modal';
 import StatusBadge from '../components/common/StatusBadge';
@@ -41,6 +41,8 @@ export default function Dashboard() {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [tab, setTab] = useState<'stories' | 'orders' | 'messages' | 'favorites' | 'profile' | 'settings'>('stories');
   const [detailsOrder, setDetailsOrder] = useState<any>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
   // Messages from the shop. The count is fetched on load so the badge is there
   // before the customer opens anything; opening the tab is what marks them read.
   const [messages, setMessages] = useState<any[]>([]);
@@ -186,6 +188,42 @@ export default function Dashboard() {
   };
 
   const favoriteStories = SHOWCASE_CARDS.filter((card) => favoriteIds.includes(card.key));
+
+  /**
+   * Save the digital copy to the customer's device. The bytes arrive through
+   * an authenticated request, so they are handed to the browser as an object
+   * URL rather than linked to directly — a plain <a href> would be anonymous
+   * and come back 401.
+   */
+  const downloadEbook = async (order: any) => {
+    setDownloadingId(order._id);
+    try {
+      const blob = await orderApi.downloadEbook(order._id);
+      const child = (typeof order.storyId === 'object' && order.storyId?.childName) || 'book';
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${child}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      // A refusal comes back as JSON, which with responseType 'blob' arrives
+      // as a Blob — so it is read back before being shown.
+      let msg = t('dashboard.ebook_failed', 'تعذّر تحميل الملف.');
+      try {
+        const body = err?.response?.data;
+        if (body instanceof Blob) {
+          const parsed = JSON.parse(await body.text());
+          if (parsed?.message) msg = parsed.message;
+        }
+      } catch { /* keep the generic message */ }
+      toast.error(msg);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen pt-24 pb-16 px-4 sm:px-6 lg:px-8">
@@ -451,6 +489,27 @@ export default function Dashboard() {
                         >
                           📖 {t('dashboard.view_book', 'تصفّح الكتاب')}
                         </Link>
+                      )}
+                      {/* The file itself, for the packages that were sold as
+                          one. Browsing on the site was all a digital buyer
+                          ever got, which is not what "كتاب إلكتروني" promises.
+                          The server re-checks ownership, payment and package —
+                          this button only decides what is worth showing. */}
+                      {order.illustrationsStatus === 'ready'
+                        && order.paymentStatus === 'paid'
+                        && ['ebook', 'pro'].includes(String(
+                          typeof order.storyId === 'object' ? order.storyId?.bookPackage : '',
+                        )) && (
+                        <button
+                          onClick={() => downloadEbook(order)}
+                          disabled={downloadingId === order._id}
+                          className="self-start sm:self-center inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-magic-500/20 border border-magic-400/40 text-magic-200 font-arabic font-bold text-sm hover:bg-magic-500/30 transition whitespace-nowrap disabled:opacity-50"
+                        >
+                          <Download className="w-4 h-4" />
+                          {downloadingId === order._id
+                            ? t('dashboard.ebook_downloading', 'جاري التحميل…')
+                            : t('dashboard.ebook_download', 'حمّل النسخة الرقمية')}
+                        </button>
                       )}
                     </div>
                   ))}
