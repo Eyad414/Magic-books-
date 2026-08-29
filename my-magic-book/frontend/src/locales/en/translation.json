@@ -1155,7 +1155,9 @@
     "pay_reconcile_title": "Stop — do not retry",
     "pay_reconcile_help": "Contact BookPod with the order number. Retrying can charge the card twice.",
     "pay_note": "The amount is whatever BookPod has stored for this order — we never send one. Card details are not stored here; only the invoice number is.",
-    "pay_ref": "Invoice number"
+    "pay_ref": "Invoice number",
+    "ebook_ready": "Digital copy — in their account",
+    "ebook_building": "Digital copy — being prepared"
   },
   "title_page": {
     "presents": "Presented to",

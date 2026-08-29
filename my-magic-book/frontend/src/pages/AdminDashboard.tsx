@@ -1612,6 +1612,23 @@ export default function AdminDashboard() {
                                 <StatusBadge tone="red" icon={AlertCircle}>{t('admin.bookpod_cancelled', 'أُلغي في المطبعة — يحتاج إرسالاً جديداً')}</StatusBadge>
                               ) : order.bookpodStatus === 'submitted' ? (
                                 <StatusBadge tone="magic" icon={Package}>{t('admin.bookpod_in_production', 'قيد الإنتاج')}</StatusBadge>
+                              ) : order.storyId?.bookPackage === 'ebook' ? (
+                                /* A digital copy never goes to a printer, so the
+                                   print status could only ever read "waiting to
+                                   send" — leaving a delivered e-book looking
+                                   permanently unfulfilled in the owner's own
+                                   list. What decides this one is whether the
+                                   book is built and sitting in the customer's
+                                   account. */
+                                order.illustrationsStatus === 'ready' ? (
+                                  <StatusBadge tone="green" icon={CheckCircle}>
+                                    {t('admin.ebook_ready', 'نسخة رقمية — بحساب العميل')}
+                                  </StatusBadge>
+                                ) : (
+                                  <StatusBadge tone="neutral" icon={Clock}>
+                                    {t('admin.ebook_building', 'نسخة رقمية — قيد التجهيز')}
+                                  </StatusBadge>
+                                )
                               ) : (
                                 <StatusBadge tone="neutral" icon={Clock}>{t('admin.bookpod_pending', 'بانتظار الإرسال')}</StatusBadge>
                               )}
