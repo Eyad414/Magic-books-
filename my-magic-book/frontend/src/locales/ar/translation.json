@@ -1143,7 +1143,19 @@
     "range_clear": "مسح",
     "range_need_both": "اختر التاريخين لعرض الفترة",
     "visits_count": "{{n}} زيارة",
-    "visits_capped": "أول ٢٠٠"
+    "visits_capped": "أول ٢٠٠",
+    "pay_title": "دفع طلب الطباعة #{{n}}",
+    "pay_btn": "ادفع",
+    "pay_now": "ادفع المبلغ المسجّل عند BookPod",
+    "pay_working": "جاري الدفع…",
+    "pay_ok": "تم الدفع ✅ رقم الفاتورة: {{ref}}",
+    "pay_failed": "فشل الدفع",
+    "pay_unknown": "نتيجة الدفع غير مؤكدة.",
+    "pay_reconcile_short": "وقف — راجع BookPod قبل أي محاولة ثانية",
+    "pay_reconcile_title": "وقف — لا تحاول مرة ثانية",
+    "pay_reconcile_help": "تواصل مع BookPod ومعك رقم الطلب. محاولة ثانية ممكن تسحب من البطاقة مرتين.",
+    "pay_note": "المبلغ هو المسجّل عند BookPod لهذا الطلب — ما بنرسل مبلغ. بيانات البطاقة ما بتتخزّن عندنا، بس رقم الفاتورة.",
+    "pay_ref": "رقم الفاتورة"
   },
   "title_page": {
     "presents": "يُقدّم لـ",

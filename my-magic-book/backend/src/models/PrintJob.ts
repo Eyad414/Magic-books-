@@ -35,6 +35,9 @@ export interface IPrintJob extends Document {
   submittedBy?: string;
   /** BookPod's own status the last time we looked: IN_PROCESS, CANCELLED, ... */
   bookpodStatus?: string;
+  /** Sumit document number from a card payment — the reconciliation key. */
+  paymentReference?: string;
+  paidAt?: Date;
   /**
    * Reconstructed from BookPod's order list rather than captured at send time,
    * so it carries only what BookPod knows — no file paths, no cover source.
@@ -70,6 +73,8 @@ const PrintJobSchema = new Schema<IPrintJob>(
     shippingPhone: { type: String },
     submittedBy: { type: String },
     bookpodStatus: { type: String },
+    paymentReference: { type: String },
+    paidAt: { type: Date },
     backfilled: { type: Boolean, default: false },
     sentAt: { type: Date },
     failed: { type: Boolean, default: false },

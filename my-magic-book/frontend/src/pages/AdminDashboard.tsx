@@ -1023,6 +1023,50 @@ export default function AdminDashboard() {
   // PDFs kept no record at all, so when the boxes arrive there was nothing to
   // match them against — and when a send looked wrong, nothing to audit.
   const [printJobs, setPrintJobs] = useState<any[] | null>(null);
+
+  // Paying a BookPod print run by card. Admin-only by construction: this whole
+  // page is behind adminOnly, and the card never leaves this form except in the
+  // single request that charges it — nothing is stored, here or on the server.
+  const [payJob, setPayJob] = useState<any | null>(null);
+  const [payCard, setPayCard] = useState({ cardNumber: '', expiryMonth: '', expiryYear: '', cvv: '', citizenId: '' });
+  const [payBusy, setPayBusy] = useState(false);
+  const [payStuck, setPayStuck] = useState<string | null>(null);
+
+  const submitPayment = async () => {
+    if (!payJob || payBusy) return;
+    setPayBusy(true);
+    setPayStuck(null);
+    const toastId = toast.loading(t('admin.pay_working', 'جاري الدفع…'));
+    try {
+      const res = await adminApi.payPrintJob(String(payJob.bookpodJobId), {
+        cardNumber: payCard.cardNumber,
+        expiryMonth: Number(payCard.expiryMonth),
+        expiryYear: Number(payCard.expiryYear),
+        cvv: payCard.cvv,
+        citizenId: payCard.citizenId || undefined,
+      });
+      if (res?.success) {
+        toast.success(t('admin.pay_ok', 'تم الدفع ✅ رقم الفاتورة: {{ref}}', { ref: res.paymentReference || '—' }), { id: toastId, duration: 9000 });
+        setPayJob(null);
+        setPayCard({ cardNumber: '', expiryMonth: '', expiryYear: '', cvv: '', citizenId: '' });
+        loadPrintJobs();
+      } else {
+        toast.error(res?.message || t('admin.pay_failed', 'فشل الدفع'), { id: toastId, duration: 9000 });
+      }
+    } catch (err: any) {
+      const d = err?.response?.data || {};
+      // The one thing that must never be lost in a toast: when the money may
+      // already have moved, trying another card can charge the first twice.
+      if (d.reconcile) {
+        setPayStuck(d.message || t('admin.pay_unknown', 'نتيجة الدفع غير مؤكدة.'));
+        toast.error(t('admin.pay_reconcile_short', 'وقف — راجع BookPod قبل أي محاولة ثانية'), { id: toastId, duration: 12000 });
+      } else {
+        toast.error(d.message || err.message || t('admin.pay_failed', 'فشل الدفع'), { id: toastId, duration: 9000 });
+      }
+    } finally {
+      setPayBusy(false);
+    }
+  };
   // Who signed up and who came back — the dash could show orders but never people.
   const [customers, setCustomers] = useState<any | null>(null);
   // Who actually came to the site today — named where they signed in.
@@ -3409,6 +3453,91 @@ export default function AdminDashboard() {
                       <p className="font-arabic text-white/70 text-[11px] font-bold mb-1.5">
                         📦 {t('admin.sent_log_title', 'آخر ما أُرسل للطباعة')}
                       </p>
+                      {/* Paying one print run. Only ever opened from a job
+                          that BookPod has not been paid for. */}
+                      {payJob && (
+                        <div className="mb-3 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-400/30">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="font-arabic text-emerald-100 text-xs font-bold">
+                              💳 {t('admin.pay_title', 'دفع طلب الطباعة #{{n}}', { n: payJob.bookpodJobId })}
+                            </p>
+                            <button onClick={() => { setPayJob(null); setPayStuck(null); }} className="text-white/40 hover:text-white/80 text-xs font-arabic">
+                              {t('common.cancel', 'إلغاء')}
+                            </button>
+                          </div>
+
+                          {payStuck ? (
+                            /* Money may already have moved. No retry button —
+                               a second card here can charge the first twice. */
+                            <div className="p-2.5 rounded-xl bg-red-500/15 border border-red-400/40">
+                              <p className="font-arabic text-red-200 text-[11px] font-bold mb-1">
+                                ⚠️ {t('admin.pay_reconcile_title', 'وقف — لا تحاول مرة ثانية')}
+                              </p>
+                              <p className="font-arabic text-red-100/80 text-[11px] leading-relaxed">{payStuck}</p>
+                              <p className="font-arabic text-white/50 text-[10px] mt-1.5">
+                                {t('admin.pay_reconcile_help', 'تواصل مع BookPod ومعك رقم الطلب. محاولة ثانية ممكن تسحب من البطاقة مرتين.')}
+                              </p>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="grid gap-1.5 sm:grid-cols-4 mb-2" dir="ltr">
+                                <input
+                                  value={payCard.cardNumber}
+                                  onChange={(e) => setPayCard({ ...payCard, cardNumber: e.target.value })}
+                                  placeholder="Card number"
+                                  inputMode="numeric"
+                                  autoComplete="off"
+                                  className="sm:col-span-2 px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] placeholder:text-white/30"
+                                />
+                                <input
+                                  value={payCard.expiryMonth}
+                                  onChange={(e) => setPayCard({ ...payCard, expiryMonth: e.target.value })}
+                                  placeholder="MM"
+                                  inputMode="numeric"
+                                  autoComplete="off"
+                                  className="px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] placeholder:text-white/30"
+                                />
+                                <input
+                                  value={payCard.expiryYear}
+                                  onChange={(e) => setPayCard({ ...payCard, expiryYear: e.target.value })}
+                                  placeholder="YYYY"
+                                  inputMode="numeric"
+                                  autoComplete="off"
+                                  className="px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] placeholder:text-white/30"
+                                />
+                                <input
+                                  value={payCard.cvv}
+                                  onChange={(e) => setPayCard({ ...payCard, cvv: e.target.value })}
+                                  placeholder="CVV"
+                                  inputMode="numeric"
+                                  autoComplete="off"
+                                  className="px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] placeholder:text-white/30"
+                                />
+                                <input
+                                  value={payCard.citizenId}
+                                  onChange={(e) => setPayCard({ ...payCard, citizenId: e.target.value })}
+                                  placeholder="ת.ז (optional)"
+                                  inputMode="numeric"
+                                  autoComplete="off"
+                                  className="sm:col-span-3 px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] placeholder:text-white/30"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={submitPayment}
+                                disabled={payBusy || !payCard.cardNumber || !payCard.expiryMonth || !payCard.expiryYear || !payCard.cvv}
+                                className="w-full px-3 py-2 rounded-xl bg-emerald-500 text-[#0a1628] font-arabic font-bold text-xs disabled:opacity-40"
+                              >
+                                {payBusy ? t('admin.pay_working', 'جاري الدفع…') : t('admin.pay_now', 'ادفع المبلغ المسجّل عند BookPod')}
+                              </button>
+                              <p className="font-arabic text-white/40 text-[10px] mt-1.5 leading-relaxed">
+                                {t('admin.pay_note', 'المبلغ هو المسجّل عند BookPod لهذا الطلب — ما بنرسل مبلغ. بيانات البطاقة ما بتتخزّن عندنا، بس رقم الفاتورة.')}
+                              </p>
+                            </>
+                          )}
+                        </div>
+                      )}
+
                       <div className="space-y-1">
                         {printJobs.slice(0, 8).map((j: any) => (
                           <div key={j._id} className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-arabic text-white/60">
@@ -3418,6 +3547,22 @@ export default function AdminDashboard() {
                               <span className="px-1.5 py-0.5 rounded bg-magic-500/20 text-magic-200" dir="ltr">#{j.bookpodJobId}</span>
                             )}
                             {j.quantity > 1 && <span className="text-white/40">× {j.quantity}</span>}
+                            {/* Every job so far died unpaid, so the payment is
+                                the action this row is actually for. */}
+                            {j.bookpodJobId && !j.paymentReference && j.bookpodStatus !== 'PAID' && (
+                              <button
+                                type="button"
+                                onClick={() => { setPayJob(j); setPayStuck(null); }}
+                                className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 hover:bg-emerald-500/30 text-[10px] font-arabic"
+                              >
+                                💳 {t('admin.pay_btn', 'ادفع')}
+                              </button>
+                            )}
+                            {j.paymentReference && (
+                              <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-200 text-[10px]" dir="ltr" title={t('admin.pay_ref', 'رقم الفاتورة')}>
+                                ✓ {j.paymentReference}
+                              </span>
+                            )}
                             {j.coverSource && (
                               <span className="text-white/40">
                                 {j.coverSource === 'page-1'

@@ -21,7 +21,7 @@ import Visit from '../models/Visit';
 import { resolveCoupon } from '../services/Pricing';
 import { publicProxyUrl } from '../services/PrintService';
 import { uploadBuffer, pdfFolderPath, listObjects, deleteObject } from '../services/StorageService';
-import { submitPrintJob, isBookPodConfigured, fetchOurJobStatuses } from '../services/BookPodService';
+import { submitPrintJob, isBookPodConfigured, fetchOurJobStatuses, payOrderWithCard } from '../services/BookPodService';
 
 // The kid photo (already in the bucket) used as the reference face for ADMIN
 // PREVIEW generation only. Real customer orders use the customer's own photo.
@@ -2368,5 +2368,61 @@ export const sendBookToCustomer = async (req: Request, res: Response): Promise<v
   } catch (err: any) {
     console.error('[sendBookToCustomer]', err);
     res.status(500).json({ success: false, message: err.message || 'فشل الإرسال' });
+  }
+};
+
+/**
+ * POST /api/admin/print-jobs/:orderNo/pay
+ *
+ * Pays one BookPod print job with a card. ADMIN ONLY, deliberately: the card
+ * number passes through this request, which puts us in PCI-DSS scope, so it
+ * stays a tool the owner uses to settle their own print runs and is never
+ * exposed to customers.
+ *
+ * Nothing about the card is logged, echoed or stored — only BookPod's
+ * paymentReference, which is the reconciliation key.
+ */
+export const payPrintJob = async (req: Request, res: Response): Promise<void> => {
+  const orderNo = String(req.params.orderNo || '').trim();
+  try {
+    const { cardNumber, expiryMonth, expiryYear, cvv, citizenId } = req.body || {};
+    if (!orderNo || !cardNumber || !expiryMonth || !expiryYear || !cvv) {
+      res.status(400).json({ success: false, message: 'أدخل رقم البطاقة وتاريخ الانتهاء والـ CVV.' });
+      return;
+    }
+
+    const r = await payOrderWithCard(orderNo, { cardNumber, expiryMonth, expiryYear, cvv, citizenId });
+
+    if (r.ok) {
+      // Keep the receipt against the job so a later question about this print
+      // run can be answered without asking BookPod.
+      await PrintJob.updateOne(
+        { bookpodJobId: orderNo },
+        { $set: { bookpodStatus: 'PAID', paymentReference: r.paymentReference, paidAt: new Date() } },
+      ).catch(() => { /* the payment is what matters; the log is secondary */ });
+
+      console.log(`[payPrintJob] order ${orderNo} paid · ref ${r.paymentReference}`);
+      res.json({
+        success: true,
+        paymentReference: r.paymentReference,
+        invoiceUrl: r.invoiceUrl,
+        amount: r.amount,
+      });
+      return;
+    }
+
+    // Never log the body — it carries the card. Only the outcome.
+    console.warn(`[payPrintJob] order ${orderNo} failed (${r.status}): ${r.error}`);
+    res.status(r.status && r.status >= 400 ? r.status : 502).json({
+      success: false,
+      message: r.error,
+      retryable: r.retryable,
+      // The dashboard must say this out loud: on these, trying again with
+      // another card can charge the first one twice.
+      reconcile: r.reconcile,
+    });
+  } catch (err: any) {
+    console.error('[payPrintJob]', err?.message || err);
+    res.status(500).json({ success: false, message: 'تعذّر تنفيذ الدفع.', retryable: false, reconcile: true });
   }
 };

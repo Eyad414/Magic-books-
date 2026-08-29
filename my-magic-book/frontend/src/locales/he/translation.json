@@ -1143,7 +1143,19 @@
     "range_clear": "נקה",
     "range_need_both": "בחר את שני התאריכים כדי להציג את הטווח",
     "visits_count": "{{n}} ביקורים",
-    "visits_capped": "200 הראשונים"
+    "visits_capped": "200 הראשונים",
+    "pay_title": "תשלום הזמנת הדפסה #{{n}}",
+    "pay_btn": "שלם",
+    "pay_now": "שלם את הסכום הרשום ב-BookPod",
+    "pay_working": "משלם…",
+    "pay_ok": "שולם ✅ חשבונית: {{ref}}",
+    "pay_failed": "התשלום נכשל",
+    "pay_unknown": "תוצאת התשלום לא ודאית.",
+    "pay_reconcile_short": "עצור — בדוק מול BookPod לפני ניסיון נוסף",
+    "pay_reconcile_title": "עצור — אל תנסה שוב",
+    "pay_reconcile_help": "פנה ל-BookPod עם מספר ההזמנה. ניסיון נוסף עלול לחייב את הכרטיס פעמיים.",
+    "pay_note": "הסכום הוא זה שרשום ב-BookPod להזמנה — אנחנו לא שולחים סכום. פרטי הכרטיס לא נשמרים אצלנו, רק מספר החשבונית.",
+    "pay_ref": "מספר חשבונית"
   },
   "title_page": {
     "presents": "מוגש ל",

@@ -326,3 +326,97 @@ export async function submitPrintJob(input: BookPodJobInput): Promise<BookPodJob
     raw: { book: bookRes, order: orderRes },
   };
 }
+
+/* ── Card payment ────────────────────────────────────────────────────────────
+ * BookPod's external card-payment API charges OUR order for its stored total.
+ * There is no amount field — the figure comes from the order BookPod already
+ * holds, so nothing a client sends can change what is collected.
+ *
+ * The card number and CVV pass through this process. They are never logged,
+ * never stored and never attached to an error: the only thing kept is the
+ * returned paymentReference. Passing raw card data puts both sides in PCI-DSS
+ * scope, which is why this is admin-only and why the alternative — Sumit
+ * tokenising the card in the browser — is worth asking BookPod for.
+ */
+export interface BookPodCardInput {
+  cardNumber: string;
+  expiryMonth: number;
+  expiryYear: number;
+  cvv: string;
+  citizenId?: string;
+}
+
+export interface BookPodPayResult {
+  ok: boolean;
+  status: number;
+  /** Sumit document number — the reconciliation key. Store this, never the card. */
+  paymentReference?: string;
+  invoiceUrl?: string;
+  amount?: number;
+  error?: string;
+  /**
+   * Whether trying again with another card is safe. False on 502 and on the
+   * "payment succeeded" 500: those are exactly the cases where the money may
+   * already have moved, and a retry charges a real card twice.
+   */
+  retryable: boolean;
+  /** True when a human must reconcile with BookPod before anything else. */
+  reconcile: boolean;
+}
+
+export async function payOrderWithCard(orderNo: string | number, card: BookPodCardInput): Promise<BookPodPayResult> {
+  const { baseUrl, headers } = cfg();
+  const digits = String(card.cardNumber || '').replace(/[\s-]/g, '');
+
+  let res: Response;
+  try {
+    res = await fetch(`${baseUrl}/api/v1/orders/${encodeURIComponent(String(orderNo))}/pay`, {
+      method: 'POST',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cardNumber: digits,
+        expiryMonth: Number(card.expiryMonth),
+        expiryYear: Number(card.expiryYear),
+        cvv: String(card.cvv),
+        ...(card.citizenId ? { citizenId: String(card.citizenId) } : {}),
+      }),
+    });
+  } catch (err: any) {
+    // The request never completed, so we cannot know whether it arrived.
+    // Treated like a 502: never retried automatically.
+    return {
+      ok: false, status: 0, retryable: false, reconcile: true,
+      error: `تعذّر الوصول إلى BookPod — لا نعرف إن تمت العملية. راجعهم قبل أي محاولة ثانية. (${err?.message || err})`,
+    };
+  }
+
+  const body: any = await res.json().catch(() => ({}));
+  if (res.ok && body?.success) {
+    return {
+      ok: true,
+      status: res.status,
+      paymentReference: body.paymentReference ? String(body.paymentReference) : undefined,
+      invoiceUrl: body.invoiceUrl,
+      amount: typeof body.amount === 'number' ? body.amount : undefined,
+      retryable: false,
+      reconcile: false,
+    };
+  }
+
+  const text = String(body?.error || `BookPod ${res.status}`);
+  // Straight from the spec's retry table: only a malformed request and a
+  // decline are safe to send again, plus the single retryable 409.
+  const retryable =
+    res.status === 400 ||
+    res.status === 402 ||
+    (res.status === 409 && /busy/i.test(text));
+  const moneyMayHaveMoved = res.status === 502 || (res.status === 500 && /succeeded/i.test(text));
+
+  return {
+    ok: false,
+    status: res.status,
+    error: text,
+    retryable,
+    reconcile: moneyMayHaveMoved || (res.status === 409 && /unresolved/i.test(text)),
+  };
+}

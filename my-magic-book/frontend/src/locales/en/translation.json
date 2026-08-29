@@ -1143,7 +1143,19 @@
     "range_clear": "Clear",
     "range_need_both": "Pick both dates to show the range",
     "visits_count": "{{n}} visits",
-    "visits_capped": "first 200"
+    "visits_capped": "first 200",
+    "pay_title": "Pay print order #{{n}}",
+    "pay_btn": "Pay",
+    "pay_now": "Pay the amount BookPod has on file",
+    "pay_working": "Paying…",
+    "pay_ok": "Paid ✅ invoice: {{ref}}",
+    "pay_failed": "Payment failed",
+    "pay_unknown": "The payment outcome is unconfirmed.",
+    "pay_reconcile_short": "Stop — check with BookPod before retrying",
+    "pay_reconcile_title": "Stop — do not retry",
+    "pay_reconcile_help": "Contact BookPod with the order number. Retrying can charge the card twice.",
+    "pay_note": "The amount is whatever BookPod has stored for this order — we never send one. Card details are not stored here; only the invoice number is.",
+    "pay_ref": "Invoice number"
   },
   "title_page": {
     "presents": "Presented to",

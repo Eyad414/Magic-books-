@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam, getSettings, updateSettings, getAllOrders, confirmOrderPayment, buildOrderBook, getOrderBuildStatus, reRenderOrderFiles, reRenderOrderColoring, submitOrderColoring, printBook, printBookSubmit, generatePreviewIllustrations, generatePhotorealPreview, generateColoringPreview, sendBookToCustomer,
+import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam, getSettings, updateSettings, getAllOrders, confirmOrderPayment, buildOrderBook, getOrderBuildStatus, reRenderOrderFiles, reRenderOrderColoring, submitOrderColoring, printBook, printBookSubmit, generatePreviewIllustrations, generatePhotorealPreview, generateColoringPreview, sendBookToCustomer, payPrintJob,
   importBookPdf,
   submitImportedBook,
   designImportedCover,
@@ -67,6 +67,9 @@ router.post('/themes/:themeId/generate-coloring', generateColoringPreview);
 router.post('/books/send-to-customer', sendBookToCustomer);
 // Writing to one customer, and whether they have read it.
 router.get('/customer-messages', messageCounts);
+// Pay one BookPod print run with a card. Admin only — card data passes through
+// this request, so it is never offered to customers.
+router.post('/print-jobs/:orderNo/pay', payPrintJob);
 router.get('/conversations', listConversations);
 router.post('/customers/:userId/messages/read', markThreadRead);
 router.get('/customers/:userId/messages', getCustomerThread);
