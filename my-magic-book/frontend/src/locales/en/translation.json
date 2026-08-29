@@ -521,9 +521,6 @@
     "create_another_story": "Create a new story",
     "create_another_confirm": "Start a new story? Your current book won't be ordered until you pay.",
     "pkg_unavailable": "The package you chose is no longer available, so “{{name}}” was selected instead. Go back a step to change it.",
-    "included_pages": "13 pages + cover, with your child’s name and face",
-    "included_print": "Printed at a real press, not at home",
-    "included_preview": "You see the whole book before it prints",
     "help_title": "A question before you finish?",
     "help_desc": "Ask on WhatsApp — we answer quickly and can help you pick the right package.",
     "coupon_free_delivery": "Code applied — delivery is free 🚚",
@@ -615,7 +612,6 @@
     "soon": "Soon",
     "card_number": "Card Number",
     "expiry_date": "Expiry Date",
-    "secure_payment": "Secure and encrypted payment via global gateways",
     "pay_now": "Pay 💳 {price} ₪ Now",
     "login_to_pay": "Login to Pay",
     "discount": "Discount"
