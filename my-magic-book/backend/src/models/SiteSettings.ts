@@ -173,11 +173,15 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
         coloringBackCover: { type: String, default: undefined },
       },
     ],
+    // Empty = show the real counted number. These used to default to "+500",
+    // "+100" and so on, which meant a brand-new shop published invented
+    // figures before it had sold anything. An override is now something the
+    // owner types on purpose.
     homeStats: {
-      storiesCreated: { type: String, default: DEFAULT_HOME_STATS.storiesCreated },
-      happyFamilies: { type: String, default: DEFAULT_HOME_STATS.happyFamilies },
-      readyStories: { type: String, default: DEFAULT_HOME_STATS.readyStories },
-      rating: { type: String, default: DEFAULT_HOME_STATS.rating },
+      storiesCreated: { type: String, default: '' },
+      happyFamilies: { type: String, default: '' },
+      readyStories: { type: String, default: '' },
+      rating: { type: String, default: '' },
     },
     coupons: {
       type: [{

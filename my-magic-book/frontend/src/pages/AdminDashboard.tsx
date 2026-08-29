@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { seriesBadge, seriesCounts } from '../utils/series';
 import { adminApi } from '../api/adminApi';
+import { publicApi } from '../api/publicApi';
 import { objectPathToUrl } from '../api/mediaUrl';
 import { useNavigate, Link } from 'react-router-dom';
 import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail, User, Phone, Sparkles, AlertCircle, Search, Upload } from 'lucide-react';
@@ -365,6 +366,13 @@ export default function AdminDashboard() {
   // at all and no way to pay one — the button existed in the code and never on
   // the screen. Every other tab loads what it needs when it opens; this one now
   // does too.
+  useEffect(() => {
+    if (tab !== 'pricing') return;
+    publicApi.getStats()
+      .then((r) => { if (r?.counted) setLiveStats(r.counted); })
+      .catch(() => { /* the fields still work; they just show — */ });
+  }, [tab]);
+
   useEffect(() => {
     if (tab !== 'showcase') return;
     loadPrintJobs();
@@ -1035,6 +1043,10 @@ export default function AdminDashboard() {
   // PDFs kept no record at all, so when the boxes arrive there was nothing to
   // match them against — and when a send looked wrong, nothing to audit.
   const [printJobs, setPrintJobs] = useState<any[] | null>(null);
+  // The real counts, shown beside each field so an override is always made
+  // with the true number in view.
+  const [liveStats, setLiveStats] = useState<any | null>(null);
+
 
   // Paying a BookPod print run by card. Admin-only by construction: this whole
   // page is behind adminOnly, and the card never leaves this form except in the
@@ -2642,28 +2654,43 @@ export default function AdminDashboard() {
                     </div>
                   ))}
 
-                  {/* Home hero stats — editable trust counters shown on the landing page */}
+                  {/* Home + About trust counters. Both pages read one source,
+                      so what is set here is what the whole site says. */}
                   <div className="mt-8 p-4 bg-white/5 rounded-xl border border-white/10">
                     <h3 className="font-arabic font-bold text-white mb-1">{t('admin.home_stats_title', 'أرقام الصفحة الرئيسية')}</h3>
-                    <p className="font-arabic text-white/40 text-xs mb-4">{t('admin.home_stats_hint', 'الأرقام التي تظهر تحت العنوان في الصفحة الرئيسية')}</p>
+                    <p className="font-arabic text-white/40 text-xs mb-4">
+                      {t('admin.home_stats_hint2', 'تظهر في الصفحة الرئيسية وصفحة «من نحن». اتركه فارغاً ليعرض الرقم الحقيقي تلقائياً — أو اكتب رقماً ليظهر بدلاً منه.')}
+                    </p>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {[
-                        { key: 'storiesCreated', label: t('hero.stats_stories_created'), def: '+500' },
-                        { key: 'happyFamilies', label: t('hero.stats_happy_families'), def: '+100' },
-                        { key: 'readyStories', label: t('hero.stats_ready_stories'), def: '+20' },
-                        { key: 'rating', label: t('hero.stats_rating'), def: '5 ⭐' },
-                      ].map((s) => (
-                        <div key={s.key}>
-                          <label className="block font-arabic text-white/70 text-xs mb-1">{s.label}</label>
-                          <input
-                            type="text"
-                            dir="ltr"
-                            className="magic-input w-full text-center"
-                            value={settings.homeStats?.[s.key] ?? s.def}
-                            onChange={(e) => setSettings({ ...settings, homeStats: { ...(settings.homeStats || {}), [s.key]: e.target.value } })}
-                          />
-                        </div>
-                      ))}
+                        { key: 'storiesCreated', label: t('hero.stats_stories_created'), real: liveStats?.books },
+                        { key: 'happyFamilies', label: t('hero.stats_happy_families'), real: liveStats?.children },
+                        { key: 'readyStories', label: t('hero.stats_ready_stories'), real: liveStats?.ready },
+                        { key: 'rating', label: t('hero.stats_rating'), real: liveStats?.languages },
+                      ].map((s) => {
+                        const override = String(settings.homeStats?.[s.key] ?? '');
+                        return (
+                          <div key={s.key}>
+                            <label className="block font-arabic text-white/70 text-xs mb-1">{s.label}</label>
+                            <input
+                              type="text"
+                              dir="ltr"
+                              className="magic-input w-full text-center"
+                              placeholder={s.real != null ? String(s.real) : '—'}
+                              value={override}
+                              onChange={(e) => setSettings({ ...settings, homeStats: { ...(settings.homeStats || {}), [s.key]: e.target.value } })}
+                            />
+                            {/* The real figure stays visible whatever is published,
+                                so the owner is never the last to know what the
+                                shop has actually done. */}
+                            <p className={`font-arabic text-[10px] mt-1 text-center ${override.trim() ? 'text-gold-500/70' : 'text-white/30'}`}>
+                              {override.trim()
+                                ? t('admin.stat_overridden', 'الحقيقي: {{n}}', { n: s.real ?? '—' })
+                                : t('admin.stat_auto', 'تلقائي: {{n}}', { n: s.real ?? '—' })}
+                            </p>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 

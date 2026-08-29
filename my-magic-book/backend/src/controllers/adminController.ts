@@ -739,7 +739,28 @@ export const getLiveStats = async (_req: Request, res: Response): Promise<void> 
     // five-star rating this replaces, which had no reviews behind it at all.
     const languages = 3;
 
-    res.json({ success: true, stats: { books, children, ready, languages } });
+    // The owner can publish a different figure from the dashboard — offline
+    // sales, a fair, a school order: things the database never saw. An EMPTY
+    // field means "use the real count", so the truth is what happens by
+    // default and a published figure is always a deliberate act, never a
+    // leftover. `counted` always carries the real numbers so the dashboard can
+    // show the owner what is actually true beside whatever is on the site.
+    const overrides: any = (settings as any)?.homeStats || {};
+    const pick = (key: string, real: number): string | number => {
+      const v = String(overrides[key] ?? '').trim();
+      return v === '' ? real : v;
+    };
+
+    res.json({
+      success: true,
+      stats: {
+        books: pick('storiesCreated', books),
+        children: pick('happyFamilies', children),
+        ready: pick('readyStories', ready),
+        languages: pick('rating', languages),
+      },
+      counted: { books, children, ready, languages },
+    });
   } catch (err: any) {
     // The page has its own fallback; a failed count must never blank the hero.
     res.json({ success: false, stats: null });

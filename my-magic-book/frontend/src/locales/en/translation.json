@@ -1153,7 +1153,10 @@
     "pay_note": "The amount is whatever BookPod has stored for this order — we never send one. Card details are not stored here; only the invoice number is.",
     "pay_ref": "Invoice number",
     "ebook_ready": "Digital copy — in their account",
-    "ebook_building": "Digital copy — being prepared"
+    "ebook_building": "Digital copy — being prepared",
+    "stat_overridden": "Real: {{n}}",
+    "stat_auto": "Automatic: {{n}}",
+    "home_stats_hint2": "Shown on the Home and About pages. Leave blank to show the real number automatically, or type one to publish it instead."
   },
   "title_page": {
     "presents": "Presented to",
