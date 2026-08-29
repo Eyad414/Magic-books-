@@ -21,6 +21,7 @@ export async function sendPasswordReset(data: {
   resetUrl: string;
 }): Promise<boolean> {
   const from = process.env.RESEND_FROM || 'Magic Fanoos <onboarding@resend.dev>';
+  const replyTo = process.env.CONTACT_TO || 'eyadat720@gmail.com';
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey || apiKey === 'your_resend_api_key') {
@@ -55,7 +56,10 @@ ${data.resetUrl}
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from, to: [data.to], subject: 'إعادة تعيين كلمة المرور — الفانوس السحري', text, html }),
+      // hello@ is a sending address with no mailbox behind it — the `send` MX
+      // only carries bounces. Without this, a customer who simply hits Reply
+      // is writing into nothing and hears back never.
+      body: JSON.stringify({ from, to: [data.to], reply_to: replyTo, subject: 'إعادة تعيين كلمة المرور — الفانوس السحري', text, html }),
     });
     if (!res.ok) {
       const body = await res.text().catch(() => '');
@@ -168,6 +172,7 @@ export async function sendCustomerMessageEmail(data: {
   preview: string;
 }): Promise<{ sent: boolean; reason?: string }> {
   const from = process.env.RESEND_FROM || 'Magic Fanoos <onboarding@resend.dev>';
+  const replyTo = process.env.CONTACT_TO || 'eyadat720@gmail.com';
   const apiKey = process.env.RESEND_API_KEY;
   const url = `${process.env.FRONTEND_URL || 'https://magicfanoos.com'}/dashboard`;
 
@@ -203,7 +208,8 @@ ${url}`;
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from, to: [data.to], subject: 'رسالة جديدة من الفانوس السحري', text, html }),
+      // Same reason as the reset mail: this one invites a reply by its nature.
+      body: JSON.stringify({ from, to: [data.to], reply_to: replyTo, subject: 'رسالة جديدة من الفانوس السحري', text, html }),
     });
     if (!res.ok) {
       const body = await res.text().catch(() => '');
