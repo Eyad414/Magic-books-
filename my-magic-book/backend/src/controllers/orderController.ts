@@ -285,8 +285,17 @@ export const downloadMyEbook = async (req: Request, res: Response): Promise<void
       return;
     }
 
+    // The child's name is almost always Arabic, and an HTTP header value must
+    // be ASCII — putting "مريم" straight into Content-Disposition makes Node
+    // throw, which turned every download into a 500. The readable name travels
+    // in the RFC 5987 `filename*` parameter, percent-encoded; the plain
+    // `filename` keeps an ASCII fallback for anything that ignores it.
     const child = String(order.storyId?.childName || 'book').replace(/[^\p{L}\p{N}_-]+/gu, '-');
-    res.setHeader('Content-Disposition', `attachment; filename="${child}.pdf"; filename*=UTF-8''${encodeURIComponent(child)}.pdf`);
+    const ascii = child.replace(/[^\x20-\x7E]/g, '').replace(/["\\]/g, '') || 'book';
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${ascii}.pdf"; filename*=UTF-8''${encodeURIComponent(child)}.pdf`,
+    );
     await streamObject(objectPath, res, req);
   } catch (err: any) {
     console.error('[downloadMyEbook]', err?.message || err);
