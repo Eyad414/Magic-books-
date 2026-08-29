@@ -1167,7 +1167,13 @@
     "coupon_is_free": "مجاني بالكامل",
     "coupon_active": "فعّال",
     "coupon_delete": "حذف الكود",
-    "coupon_add": "أضف كود خصم"
+    "coupon_add": "أضف كود خصم",
+    "send_digital": "أرسل للعميل (قراءة)",
+    "sent_digital_done": "أُرسل للعميل ✅",
+    "send_digital_again": "سبق وأرسلته لهذا العميل. تريد إرساله مرة ثانية؟",
+    "send_digital_ok": "تم الإرسال — بيشوفه لما يدخل حسابه ✅",
+    "send_digital_ok_mail": "تم الإرسال — بيشوفه بحسابه ووصله إيميل ✅",
+    "send_failed_generic": "فشل الإرسال"
   },
   "title_page": {
     "presents": "يُقدّم لـ",

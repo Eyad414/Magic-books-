@@ -47,6 +47,9 @@ export interface IOrder extends Document {
   /** Human label for the current step, e.g. "الصفحة ٤ من ١٣". */
   buildStage?: string;
   bookPdfUrl?: string;
+  /** When the book was handed to the customer digitally (read in their
+   *  account). Absent = they have not been told it is ready. */
+  digitalSentAt?: Date;
   // Print-ready files for BookPod (wraparound cover + interior) and job tracking.
   printCoverUrl?: string;
   printInteriorUrl?: string;
@@ -116,6 +119,7 @@ const OrderSchema = new Schema<IOrder>(
     buildProgress: { type: Number, default: 0 },
     buildStage: { type: String },
     bookPdfUrl: { type: String },
+    digitalSentAt: { type: Date },
     printCoverUrl: { type: String },
     printInteriorUrl: { type: String },
     printInteriorPages: { type: Number },

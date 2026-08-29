@@ -1167,7 +1167,13 @@
     "coupon_is_free": "חינם לגמרי",
     "coupon_active": "פעיל",
     "coupon_delete": "מחיקת קוד",
-    "coupon_add": "הוספת קוד"
+    "coupon_add": "הוספת קוד",
+    "send_digital": "שליחה ללקוח (קריאה)",
+    "sent_digital_done": "נשלח ללקוח ✅",
+    "send_digital_again": "כבר שלחת ללקוח הזה. לשלוח שוב?",
+    "send_digital_ok": "נשלח — הוא יראה זאת בחשבונו ✅",
+    "send_digital_ok_mail": "נשלח — נמצא בחשבונו וגם נשלח אימייל ✅",
+    "send_failed_generic": "השליחה נכשלה"
   },
   "title_page": {
     "presents": "מוגש ל",

@@ -1167,7 +1167,13 @@
     "coupon_is_free": "Completely free",
     "coupon_active": "Active",
     "coupon_delete": "Delete code",
-    "coupon_add": "Add a code"
+    "coupon_add": "Add a code",
+    "send_digital": "Send to customer (read)",
+    "sent_digital_done": "Sent to customer ✅",
+    "send_digital_again": "You already sent this to the customer. Send it again?",
+    "send_digital_ok": "Sent — they will see it in their account ✅",
+    "send_digital_ok_mail": "Sent — it is in their account and they got an email ✅",
+    "send_failed_generic": "Sending failed"
   },
   "title_page": {
     "presents": "Presented to",

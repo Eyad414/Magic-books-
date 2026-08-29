@@ -1046,6 +1046,36 @@ export default function AdminDashboard() {
   // The real counts, shown beside each field so an override is always made
   // with the true number in view.
   const [liveStats, setLiveStats] = useState<any | null>(null);
+  const [sendingDigitalId, setSendingDigitalId] = useState<string | null>(null);
+
+  /**
+   * Tell the customer their book is ready to read in their account. Sends a
+   * message and an email; attaches no file.
+   */
+  const handleSendDigital = async (order: any) => {
+    if (order.digitalSentAt
+      && !window.confirm(t('admin.send_digital_again', 'سبق وأرسلته لهذا العميل. تريد إرساله مرة ثانية؟'))) return;
+    setSendingDigitalId(order._id);
+    const toastId = toast.loading(t('admin.sending', 'جارٍ الإرسال...'));
+    try {
+      const res = await adminApi.sendOrderDigital(order._id);
+      if (!res?.success) throw new Error(res?.message);
+      // Say which actually happened: "sent" over an email that never left
+      // would leave the owner thinking the customer was told.
+      toast.success(
+        res.emailed
+          ? t('admin.send_digital_ok_mail', 'تم الإرسال — بيشوفه بحسابه ووصله إيميل ✅')
+          : t('admin.send_digital_ok', 'تم الإرسال — بيشوفه لما يدخل حسابه ✅'),
+        { id: toastId, duration: 6000 },
+      );
+      fetchOrders();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || t('admin.send_failed_generic', 'فشل الإرسال'), { id: toastId });
+    } finally {
+      setSendingDigitalId(null);
+    }
+  };
+
 
 
   // Paying a BookPod print run by card. Admin-only by construction: this whole
@@ -1783,6 +1813,25 @@ export default function AdminDashboard() {
                               disabled={orderBusy}
                             >
                               {buildingOrderId === order._id ? t('admin.sending', 'جارٍ الإرسال...') : t('admin.send_to_bookpod', 'إرسال إلى BookPod')}
+                            </ActionButton>
+                            {/* The digital half of "the book is done": hand it
+                                to the customer to READ in their account. No
+                                file is attached — whether they may also
+                                download the PDF is decided by the package they
+                                bought, not by this button. */}
+                            <ActionButton
+                              variant="ghost"
+                              active={sendingDigitalId === order._id}
+                              spin={sendingDigitalId === order._id}
+                              icon={Mail}
+                              onClick={() => handleSendDigital(order)}
+                              disabled={order.illustrationsStatus !== 'ready' || orderBusy}
+                            >
+                              {sendingDigitalId === order._id
+                                ? t('admin.sending', 'جارٍ الإرسال...')
+                                : order.digitalSentAt
+                                  ? t('admin.sent_digital_done', 'أُرسل للعميل ✅')
+                                  : t('admin.send_digital', 'أرسل للعميل (قراءة)')}
                             </ActionButton>
                             {/* Free re-render of print files from existing images */}
                             <ActionButton

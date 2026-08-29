@@ -104,6 +104,11 @@ export const adminApi = {
    * Pay one BookPod print run by card. Card fields are forwarded and never
    * stored anywhere on our side — only the returned paymentReference is kept.
    */
+  /** Hand a finished order to its customer to read in their account. */
+  sendOrderDigital: async (orderId: string) => {
+    const response = await axiosInstance.post(`/admin/orders/${orderId}/send-digital`, {});
+    return response.data;
+  },
   payPrintJob: async (orderNo: string, card: { cardNumber: string; expiryMonth: number; expiryYear: number; cvv: string; citizenId?: string }) => {
     const response = await axiosInstance.post(`/admin/print-jobs/${orderNo}/pay`, card);
     return response.data;

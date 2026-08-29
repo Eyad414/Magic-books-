@@ -2451,6 +2451,72 @@ export const sendBookToCustomer = async (req: Request, res: Response): Promise<v
 };
 
 /**
+ * POST /api/admin/orders/:id/send-digital
+ *
+ * Hand a finished order to its customer as a book they READ in their account —
+ * the other half of "the book is done", next to sending it to the printer.
+ *
+ * Deliberately NOT a file. The story already belongs to this customer, so
+ * nothing is copied and no PDF is attached or linked: they open it from
+ * «قصصي». Whether they may also download the PDF is decided by the package
+ * they bought, in the customer route, and is not affected by this button.
+ *
+ * The message is tied to the story so it appears in their conversation with
+ * the book card attached, and it carries the unread badge like any other.
+ */
+export const sendOrderDigital = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const order: any = await Order.findById(req.params.id).populate('storyId', 'childName userId');
+    if (!order) {
+      res.status(404).json({ success: false, message: 'الطلب غير موجود' });
+      return;
+    }
+    if (order.illustrationsStatus !== 'ready') {
+      res.status(409).json({ success: false, message: 'الكتاب لسه ما خلص. ابنيه أولاً.' });
+      return;
+    }
+
+    const customer = await User.findById(order.userId).select('_id name email').lean();
+    if (!customer) {
+      res.status(404).json({ success: false, message: 'صاحب الطلب غير موجود' });
+      return;
+    }
+
+    const admin = (req as any).user;
+    const child = String(order.storyId?.childName || '').trim();
+    const text = String(req.body?.note || '').trim()
+      || `كتاب ${child || 'طفلك'} صار جاهز 🎉 افتحه من «قصصي» بحسابك واقرأه وقت ما تحب.`;
+
+    await CustomerMessage.create({
+      userId: customer._id,
+      body: text,
+      fromAdmin: true,
+      adminId: admin?._id,
+      adminName: admin?.name,
+      storyId: order.storyId?._id || order.storyId,
+    });
+
+    const mail = (customer as any).email
+      ? await sendCustomerMessageEmail({ to: (customer as any).email, name: (customer as any).name, preview: text })
+      : { sent: false, reason: 'no-email' };
+
+    order.digitalSentAt = new Date();
+    await order.save();
+
+    res.json({
+      success: true,
+      sentAt: order.digitalSentAt,
+      customer: { name: customer.name, email: (customer as any).email },
+      emailed: mail.sent,
+      emailReason: mail.sent ? undefined : mail.reason,
+    });
+  } catch (err: any) {
+    console.error('[sendOrderDigital]', err?.message || err);
+    res.status(500).json({ success: false, message: err.message || 'فشل الإرسال' });
+  }
+};
+
+/**
  * POST /api/admin/print-jobs/:orderNo/pay
  *
  * Pays one BookPod print job with a card. ADMIN ONLY, deliberately: the card
