@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Sparkles, Star, ArrowLeft } from 'lucide-react';
+import { Sparkles, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useStoryProgress } from '../../context/StoryProgressContext';
 import { publicApi } from '../../api/publicApi';
@@ -37,7 +37,7 @@ export default function HeroSection() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Text Content */}
-          <div className="text-center lg:text-right animate-fade-in-up">
+          <div className="text-center lg:text-right animate-fade-in-up order-2 lg:order-1">
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold-500/10 border border-gold-500/30 text-gold-500 font-arabic text-sm mb-6">
               <Sparkles className="w-4 h-4 animate-sparkle" />
@@ -89,8 +89,12 @@ export default function HeroSection() {
               ))}
             </div>
           </div>
-          {/* Floating Book Illustration */}
-          <div className="flex items-center justify-center animate-float">
+          {/* Floating Book Illustration.
+              On a phone this comes FIRST: nearly all of this traffic arrives
+              from Instagram on a handset, and stacked text-then-book put the
+              product below the fold — the visitor met a headline where the
+              reel had promised a book. */}
+          <div className="flex items-center justify-center animate-float order-1 lg:order-2">
             <div className="relative">
               {/* Main book */}
               <div className="w-64 h-80 md:w-80 md:h-96 relative" style={{ perspective: '1000px' }}>
@@ -101,24 +105,18 @@ export default function HeroSection() {
                     boxShadow: '0 0 60px rgba(108,63,197,0.5), 0 0 30px rgba(245,166,35,0.2)',
                   }}
                 >
-                  {/* Book content mockup */}
-                  <div className="p-6 h-full flex flex-col justify-between">
-                    <div>
-                      <div className="w-12 h-12 rounded-xl bg-gold-500/20 flex items-center justify-center mb-4">
-                        <Star className="w-6 h-6 text-gold-500 animate-sparkle" />
-                      </div>
-                      <div className="space-y-2">
-                        <div className="h-3 bg-white/20 rounded-full w-3/4" />
-                        <div className="h-3 bg-white/15 rounded-full w-full" />
-                        <div className="h-3 bg-white/15 rounded-full w-2/3" />
-                        <div className="h-3 bg-white/10 rounded-full w-5/6" />
-                      </div>
-                    </div>
-                    <div className="border-t border-white/10 pt-4">
-                      <div className="text-gold-500 font-arabic text-sm font-bold">{t('hero.custom_story')}</div>
-                      <div className="h-2 bg-white/10 rounded-full w-1/2 mt-2" />
-                    </div>
-                  </div>
+                  {/* A REAL cover, not a mockup. This was a purple rectangle
+                      with grey bars standing in for text: someone arriving from
+                      a reel full of real children's books saw an abstract shape
+                      and left — every Instagram visitor so far opened this page
+                      and no other. Local webp so it paints immediately rather
+                      than waiting on the image proxy. */}
+                  <img
+                    src="/showcase/baha.webp"
+                    alt={t('hero.custom_story')}
+                    className="w-full h-full object-cover"
+                    fetchPriority="high"
+                  />
                 </div>
                 {/* Floating sparkles */}
                 {[
