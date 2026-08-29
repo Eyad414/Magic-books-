@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useStoryProgress } from '../../context/StoryProgressContext';
 import { useAuth } from '../../context/AuthContext';
 import MagicButton from '../common/MagicButton';
-import { ChevronRight, CreditCard, Shield, CheckCircle, Lock } from 'lucide-react';
+import { ChevronRight, CreditCard, CheckCircle, Lock } from 'lucide-react';
 import { orderApi } from '../../api/orderApi';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -218,12 +218,6 @@ export default function Step4_Payment({ onPrev }: Props) {
             🍎 {t('step5.applepay_note', 'استخدم Touch ID أو Face ID لإتمام الدفع.')}
           </p>
         )}
-      </div>
-
-      {/* Security badge */}
-      <div className="flex items-center gap-2 justify-center text-white/30">
-        <Shield className="w-4 h-4 text-green-500" />
-        <span className="font-arabic text-xs">{t('step5.secure_payment')}</span>
       </div>
 
       {/* Navigation */}
