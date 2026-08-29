@@ -3548,8 +3548,15 @@ export default function AdminDashboard() {
                             )}
                             {j.quantity > 1 && <span className="text-white/40">× {j.quantity}</span>}
                             {/* Every job so far died unpaid, so the payment is
-                                the action this row is actually for. */}
-                            {j.bookpodJobId && !j.paymentReference && j.bookpodStatus !== 'PAID' && (
+                                the action this row is actually for — but only
+                                where paying is possible at all. BookPod refuses
+                                a cancelled order (409, "cannot be paid in its
+                                current state"), so offering the button there
+                                asks the owner to type card details for nothing.
+                                A cancelled job needs re-sending, not paying. */}
+                            {j.bookpodJobId && !j.paymentReference
+                              && j.bookpodStatus !== 'PAID'
+                              && j.bookpodStatus !== 'CANCELLED' && (
                               <button
                                 type="button"
                                 onClick={() => { setPayJob(j); setPayStuck(null); }}
@@ -3589,6 +3596,11 @@ export default function AdminDashboard() {
                                       : 'bg-white/10 text-white/45'
                                 }`}
                                 dir="ltr"
+                                title={
+                                  j.bookpodStatus === 'CANCELLED'
+                                    ? t('admin.cancelled_hint', 'طلب ملغى عند BookPod — لا يقبل الدفع. أعد إرساله لتحصل على رقم طلب جديد.')
+                                    : ''
+                                }
                               >
                                 {String(j.bookpodStatus).replace(/_/g, ' ').toLowerCase()}
                               </span>

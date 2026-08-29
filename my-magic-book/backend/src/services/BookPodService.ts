@@ -364,6 +364,50 @@ export interface BookPodPayResult {
   reconcile: boolean;
 }
 
+/**
+ * Turn BookPod's terse English error into something the owner can act on.
+ *
+ * The one that matters most is 404. BookPod's own spec says the endpoint
+ * "returns 404 until EXTERNAL_CARD_PAYMENT_ENABLED=true is set on the Cloud
+ * Run service" — so the bare word "Not found" is not a bug on our side and not
+ * a missing order: it is a switch only BookPod can throw. Showing it raw sends
+ * the owner hunting through his own site for a fault that is not there.
+ *
+ * BookPod's original wording is always kept, so nothing is hidden behind the
+ * translation.
+ */
+function explainPayFailure(status: number, text: string): string {
+  const t = text.toLowerCase();
+  let ar = '';
+  if (status === 404) {
+    ar = 'خدمة الدفع بالبطاقة غير مُفعّلة لحسابك عند BookPod بعد. مسار الدفع مغلق من طرفهم '
+       + '(EXTERNAL_CARD_PAYMENT_ENABLED) — راسِلهم لتفعيله لتكاملك. '
+       + 'أو أن رقم الطلب ليس ضمن حسابك.';
+  } else if (status === 402) {
+    ar = 'رفض البنك البطاقة. لم يُخصم أي مبلغ — جرّب بطاقة أخرى.';
+  } else if (status === 403) {
+    ar = 'هذا الطلب لم يُنشأ بمفاتيحك، فلا يمكن دفعه منها.';
+  } else if (status === 409 && /already paid/.test(t)) {
+    ar = 'هذا الطلب مدفوع أصلًا.';
+  } else if (status === 409 && /busy/.test(t)) {
+    ar = 'الطلب مشغول بمحاولة أخرى الآن. انتظر قليلًا ثم أعد المحاولة.';
+  } else if (status === 409 && /current state|cancelled/.test(t)) {
+    ar = 'لا يمكن دفع هذا الطلب في حالته الحالية (ملغى أو مُعطّل). '
+       + 'أنشئ طلب طباعة جديدًا بدل محاولة دفع الملغى.';
+  } else if (status === 409 && /unresolved/.test(t)) {
+    ar = 'محاولة دفع سابقة لهذا الطلب لم تُحسم. لا تُعِد المحاولة — راجِع BookPod برقم الطلب.';
+  } else if (status === 409) {
+    ar = 'لا يمكن دفع هذا الطلب الآن.';
+  } else if (status === 502) {
+    ar = 'لا نعرف نتيجة العملية — قد تكون البطاقة خُصمت فعلًا. لا تُعِد المحاولة، وراجِع BookPod برقم الطلب.';
+  } else if (status === 500 && /succeeded/.test(t)) {
+    ar = 'تم الخصم لكن BookPod لم يُحدّث الطلب. لا تُعِد المحاولة — احتفظ بمرجع الدفع وراجِعهم.';
+  } else if (status === 503) {
+    ar = 'مزوّد الدفع غير مُهيّأ على خادم BookPod.';
+  }
+  return ar ? `${ar} (BookPod: ${text})` : text;
+}
+
 export async function payOrderWithCard(orderNo: string | number, card: BookPodCardInput): Promise<BookPodPayResult> {
   const { baseUrl, headers } = cfg();
   const digits = String(card.cardNumber || '').replace(/[\s-]/g, '');
@@ -415,7 +459,7 @@ export async function payOrderWithCard(orderNo: string | number, card: BookPodCa
   return {
     ok: false,
     status: res.status,
-    error: text,
+    error: explainPayFailure(res.status, text),
     retryable,
     reconcile: moneyMayHaveMoved || (res.status === 409 && /unresolved/i.test(text)),
   };
