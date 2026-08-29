@@ -155,31 +155,27 @@ export default function Step4_Payment({ onPrev }: Props) {
                 icon: '💵',
                 soon: false,
               },
-            ].map((method) => {
+            // Three greyed-out "قريباً" chips against one real option made the
+            // last screen before paying look like a shop that is not open yet.
+            // A method the customer cannot choose is not information, it is
+            // doubt at the worst possible moment. These come back on their own
+            // the day online payments are switched on.
+            ].filter((method) => !method.soon).map((method) => {
               const active = paymentMethod === method.id;
-              const soon = method.soon;
               return (
                 <button
                   key={method.id}
                   type="button"
-                  disabled={soon}
-                  onClick={() => { if (!soon) { setTouchedMethod(true); setPaymentMethod(method.id as any); } }}
-                  title={soon ? `${method.label} — ${t('step5.soon', 'قريباً')}` : method.label}
+                  onClick={() => { setTouchedMethod(true); setPaymentMethod(method.id as any); }}
+                  title={method.label}
                   className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-arabic font-bold whitespace-nowrap transition-all ${
-                    soon
-                      ? 'text-white/35 cursor-not-allowed'
-                      : active
-                        ? 'bg-gold-500 text-dark-900 shadow-[0_0_12px_rgba(212,169,55,0.4)]'
-                        : 'text-white/60 hover:text-white hover:bg-white/5'
+                    active
+                      ? 'bg-gold-500 text-dark-900 shadow-[0_0_12px_rgba(212,169,55,0.4)]'
+                      : 'text-white/60 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <span className={`text-base leading-none ${soon ? 'opacity-60' : ''}`}>{method.icon}</span>
+                  <span className="text-base leading-none">{method.icon}</span>
                   <span className={active ? '' : 'hidden sm:inline'}>{method.label}</span>
-                  {soon && (
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gold-500/15 text-gold-500/80 border border-gold-500/25">
-                      {t('step5.soon', 'قريباً')}
-                    </span>
-                  )}
                 </button>
               );
             })}

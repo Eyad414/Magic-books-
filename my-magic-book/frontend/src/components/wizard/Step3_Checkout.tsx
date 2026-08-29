@@ -594,20 +594,6 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
               <span className="font-arabic font-black text-white text-lg">{t('step5.total')}</span>
               <span className="font-arabic font-black text-gold-500 text-3xl drop-shadow-[0_0_14px_rgba(212,169,55,0.5)]">{totalPrice} ₪</span>
             </div>
-
-            {/* What the number buys. A total on its own invites second
-                thoughts; the things it pays for answer them. */}
-            <ul className="pt-1 space-y-1">
-              {[
-                t('step3.included_pages', '١٣ صفحة + غلاف، باسم طفلك ووجهه'),
-                t('step3.included_print', 'طباعة مطبعة حقيقية — مش طباعة بيت'),
-                t('step3.included_preview', 'بتعاين الكتاب كامل قبل الطباعة'),
-              ].map((line, i) => (
-                <li key={i} className="flex items-start gap-1.5 font-arabic text-white/60 text-[11px] leading-relaxed">
-                  <span className="text-gold-500 shrink-0">✓</span> {line}
-                </li>
-              ))}
-            </ul>
           </div>
         </div>
 
