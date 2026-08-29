@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useCheckoutTotals } from '../../hooks/useCheckoutTotals';
+import { publicApi } from '../../api/publicApi';
 
 /**
  * Step 4 — payment only.
@@ -30,9 +31,26 @@ export default function Step4_Payment({ onPrev }: Props) {
   const { storyConfig, bookCustomization, shippingAddress } = progress;
   const isPickup = shippingAddress?.deliveryMethod === 'pickup';
 
+  // The coupon was applied a screen ago and is sent to the server with the
+  // order, but this screen priced the book as if it did not exist: a customer
+  // with 50% off read "ادفع 130 ₪ الآن" on the button while the server charged
+  // 65. It is re-checked against the server rather than trusted from the
+  // wizard, so the figure shown here is the figure that will be charged.
+  const [coupon, setCoupon] = useState<{ type: 'percent' | 'freeDelivery'; value: number } | null>(null);
+  useEffect(() => {
+    const code = String(storyConfig?.couponCode || '').trim();
+    if (!code) { setCoupon(null); return; }
+    publicApi.checkCoupon(code)
+      .then((r) => setCoupon(r?.success ? { type: r.type, value: Number(r.value) || 0 } : null))
+      .catch(() => setCoupon(null));
+  }, [storyConfig?.couponCode]);
+
   const { selectedPkg, deliveryFee, discountedBase, totalPrice, liveSettings } = useCheckoutTotals({
     bookPackage: bookCustomization?.bookPackage,
     isPickup,
+    couponApplied: !!coupon,
+    discount: coupon?.type === 'percent' ? coupon.value : 0,
+    couponType: coupon?.type,
   });
 
   // Card payment appears only when there is a hosted checkout to hand off to.

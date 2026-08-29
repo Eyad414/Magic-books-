@@ -213,7 +213,10 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
   const basePrice = selectedPkg.price;
   const discountedBase = couponApplied ? Math.round(basePrice * (1 - discount / 100)) : basePrice;
   const couponFreeDelivery = couponApplied && couponType === 'freeDelivery';
-  const freeDelivery = isDigital || isPickup || couponFreeDelivery;
+  // A 100% coupon is a giveaway; asking the winner for 30 ₪ delivery at the
+  // door is not one. Matches priceOrder on the server.
+  const couponFullyFree = couponApplied && couponType === 'percent' && discount >= 100;
+  const freeDelivery = isDigital || isPickup || couponFreeDelivery || couponFullyFree;
   const deliveryFee = freeDelivery ? 0 : 30;
   const totalPrice = discountedBase + deliveryFee;
 

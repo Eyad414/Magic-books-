@@ -1159,7 +1159,15 @@
     "ebook_building": "Digital copy — being prepared",
     "stat_overridden": "Real: {{n}}",
     "stat_auto": "Automatic: {{n}}",
-    "home_stats_hint2": "Shown on the Home and About pages. Leave blank to show the real number automatically, or type one to publish it instead."
+    "home_stats_hint2": "Shown on the Home and About pages. Leave blank to show the real number automatically, or type one to publish it instead.",
+    "coupons_title": "Discount codes",
+    "coupons_hint": "100% = the book is completely free, delivery included. Codes are not case-sensitive.",
+    "coupon_percent": "Percent off",
+    "coupon_free_delivery": "Free delivery",
+    "coupon_is_free": "Completely free",
+    "coupon_active": "Active",
+    "coupon_delete": "Delete code",
+    "coupon_add": "Add a code"
   },
   "title_page": {
     "presents": "Presented to",

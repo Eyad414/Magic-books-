@@ -28,6 +28,7 @@ export function useCheckoutTotals(opts: {
   isPickup: boolean;
   discount?: number;
   couponApplied?: boolean;
+  couponType?: 'percent' | 'freeDelivery';
 }): CheckoutTotals {
   const { t, i18n } = useTranslation();
   const [liveSettings, setLiveSettings] = useState<any>(null);
@@ -70,10 +71,16 @@ export function useCheckoutTotals(opts: {
 
   const isDigital = selectedPkg?.id === 'audio' || selectedPkg?.id === 'ebook';
   const basePrice = selectedPkg?.price ?? 0;
-  const discountedBase = opts.couponApplied
-    ? Math.round(basePrice * (1 - (opts.discount || 0) / 100))
-    : basePrice;
-  const deliveryFee = isDigital || opts.isPickup ? 0 : 30;
+  // Clamped for the same reason the server clamps: a coupon saved as 150 must
+  // not show money owed back to the customer.
+  const percent = Math.min(100, Math.max(0, opts.discount || 0));
+  const discountedBase = opts.couponApplied ? Math.round(basePrice * (1 - percent / 100)) : basePrice;
+  // Mirrors priceOrder on the server: 100% off means free, delivery included,
+  // and a free-delivery coupon waives the fee on its own. If these two ever
+  // disagree the customer is quoted one number and charged another.
+  const fullyFree = !!opts.couponApplied && opts.couponType !== 'freeDelivery' && percent >= 100;
+  const couponFreeDelivery = !!opts.couponApplied && opts.couponType === 'freeDelivery';
+  const deliveryFee = isDigital || opts.isPickup || fullyFree || couponFreeDelivery ? 0 : 30;
 
   return {
     packages, selectedPkg, pkgUnavailable, isDigital,

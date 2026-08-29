@@ -36,4 +36,38 @@ describe('priceOrder', () => {
     expect(priceOrder({ basePrice: 130, coupon: percent(20) }).couponCode).toBe('X');
     expect(priceOrder({ basePrice: 130, coupon: null }).couponCode).toBeUndefined();
   });
+
+  it('a 100% coupon makes the order free, delivery included', () => {
+    const p = priceOrder({
+      basePrice: 130,
+      bookPackage: 'color',
+      deliveryMethod: 'delivery',
+      coupon: { code: 'FREE', type: 'percent', value: 100, active: true },
+    });
+    expect(p.discount).toBe(130);
+    // The point of the rule: a giveaway must not ask for 30 ILS at the door.
+    expect(p.deliveryFee).toBe(0);
+    expect(p.total).toBe(0);
+  });
+
+  it('clamps a coupon saved above 100 instead of paying the customer', () => {
+    const p = priceOrder({
+      basePrice: 130,
+      bookPackage: 'color',
+      deliveryMethod: 'delivery',
+      coupon: { code: 'OOPS', type: 'percent', value: 150, active: true },
+    });
+    expect(p.total).toBe(0);
+    expect(p.discount).toBe(130);
+  });
+
+  it('a 99% coupon still charges delivery — only 100 means free', () => {
+    const p = priceOrder({
+      basePrice: 130,
+      bookPackage: 'color',
+      deliveryMethod: 'delivery',
+      coupon: { code: 'NEARLY', type: 'percent', value: 99, active: true },
+    });
+    expect(p.deliveryFee).toBe(DELIVERY_FEE_ILS);
+  });
 });

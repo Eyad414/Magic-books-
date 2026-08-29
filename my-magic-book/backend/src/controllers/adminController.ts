@@ -797,7 +797,7 @@ export const getPublicSettings = async (_req: Request, res: Response): Promise<v
 // @route PUT /api/admin/settings
 export const updateSettings = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { bookPackages, themes, homeStats, allowSkipPhoto, aiModeEnabled, demoCards } = req.body;
+    const { bookPackages, themes, homeStats, allowSkipPhoto, aiModeEnabled, demoCards, coupons } = req.body;
     let settings = await SiteSettings.findOne();
 
     if (!settings) {
@@ -816,6 +816,25 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
       if (themes) {
         settings.themes = themes;
         settings.markModified('themes');
+      }
+      if (Array.isArray(coupons)) {
+        // Sanitised here rather than trusted from the browser: the value feeds
+        // straight into what a customer is charged, and a coupon saved as 500
+        // or with a blank code would be discovered at checkout by a real buyer.
+        const seen = new Set<string>();
+        settings.coupons = coupons
+          .map((c: any) => ({
+            code: String(c?.code || '').trim().toUpperCase(),
+            type: c?.type === 'freeDelivery' ? 'freeDelivery' : 'percent',
+            value: Math.min(100, Math.max(0, Math.round(Number(c?.value) || 0))),
+            active: c?.active !== false,
+          }))
+          .filter((c: any) => {
+            if (!c.code || seen.has(c.code)) return false;
+            seen.add(c.code);
+            return true;
+          }) as any;
+        settings.markModified('coupons');
       }
       if (homeStats) {
         settings.homeStats = homeStats;

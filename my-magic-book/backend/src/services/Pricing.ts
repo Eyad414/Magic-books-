@@ -35,11 +35,18 @@ export function priceOrder(opts: {
   coupon?: ICoupon | null;
 }): PriceBreakdown {
   const { basePrice, bookPackage, deliveryMethod, coupon } = opts;
-  const percent = coupon?.type === 'percent' ? coupon.value : 0;
+  // Clamped: a coupon saved as 150 must not invent money back, and a negative
+  // one must not quietly add to the bill.
+  const percent = coupon?.type === 'percent' ? Math.min(100, Math.max(0, coupon.value)) : 0;
   const discount = percent ? Math.round(basePrice * (percent / 100)) : 0;
 
+  // "100% off" has to mean free. Charging delivery on top of a coupon that
+  // says the order costs nothing is the kind of surprise that loses the
+  // customer at the last screen — and a giveaway is not a giveaway if the
+  // winner is asked for 30 ₪ at the door.
+  const fullyFree = percent >= 100;
   const noParcel = DIGITAL.has(String(bookPackage)) || deliveryMethod === 'pickup';
-  const deliveryWaived = noParcel || coupon?.type === 'freeDelivery';
+  const deliveryWaived = noParcel || fullyFree || coupon?.type === 'freeDelivery';
   const deliveryFee = deliveryWaived ? 0 : DELIVERY_FEE_ILS;
 
   return {
