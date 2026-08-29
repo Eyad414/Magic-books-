@@ -22,12 +22,13 @@ export default function HeroSection() {
     publicApi.getStats()
       .then((res) => {
         if (!res?.stats) return;
-        const { books, families, ready } = res.stats;
+        const { books, children, ready, languages } = res.stats;
         setStats((prev) => ({
           ...prev,
           storiesCreated: String(books ?? '—'),
-          happyFamilies: String(families ?? '—'),
+          happyFamilies: String(children ?? '—'),
           readyStories: String(ready ?? '—'),
+          rating: languages ? `${languages}` : prev.rating,
         }));
       })
       .catch(() => { /* the page keeps its placeholders rather than a wrong number */ });

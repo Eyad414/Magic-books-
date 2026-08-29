@@ -720,23 +720,26 @@ const SCHOOL = (part: number) => ({ series: 'school', seriesName: 'سلسلة ا
  */
 export const getLiveStats = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const [stories, orders, settings] = await Promise.all([
-      Story.find({}).select('generatedCover generatedImages coloringImages').lean(),
-      Order.find({}).select('userId paymentStatus paymentMethod').lean(),
+    const [stories, settings] = await Promise.all([
+      Story.find({}).select('childName').lean(),
       SiteSettings.findOne().lean(),
     ]);
 
-    const books = (stories as any[]).filter(
-      (s) => s.generatedCover || (s.generatedImages || []).length || (s.coloringImages || []).length,
-    ).length;
-    const families = new Set(
-      (orders as any[])
-        .filter((o) => o.paymentStatus === 'paid' || o.paymentMethod === 'cash')
-        .map((o) => String(o.userId)),
+    // Counted as broadly as is still TRUE. "Stories created" is every story a
+    // parent has started, not only the ones already drawn — they were created.
+    // "Children" is distinct named children across those stories, which is a
+    // bigger and more honest number than counting paying accounts: a family
+    // with two children is two children.
+    const books = (stories as any[]).length;
+    const children = new Set(
+      (stories as any[]).map((s) => String(s.childName || '').trim()).filter(Boolean),
     ).size;
     const ready = ((settings as any)?.themes || []).filter((t: any) => t.isPublic !== false).length;
+    // Every story is written in Arabic, Hebrew and English — a fact, unlike the
+    // five-star rating this replaces, which had no reviews behind it at all.
+    const languages = 3;
 
-    res.json({ success: true, stats: { books, families, ready } });
+    res.json({ success: true, stats: { books, children, ready, languages } });
   } catch (err: any) {
     // The page has its own fallback; a failed count must never blank the hero.
     res.json({ success: false, stats: null });
