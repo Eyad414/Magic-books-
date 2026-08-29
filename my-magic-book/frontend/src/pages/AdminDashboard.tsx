@@ -359,6 +359,18 @@ export default function AdminDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
+  // The print log is where the pay button lives, and nothing ever filled it in
+  // on its own: it was loaded only as a side effect of sending a book, paying,
+  // or running the readiness check by hand. So opening this tab showed no jobs
+  // at all and no way to pay one — the button existed in the code and never on
+  // the screen. Every other tab loads what it needs when it opens; this one now
+  // does too.
+  useEffect(() => {
+    if (tab !== 'showcase') return;
+    loadPrintJobs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
+
   // The messenger refreshes itself while it is open — a reply that arrives
   // while the owner is looking at the inbox should appear there, not on the
   // next manual reload.
