@@ -35,6 +35,11 @@ export const publicApi = {
     return res.data;
   },
   /** Real generated books the owner published to the home page. */
+  /** Live counts for the hero — real books, real families, real choices. */
+  getStats: async () => {
+    const res = await api.get('/public/stats');
+    return res.data;
+  },
   getShowcaseBooks: async () => {
     const res = await api.get('/public/showcase-books');
     return res.data;

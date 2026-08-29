@@ -5,6 +5,11 @@ export const authApi = {
     const { data } = await api.post('/auth/register', { name, email, password });
     return data;
   },
+  /** Exchange Google's ID token for our own session token. */
+  google: async (credential: string) => {
+    const res = await api.post('/auth/google', { credential });
+    return res.data;
+  },
   login: async (email: string, password: string) => {
     const { data } = await api.post('/auth/login', { email, password });
     return data;

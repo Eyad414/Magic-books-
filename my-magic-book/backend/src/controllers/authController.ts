@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { OAuth2Client } from 'google-auth-library';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import User from '../models/User';
@@ -207,5 +208,86 @@ export const makeMeAdmin = async (req: Request, res: Response): Promise<void> =>
     res.json({ success: true, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
   } catch (error) {
     res.status(500).json({ success: false, message: 'حدث خطأ في الخادم' });
+  }
+};
+
+/**
+ * POST /api/auth/google
+ *
+ * "Continue with Google". The browser hands us the ID token Google minted for
+ * it; we verify that token with Google's own keys before trusting a single
+ * field of it — an unverified token is just a string a caller made up, and
+ * accepting one would let anyone sign in as anybody.
+ *
+ * Three cases: a known Google account signs in; an existing email-and-password
+ * account gets Google linked to it (same person, one account, no duplicate);
+ * a new visitor gets an account with no password at all.
+ */
+export const googleLogin = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const clientId = (process.env.GOOGLE_CLIENT_ID || '').trim();
+    if (!clientId) {
+      res.status(503).json({ success: false, message: 'الدخول بحساب Google غير مفعّل بعد.' });
+      return;
+    }
+    const credential = String(req.body?.credential || '').trim();
+    if (!credential) {
+      res.status(400).json({ success: false, message: 'لم يصل رمز Google.' });
+      return;
+    }
+
+    const client = new OAuth2Client(clientId);
+    let payload: any;
+    try {
+      // audience is checked here: a token minted for a DIFFERENT app is valid
+      // in itself and must still be refused.
+      const ticket = await client.verifyIdToken({ idToken: credential, audience: clientId });
+      payload = ticket.getPayload();
+    } catch {
+      res.status(401).json({ success: false, message: 'تعذّر التحقق من حساب Google.' });
+      return;
+    }
+
+    const email = String(payload?.email || '').toLowerCase().trim();
+    const googleId = String(payload?.sub || '');
+    if (!email || !googleId || payload?.email_verified === false) {
+      res.status(401).json({ success: false, message: 'حساب Google بدون بريد مُوثّق.' });
+      return;
+    }
+
+    let user = await User.findOne({ googleId });
+    if (!user) {
+      const byEmail = await User.findOne({ email });
+      if (byEmail) {
+        // Same person arriving a different way — link, never create a second
+        // account holding half their orders.
+        byEmail.googleId = googleId;
+        await byEmail.save();
+        user = byEmail;
+      } else {
+        user = await User.create({
+          name: String(payload?.name || email.split('@')[0]).slice(0, 60),
+          email,
+          googleId,
+        });
+      }
+    }
+
+    // Same bookkeeping the password path does, so the customers tab counts a
+    // Google sign-in like any other.
+    user.lastLoginAt = new Date();
+    user.loginCount = (user.loginCount || 0) + 1;
+    if (Array.isArray((user as any).loginHistory)) {
+      (user as any).loginHistory = [...(user as any).loginHistory, new Date()].slice(-20);
+    }
+    await user.save();
+    res.json({
+      success: true,
+      token: signToken(String(user._id)),
+      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+    });
+  } catch (err: any) {
+    console.error('[googleLogin]', err?.message || err);
+    res.status(500).json({ success: false, message: 'تعذّر تسجيل الدخول بحساب Google.' });
   }
 };

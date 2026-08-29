@@ -707,6 +707,42 @@ const SCHOOL = (part: number) => ({ series: 'school', seriesName: 'سلسلة ا
 // @route GET /api/public/settings
 // @desc  Customer-facing settings: hides unready themes so half-finished stories
 //        never appear in the wizard.
+/**
+ * Live counts for the numbers under the hero.
+ *
+ * These were fixed strings — "+300", "+150" — and a parent reading them is
+ * being told a fact. They are counted from the database now, so the page can
+ * only ever claim what actually happened.
+ *
+ * Books counts the ones with artwork, not started drafts; families counts
+ * distinct accounts with a settled order, so one buyer with three books is one
+ * family. Ready stories is what a customer can actually pick today.
+ */
+export const getLiveStats = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const [stories, orders, settings] = await Promise.all([
+      Story.find({}).select('generatedCover generatedImages coloringImages').lean(),
+      Order.find({}).select('userId paymentStatus paymentMethod').lean(),
+      SiteSettings.findOne().lean(),
+    ]);
+
+    const books = (stories as any[]).filter(
+      (s) => s.generatedCover || (s.generatedImages || []).length || (s.coloringImages || []).length,
+    ).length;
+    const families = new Set(
+      (orders as any[])
+        .filter((o) => o.paymentStatus === 'paid' || o.paymentMethod === 'cash')
+        .map((o) => String(o.userId)),
+    ).size;
+    const ready = ((settings as any)?.themes || []).filter((t: any) => t.isPublic !== false).length;
+
+    res.json({ success: true, stats: { books, families, ready } });
+  } catch (err: any) {
+    // The page has its own fallback; a failed count must never blank the hero.
+    res.json({ success: false, stats: null });
+  }
+};
+
 export const getPublicSettings = async (_req: Request, res: Response): Promise<void> => {
   try {
     const settings = await SiteSettings.findOne();

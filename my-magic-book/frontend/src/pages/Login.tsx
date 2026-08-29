@@ -5,6 +5,7 @@ import MagicButton from '../components/common/MagicButton';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import GoogleButton from '../components/auth/GoogleButton';
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -117,6 +118,10 @@ export default function Login() {
               {t('auth.login_btn')}
             </MagicButton>
           </form>
+
+          {/* One tap instead of a password. Renders nothing until a Google
+              client id is configured, so it never appears half-working. */}
+          <GoogleButton onDone={() => navigate('/dashboard')} />
 
           <p className="font-arabic text-white/40 text-sm text-center mt-6">
             {t('auth.no_account')}

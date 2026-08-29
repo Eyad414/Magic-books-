@@ -5,20 +5,32 @@ import { useTranslation } from 'react-i18next';
 import { useStoryProgress } from '../../context/StoryProgressContext';
 import { publicApi } from '../../api/publicApi';
 
-// Fallback stats if the backend hasn't set custom ones yet.
-const DEFAULT_STATS = { storiesCreated: '+500', happyFamilies: '+100', readyStories: '+20', rating: '5 ⭐' };
+// Shown only until the live counts arrive — never instead of them.
+const DEFAULT_STATS = { storiesCreated: '—', happyFamilies: '—', readyStories: '—', rating: '5 ⭐' };
 
 export default function HeroSection() {
   const { t } = useTranslation();
   const { resetProgress } = useStoryProgress();
   const navigate = useNavigate();
 
-  // Admin-editable trust counters (from site settings).
+  // The counters under the hero. These used to be fixed strings — "+500
+  // stories", "+100 families" — presented to a parent as fact. They are counted
+  // from the database now: whatever the shop has actually done, and nothing
+  // more. Small is fine; untrue is not.
   const [stats, setStats] = useState(DEFAULT_STATS);
   useEffect(() => {
-    publicApi.getSettings()
-      .then((res) => { if (res?.settings?.homeStats) setStats({ ...DEFAULT_STATS, ...res.settings.homeStats }); })
-      .catch(() => {});
+    publicApi.getStats()
+      .then((res) => {
+        if (!res?.stats) return;
+        const { books, families, ready } = res.stats;
+        setStats((prev) => ({
+          ...prev,
+          storiesCreated: String(books ?? '—'),
+          happyFamilies: String(families ?? '—'),
+          readyStories: String(ready ?? '—'),
+        }));
+      })
+      .catch(() => { /* the page keeps its placeholders rather than a wrong number */ });
   }, []);
 
   const handleStartStory = (e: React.MouseEvent) => {
