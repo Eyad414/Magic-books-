@@ -2621,7 +2621,7 @@ export const sendOrderDigital = async (req: Request, res: Response): Promise<voi
     const admin = (req as any).user;
     const child = String(order.storyId?.childName || '').trim();
     const text = String(req.body?.note || '').trim()
-      || `كتاب ${child || 'طفلك'} صار جاهز 🎉 افتحه من «قصصي» بحسابك واقرأه وقت ما تحب.`;
+      || `كتاب ${child || 'طفلك'} أصبح جاهزاً 🎉 افتحه من «قصصي» في حسابك واقرأه متى شئت.`;
 
     const mail = (customer as any).email
       ? await sendCustomerMessageEmail({ to: (customer as any).email, name: (customer as any).name, preview: text })

@@ -83,8 +83,8 @@ export async function grantIfDue(userId: string, now = new Date()): Promise<{ co
   // signup would read as a mistake to anyone who knows their own birthday.
   const isRealBirthday = !!user.birthday;
   const body = isRealBirthday
-    ? `كل عام وإنت بخير يا ${user.name || 'صديقنا'} 🎂🎉 هديتنا إلك بعيد ميلادك: كود «${code}» — اصنع قصة كاملة مجاناً (نسخة رقمية). استخدمه عند الدفع.`
-    : `كل سنة وإنت بخير 🎉 مرّت سنة على انضمامك لـ«الفانوس السحري»، وهدية السنة كود «${code}» — نسخة رقمية مجانية بالكامل من أي قصة. استخدمه عند الدفع.`;
+    ? `كل عام وأنت بخير يا ${user.name || 'صديقنا'} 🎂🎉 هديتنا لك في عيد ميلادك: كود «${code}» — اصنع قصة كاملة مجاناً (نسخة رقمية). استخدمه عند الدفع.`
+    : `كل عام وأنت بخير 🎉 مرّت سنة على انضمامك إلى «الفانوس السحري»، وهدية هذا العام كود «${code}» — نسخة رقمية مجانية بالكامل من أي قصة. استخدمه عند الدفع.`;
   // Send first, then record what happened. Swallowing the result left the
   // owner unable to tell a gift that arrived from one that never left.
   const mail = user.email

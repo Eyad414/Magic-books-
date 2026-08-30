@@ -514,7 +514,7 @@ export default function Dashboard() {
                         onChange={e => setProfileForm({ ...profileForm, birthday: e.target.value })}
                       />
                       <p className="font-arabic text-white/35 text-[11px] mt-1">
-                        {t('dashboard.birthday_hint', 'منشان نبعتلك هدية بعيد ميلادك — قصة كاملة مجاناً 🎁')}
+                        {t('dashboard.birthday_hint', 'لنُرسل لك هدية في عيد ميلادك — قصة كاملة مجاناً 🎁')}
                       </p>
                     </div>
                     <MagicButton type="submit" isLoading={isSavingProfile} className="mt-4">{t('dashboard.save_changes')}</MagicButton>

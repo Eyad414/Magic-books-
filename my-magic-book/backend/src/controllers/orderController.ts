@@ -78,7 +78,7 @@ export const createCheckout = async (req: Request, res: Response): Promise<void>
       // shop-wide list.
       const took = await claimBirthdayCoupon(String(price.couponCode), String(user._id));
       if (!took) {
-        res.status(409).json({ success: false, message: 'كود الهدية مستخدم من قبل.' });
+        res.status(409).json({ success: false, message: 'كود الهدية مُستخدَم من قبل.' });
         return;
       }
     } else if (price.couponCode) {
@@ -90,7 +90,7 @@ export const createCheckout = async (req: Request, res: Response): Promise<void>
             ? 'انتهى عدد مرات استخدام هذا الكود.'
             : claim.reason === 'missing'
               ? 'الكود غير صالح أو متوقف.'
-              : 'الكود مشغول الآن، جرّب مرة ثانية.',
+              : 'الكود قيد الاستخدام حالياً، حاول مرة أخرى.',
         });
         return;
       }

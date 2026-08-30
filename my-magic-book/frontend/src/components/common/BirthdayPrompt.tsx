@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
  *
  * Two things it deliberately is NOT:
  *
- *  - not a wall. There is a close button and «مش هلق», because a shop that
+ *  - not a wall. There is a close button and «ليس الآن», because a shop that
  *    holds a reader hostage for a date of birth loses the reader, not the date.
  *  - not repeated. Dismissing it is remembered per account, so the site does
  *    not ask again on every visit; the field stays in their profile for
@@ -100,7 +100,7 @@ export default function BirthdayPrompt() {
     try {
       const res = await userApi.updateProfile({ birthday: date });
       if (!res?.success) throw new Error(res?.message);
-      toast.success(t('birthday.saved', 'تمام! رح نتذكّر عيد ميلادك 🎂'));
+      toast.success(t('birthday.saved', 'تم الحفظ! سنتذكّر عيد ميلادك 🎂'));
       try { localStorage.setItem(key, String(Date.now())); } catch { /* fine */ }
       setOpen(false);
       // Keep the session in step so the prompt does not reappear on navigation.
@@ -135,11 +135,11 @@ export default function BirthdayPrompt() {
         </div>
 
         <h2 id="bday-title" className="font-arabic font-black text-[#1b2437] text-lg mb-3">
-          {t('birthday.title', 'إيمتى عيد ميلادك؟')}
+          {t('birthday.title', 'متى عيد ميلادك؟')}
         </h2>
 
         <p className="font-arabic text-[#5b6478] text-sm leading-[1.9] mb-6">
-          {t('birthday.desc', 'خبّرنا بتاريخ ميلادك ومنبعتلك هدية بيومه — قصة كاملة مجاناً 🎁')}
+          {t('birthday.desc', 'أخبِرنا بتاريخ ميلادك ونُرسل لك هدية في يومه — قصة كاملة مجاناً 🎁')}
         </p>
 
         {/* Day / month / year, in the reader's own language. */}
@@ -195,7 +195,7 @@ export default function BirthdayPrompt() {
           disabled={!date || saving}
           className="w-full py-3.5 rounded-xl bg-[#D4A937] text-[#1b2437] font-arabic font-black text-[15px] hover:bg-[#c39a2c] active:scale-[0.99] transition disabled:opacity-45 disabled:cursor-not-allowed"
         >
-          {saving ? t('birthday.saving', 'جاري الحفظ…') : t('birthday.save', 'احفظ وابعتلي الهدية')}
+          {saving ? t('birthday.saving', 'جارٍ الحفظ…') : t('birthday.save', 'احفظ وأرسِل لي الهدية')}
         </button>
 
         <button
@@ -203,7 +203,7 @@ export default function BirthdayPrompt() {
           onClick={dismiss}
           className="mt-3 w-full py-2 font-arabic text-[#8b93a5] text-xs hover:text-[#5b6478] transition"
         >
-          {t('birthday.later', 'مش هلق')}
+          {t('birthday.later', 'ليس الآن')}
         </button>
       </div>
     </div>
