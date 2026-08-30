@@ -70,10 +70,10 @@ export default function AboutUs() {
       role: 'Founder & CEO | Software Engineer',
       emoji: '👨‍💻',
       desc: t('about.founder_role'),
-      // iyad_abu_taha did not exist — Instagram answered "this page isn't
-      // available", so the founder's icon led nowhere. Same convention as the
-      // brand links below: no ?igsh= share token.
-      instagram: 'https://www.instagram.com/eyad_abu_taha' },
+      // Confirmed by the owner. iyad_abu_taha (the old link) does not exist,
+      // and eyad_abu_taha is a different, private account — neither was his.
+      // No ?igsh= share token, matching the brand links below.
+      instagram: 'https://www.instagram.com/eyad.abutaha' },
   ];
 
   // Brand accounts. Same URLs as the footer so the two never drift apart —
