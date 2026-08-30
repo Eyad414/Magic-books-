@@ -29,7 +29,13 @@ export default function BirthdayPrompt() {
 
   const key = user?.id ? `mmb_bday_asked:${user.id}` : '';
 
+  // ?birthday=1 forces it open for anyone signed in, admins included. The
+  // owner cannot otherwise see the thing his customers see, and neither could
+  // I — the dialog hides from exactly the account used to check it.
+  const forced = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('birthday') === '1';
+
   useEffect(() => {
+    if (forced && user) { setOpen(true); return; }
     if (!user || user.role === 'admin') { setOpen(false); return; }
     if (user.birthday) { setOpen(false); return; }
     let dismissed = false;
@@ -39,7 +45,7 @@ export default function BirthdayPrompt() {
     // reads as an error, not an invitation.
     const id = setTimeout(() => setOpen(true), 1200);
     return () => clearTimeout(id);
-  }, [user, key]);
+  }, [user, key, forced]);
 
   const dismiss = () => {
     try { localStorage.setItem(key, String(Date.now())); } catch { /* fine */ }
@@ -67,13 +73,30 @@ export default function BirthdayPrompt() {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-sm rounded-3xl bg-[#0d1b2e] border border-gold-500/25 shadow-2xl p-6 text-center">
-        <div className="text-4xl mb-2">🎂</div>
-        <h2 className="font-arabic font-black text-white text-lg mb-1">
+    <div
+      className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/55 backdrop-blur-[2px]"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="bday-title"
+      onClick={dismiss}
+    >
+      {/* A light card on a dimmed page, the way a site notice is normally
+          shown. The rest of the site is dark, so this stands away from it
+          instead of blending into the page behind. Clicking the backdrop
+          closes it — a dialog you cannot get out of is a wall. */}
+      <div
+        className="w-full max-w-[420px] rounded-2xl bg-white shadow-2xl px-7 py-8 text-center"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mx-auto mb-5 w-16 h-16 rounded-full bg-[#FDF3D6] flex items-center justify-center text-3xl">
+          🎂
+        </div>
+
+        <h2 id="bday-title" className="font-arabic font-black text-[#1b2437] text-lg mb-3">
           {t('birthday.title', 'إيمتى عيد ميلادك؟')}
         </h2>
-        <p className="font-arabic text-white/55 text-sm mb-5 leading-relaxed">
+
+        <p className="font-arabic text-[#5b6478] text-sm leading-[1.9] mb-6">
           {t('birthday.desc', 'خبّرنا بتاريخ ميلادك ومنبعتلك هدية بيومه — قصة كاملة مجاناً 🎁')}
         </p>
 
@@ -82,21 +105,23 @@ export default function BirthdayPrompt() {
           dir="ltr"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="magic-input w-full text-center mb-4"
+          aria-label={t('birthday.title', 'إيمتى عيد ميلادك؟')}
+          className="w-full mb-5 px-4 py-3 rounded-xl border border-[#d9dee8] bg-white text-[#1b2437] text-center text-base focus:outline-none focus:border-[#D4A937] focus:ring-2 focus:ring-[#D4A937]/25 transition"
         />
 
         <button
           type="button"
           onClick={save}
           disabled={!date || saving}
-          className="w-full py-3 rounded-xl bg-gold-500 text-[#0a1628] font-arabic font-black hover:bg-gold-400 transition disabled:opacity-50"
+          className="w-full py-3.5 rounded-xl bg-[#D4A937] text-[#1b2437] font-arabic font-black text-[15px] hover:bg-[#c39a2c] active:scale-[0.99] transition disabled:opacity-45 disabled:cursor-not-allowed"
         >
           {saving ? t('birthday.saving', 'جاري الحفظ…') : t('birthday.save', 'احفظ وابعتلي الهدية')}
         </button>
+
         <button
           type="button"
           onClick={dismiss}
-          className="mt-3 w-full py-2 font-arabic text-white/40 text-xs hover:text-white/70 transition"
+          className="mt-3 w-full py-2 font-arabic text-[#8b93a5] text-xs hover:text-[#5b6478] transition"
         >
           {t('birthday.later', 'مش هلق')}
         </button>
