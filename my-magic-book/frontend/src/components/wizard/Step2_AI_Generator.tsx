@@ -516,6 +516,41 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
         enabled={!!user && !!progress.childDetails.childPhotoUrl && form.theme !== 'custom'}
       />
 
+      {/* How the child's name will be written once the language is chosen —
+          and a box to correct it. The transliteration is a guess: «وهيب» can
+          be Waheeb, Wahib or Waheb, and the parent is the one who knows. Left
+          empty it follows the automatic spelling, so nobody has to care. */}
+      {typedName && autoName !== typedName && (
+        <div className="mt-3 rounded-xl bg-white/[0.04] border border-white/10 px-3 py-2.5">
+          <label className="block font-arabic text-[11px] text-white/60 mb-1.5" htmlFor="name-as-written">
+            {t('cover_preview.name_as', 'سيظهر الاسم في القصة هكذا:')}
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              id="name-as-written"
+              type="text"
+              dir="auto"
+              value={nameOverride || autoName}
+              onChange={(e) => setChildDetails({ childNameAlt: e.target.value })}
+              className="flex-1 px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white font-black text-sm text-center focus:outline-none focus:border-gold-500/60"
+            />
+            {nameOverride && nameOverride !== autoName && (
+              <button
+                type="button"
+                onClick={() => setChildDetails({ childNameAlt: '' })}
+                className="px-2.5 py-2 rounded-lg text-[11px] font-arabic text-white/50 hover:text-gold-400 border border-white/10 whitespace-nowrap"
+                title={autoName}
+              >
+                {t('cover_preview.name_reset', 'رجوع للتلقائي')}
+              </button>
+            )}
+          </div>
+          <p className="font-arabic text-[10px] text-white/35 mt-1.5">
+            {t('cover_preview.name_edit_hint', 'يمكنك تعديل طريقة كتابة الاسم — هكذا سيُطبع في الكتاب.')}
+          </p>
+        </div>
+      )}
+
       {/* Language: The language in which the AI generator will write the text */}
       <div>
         <label className="block font-arabic text-white/80 text-sm mb-3">
@@ -550,40 +585,6 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
           ))}
         </div>
 
-        {/* How the child's name will be written once the language is chosen —
-            and a box to correct it. The transliteration is a guess: «وهيب» can
-            be Waheeb, Wahib or Waheb, and the parent is the one who knows. Left
-            empty it follows the automatic spelling, so nobody has to care. */}
-        {typedName && autoName !== typedName && (
-          <div className="mt-3 rounded-xl bg-white/[0.04] border border-white/10 px-3 py-2.5">
-            <label className="block font-arabic text-[11px] text-white/60 mb-1.5" htmlFor="name-as-written">
-              {t('cover_preview.name_as', 'سيظهر الاسم في القصة هكذا:')}
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                id="name-as-written"
-                type="text"
-                dir="auto"
-                value={nameOverride || autoName}
-                onChange={(e) => setChildDetails({ childNameAlt: e.target.value })}
-                className="flex-1 px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white font-black text-sm text-center focus:outline-none focus:border-gold-500/60"
-              />
-              {nameOverride && nameOverride !== autoName && (
-                <button
-                  type="button"
-                  onClick={() => setChildDetails({ childNameAlt: '' })}
-                  className="px-2.5 py-2 rounded-lg text-[11px] font-arabic text-white/50 hover:text-gold-400 border border-white/10 whitespace-nowrap"
-                  title={autoName}
-                >
-                  {t('cover_preview.name_reset', 'رجوع للتلقائي')}
-                </button>
-              )}
-            </div>
-            <p className="font-arabic text-[10px] text-white/35 mt-1.5">
-              {t('cover_preview.name_edit_hint', 'يمكنك تعديل طريقة كتابة الاسم — هكذا سيُطبع في الكتاب.')}
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Book Format / Package: full-color story, coloring book, audio, e-book … */}
