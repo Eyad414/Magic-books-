@@ -521,8 +521,8 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
           be Waheeb, Wahib or Waheb, and the parent is the one who knows. Left
           empty it follows the automatic spelling, so nobody has to care. */}
       {typedName && autoName !== typedName && (
-        <div className="mt-3 rounded-xl bg-white/[0.04] border border-white/10 px-3 py-2.5">
-          <label className="block font-arabic text-[11px] text-white/60 mb-1.5" htmlFor="name-as-written">
+        <div className="mt-3 rounded-xl bg-gold-500/[0.07] border border-gold-500/30 px-3 py-2.5">
+          <label className="block font-arabic text-[11px] text-gold-200/90 mb-1.5" htmlFor="name-as-written">
             {t('cover_preview.name_as', 'سيظهر الاسم في القصة هكذا:')}
           </label>
           <div className="flex items-center gap-2">
@@ -532,20 +532,20 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
               dir="auto"
               value={nameOverride || autoName}
               onChange={(e) => setChildDetails({ childNameAlt: e.target.value })}
-              className="flex-1 px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white font-black text-sm text-center focus:outline-none focus:border-gold-500/60"
+              className="flex-1 px-3 py-2 rounded-lg bg-[#0a1426] border-2 border-gold-500/50 text-gold-300 font-black text-base text-center focus:outline-none focus:border-gold-500 focus:ring-2 focus:ring-gold-500/25 transition"
             />
             {nameOverride && nameOverride !== autoName && (
               <button
                 type="button"
                 onClick={() => setChildDetails({ childNameAlt: '' })}
-                className="px-2.5 py-2 rounded-lg text-[11px] font-arabic text-white/50 hover:text-gold-400 border border-white/10 whitespace-nowrap"
+                className="px-2.5 py-2 rounded-lg text-[11px] font-arabic text-gold-300 hover:text-[#0a1426] hover:bg-gold-500 border border-gold-500/40 whitespace-nowrap transition"
                 title={autoName}
               >
                 {t('cover_preview.name_reset', 'رجوع للتلقائي')}
               </button>
             )}
           </div>
-          <p className="font-arabic text-[10px] text-white/35 mt-1.5">
+          <p className="font-arabic text-[10px] text-white/45 mt-1.5">
             {t('cover_preview.name_edit_hint', 'يمكنك تعديل طريقة كتابة الاسم — هكذا سيُطبع في الكتاب.')}
           </p>
         </div>
