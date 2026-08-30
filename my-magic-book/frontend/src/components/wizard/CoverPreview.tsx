@@ -96,7 +96,15 @@ export default function CoverPreview({ childName, childGender, childPhotoUrl, th
   // meant an English UI showed "Ayad" over a cover printed "اياد".
   const displayName = localizeName(childName || '', language);
   const gender = resolveGender(childName, childGender === 'female' ? 'female' : 'male');
-  const rawTitle = (t(`stories.${theme.replace(/_(real|photoreal|cartoon|pr|hd)$/, '')}.title`, '') as string) || '';
+  // …and the TITLE has to come from that same language. t() reads the site's
+  // language, so an English site over an Arabic book pulled the English title
+  // and dropped the Arabic name into it — «وهيب's Adventure in Building», which
+  // the bidi algorithm then scrambles on screen. Asking for the book's `lng`
+  // keeps the whole line in one language.
+  const rawTitle = (t(`stories.${theme.replace(/_(real|photoreal|cartoon|pr|hd)$/, '')}.title`, {
+    defaultValue: '',
+    lng: language,
+  }) as string) || '';
   const storyTitle = applyGenderTokens(rawTitle.replace(/\[NAME\]/gi, displayName), gender);
 
   const remaining = quota ? Math.max(0, quota.limit - quota.used) : null;
