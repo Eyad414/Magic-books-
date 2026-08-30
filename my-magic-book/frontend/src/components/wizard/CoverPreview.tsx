@@ -126,20 +126,6 @@ export default function CoverPreview({ childName, childGender, childPhotoUrl, th
         </p>
       </div>
 
-      {/* How the name will actually be written in the book they chose.
-          A name typed in Arabic becomes «Waheeb» in an English story, and the
-          customer used to discover that only after spending a preview — or
-          worse, on the printed cover. Shown only when the two differ, because
-          repeating the name they just typed back at them says nothing. */}
-      {displayName && childName && displayName !== childName.trim() && (
-        <p
-          className="mt-2 font-arabic text-[11px] text-gold-200/80 bg-gold-500/10 border border-gold-500/20 rounded-lg px-3 py-2 inline-block"
-          dir="auto"
-        >
-          {t('cover_preview.name_as', 'سيظهر الاسم في القصة هكذا:')}{' '}
-          <strong className="text-white font-black" dir="auto">{displayName}</strong>
-        </p>
-      )}
 
       {cover && (
         /* Rendered exactly like the printed FrontCover: a square, full-bleed

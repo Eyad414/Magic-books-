@@ -64,7 +64,7 @@ interface ApiTheme {
 }
 
 export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To move to the next page in the steps
-  const { progress, setStoryConfig, setBookCustomization } = useStoryProgress(); // To save User Choices in the steps
+  const { progress, setStoryConfig, setBookCustomization, setChildDetails } = useStoryProgress(); // To save User Choices in the steps
   const { t, i18n } = useTranslation();
   // "Write with AI" stays hidden until the owner turns it on in the dashboard.
   const { aiModeEnabled } = useSiteFlags();
@@ -139,6 +139,19 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
     customThemeNote: progress.storyConfig.customThemeNote || '',
   });
 
+
+  /**
+   * The name as it will be WRITTEN in the book.
+   *
+   * Transliterated automatically — «وهيب» becomes «Waheeb» in an English
+   * story — unless the parent corrected the spelling, in which case theirs
+   * wins. They know how their child's name is spelled; we are guessing.
+   */
+  const typedName = (progress.childDetails.childName || '').trim();
+  const autoName = localizeName(typedName, form.language);
+  const nameOverride = (progress.childDetails.childNameAlt || '').trim();
+  const effectiveName = nameOverride || autoName;
+
   // Local State: The book format/package (full-color story, coloring book, …).
   // Merged in from the old "Customize" step so story + format live on one screen.
   const [bookPackage, setBookPackage] = useState(progress.bookCustomization?.bookPackage || 'color');
@@ -212,8 +225,9 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
       const createRes = await storyApi.create({
         ...childDetails,
         ...form,
-        // Render the child's name in the book's language script (e.g. "Baha" -> "بهاء").
-        childName: localizeName(childDetails.childName || '', form.language),
+        // The book's language script (e.g. "Baha" -> "بهاء"), or the spelling
+        // the parent typed over it.
+        childName: effectiveName,
         customThemeNote: subject || undefined,
         mode: 'ai',
       });
@@ -291,8 +305,8 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
           const createRes = await storyApi.create({
             ...progress.childDetails,
             ...form,
-            // Render the child's name in the book's language script (e.g. "Baha" -> "بهاء").
-            childName: localizeName(progress.childDetails.childName || '', form.language),
+            // Same name the cover and the preview showed.
+            childName: effectiveName,
             mode: 'template',
             templatePages: effectiveTemplate, // raw, placeholders intact
           });
@@ -494,7 +508,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
           Needs a signed-in account (the free allowance is per account) and an
           uploaded photo — there is no face to render without one. */}
       <CoverPreview
-        childName={progress.childDetails.childName || ''}
+        childName={effectiveName}
         childGender={progress.childDetails.childGender || 'male'}
         childPhotoUrl={progress.childDetails.childPhotoUrl || ''}
         theme={form.theme}
@@ -518,7 +532,11 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
               key={lang.id}
               id={`lang-${lang.id}`}
               type="button"
-              onClick={() => setForm({ ...form, language: lang.id as 'ar' | 'en' | 'he' })}
+              onClick={() => {
+                setForm({ ...form, language: lang.id as 'ar' | 'en' | 'he' });
+                // A spelling corrected for English means nothing in Hebrew.
+                if (nameOverride) setChildDetails({ childNameAlt: '' });
+              }}
               className={`p-3 rounded-xl border transition-all text-center sm:text-right ${form.language === lang.id
                   ? 'border-gold-500 bg-gold-500/10'
                   : 'border-white/10 hover:border-white/30'
@@ -532,22 +550,40 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
           ))}
         </div>
 
-        {/* How the child's name will actually be written once the language is
-            chosen. A name typed in Arabic becomes «Waheeb» in an English story,
-            and the customer should meet that here — while it is still one tap
-            to change — rather than on the cover they paid for. Only shown when
-            the two differ; echoing back the name they typed says nothing. */}
-        {(() => {
-          const typed = (progress.childDetails.childName || '').trim();
-          const asWritten = localizeName(typed, form.language);
-          if (!typed || !asWritten || asWritten === typed) return null;
-          return (
-            <p className="mt-3 font-arabic text-[11px] text-gold-200/80" dir="auto">
-              {t('cover_preview.name_as', 'سيظهر الاسم في القصة هكذا:')}{' '}
-              <strong className="text-white font-black" dir="auto">{asWritten}</strong>
+        {/* How the child's name will be written once the language is chosen —
+            and a box to correct it. The transliteration is a guess: «وهيب» can
+            be Waheeb, Wahib or Waheb, and the parent is the one who knows. Left
+            empty it follows the automatic spelling, so nobody has to care. */}
+        {typedName && autoName !== typedName && (
+          <div className="mt-3 rounded-xl bg-white/[0.04] border border-white/10 px-3 py-2.5">
+            <label className="block font-arabic text-[11px] text-white/60 mb-1.5" htmlFor="name-as-written">
+              {t('cover_preview.name_as', 'سيظهر الاسم في القصة هكذا:')}
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                id="name-as-written"
+                type="text"
+                dir="auto"
+                value={nameOverride || autoName}
+                onChange={(e) => setChildDetails({ childNameAlt: e.target.value })}
+                className="flex-1 px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white font-black text-sm text-center focus:outline-none focus:border-gold-500/60"
+              />
+              {nameOverride && nameOverride !== autoName && (
+                <button
+                  type="button"
+                  onClick={() => setChildDetails({ childNameAlt: '' })}
+                  className="px-2.5 py-2 rounded-lg text-[11px] font-arabic text-white/50 hover:text-gold-400 border border-white/10 whitespace-nowrap"
+                  title={autoName}
+                >
+                  {t('cover_preview.name_reset', 'رجوع للتلقائي')}
+                </button>
+              )}
+            </div>
+            <p className="font-arabic text-[10px] text-white/35 mt-1.5">
+              {t('cover_preview.name_edit_hint', 'يمكنك تعديل طريقة كتابة الاسم — هكذا سيُطبع في الكتاب.')}
             </p>
-          );
-        })()}
+          </div>
+        )}
       </div>
 
       {/* Book Format / Package: full-color story, coloring book, audio, e-book … */}

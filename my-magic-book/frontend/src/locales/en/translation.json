@@ -1855,7 +1855,9 @@
     "wait_note": "Please keep this page open — the artwork is being drawn.",
     "remaining": "{n} free previews left",
     "error": "Couldn't create the cover, please try again",
-    "name_as": "The name will appear in the story as:"
+    "name_as": "The name will appear in the story as:",
+    "name_reset": "Reset",
+    "name_edit_hint": "You can change how the name is spelled — this is how it will be printed."
   },
   "payment": {
     "title": "Payment",
