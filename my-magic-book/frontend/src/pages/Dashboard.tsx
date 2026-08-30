@@ -346,7 +346,7 @@ export default function Dashboard() {
                   <EmptyState
                     emoji="✉️"
                     title={t('dashboard.empty_messages_title', 'ما في رسائل')}
-                    desc={t('dashboard.empty_messages_desc', 'لما نبعتلك إشي رح يوصلك هون.')}
+                    desc={t('dashboard.empty_messages_desc', 'عندما نُرسل لك رسالة ستظهر هنا.')}
                     cta={t('dashboard.empty_stories_cta')}
                     onClick={handleStartStory}
                   />
