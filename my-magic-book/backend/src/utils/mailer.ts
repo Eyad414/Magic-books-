@@ -79,7 +79,7 @@ export async function sendAdminNotification(data: {
   phone?: string;
   subject: string;
   message: string;
-}): Promise<void> {
+}): Promise<{ sent: boolean; reason?: string }> {
   const adminEmail = process.env.CONTACT_TO || 'eyadat720@gmail.com';
   const from = process.env.RESEND_FROM || 'Magic Fanoos <onboarding@resend.dev>';
   const apiKey = process.env.RESEND_API_KEY;
@@ -95,7 +95,7 @@ export async function sendAdminNotification(data: {
     console.log(`Subject: ${data.subject}`);
     console.log(`Message: ${data.message}`);
     console.log('--------------------------------------------------');
-    return;
+    return { sent: false, reason: 'not-configured' };
   }
 
   const text = `لقد استلمت رسالة جديدة من نموذج الاتصال بموقع فوانيس السحرية:
@@ -148,9 +148,13 @@ ${data.message}
       throw new Error(`Resend API ${res.status}: ${body.slice(0, 300)}`);
     }
     console.log(`[Mailer] Message successfully sent to ${adminEmail} via Resend`);
-  } catch (error) {
+    return { sent: true };
+  } catch (error: any) {
     console.error('❌ Resend Error: Failed to send contact message email:', error);
-    // Stay silent/logged so the API caller still gets a success response.
+    // Still not thrown — a customer who wrote to us must always be told their
+    // message was received, because it WAS. But the outcome is returned now
+    // instead of swallowed, so the shop can see that nobody was alerted.
+    return { sent: false, reason: error?.message || 'error' };
   }
 }
 

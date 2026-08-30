@@ -7,6 +7,13 @@ export interface IContactMessage extends Document {
   subject: string;
   message: string;
   isRead: boolean;
+  /**
+   * Whether the "you have a new message" email to the shop actually left.
+   * A notification that fails silently means a customer sat waiting while
+   * nobody knew they had written.
+   */
+  notified?: boolean;
+  notifyReason?: string;
   createdAt: Date;
 }
 
@@ -18,6 +25,8 @@ const ContactMessageSchema = new Schema<IContactMessage>(
     subject: { type: String, required: true },
     message: { type: String, required: true },
     isRead: { type: Boolean, default: false },
+    notified: { type: Boolean },
+    notifyReason: { type: String },
   },
   { timestamps: true }
 );

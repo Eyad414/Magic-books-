@@ -266,14 +266,22 @@ export const replyToShop = async (req: Request, res: Response): Promise<void> =>
     // waiting for. This one CAN be delivered today: it goes to the address the
     // Resend account was registered with, which is the one address the shared
     // sender is allowed to reach.
-    sendAdminNotification({
+    const notice = await sendAdminNotification({
       name: user.name || 'عميل',
       email: user.email || '',
       subject: 'رسالة جديدة من عميل في حسابه',
       message: body,
-    }).catch((e) => console.error('[replyToShop] admin email failed:', e?.message || e));
+    }).catch((e: any) => {
+      console.error('[replyToShop] admin email failed:', e?.message || e);
+      return { sent: false, reason: e?.message || 'error' };
+    });
+    const notified = (notice as any)?.sent === true;
+    await CustomerMessage.updateOne(
+      { _id: msg._id },
+      { $set: { emailed: notified, emailReason: notified ? undefined : (notice as any)?.reason } },
+    ).catch(() => { /* the reply stands either way */ });
 
-    res.json({ success: true, message: { id: String(msg._id), createdAt: msg.createdAt } });
+    res.json({ success: true, notified, message: { id: String(msg._id), createdAt: msg.createdAt } });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message || 'فشل الإرسال' });
   }
