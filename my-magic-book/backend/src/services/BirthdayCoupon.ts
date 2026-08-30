@@ -85,11 +85,15 @@ export async function grantIfDue(userId: string, now = new Date()): Promise<{ co
   const body = isRealBirthday
     ? `كل عام وإنت بخير يا ${user.name || 'صديقنا'} 🎂🎉 هديتنا إلك بعيد ميلادك: كود «${code}» — اصنع قصة كاملة مجاناً (نسخة رقمية). استخدمه عند الدفع.`
     : `كل سنة وإنت بخير 🎉 مرّت سنة على انضمامك لـ«الفانوس السحري»، وهدية السنة كود «${code}» — نسخة رقمية مجانية بالكامل من أي قصة. استخدمه عند الدفع.`;
-  await CustomerMessage.create({ userId, body, fromAdmin: true, adminName: 'الفانوس السحري' }).catch(() => { /* the coupon is what matters */ });
-  if (user.email) {
-    await sendCustomerMessageEmail({ to: user.email, name: user.name, preview: body })
-      .catch(() => { /* they will see it in their account */ });
-  }
+  // Send first, then record what happened. Swallowing the result left the
+  // owner unable to tell a gift that arrived from one that never left.
+  const mail = user.email
+    ? await sendCustomerMessageEmail({ to: user.email, name: user.name, preview: body }).catch((e: any) => ({ sent: false, reason: e?.message || 'error' }))
+    : { sent: false, reason: 'no-email' };
+  await CustomerMessage.create({
+    userId, body, fromAdmin: true, adminName: 'الفانوس السحري',
+    emailed: (mail as any).sent, emailReason: (mail as any).sent ? undefined : (mail as any).reason,
+  }).catch(() => { /* the coupon is what matters */ });
 
   return { code, year };
 }
@@ -113,8 +117,13 @@ export async function grantNow(userId: string, now = new Date()): Promise<{ code
   if (res.modifiedCount !== 1) return null;
 
   const body = `هدية منّا 🎁 كود «${code}» — نسخة رقمية مجانية بالكامل من أي قصة تختارها. استخدمه عند الدفع.`;
-  await CustomerMessage.create({ userId, body, fromAdmin: true, adminName: 'الفانوس السحري' }).catch(() => {});
-  if (user.email) await sendCustomerMessageEmail({ to: user.email, name: user.name, preview: body }).catch(() => {});
+  const mail = user.email
+    ? await sendCustomerMessageEmail({ to: user.email, name: user.name, preview: body }).catch((e: any) => ({ sent: false, reason: e?.message || 'error' }))
+    : { sent: false, reason: 'no-email' };
+  await CustomerMessage.create({
+    userId, body, fromAdmin: true, adminName: 'الفانوس السحري',
+    emailed: (mail as any).sent, emailReason: (mail as any).sent ? undefined : (mail as any).reason,
+  }).catch(() => {});
   return { code, year };
 }
 

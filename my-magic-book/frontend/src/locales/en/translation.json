@@ -1183,7 +1183,9 @@
     "coupon_reset_hint": "Clears the counter when you save",
     "tab_coupons": "Discount codes",
     "coupons_page_hint": "Create a code: its name, the percentage off, and how many times it may be used. It works at checkout straight away.",
-    "save_coupons": "Save codes"
+    "save_coupons": "Save codes",
+    "msg_mail_failed": "Email did not send ✕",
+    "msg_mail_sent": "Email sent ✉"
   },
   "title_page": {
     "presents": "Presented to",
@@ -1865,5 +1867,14 @@
     "loading": "Loading…",
     "close": "Close",
     "cancel": "Cancel"
+  },
+  "birthday": {
+    "title": "When is your birthday?",
+    "desc": "Tell us your birthday and we'll send a gift on the day — a whole story, free 🎁",
+    "save": "Save and send my gift",
+    "saving": "Saving…",
+    "later": "Not now",
+    "saved": "Great! We'll remember your birthday 🎂",
+    "failed": "Could not save"
   }
 }

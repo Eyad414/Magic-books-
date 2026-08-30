@@ -2473,6 +2473,19 @@ export default function AdminDashboard() {
                                       {' · '}{m.readAt ? t('admin.msg_read', 'قرأها ✓') : t('admin.msg_unread', 'لسا ما فتحها')}
                                     </span>
                                   )}
+                                  {/* Whether the nudge email actually left. A
+                                      customer who never got one looks exactly
+                                      like a customer ignoring you. */}
+                                  {m.fromAdmin && m.emailed === false && (
+                                    <span className="text-red-300/80" title={m.emailReason || ''}>
+                                      {' · '}{t('admin.msg_mail_failed', 'الإيميل ما انبعت ✕')}
+                                    </span>
+                                  )}
+                                  {m.fromAdmin && m.emailed === true && (
+                                    <span className="text-white/35">
+                                      {' · '}{t('admin.msg_mail_sent', 'انبعت إيميل ✉')}
+                                    </span>
+                                  )}
                                 </p>
                               </div>
                             ))

@@ -1,7 +1,7 @@
 import api from './axiosInstance';
 
 export const userApi = {
-  updateProfile: async (profileData: { name?: string; email?: string; phone?: string; location?: string }) => {
+  updateProfile: async (profileData: { name?: string; email?: string; phone?: string; location?: string; birthday?: string }) => {
     const { data } = await api.put('/user/profile', profileData);
     return data;
   },

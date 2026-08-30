@@ -2623,6 +2623,10 @@ export const sendOrderDigital = async (req: Request, res: Response): Promise<voi
     const text = String(req.body?.note || '').trim()
       || `كتاب ${child || 'طفلك'} صار جاهز 🎉 افتحه من «قصصي» بحسابك واقرأه وقت ما تحب.`;
 
+    const mail = (customer as any).email
+      ? await sendCustomerMessageEmail({ to: (customer as any).email, name: (customer as any).name, preview: text })
+      : { sent: false, reason: 'no-email' };
+
     await CustomerMessage.create({
       userId: customer._id,
       body: text,
@@ -2630,11 +2634,9 @@ export const sendOrderDigital = async (req: Request, res: Response): Promise<voi
       adminId: admin?._id,
       adminName: admin?.name,
       storyId: order.storyId?._id || order.storyId,
+      emailed: mail.sent,
+      emailReason: mail.sent ? undefined : (mail as any).reason,
     });
-
-    const mail = (customer as any).email
-      ? await sendCustomerMessageEmail({ to: (customer as any).email, name: (customer as any).name, preview: text })
-      : { sent: false, reason: 'no-email' };
 
     order.digitalSentAt = new Date();
     await order.save();

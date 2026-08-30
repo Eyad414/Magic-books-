@@ -64,6 +64,13 @@ export const sendMessageToCustomer = async (req: Request, res: Response): Promis
       ? await sendCustomerMessageEmail({ to: (customer as any).email, name: (customer as any).name, preview: body })
       : { sent: false, reason: 'no-email' };
 
+    // Kept against the message, so the thread can show it later rather than
+    // only in the toast the owner saw once and closed.
+    await CustomerMessage.updateOne(
+      { _id: msg._id },
+      { $set: { emailed: mail.sent, emailReason: mail.sent ? undefined : (mail as any).reason } },
+    ).catch(() => { /* the message stands either way */ });
+
     res.json({
       success: true,
       message: { id: String(msg._id), createdAt: msg.createdAt },
@@ -95,6 +102,8 @@ export const getCustomerThread = async (req: Request, res: Response): Promise<vo
         adminName: m.adminName || '',
         book: m.storyId ? books[String(m.storyId)] || null : null,
         readAt: m.readAt || null,
+        emailed: m.emailed,
+        emailReason: m.emailReason || null,
         createdAt: m.createdAt,
       })),
       // What the owner actually wants at a glance: did they read it, and is

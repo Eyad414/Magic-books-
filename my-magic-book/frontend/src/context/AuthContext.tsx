@@ -9,6 +9,8 @@ interface User {
   role: 'user' | 'admin';
   phone?: string;
   location?: string;
+  /** Set once the customer tells us; drives the yearly free-story gift. */
+  birthday?: string;
   createdAt?: string;
   lastLoginAt?: string;
 }

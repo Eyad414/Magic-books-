@@ -26,6 +26,15 @@ export interface ICustomerMessage extends Document {
   readAt?: Date;
   /** Optionally about a specific book — a gift, or an order being discussed. */
   storyId?: mongoose.Types.ObjectId;
+  /**
+   * Whether the nudge email actually left, and why not when it did not.
+   *
+   * Without this the owner cannot tell a message that reached someone from one
+   * that only ever sat in an account nobody opened — which is exactly how a
+   * customer on iCloud goes quiet and looks like they ignored you.
+   */
+  emailed?: boolean;
+  emailReason?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -39,6 +48,8 @@ const CustomerMessageSchema = new Schema<ICustomerMessage>(
     adminName: { type: String },
     readAt: { type: Date },
     storyId: { type: Schema.Types.ObjectId, ref: 'Story' },
+    emailed: { type: Boolean },
+    emailReason: { type: String },
   },
   { timestamps: true },
 );

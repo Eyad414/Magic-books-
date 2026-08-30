@@ -25,6 +25,7 @@ import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { publicApi } from './api/publicApi';
 import { useAuth } from './context/AuthContext';
+import BirthdayPrompt from './components/common/BirthdayPrompt';
 
 export default function App() {
   const { i18n } = useTranslation();
@@ -104,6 +105,7 @@ export default function App() {
           },
         }}
       />
+      <BirthdayPrompt />
       <Routes>
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
