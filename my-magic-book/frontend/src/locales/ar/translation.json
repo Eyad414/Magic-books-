@@ -294,7 +294,9 @@
     "msg_from_you": "أنت",
     "msg_placeholder": "اكتب رسالتك…",
     "msg_sending": "جاري الإرسال…",
-    "msg_send": "إرسال"
+    "msg_send": "إرسال",
+    "label_birthday": "تاريخ ميلادك",
+    "birthday_hint": "منشان نبعتلك هدية بعيد ميلادك — قصة كاملة مجاناً 🎁"
   },
   "wizard": {
     "step1_label": "طفلك",

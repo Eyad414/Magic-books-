@@ -294,7 +294,9 @@
     "msg_from_you": "You",
     "msg_placeholder": "Write your message…",
     "msg_sending": "Sending…",
-    "msg_send": "Send"
+    "msg_send": "Send",
+    "label_birthday": "Your birthday",
+    "birthday_hint": "So we can send you a gift on your birthday — a whole story, free 🎁"
   },
   "wizard": {
     "step1_label": "Your child",

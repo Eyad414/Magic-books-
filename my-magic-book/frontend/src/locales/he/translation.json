@@ -294,7 +294,9 @@
     "msg_from_you": "אתה",
     "msg_placeholder": "כתוב את ההודעה שלך…",
     "msg_sending": "שולח…",
-    "msg_send": "שלח"
+    "msg_send": "שלח",
+    "label_birthday": "תאריך הלידה שלך",
+    "birthday_hint": "כדי שנשלח לכם מתנה ביום ההולדת — סיפור שלם, חינם 🎁"
   },
   "wizard": {
     "step1_label": "הילד שלך",

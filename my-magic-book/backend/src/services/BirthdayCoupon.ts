@@ -27,19 +27,29 @@ export const BIRTHDAY_PACKAGE = 'ebook';
  * Owed when at least one full year has passed AND this year's anniversary date
  * is behind us AND nothing was already granted for that year.
  */
-export function dueYear(user: Pick<IUser, 'createdAt' | 'birthdayCoupon'> & any, now = new Date()): number | null {
+export function dueYear(user: any, now = new Date()): number | null {
+  const year = now.getFullYear();
+  if (user?.birthdayCoupon?.year === year) return null; // already given this year
+
+  // Their real birthday wins when we know it: that is the day that means
+  // something to them, and the day they signed up is only ever a stand-in.
+  const bday = user?.birthday ? new Date(user.birthday) : null;
+  if (bday && !Number.isNaN(bday.getTime())) {
+    const thisYear = new Date(bday);
+    thisYear.setFullYear(year);
+    // Only from the day itself onward. A gift that arrives in January for a
+    // birthday in June is not a birthday gift.
+    return thisYear <= now ? year : null;
+  }
+
+  // No birthday on file: fall back to the anniversary of signing up.
   const joined = user?.createdAt ? new Date(user.createdAt) : null;
   if (!joined || Number.isNaN(joined.getTime())) return null;
 
-  const year = now.getFullYear();
-  // This year's anniversary. Someone who joined on 29 February gets 1 March in
-  // ordinary years, which is what the Date constructor already does.
   const anniversary = new Date(joined);
   anniversary.setFullYear(year);
-  if (anniversary > now) return null;          // not yet reached this year
+  if (anniversary > now) return null;            // not yet reached this year
   if (year <= joined.getFullYear()) return null; // still their first year
-
-  if (user?.birthdayCoupon?.year === year) return null; // already given
   return year;
 }
 
@@ -55,7 +65,7 @@ function makeCode(year: number): string {
  * year still being the old one, so two sign-ins at once cannot grant twice.
  */
 export async function grantIfDue(userId: string, now = new Date()): Promise<{ code: string; year: number } | null> {
-  const user: any = await User.findById(userId).select('name email createdAt birthdayCoupon').lean();
+  const user: any = await User.findById(userId).select('name email createdAt birthday birthdayCoupon').lean();
   if (!user) return null;
 
   const year = dueYear(user, now);
@@ -69,7 +79,12 @@ export async function grantIfDue(userId: string, now = new Date()): Promise<{ co
   );
   if (res.modifiedCount !== 1) return null; // somebody else got there first
 
-  const body = `كل سنة وإنت بخير 🎉 مرّت سنة على انضمامك لـ«الفانوس السحري»، وهدية السنة كود «${code}» — نسخة رقمية مجانية بالكامل من أي قصة. استخدمه عند الدفع.`;
+  // Two occasions, two messages. "Happy birthday" on the anniversary of a
+  // signup would read as a mistake to anyone who knows their own birthday.
+  const isRealBirthday = !!user.birthday;
+  const body = isRealBirthday
+    ? `كل عام وإنت بخير يا ${user.name || 'صديقنا'} 🎂🎉 هديتنا إلك بعيد ميلادك: كود «${code}» — اصنع قصة كاملة مجاناً (نسخة رقمية). استخدمه عند الدفع.`
+    : `كل سنة وإنت بخير 🎉 مرّت سنة على انضمامك لـ«الفانوس السحري»، وهدية السنة كود «${code}» — نسخة رقمية مجانية بالكامل من أي قصة. استخدمه عند الدفع.`;
   await CustomerMessage.create({ userId, body, fromAdmin: true, adminName: 'الفانوس السحري' }).catch(() => { /* the coupon is what matters */ });
   if (user.email) {
     await sendCustomerMessageEmail({ to: user.email, name: user.name, preview: body })

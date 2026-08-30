@@ -11,6 +11,12 @@ export interface IUser extends Document {
    */
   googleId?: string;
   /**
+   * The customer's birthday, so the yearly gift lands on the day that means
+   * something to them instead of the day they happened to sign up. Stored as a
+   * date; only the day and month are ever compared.
+   */
+  birthday?: Date;
+  /**
    * The yearly thank-you: one free digital copy on the anniversary of signing
    * up. Only the current one is kept — a coupon from two years ago is history,
    * not something anyone needs to redeem.
@@ -65,6 +71,7 @@ const UserSchema = new Schema<IUser>(
     // sparse: only accounts that actually used Google occupy the index, so the
     // uniqueness applies to real ids and not to a field full of nulls.
     googleId: { type: String, index: { unique: true, sparse: true } },
+    birthday: { type: Date },
     birthdayCoupon: {
       code: { type: String },
       year: { type: Number },

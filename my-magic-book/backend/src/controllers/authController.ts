@@ -42,7 +42,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       success: true,
       message: 'تم التسجيل بنجاح!',
       token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, location: user.location, createdAt: user.createdAt, lastLoginAt: user.lastLoginAt },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, location: user.location, birthday: user.birthday, createdAt: user.createdAt, lastLoginAt: user.lastLoginAt },
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'حدث خطأ في الخادم' });
@@ -83,7 +83,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       success: true,
       message: 'تم تسجيل الدخول بنجاح!',
       token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, location: user.location, createdAt: user.createdAt, lastLoginAt: user.lastLoginAt },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, location: user.location, birthday: user.birthday, createdAt: user.createdAt, lastLoginAt: user.lastLoginAt },
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'حدث خطأ في الخادم' });
@@ -178,7 +178,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
 export const getMe = async (req: Request, res: Response): Promise<void> => {
   try {
     const user = (req as any).user;
-    res.json({ success: true, user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, location: user.location, createdAt: user.createdAt, lastLoginAt: user.lastLoginAt } });
+    res.json({ success: true, user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, location: user.location, birthday: user.birthday, createdAt: user.createdAt, lastLoginAt: user.lastLoginAt } });
   } catch (error) {
     res.status(500).json({ success: false, message: 'حدث خطأ في الخادم' });
   }

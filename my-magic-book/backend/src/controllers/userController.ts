@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs';
 // @route PUT /api/user/profile
 export const updateProfile = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, email, phone, location } = req.body;
+    const { name, email, phone, location, birthday } = req.body;
     const userId = (req as any).user._id;
 
     const user = await User.findById(userId);
@@ -26,13 +26,19 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
     if (name) user.name = name;
     if (phone !== undefined) user.phone = phone;
     if (location !== undefined) user.location = location;
+    // '' clears it. A birthday nobody can remember giving is worse than none,
+    // so it has to be removable.
+    if (birthday !== undefined) {
+      const d = String(birthday).trim() ? new Date(birthday) : null;
+      user.birthday = d && !Number.isNaN(d.getTime()) ? d : undefined;
+    }
 
     await user.save();
 
     res.json({
       success: true,
       message: 'تم تحديث البيانات بنجاح',
-      user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, location: user.location, createdAt: user.createdAt, lastLoginAt: user.lastLoginAt },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, location: user.location, birthday: user.birthday, createdAt: user.createdAt, lastLoginAt: user.lastLoginAt },
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'حدث خطأ في الخادم' });

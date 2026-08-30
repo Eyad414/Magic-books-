@@ -52,7 +52,7 @@ export default function Dashboard() {
   const { t, i18n } = useTranslation();
 
   // Profile form state
-  const [profileForm, setProfileForm] = useState({ name: '', email: '', phone: '', location: '' });
+  const [profileForm, setProfileForm] = useState({ name: '', email: '', phone: '', location: '', birthday: '' });
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -82,7 +82,10 @@ export default function Dashboard() {
         name: user.name || '',
         email: user.email || '',
         phone: user.phone || '',
-        location: user.location || ''
+        location: user.location || '',
+        // <input type="date"> speaks yyyy-mm-dd only; anything else renders blank
+        // and looks like the birthday was never saved.
+        birthday: (user as any).birthday ? String((user as any).birthday).slice(0, 10) : '',
       });
     }
   }, [user]);
@@ -495,6 +498,24 @@ export default function Dashboard() {
                     <div>
                       <label className="block font-arabic text-white/70 text-xs mb-1">{t('dashboard.label_location')}</label>
                       <input type="text" className="magic-input w-full" value={profileForm.location} onChange={e => setProfileForm({...profileForm, location: e.target.value})} />
+                    </div>
+                    {/* Asked for one reason only, and the reason is said out
+                        loud: a date of birth collected with no explanation is
+                        a thing people decline to give. */}
+                    <div>
+                      <label className="block font-arabic text-white/70 text-xs mb-1">
+                        🎂 {t('dashboard.label_birthday', 'تاريخ ميلادك')}
+                      </label>
+                      <input
+                        type="date"
+                        dir="ltr"
+                        className="magic-input w-full"
+                        value={profileForm.birthday}
+                        onChange={e => setProfileForm({ ...profileForm, birthday: e.target.value })}
+                      />
+                      <p className="font-arabic text-white/35 text-[11px] mt-1">
+                        {t('dashboard.birthday_hint', 'منشان نبعتلك هدية بعيد ميلادك — قصة كاملة مجاناً 🎁')}
+                      </p>
                     </div>
                     <MagicButton type="submit" isLoading={isSavingProfile} className="mt-4">{t('dashboard.save_changes')}</MagicButton>
                   </form>
