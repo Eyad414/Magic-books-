@@ -824,13 +824,26 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
         // straight into what a customer is charged, and a coupon saved as 500
         // or with a blank code would be discovered at checkout by a real buyer.
         const seen = new Set<string>();
+        // usedCount is the SERVER's number. Taking it from the request would
+        // let an ordinary save — the dashboard sends the whole list — quietly
+        // reset a limited code back to unused. It only moves when an order
+        // claims it, or when the owner deliberately resets that row.
+        const existing = new Map<string, any>(
+          ((settings.coupons || []) as any[]).map((c: any) => [String(c.code).toUpperCase(), c]),
+        );
         settings.coupons = coupons
-          .map((c: any) => ({
-            code: String(c?.code || '').trim().toUpperCase(),
-            type: c?.type === 'freeDelivery' ? 'freeDelivery' : 'percent',
-            value: Math.min(100, Math.max(0, Math.round(Number(c?.value) || 0))),
-            active: c?.active !== false,
-          }))
+          .map((c: any) => {
+            const code = String(c?.code || '').trim().toUpperCase();
+            const prior = existing.get(code);
+            return {
+              code,
+              type: c?.type === 'freeDelivery' ? 'freeDelivery' : 'percent',
+              value: Math.min(100, Math.max(0, Math.round(Number(c?.value) || 0))),
+              active: c?.active !== false,
+              maxUses: Math.max(0, Math.round(Number(c?.maxUses) || 0)),
+              usedCount: c?.resetUses ? 0 : (prior ? Number(prior.usedCount) || 0 : 0),
+            };
+          })
           .filter((c: any) => {
             if (!c.code || seen.has(c.code)) return false;
             seen.add(c.code);
@@ -2105,10 +2118,22 @@ export const checkCoupon = async (req: Request, res: Response): Promise<void> =>
   try {
     const coupon = await resolveCoupon(String(req.body?.code || ''));
     if (!coupon) {
-      res.json({ success: false, message: 'الكود غير صالح أو منتهي.' });
+      // Say which it is. "Invalid" for a code the customer was given by hand,
+      // and which worked yesterday, sends them to the contact form.
+      const wanted = String(req.body?.code || '').trim().toUpperCase();
+      const settings = await SiteSettings.findOne().lean();
+      const raw = ((settings as any)?.coupons || []).find((c: any) => String(c.code).toUpperCase() === wanted);
+      const usedUp = raw && Number(raw.maxUses) > 0 && (Number(raw.usedCount) || 0) >= Number(raw.maxUses);
+      res.json({
+        success: false,
+        message: usedUp ? 'انتهى عدد مرات استخدام هذا الكود.' : 'الكود غير صالح أو منتهي.',
+      });
       return;
     }
-    res.json({ success: true, code: coupon.code, type: coupon.type, value: coupon.value });
+    const left = Number(coupon.maxUses) > 0
+      ? Math.max(0, Number(coupon.maxUses) - (Number(coupon.usedCount) || 0))
+      : null;
+    res.json({ success: true, code: coupon.code, type: coupon.type, value: coupon.value, usesLeft: left });
   } catch (err: any) {
     console.error('[checkCoupon]', err?.message || err);
     res.status(500).json({ success: false, message: 'تعذّر التحقق من الكود.' });

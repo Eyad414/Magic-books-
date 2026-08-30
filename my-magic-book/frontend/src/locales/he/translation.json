@@ -1170,7 +1170,15 @@
     "send_digital_again": "כבר שלחת ללקוח הזה. לשלוח שוב?",
     "send_digital_ok": "נשלח — הוא יראה זאת בחשבונו ✅",
     "send_digital_ok_mail": "נשלח — נמצא בחשבונו וגם נשלח אימייל ✅",
-    "send_failed_generic": "השליחה נכשלה"
+    "send_failed_generic": "השליחה נכשלה",
+    "coupons_hint2": "100% = הספר חינם לגמרי, כולל משלוח. תיבת המספר קובעת כמה פעמים ניתן להשתמש בקוד (0 = ללא הגבלה) — כל שימוש בקוד חינם הוא ספר אמיתי בעלות אמיתית.",
+    "coupon_max_uses": "מספר שימושים (0 = ללא הגבלה)",
+    "coupon_used_of": "נוצל {{n}} מתוך {{m}}",
+    "coupon_used_n": "נוצל {{n}}",
+    "coupon_used_hint": "כמה פעמים נעשה שימוש בקוד",
+    "coupon_reset": "איפוס",
+    "coupon_will_reset": "יאופס ↺",
+    "coupon_reset_hint": "מאפס את המונה בשמירה"
   },
   "title_page": {
     "presents": "מוגש ל",

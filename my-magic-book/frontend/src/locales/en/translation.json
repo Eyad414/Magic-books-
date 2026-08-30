@@ -1170,7 +1170,15 @@
     "send_digital_again": "You already sent this to the customer. Send it again?",
     "send_digital_ok": "Sent — they will see it in their account ✅",
     "send_digital_ok_mail": "Sent — it is in their account and they got an email ✅",
-    "send_failed_generic": "Sending failed"
+    "send_failed_generic": "Sending failed",
+    "coupons_hint2": "100% = the book is completely free, delivery included. The number box sets how many times a code may be used (0 = unlimited) — every use of a free code is a real book with a real cost.",
+    "coupon_max_uses": "Times it may be used (0 = unlimited)",
+    "coupon_used_of": "used {{n}} of {{m}}",
+    "coupon_used_n": "used {{n}}",
+    "coupon_used_hint": "How many times this code has been used",
+    "coupon_reset": "Reset",
+    "coupon_will_reset": "Will reset ↺",
+    "coupon_reset_hint": "Clears the counter when you save"
   },
   "title_page": {
     "presents": "Presented to",

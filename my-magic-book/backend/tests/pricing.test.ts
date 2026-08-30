@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { priceOrder, DELIVERY_FEE_ILS } from '../src/services/Pricing';
+import { priceOrder, DELIVERY_FEE_ILS, couponExhausted } from '../src/services/Pricing';
 
 const percent = (value: number) => ({ code: 'X', type: 'percent' as const, value, active: true });
 const freeDelivery = { code: 'FANOOS', type: 'freeDelivery' as const, value: 0, active: true };
@@ -69,5 +69,18 @@ describe('priceOrder', () => {
       coupon: { code: 'NEARLY', type: 'percent', value: 99, active: true },
     });
     expect(p.deliveryFee).toBe(DELIVERY_FEE_ILS);
+  });
+
+  it('a limited coupon is exhausted once it hits its cap', () => {
+    expect(couponExhausted({ code: 'X', type: 'percent', value: 100, active: true, maxUses: 1, usedCount: 0 })).toBe(false);
+    expect(couponExhausted({ code: 'X', type: 'percent', value: 100, active: true, maxUses: 1, usedCount: 1 })).toBe(true);
+    // Over the cap counts as exhausted too, not as "one more left".
+    expect(couponExhausted({ code: 'X', type: 'percent', value: 100, active: true, maxUses: 2, usedCount: 5 })).toBe(true);
+  });
+
+  it('an unlimited coupon is never exhausted, however often it is used', () => {
+    expect(couponExhausted({ code: 'X', type: 'percent', value: 20, active: true, maxUses: 0, usedCount: 999 })).toBe(false);
+    // Codes saved before the field existed have neither number.
+    expect(couponExhausted({ code: 'X', type: 'percent', value: 20, active: true } as any)).toBe(false);
   });
 });

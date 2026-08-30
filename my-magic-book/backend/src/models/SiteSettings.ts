@@ -97,6 +97,17 @@ export interface ICoupon {
   type: 'percent' | 'freeDelivery';
   value: number;
   active: boolean;
+  /**
+   * How many orders may use this code. 0 or absent = unlimited.
+   *
+   * A 100% code with no limit is a book a day for whoever shares it: every
+   * redemption is real Gemini spend plus printing and delivery. Switching the
+   * code off afterwards only helps once somebody notices.
+   */
+  maxUses?: number;
+  /** How many orders have used it. Counted for every code, limited or not, so
+   *  the owner can see which ones people actually use. */
+  usedCount?: number;
 }
 
 export const DEFAULT_COUPONS: ICoupon[] = [
@@ -189,6 +200,9 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
         type: { type: String, enum: ['percent', 'freeDelivery'], default: 'percent' },
         value: { type: Number, default: 0 },
         active: { type: Boolean, default: true },
+        // 0 = unlimited. Counted for every code either way.
+        maxUses: { type: Number, default: 0 },
+        usedCount: { type: Number, default: 0 },
       }],
       default: DEFAULT_COUPONS,
     },

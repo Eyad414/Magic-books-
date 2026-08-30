@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 import Order from '../models/Order';
 import Story from '../models/Story';
 import SiteSettings from '../models/SiteSettings';
-import { resolveCoupon, priceOrder } from '../services/Pricing';
+import { resolveCoupon, priceOrder, claimCouponUse, releaseCouponUse } from '../services/Pricing';
 import { buildBookForOrder } from '../services/BookBuilder';
 
 const stripe = process.env.STRIPE_SECRET_KEY
@@ -65,19 +65,45 @@ export const createCheckout = async (req: Request, res: Response): Promise<void>
     });
     const totalPrice = price.total;
 
-    const order = await Order.create({
-      userId: user._id,
-      storyId,
-      shippingAddress,
-      totalPrice,
-      basePrice: price.basePrice,
-      discountAmount: price.discount,
-      deliveryFee: price.deliveryFee,
-      couponCode: price.couponCode,
-      currency: 'ILS',
-      paymentMethod: paymentMethod === 'cash' ? 'cash' : 'card',
-      paymentStatus: 'pending',
-    });
+    // Claim the use BEFORE the order exists. The other order — create first,
+    // count after — hands out the discount and only then discovers the code was
+    // used up, which is exactly the case a limit is for.
+    if (price.couponCode) {
+      const claim = await claimCouponUse(price.couponCode);
+      if (!claim.ok) {
+        res.status(409).json({
+          success: false,
+          message: claim.reason === 'exhausted'
+            ? 'انتهى عدد مرات استخدام هذا الكود.'
+            : claim.reason === 'missing'
+              ? 'الكود غير صالح أو متوقف.'
+              : 'الكود مشغول الآن، جرّب مرة ثانية.',
+        });
+        return;
+      }
+    }
+
+    let order;
+    try {
+      order = await Order.create({
+        userId: user._id,
+        storyId,
+        shippingAddress,
+        totalPrice,
+        basePrice: price.basePrice,
+        discountAmount: price.discount,
+        deliveryFee: price.deliveryFee,
+        couponCode: price.couponCode,
+        currency: 'ILS',
+        paymentMethod: paymentMethod === 'cash' ? 'cash' : 'card',
+        paymentStatus: 'pending',
+      });
+    } catch (e) {
+      // The order never happened, so the use it claimed must go back — a
+      // one-shot code burned by a failed checkout would be gone for good.
+      await releaseCouponUse(price.couponCode);
+      throw e;
+    }
 
     // Cash on delivery / self-pickup — no online payment. The order is placed
     // as pending and handled offline; generation triggers once an admin (or the

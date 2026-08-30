@@ -2749,7 +2749,7 @@ export default function AdminDashboard() {
                   <div className="mt-8 p-4 bg-white/5 rounded-xl border border-white/10">
                     <h3 className="font-arabic font-bold text-white mb-1">{t('admin.coupons_title', 'أكواد الخصم')}</h3>
                     <p className="font-arabic text-white/40 text-xs mb-4">
-                      {t('admin.coupons_hint', 'خصم ١٠٠٪ = الكتاب مجاني تماماً، بدون رسوم توصيل. الكود غير حسّاس لحالة الأحرف.')}
+                      {t('admin.coupons_hint2', 'خصم ١٠٠٪ = الكتاب مجاني تماماً، بدون رسوم توصيل. خانة العدد تحدّد كم مرة يُستخدم الكود (٠ = بلا حد) — كل استخدام لكود مجاني هو كتاب حقيقي بتكلفة حقيقية.')}
                     </p>
 
                     <div className="space-y-2">
@@ -2760,6 +2760,8 @@ export default function AdminDashboard() {
                           setSettings({ ...settings, coupons: next });
                         };
                         const free = c.type === 'percent' && Number(c.value) >= 100;
+                        const used = Number(c.usedCount) || 0;
+                        const usedUp = Number(c.maxUses) > 0 && used >= Number(c.maxUses);
                         return (
                           <div key={i} className="flex flex-wrap items-center gap-2 p-2 rounded-lg bg-dark-800/60 border border-white/10">
                             <input
@@ -2794,6 +2796,40 @@ export default function AdminDashboard() {
                                 {t('admin.coupon_is_free', 'مجاني بالكامل')}
                               </span>
                             )}
+                            {/* How many orders may use it. 0 = unlimited, which
+                                is fine for 20% off and dangerous for 100%. */}
+                            <input
+                              type="number"
+                              min={0}
+                              dir="ltr"
+                              className="magic-input w-16 text-center"
+                              title={t('admin.coupon_max_uses', 'عدد مرات الاستخدام (٠ = بلا حد)')}
+                              placeholder="∞"
+                              value={c.maxUses || ''}
+                              onChange={(e) => setCoupon({ maxUses: Number(e.target.value) || 0 })}
+                            />
+                            {/* The counter the owner actually needs: used up
+                                turns red, because that code stops working. */}
+                            <span
+                              className={`font-arabic text-[10px] px-1.5 py-0.5 rounded ${
+                                usedUp ? 'bg-red-500/20 text-red-300' : 'text-white/40'
+                              }`}
+                              title={t('admin.coupon_used_hint', 'كم مرة استُخدم هذا الكود')}
+                            >
+                              {Number(c.maxUses) > 0
+                                ? t('admin.coupon_used_of', 'استُخدم {{n}} من {{m}}', { n: used, m: c.maxUses })
+                                : t('admin.coupon_used_n', 'استُخدم {{n}}', { n: used })}
+                            </span>
+                            {used > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => setCoupon({ resetUses: true })}
+                                className="px-1.5 py-0.5 rounded text-[10px] font-arabic text-white/50 hover:text-gold-400 border border-white/10"
+                                title={t('admin.coupon_reset_hint', 'يصفّر العداد عند الحفظ')}
+                              >
+                                {c.resetUses ? t('admin.coupon_will_reset', 'سيُصفّر ↺') : t('admin.coupon_reset', 'صفّر')}
+                              </button>
+                            )}
                             <label className="flex items-center gap-1.5 font-arabic text-white/60 text-xs cursor-pointer">
                               <input type="checkbox" checked={c.active !== false} onChange={(e) => setCoupon({ active: e.target.checked })} />
                               {t('admin.coupon_active', 'فعّال')}
@@ -2813,7 +2849,7 @@ export default function AdminDashboard() {
 
                     <button
                       type="button"
-                      onClick={() => setSettings({ ...settings, coupons: [...(settings.coupons || []), { code: '', type: 'percent', value: 100, active: true }] })}
+                      onClick={() => setSettings({ ...settings, coupons: [...(settings.coupons || []), { code: '', type: 'percent', value: 100, active: true, maxUses: 1, usedCount: 0 }] })}
                       className="mt-3 px-3 py-1.5 rounded-lg bg-magic-500/20 text-magic-200 border border-magic-500/30 font-arabic font-bold text-xs hover:bg-magic-500/30"
                     >
                       + {t('admin.coupon_add', 'أضف كود خصم')}
