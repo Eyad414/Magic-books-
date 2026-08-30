@@ -79,7 +79,7 @@ export default function BirthdayPrompt() {
   useEffect(() => {
     if (forced && user) { setOpen(true); return; }
     if (!user || user.role === 'admin') { setOpen(false); return; }
-    if (user.birthday) { setOpen(false); return; }
+    if (user.birthday) { setOpen(false); return; } // saved anywhere = never ask again
     let dismissed = false;
     try { dismissed = !!localStorage.getItem(key); } catch { /* private mode */ }
     if (dismissed) return;
@@ -103,8 +103,9 @@ export default function BirthdayPrompt() {
       toast.success(t('birthday.saved', 'تم الحفظ! سنتذكّر عيد ميلادك 🎂'));
       try { localStorage.setItem(key, String(Date.now())); } catch { /* fine */ }
       setOpen(false);
-      // Keep the session in step so the prompt does not reappear on navigation.
-      updateUser?.({ ...user, birthday: date });
+      // Take the server's copy, not my local guess: the session must hold what
+      // was actually stored, or the dialog decides on a value that never landed.
+      updateUser?.(res.user || { ...user, birthday: date });
     } catch (err: any) {
       toast.error(err?.response?.data?.message || t('birthday.failed', 'تعذّر الحفظ'));
     } finally {
