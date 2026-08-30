@@ -526,7 +526,8 @@
     "help_title": "שאלה לפני שתסיימו?",
     "help_desc": "שאלו בוואטסאפ — עונים מהר ועוזרים לבחור את החבילה המתאימה.",
     "coupon_free_delivery": "הקוד הופעל — המשלוח חינם 🚚",
-    "coupon_free_delivery_row": "קוד משלוח חינם"
+    "coupon_free_delivery_row": "קוד משלוח חינם",
+    "coupon_only_package": "הקוד תקף רק ל”{{pkg}}” — החליפו חבילה כדי להשתמש בו."
   },
   "step4": {
     "err_pickup_location": "אנא בחר נקודת איסוף",

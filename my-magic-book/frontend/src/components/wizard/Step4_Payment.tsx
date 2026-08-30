@@ -36,12 +36,12 @@ export default function Step4_Payment({ onPrev }: Props) {
   // with 50% off read "ادفع 130 ₪ الآن" on the button while the server charged
   // 65. It is re-checked against the server rather than trusted from the
   // wizard, so the figure shown here is the figure that will be charged.
-  const [coupon, setCoupon] = useState<{ type: 'percent' | 'freeDelivery'; value: number } | null>(null);
+  const [coupon, setCoupon] = useState<{ type: 'percent' | 'freeDelivery'; value: number; onlyPackage?: string | null } | null>(null);
   useEffect(() => {
     const code = String(storyConfig?.couponCode || '').trim();
     if (!code) { setCoupon(null); return; }
     publicApi.checkCoupon(code)
-      .then((r) => setCoupon(r?.success ? { type: r.type, value: Number(r.value) || 0 } : null))
+      .then((r) => setCoupon(r?.success ? { type: r.type, value: Number(r.value) || 0, onlyPackage: r.onlyPackage || null } : null))
       .catch(() => setCoupon(null));
   }, [storyConfig?.couponCode]);
 
@@ -51,6 +51,7 @@ export default function Step4_Payment({ onPrev }: Props) {
     couponApplied: !!coupon,
     discount: coupon?.type === 'percent' ? coupon.value : 0,
     couponType: coupon?.type,
+    couponOnlyPackage: coupon?.onlyPackage ?? null,
   });
 
   // Card payment appears only when there is a hosted checkout to hand off to.

@@ -83,4 +83,21 @@ describe('priceOrder', () => {
     // Codes saved before the field existed have neither number.
     expect(couponExhausted({ code: 'X', type: 'percent', value: 20, active: true } as any)).toBe(false);
   });
+
+  it('a package-tied coupon is free on that package', () => {
+    const gift = { code: 'BDAY2026-AAA', type: 'percent' as const, value: 100, active: true, onlyPackage: 'ebook' };
+    const p = priceOrder({ basePrice: 40, bookPackage: 'ebook', deliveryMethod: 'pickup', coupon: gift });
+    expect(p.total).toBe(0);
+    expect(p.couponCode).toBe('BDAY2026-AAA');
+  });
+
+  it('and does NOTHING on any other package — no discount, no free delivery', () => {
+    const gift = { code: 'BDAY2026-AAA', type: 'percent' as const, value: 100, active: true, onlyPackage: 'ebook' };
+    const p = priceOrder({ basePrice: 130, bookPackage: 'color', deliveryMethod: 'delivery', coupon: gift });
+    expect(p.discount).toBe(0);
+    expect(p.deliveryFee).toBe(DELIVERY_FEE_ILS);
+    expect(p.total).toBe(130 + DELIVERY_FEE_ILS);
+    // The code must not be recorded on an order it did not discount.
+    expect(p.couponCode).toBeUndefined();
+  });
 });

@@ -29,6 +29,8 @@ export function useCheckoutTotals(opts: {
   discount?: number;
   couponApplied?: boolean;
   couponType?: 'percent' | 'freeDelivery';
+  /** Set when the code only works on one package, e.g. a birthday e-book gift. */
+  couponOnlyPackage?: string | null;
 }): CheckoutTotals {
   const { t, i18n } = useTranslation();
   const [liveSettings, setLiveSettings] = useState<any>(null);
@@ -71,15 +73,21 @@ export function useCheckoutTotals(opts: {
 
   const isDigital = selectedPkg?.id === 'audio' || selectedPkg?.id === 'ebook';
   const basePrice = selectedPkg?.price ?? 0;
+  // A code tied to one package does nothing on any other — the same rule the
+  // server prices by. Without this a birthday e-book gift quoted a printed
+  // book at 0 ILS and the server then charged full price.
+  const wrongPackage = !!opts.couponOnlyPackage && String(opts.couponOnlyPackage) !== String(selectedPkg?.id || '');
+  const couponLive = !!opts.couponApplied && !wrongPackage;
+
   // Clamped for the same reason the server clamps: a coupon saved as 150 must
   // not show money owed back to the customer.
-  const percent = Math.min(100, Math.max(0, opts.discount || 0));
-  const discountedBase = opts.couponApplied ? Math.round(basePrice * (1 - percent / 100)) : basePrice;
+  const percent = couponLive ? Math.min(100, Math.max(0, opts.discount || 0)) : 0;
+  const discountedBase = couponLive ? Math.round(basePrice * (1 - percent / 100)) : basePrice;
   // Mirrors priceOrder on the server: 100% off means free, delivery included,
   // and a free-delivery coupon waives the fee on its own. If these two ever
   // disagree the customer is quoted one number and charged another.
-  const fullyFree = !!opts.couponApplied && opts.couponType !== 'freeDelivery' && percent >= 100;
-  const couponFreeDelivery = !!opts.couponApplied && opts.couponType === 'freeDelivery';
+  const fullyFree = couponLive && opts.couponType !== 'freeDelivery' && percent >= 100;
+  const couponFreeDelivery = couponLive && opts.couponType === 'freeDelivery';
   const deliveryFee = isDigital || opts.isPickup || fullyFree || couponFreeDelivery ? 0 : 30;
 
   return {

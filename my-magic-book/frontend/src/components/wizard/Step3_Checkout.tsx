@@ -163,6 +163,8 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
   const [couponError, setCouponError] = useState('');
   const [discount, setDiscount] = useState(0);
   const [couponType, setCouponType] = useState<'percent' | 'freeDelivery'>('percent');
+  // Which package the applied code is limited to, if any.
+  const [couponOnlyPackage, setCouponOnlyPackage] = useState<string | null>(null);
   const [couponChecking, setCouponChecking] = useState(false);
 
   /**
@@ -178,8 +180,20 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
     try {
       const res = await publicApi.checkCoupon(code);
       if (res?.success) {
+        // A code tied to one package — a birthday e-book gift, say — is real
+        // but does nothing here. Saying so now beats accepting it, showing 0 ₪
+        // and letting the server charge the full price at the end.
+        if (res.onlyPackage && String(res.onlyPackage) !== String(selectedPkg.id)) {
+          setCouponApplied(false); setDiscount(0); setCouponType('percent');
+          setStoryConfig({ couponCode: '' });
+          setCouponError(t('step3.coupon_only_package', 'هذا الكود صالح لـ«{{pkg}}» فقط — غيّر الباقة لتستخدمه.', {
+            pkg: t(`step3.pkg_${res.onlyPackage}`, String(res.onlyPackage)),
+          }));
+          return;
+        }
         setCouponType(res.type === 'freeDelivery' ? 'freeDelivery' : 'percent');
         setDiscount(res.type === 'percent' ? res.value : 0);
+        setCouponOnlyPackage(res.onlyPackage || null);
         setCouponApplied(true);
         setCouponError('');
         // Carried to step 4 — the order is priced from this code on the server.
@@ -211,11 +225,15 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
   // Arabic uses its own comma; an English address line reading "Silwan، Jerusalem" looks broken.
   const addrSep = i18n.language?.startsWith('ar') ? '،' : ',';
   const basePrice = selectedPkg.price;
-  const discountedBase = couponApplied ? Math.round(basePrice * (1 - discount / 100)) : basePrice;
-  const couponFreeDelivery = couponApplied && couponType === 'freeDelivery';
+  // Changing the package after applying must drop a code that no longer fits,
+  // or the summary keeps a discount the server will not honour.
+  const couponFitsPackage = !couponOnlyPackage || couponOnlyPackage === selectedPkg.id;
+  const couponLive = couponApplied && couponFitsPackage;
+  const discountedBase = couponLive ? Math.round(basePrice * (1 - discount / 100)) : basePrice;
+  const couponFreeDelivery = couponLive && couponType === 'freeDelivery';
   // A 100% coupon is a giveaway; asking the winner for 30 ₪ delivery at the
   // door is not one. Matches priceOrder on the server.
-  const couponFullyFree = couponApplied && couponType === 'percent' && discount >= 100;
+  const couponFullyFree = couponLive && couponType === 'percent' && discount >= 100;
   const freeDelivery = isDigital || isPickup || couponFreeDelivery || couponFullyFree;
   const deliveryFee = freeDelivery ? 0 : 30;
   const totalPrice = discountedBase + deliveryFee;

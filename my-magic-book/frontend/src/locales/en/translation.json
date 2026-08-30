@@ -526,7 +526,8 @@
     "help_title": "A question before you finish?",
     "help_desc": "Ask on WhatsApp — we answer quickly and can help you pick the right package.",
     "coupon_free_delivery": "Code applied — delivery is free 🚚",
-    "coupon_free_delivery_row": "free-delivery code"
+    "coupon_free_delivery_row": "free-delivery code",
+    "coupon_only_package": "This code only works with “{{pkg}}” — switch package to use it."
   },
   "step4": {
     "err_pickup_location": "Please choose a pickup point",
