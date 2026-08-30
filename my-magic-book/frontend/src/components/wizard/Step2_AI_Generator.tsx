@@ -531,6 +531,23 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
             </button>
           ))}
         </div>
+
+        {/* How the child's name will actually be written once the language is
+            chosen. A name typed in Arabic becomes «Waheeb» in an English story,
+            and the customer should meet that here — while it is still one tap
+            to change — rather than on the cover they paid for. Only shown when
+            the two differ; echoing back the name they typed says nothing. */}
+        {(() => {
+          const typed = (progress.childDetails.childName || '').trim();
+          const asWritten = localizeName(typed, form.language);
+          if (!typed || !asWritten || asWritten === typed) return null;
+          return (
+            <p className="mt-3 font-arabic text-[11px] text-gold-200/80" dir="auto">
+              {t('cover_preview.name_as', 'سيظهر الاسم في القصة هكذا:')}{' '}
+              <strong className="text-white font-black" dir="auto">{asWritten}</strong>
+            </p>
+          );
+        })()}
       </div>
 
       {/* Book Format / Package: full-color story, coloring book, audio, e-book … */}

@@ -1854,7 +1854,8 @@
     "stage_4": "📖 Your cover is almost ready!",
     "wait_note": "Please keep this page open — the artwork is being drawn.",
     "remaining": "{n} free previews left",
-    "error": "Couldn't create the cover, please try again"
+    "error": "Couldn't create the cover, please try again",
+    "name_as": "The name will appear in the story as:"
   },
   "payment": {
     "title": "Payment",
