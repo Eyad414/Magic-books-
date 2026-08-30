@@ -98,6 +98,12 @@ export function pdfFolderPath(...parts: string[]): string {
 }
 
 /** Server-side copy of one bucket object to another path (no download). */
+/** Read a stored object into memory. Used by tools that rewrite artwork. */
+export async function getFileBuffer(objectPath: string): Promise<Buffer> {
+  const [buf] = await bucket.file(objectPath).download();
+  return buf;
+}
+
 export async function copyObject(srcPath: string, destPath: string): Promise<void> {
   await bucket.file(srcPath).copy(bucket.file(destPath));
 }

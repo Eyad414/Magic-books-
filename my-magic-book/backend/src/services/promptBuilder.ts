@@ -149,6 +149,11 @@ export function buildIllustrationPrompt(input: PromptInput): string {
     sceneHint ? `Scene from the story: "${sceneHint}".` : null,
     styleHints,
     'Square 1:1 aspect ratio, 220x220mm print size. Soft realistic textures, volumetric glow, highly detailed background, professional CGI render quality.',
+    // Without this the model sometimes draws a narrower picture and pads the
+    // sides with white. The page is square and the image is square, so nothing
+    // downstream can hide it — object-fit: cover places the padding perfectly.
+    // It has to not be drawn in the first place.
+    'FULL BLEED: the artwork fills the entire square to all four edges. NO white border, NO white bars down the sides, NO frame, NO margin, NO matte, NO passe-partout, no rounded corners — the scene continues right off every edge of the image.',
     COLOR_GRADE,
     'Expressive joyful face, child-safe, polished and magical. No text, no captions, no watermarks, no signatures.',
   ].filter(Boolean);

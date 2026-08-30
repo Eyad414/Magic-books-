@@ -22,6 +22,8 @@ import { resolveCoupon } from '../services/Pricing';
 import { publicProxyUrl } from '../services/PrintService';
 import { uploadBuffer, pdfFolderPath, listObjects, deleteObject } from '../services/StorageService';
 import { submitPrintJob, isBookPodConfigured, fetchOurJobStatuses, payOrderWithCard } from '../services/BookPodService';
+import { trimStoredImage, measureWhiteFrame } from '../services/TrimBorders';
+import { getFileBuffer } from '../services/StorageService';
 
 // The kid photo (already in the bucket) used as the reference face for ADMIN
 // PREVIEW generation only. Real customer orders use the customer's own photo.
@@ -2447,6 +2449,70 @@ export const sendBookToCustomer = async (req: Request, res: Response): Promise<v
   } catch (err: any) {
     console.error('[sendBookToCustomer]', err);
     res.status(500).json({ success: false, message: err.message || 'فشل الإرسال' });
+  }
+};
+
+/**
+ * POST /api/admin/stories/:id/trim-borders
+ *
+ * Take the white frame off a story's pages. Some generated pages come back
+ * with the drawing padded — most often a bar down the left and right — and no
+ * layout can hide it: the page is square, the image is square, and the white
+ * is inside the picture.
+ *
+ * `dryRun` reports what would be cut without touching anything, because this
+ * overwrites artwork the customer may already have seen. Every page that IS
+ * rewritten keeps its original alongside as <name>.orig.png.
+ */
+export const trimStoryBorders = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const story: any = await Story.findById(req.params.id).lean();
+    if (!story) {
+      res.status(404).json({ success: false, message: 'القصة غير موجودة' });
+      return;
+    }
+
+    const strip = (u: any) => String(u || '').replace(/^gs:\/\/[^/]+\//, '');
+    const paths: string[] = [
+      ...(story.generatedImages || []),
+      ...(req.body?.includeCover ? [story.generatedCover] : []),
+    ].map(strip).filter((p: string) => p.endsWith('.png'));
+
+    if (!paths.length) {
+      res.status(409).json({ success: false, message: 'لا توجد صور PNG في هذه القصة.' });
+      return;
+    }
+
+    const dryRun = req.body?.dryRun !== false;
+    const results: any[] = [];
+    for (const path of paths) {
+      try {
+        if (dryRun) {
+          const buf = await getFileBuffer(path);
+          const m = await measureWhiteFrame(buf);
+          results.push({
+            path,
+            wouldTrim: Math.max(m.l, m.r, m.t, m.b) >= 4,
+            margins: { left: m.l, right: m.r, top: m.t, bottom: m.b },
+          });
+        } else {
+          results.push(await trimStoredImage(path));
+        }
+      } catch (e: any) {
+        results.push({ path, error: e?.message || String(e) });
+      }
+    }
+
+    res.json({
+      success: true,
+      dryRun,
+      pages: results.length,
+      changed: results.filter((r) => r.trimmed || r.wouldTrim).length,
+      results,
+    });
+  } catch (err: any) {
+    console.error('[trimStoryBorders]', err?.message || err);
+    res.status(500).json({ success: false, message: err.message || 'تعذّر المعالجة' });
   }
 };
 

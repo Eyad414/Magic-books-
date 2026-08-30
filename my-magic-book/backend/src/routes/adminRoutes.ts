@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam, getSettings, updateSettings, getAllOrders, confirmOrderPayment, buildOrderBook, getOrderBuildStatus, reRenderOrderFiles, reRenderOrderColoring, submitOrderColoring, printBook, printBookSubmit, generatePreviewIllustrations, generatePhotorealPreview, generateColoringPreview, sendBookToCustomer, payPrintJob, sendOrderDigital,
+import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam, getSettings, updateSettings, getAllOrders, confirmOrderPayment, buildOrderBook, getOrderBuildStatus, reRenderOrderFiles, reRenderOrderColoring, submitOrderColoring, printBook, printBookSubmit, generatePreviewIllustrations, generatePhotorealPreview, generateColoringPreview, sendBookToCustomer, payPrintJob, sendOrderDigital, trimStoryBorders,
   importBookPdf,
   submitImportedBook,
   designImportedCover,
@@ -73,6 +73,8 @@ router.post('/print-jobs/:orderNo/pay', payPrintJob);
 // Deliver a finished order to its customer to READ in their account — the
 // digital counterpart of sending it to the printer.
 router.post('/orders/:id/send-digital', sendOrderDigital);
+// Take the white frame off generated pages that came back padded.
+router.post('/stories/:id/trim-borders', trimStoryBorders);
 router.get('/conversations', listConversations);
 router.post('/customers/:userId/messages/read', markThreadRead);
 router.get('/customers/:userId/messages', getCustomerThread);
