@@ -20,11 +20,53 @@ import toast from 'react-hot-toast';
  * Admins never see it: the owner opening their own dashboard does not need a
  * birthday gift from themselves.
  */
+/**
+ * Month names written out, per language.
+ *
+ * The browser's own <input type="date"> follows the BROWSER's locale, not the
+ * page, so an Arabic reader was being shown "dd/mm/yyyy" and a Gregorian
+ * picker in English. Three dropdowns read in the language the person chose.
+ *
+ * Arabic uses the Levantine names — كانون الثاني rather than يناير — because
+ * that is what is said in Jerusalem, where the shop is.
+ */
+const MONTHS: Record<string, string[]> = {
+  ar: ['كانون الثاني', 'شباط', 'آذار', 'نيسان', 'أيار', 'حزيران', 'تموز', 'آب', 'أيلول', 'تشرين الأول', 'تشرين الثاني', 'كانون الأول'],
+  he: ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'],
+  en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+};
+
+/** Days in a month, so 31 February cannot be picked. */
+function daysIn(month: string, year: string): number {
+  const m = Number(month);
+  const y = Number(year);
+  if (!m) return 31;
+  if (!y) return m === 2 ? 29 : [4, 6, 9, 11].includes(m) ? 30 : 31;
+  return new Date(y, m, 0).getDate();
+}
+
 export default function BirthdayPrompt() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = (i18n.language || 'ar').slice(0, 2);
+  const isRtl = lang === 'ar' || lang === 'he';
+  const monthNames = MONTHS[lang] || MONTHS.ar;
+  // Oldest first would put 1926 at the top of a list a 30-year-old scrolls
+  // through; newest first puts the likely years within reach.
+  const thisYear = new Date().getFullYear();
+  const years = Array.from({ length: 90 }, (_, i) => String(thisYear - 5 - i));
+  const selectClass =
+    'w-full px-2 py-3 rounded-xl border border-[#d9dee8] bg-white text-[#1b2437] font-arabic text-sm text-center ' +
+    'focus:outline-none focus:border-[#D4A937] focus:ring-2 focus:ring-[#D4A937]/25 transition';
   const { user, updateUser } = useAuth() as any;
   const [open, setOpen] = useState(false);
-  const [date, setDate] = useState('');
+  const [day, setDay] = useState('');
+  const [month, setMonth] = useState('');
+  const [year, setYear] = useState('');
+
+  // The three parts only become a date once all three are chosen.
+  const date = day && month && year
+    ? `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    : '';
   const [saving, setSaving] = useState(false);
 
   const key = user?.id ? `mmb_bday_asked:${user.id}` : '';
@@ -100,14 +142,52 @@ export default function BirthdayPrompt() {
           {t('birthday.desc', 'خبّرنا بتاريخ ميلادك ومنبعتلك هدية بيومه — قصة كاملة مجاناً 🎁')}
         </p>
 
-        <input
-          type="date"
-          dir="ltr"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          aria-label={t('birthday.title', 'إيمتى عيد ميلادك؟')}
-          className="w-full mb-5 px-4 py-3 rounded-xl border border-[#d9dee8] bg-white text-[#1b2437] text-center text-base focus:outline-none focus:border-[#D4A937] focus:ring-2 focus:ring-[#D4A937]/25 transition"
-        />
+        {/* Day / month / year, in the reader's own language. */}
+        <div className="grid grid-cols-3 gap-2 mb-5" dir={isRtl ? 'rtl' : 'ltr'}>
+          <select
+            aria-label={t('birthday.day', 'يوم')}
+            value={day}
+            onChange={(e) => setDay(e.target.value)}
+            className={selectClass}
+          >
+            <option value="">{t('birthday.day', 'يوم')}</option>
+            {Array.from({ length: daysIn(month, year) }, (_, i) => String(i + 1)).map((d) => (
+              <option key={d} value={d}>{d}</option>
+            ))}
+          </select>
+
+          <select
+            aria-label={t('birthday.month', 'شهر')}
+            value={month}
+            onChange={(e) => {
+              setMonth(e.target.value);
+              // A day that no longer exists in the new month has to go, or
+              // "31 February" quietly becomes 3 March when saved.
+              if (day && Number(day) > daysIn(e.target.value, year)) setDay('');
+            }}
+            className={selectClass}
+          >
+            <option value="">{t('birthday.month', 'شهر')}</option>
+            {monthNames.map((name, i) => (
+              <option key={name} value={String(i + 1)}>{name}</option>
+            ))}
+          </select>
+
+          <select
+            aria-label={t('birthday.year', 'سنة')}
+            value={year}
+            onChange={(e) => {
+              setYear(e.target.value);
+              if (day && Number(day) > daysIn(month, e.target.value)) setDay('');
+            }}
+            className={selectClass}
+          >
+            <option value="">{t('birthday.year', 'سنة')}</option>
+            {years.map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        </div>
 
         <button
           type="button"

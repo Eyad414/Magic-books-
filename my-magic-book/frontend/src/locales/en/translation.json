@@ -1876,6 +1876,9 @@
     "saving": "Saving…",
     "later": "Not now",
     "saved": "Great! We'll remember your birthday 🎂",
-    "failed": "Could not save"
+    "failed": "Could not save",
+    "day": "Day",
+    "month": "Month",
+    "year": "Year"
   }
 }
