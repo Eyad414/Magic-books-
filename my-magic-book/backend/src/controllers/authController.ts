@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import User from '../models/User';
 import { sendPasswordReset } from '../utils/mailer';
+import { grantIfDue } from '../services/BirthdayCoupon';
 
 /** Reset links die after an hour — long enough to find the mail, short enough
  *  that an old one in an inbox is not a standing key to the account. */
@@ -69,6 +70,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const now = new Date();
     user.lastLoginAt = now;
     user.loginCount = (user.loginCount || 0) + 1;
+    // The yearly thank-you, handed over at the only moment they could use it.
+    // Never allowed to break a sign-in: a failed gift must not cost someone
+    // access to their own account.
+    grantIfDue(String(user._id)).catch((e) => console.error('[birthday]', e?.message || e));
+
     // Keep the last twenty, so the list cannot grow without bound.
     user.loginHistory = [...(user.loginHistory || []), now].slice(-20);
     await user.save();
@@ -276,6 +282,11 @@ export const googleLogin = async (req: Request, res: Response): Promise<void> =>
     // Same bookkeeping the password path does, so the customers tab counts a
     // Google sign-in like any other.
     user.lastLoginAt = new Date();
+    // The yearly thank-you, handed over at the only moment they could use it.
+    // Never allowed to break a sign-in: a failed gift must not cost someone
+    // access to their own account.
+    grantIfDue(String(user._id)).catch((e) => console.error('[birthday]', e?.message || e));
+
     user.loginCount = (user.loginCount || 0) + 1;
     if (Array.isArray((user as any).loginHistory)) {
       (user as any).loginHistory = [...(user as any).loginHistory, new Date()].slice(-20);

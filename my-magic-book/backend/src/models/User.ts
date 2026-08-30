@@ -10,6 +10,18 @@ export interface IUser extends Document {
    * later linked to, "continue with Google".
    */
   googleId?: string;
+  /**
+   * The yearly thank-you: one free digital copy on the anniversary of signing
+   * up. Only the current one is kept — a coupon from two years ago is history,
+   * not something anyone needs to redeem.
+   */
+  birthdayCoupon?: {
+    code: string;
+    /** Which anniversary it was granted for, so the same year cannot grant twice. */
+    year: number;
+    grantedAt: Date;
+    usedAt?: Date;
+  };
   role: 'user' | 'admin';
   avatar?: string;
   phone?: string;
@@ -53,6 +65,12 @@ const UserSchema = new Schema<IUser>(
     // sparse: only accounts that actually used Google occupy the index, so the
     // uniqueness applies to real ids and not to a field full of nulls.
     googleId: { type: String, index: { unique: true, sparse: true } },
+    birthdayCoupon: {
+      code: { type: String },
+      year: { type: Number },
+      grantedAt: { type: Date },
+      usedAt: { type: Date },
+    },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     avatar: { type: String },
     phone: { type: String, trim: true },

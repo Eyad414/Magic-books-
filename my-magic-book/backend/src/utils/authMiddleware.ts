@@ -18,6 +18,24 @@ function touchLastSeen(user: any): void {
     .catch((err) => console.warn('[lastSeen]', err?.message || err));
 }
 
+/**
+ * Who is asking, when it is optional.
+ *
+ * Some public endpoints answer better for a signed-in customer — the coupon
+ * box has to recognise that person's own birthday code — but must still work
+ * for a guest. Returns null rather than refusing.
+ */
+export function optionalUserId(req: Request): string | null {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+    const decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET || 'secret') as JwtPayload;
+    return decoded?.id ? String(decoded.id) : null;
+  } catch {
+    return null; // an expired or forged token is simply a guest
+  }
+}
+
 export const protect = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;

@@ -23,6 +23,8 @@ import { publicProxyUrl } from '../services/PrintService';
 import { uploadBuffer, pdfFolderPath, listObjects, deleteObject } from '../services/StorageService';
 import { submitPrintJob, isBookPodConfigured, fetchOurJobStatuses, payOrderWithCard } from '../services/BookPodService';
 import { trimStoredImage, measureWhiteFrame } from '../services/TrimBorders';
+import { resolveBirthdayCoupon, grantNow } from '../services/BirthdayCoupon';
+import { optionalUserId } from '../utils/authMiddleware';
 import { getFileBuffer } from '../services/StorageService';
 
 // The kid photo (already in the bucket) used as the reference face for ADMIN
@@ -2116,7 +2118,11 @@ export const listVisits = async (req: Request, res: Response): Promise<void> => 
  */
 export const checkCoupon = async (req: Request, res: Response): Promise<void> => {
   try {
-    const coupon = await resolveCoupon(String(req.body?.code || ''));
+    const typed = String(req.body?.code || '');
+    // Their own birthday code is theirs alone, so it is looked up against the
+    // signed-in account. A guest simply does not have one.
+    const coupon = (await resolveCoupon(typed))
+      || (await resolveBirthdayCoupon(typed, optionalUserId(req) || undefined));
     if (!coupon) {
       // Say which it is. "Invalid" for a code the customer was given by hand,
       // and which worked yesterday, sends them to the contact form.
@@ -2133,7 +2139,7 @@ export const checkCoupon = async (req: Request, res: Response): Promise<void> =>
     const left = Number(coupon.maxUses) > 0
       ? Math.max(0, Number(coupon.maxUses) - (Number(coupon.usedCount) || 0))
       : null;
-    res.json({ success: true, code: coupon.code, type: coupon.type, value: coupon.value, usesLeft: left });
+    res.json({ success: true, code: coupon.code, type: coupon.type, value: coupon.value, usesLeft: left, onlyPackage: (coupon as any).onlyPackage || null });
   } catch (err: any) {
     console.error('[checkCoupon]', err?.message || err);
     res.status(500).json({ success: false, message: 'تعذّر التحقق من الكود.' });
@@ -2474,6 +2480,45 @@ export const sendBookToCustomer = async (req: Request, res: Response): Promise<v
   } catch (err: any) {
     console.error('[sendBookToCustomer]', err);
     res.status(500).json({ success: false, message: err.message || 'فشل الإرسال' });
+  }
+};
+
+/**
+ * POST /api/admin/birthday-coupons/grant
+ *
+ * Hand the yearly gift out now, to every account that does not already have an
+ * unspent one. The automatic grant waits for a real anniversary — no account
+ * is a year old yet — so this exists for the owner who wants to start now.
+ *
+ * dryRun by default: this gives away books.
+ */
+export const grantBirthdayCoupons = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const dryRun = req.body?.dryRun !== false;
+    const users = await User.find({ role: { $ne: 'admin' } }).select('_id name email birthdayCoupon').lean();
+    const eligible = users.filter((u: any) => !(u.birthdayCoupon?.code && !u.birthdayCoupon?.usedAt));
+
+    if (dryRun) {
+      res.json({
+        success: true,
+        dryRun: true,
+        accounts: users.length,
+        wouldGrant: eligible.length,
+        who: eligible.map((u: any) => u.name || u.email),
+      });
+      return;
+    }
+
+    const granted: any[] = [];
+    for (const u of eligible as any[]) {
+      const r = await grantNow(String(u._id));
+      if (r) granted.push({ name: u.name || u.email, code: r.code });
+    }
+    console.log(`[birthday] owner granted ${granted.length} coupons`);
+    res.json({ success: true, dryRun: false, granted: granted.length, results: granted });
+  } catch (err: any) {
+    console.error('[grantBirthdayCoupons]', err?.message || err);
+    res.status(500).json({ success: false, message: err.message || 'تعذّر' });
   }
 };
 

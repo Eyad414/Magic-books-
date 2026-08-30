@@ -4,6 +4,7 @@ import Order from '../models/Order';
 import Story from '../models/Story';
 import SiteSettings from '../models/SiteSettings';
 import { resolveCoupon, priceOrder, claimCouponUse, releaseCouponUse } from '../services/Pricing';
+import { resolveBirthdayCoupon, claimBirthdayCoupon } from '../services/BirthdayCoupon';
 import { buildBookForOrder } from '../services/BookBuilder';
 
 const stripe = process.env.STRIPE_SECRET_KEY
@@ -56,7 +57,10 @@ export const createCheckout = async (req: Request, res: Response): Promise<void>
     // was then charged full price, because the code never reached the server.
     // It travels with the order now and is applied here, from the same list the
     // checkout checked it against.
-    const coupon = await resolveCoupon(couponCode);
+    // A shop-wide code first, then the customer's own birthday coupon. Theirs
+    // is checked second so a shared code can never be shadowed by it.
+    const coupon = (await resolveCoupon(couponCode))
+      || (await resolveBirthdayCoupon(String(couponCode || ''), String(user._id)));
     const price = priceOrder({
       basePrice,
       bookPackage: bookPackage || story.bookPackage,
@@ -68,7 +72,16 @@ export const createCheckout = async (req: Request, res: Response): Promise<void>
     // Claim the use BEFORE the order exists. The other order — create first,
     // count after — hands out the discount and only then discovers the code was
     // used up, which is exactly the case a limit is for.
-    if (price.couponCode) {
+    const isBirthday = !!coupon && (coupon as any).onlyPackage === 'ebook' && /^BDAY\d{4}-/.test(String(coupon.code));
+    if (price.couponCode && isBirthday) {
+      // Their own, single-use, marked spent on their account rather than in the
+      // shop-wide list.
+      const took = await claimBirthdayCoupon(String(price.couponCode), String(user._id));
+      if (!took) {
+        res.status(409).json({ success: false, message: 'كود الهدية مستخدم من قبل.' });
+        return;
+      }
+    } else if (price.couponCode) {
       const claim = await claimCouponUse(price.couponCode);
       if (!claim.ok) {
         res.status(409).json({

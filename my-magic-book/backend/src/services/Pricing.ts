@@ -93,9 +93,16 @@ export function priceOrder(opts: {
   coupon?: ICoupon | null;
 }): PriceBreakdown {
   const { basePrice, bookPackage, deliveryMethod, coupon } = opts;
+  // A code tied to one package does nothing on any other. Checked here, in the
+  // one place that decides what is owed, rather than in the entry box — the
+  // customer could otherwise apply a free-e-book code to a printed order and
+  // be quoted zero.
+  const wrongPackage = !!coupon?.onlyPackage && String(coupon.onlyPackage) !== String(bookPackage || '');
+  const usable = wrongPackage ? null : coupon;
+
   // Clamped: a coupon saved as 150 must not invent money back, and a negative
   // one must not quietly add to the bill.
-  const percent = coupon?.type === 'percent' ? Math.min(100, Math.max(0, coupon.value)) : 0;
+  const percent = usable?.type === 'percent' ? Math.min(100, Math.max(0, usable.value)) : 0;
   const discount = percent ? Math.round(basePrice * (percent / 100)) : 0;
 
   // "100% off" has to mean free. Charging delivery on top of a coupon that
@@ -104,7 +111,7 @@ export function priceOrder(opts: {
   // winner is asked for 30 ₪ at the door.
   const fullyFree = percent >= 100;
   const noParcel = DIGITAL.has(String(bookPackage)) || deliveryMethod === 'pickup';
-  const deliveryWaived = noParcel || fullyFree || coupon?.type === 'freeDelivery';
+  const deliveryWaived = noParcel || fullyFree || usable?.type === 'freeDelivery';
   const deliveryFee = deliveryWaived ? 0 : DELIVERY_FEE_ILS;
 
   return {
@@ -112,6 +119,6 @@ export function priceOrder(opts: {
     discount,
     deliveryFee,
     total: Math.max(0, basePrice - discount) + deliveryFee,
-    couponCode: coupon?.code,
+    couponCode: usable?.code,
   };
 }

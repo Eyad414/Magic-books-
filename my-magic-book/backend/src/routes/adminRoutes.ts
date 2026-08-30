@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam, getSettings, updateSettings, getAllOrders, confirmOrderPayment, buildOrderBook, getOrderBuildStatus, reRenderOrderFiles, reRenderOrderColoring, submitOrderColoring, printBook, printBookSubmit, generatePreviewIllustrations, generatePhotorealPreview, generateColoringPreview, sendBookToCustomer, payPrintJob, sendOrderDigital, trimStoryBorders,
+import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam, getSettings, updateSettings, getAllOrders, confirmOrderPayment, buildOrderBook, getOrderBuildStatus, reRenderOrderFiles, reRenderOrderColoring, submitOrderColoring, printBook, printBookSubmit, generatePreviewIllustrations, generatePhotorealPreview, generateColoringPreview, sendBookToCustomer, payPrintJob, sendOrderDigital, trimStoryBorders, grantBirthdayCoupons,
   importBookPdf,
   submitImportedBook,
   designImportedCover,
@@ -75,6 +75,8 @@ router.post('/print-jobs/:orderNo/pay', payPrintJob);
 router.post('/orders/:id/send-digital', sendOrderDigital);
 // Take the white frame off generated pages that came back padded.
 router.post('/stories/:id/trim-borders', trimStoryBorders);
+// Hand out the yearly gift now, before any account is old enough to earn it.
+router.post('/birthday-coupons/grant', grantBirthdayCoupons);
 router.get('/conversations', listConversations);
 router.post('/customers/:userId/messages/read', markThreadRead);
 router.get('/customers/:userId/messages', getCustomerThread);

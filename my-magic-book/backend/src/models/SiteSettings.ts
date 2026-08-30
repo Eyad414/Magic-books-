@@ -108,6 +108,12 @@ export interface ICoupon {
   /** How many orders have used it. Counted for every code, limited or not, so
    *  the owner can see which ones people actually use. */
   usedCount?: number;
+  /**
+   * Restrict the code to ONE package id, e.g. 'ebook'. Absent = any package.
+   * A birthday gift of a free digital copy must not also give away a printed
+   * book, which costs paper, ink and a courier on top of the AI images.
+   */
+  onlyPackage?: string;
 }
 
 export const DEFAULT_COUPONS: ICoupon[] = [
@@ -203,6 +209,7 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
         // 0 = unlimited. Counted for every code either way.
         maxUses: { type: Number, default: 0 },
         usedCount: { type: Number, default: 0 },
+        onlyPackage: { type: String, default: '' },
       }],
       default: DEFAULT_COUPONS,
     },
