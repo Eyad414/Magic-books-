@@ -294,10 +294,7 @@
     "msg_from_you": "أنت",
     "msg_placeholder": "اكتب رسالتك…",
     "msg_sending": "جاري الإرسال…",
-    "msg_send": "إرسال",
-    "ebook_download": "حمّل النسخة الرقمية",
-    "ebook_downloading": "جاري التحميل…",
-    "ebook_failed": "تعذّر تحميل الملف."
+    "msg_send": "إرسال"
   },
   "wizard": {
     "step1_label": "طفلك",

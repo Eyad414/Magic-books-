@@ -294,10 +294,7 @@
     "msg_from_you": "אתה",
     "msg_placeholder": "כתוב את ההודעה שלך…",
     "msg_sending": "שולח…",
-    "msg_send": "שלח",
-    "ebook_download": "הורידו את העותק הדיגיטלי",
-    "ebook_downloading": "מוריד…",
-    "ebook_failed": "לא הצלחנו להוריד את הקובץ."
+    "msg_send": "שלח"
   },
   "wizard": {
     "step1_label": "הילד שלך",

@@ -5,7 +5,6 @@ import Story from '../models/Story';
 import SiteSettings from '../models/SiteSettings';
 import { resolveCoupon, priceOrder } from '../services/Pricing';
 import { buildBookForOrder } from '../services/BookBuilder';
-import { streamObject } from '../services/StorageService';
 
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' as any })
@@ -224,81 +223,5 @@ export const getMyOrders = async (req: Request, res: Response): Promise<void> =>
     res.json({ success: true, orders });
   } catch (error) {
     res.status(500).json({ success: false, message: 'فشل في جلب الطلبات' });
-  }
-};
-
-/**
- * GET /api/orders/:id/ebook
- *
- * Hand the buyer of a digital copy the actual file.
- *
- * The E-Book package is sold as "كتاب إلكتروني للقراءة على الأجهزة" — a book
- * you keep — but the PDF the build already produces was reachable only from
- * the admin dashboard, so the customer paid for a file and received a web
- * page. This closes that gap.
- *
- * Four things are checked here rather than in the UI, because a hidden button
- * is not access control:
- *   1. the order belongs to the person asking,
- *   2. it is paid,
- *   3. the package actually includes a digital copy,
- *   4. the stored path is inside our own bucket prefix — streamObject would
- *      otherwise happily proxy anything the URL named.
- */
-export const downloadMyEbook = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const userId = String((req as any).user._id);
-    const order: any = await Order.findById(req.params.id)
-      .populate('storyId', 'childName bookPackage')
-      .lean();
-
-    if (!order || String(order.userId) !== userId) {
-      // Same answer for "not yours" as for "does not exist": an owner check
-      // that distinguishes them tells a stranger which order ids are real.
-      res.status(404).json({ success: false, message: 'الطلب غير موجود' });
-      return;
-    }
-    if (order.paymentStatus !== 'paid') {
-      res.status(403).json({ success: false, message: 'هذا الطلب غير مدفوع بعد.' });
-      return;
-    }
-
-    const pkg = String(order.storyId?.bookPackage || '');
-    if (pkg !== 'ebook' && pkg !== 'pro') {
-      res.status(403).json({ success: false, message: 'باقتك لا تشمل نسخة رقمية.' });
-      return;
-    }
-
-    const uri = String(order.bookPdfUrl || '');
-    if (!uri) {
-      res.status(409).json({ success: false, message: 'الكتاب لسه ما خلص تجهيزه. جرّب بعد شوي.' });
-      return;
-    }
-
-    // gs://bucket/object → object
-    const objectPath = uri.startsWith('gs://')
-      ? uri.slice('gs://'.length).split('/').slice(1).join('/')
-      : uri;
-    if (!objectPath.startsWith('magic-fanoose/')) {
-      console.error('[downloadMyEbook] refused path outside our prefix:', objectPath);
-      res.status(500).json({ success: false, message: 'تعذّر تحميل الملف.' });
-      return;
-    }
-
-    // The child's name is almost always Arabic, and an HTTP header value must
-    // be ASCII — putting "مريم" straight into Content-Disposition makes Node
-    // throw, which turned every download into a 500. The readable name travels
-    // in the RFC 5987 `filename*` parameter, percent-encoded; the plain
-    // `filename` keeps an ASCII fallback for anything that ignores it.
-    const child = String(order.storyId?.childName || 'book').replace(/[^\p{L}\p{N}_-]+/gu, '-');
-    const ascii = child.replace(/[^\x20-\x7E]/g, '').replace(/["\\]/g, '') || 'book';
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${ascii}.pdf"; filename*=UTF-8''${encodeURIComponent(child)}.pdf`,
-    );
-    await streamObject(objectPath, res, req);
-  } catch (err: any) {
-    console.error('[downloadMyEbook]', err?.message || err);
-    if (!res.headersSent) res.status(500).json({ success: false, message: 'تعذّر تحميل الملف.' });
   }
 };

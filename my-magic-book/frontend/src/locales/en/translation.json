@@ -294,10 +294,7 @@
     "msg_from_you": "You",
     "msg_placeholder": "Write your message…",
     "msg_sending": "Sending…",
-    "msg_send": "Send",
-    "ebook_download": "Download your copy",
-    "ebook_downloading": "Downloading…",
-    "ebook_failed": "Could not download the file."
+    "msg_send": "Send"
   },
   "wizard": {
     "step1_label": "Your child",
