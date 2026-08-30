@@ -1178,7 +1178,10 @@
     "coupon_used_hint": "כמה פעמים נעשה שימוש בקוד",
     "coupon_reset": "איפוס",
     "coupon_will_reset": "יאופס ↺",
-    "coupon_reset_hint": "מאפס את המונה בשמירה"
+    "coupon_reset_hint": "מאפס את המונה בשמירה",
+    "tab_coupons": "קודי הנחה",
+    "coupons_page_hint": "צרו קוד: השם, אחוז ההנחה, וכמה פעמים ניתן להשתמש בו. הקוד פועל בקופה מיד.",
+    "save_coupons": "שמירת הקודים"
   },
   "title_page": {
     "presents": "מוגש ל",

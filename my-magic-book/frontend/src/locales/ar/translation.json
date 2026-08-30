@@ -1178,7 +1178,10 @@
     "coupon_used_hint": "كم مرة استُخدم هذا الكود",
     "coupon_reset": "صفّر",
     "coupon_will_reset": "سيُصفّر ↺",
-    "coupon_reset_hint": "يصفّر العداد عند الحفظ"
+    "coupon_reset_hint": "يصفّر العداد عند الحفظ",
+    "tab_coupons": "أكواد الخصم",
+    "coupons_page_hint": "أنشئ كود خصم: الاسم، نسبة الخصم، وعدد مرات الاستخدام. الكود يعمل في صفحة الدفع مباشرة.",
+    "save_coupons": "حفظ الأكواد"
   },
   "title_page": {
     "presents": "يُقدّم لـ",

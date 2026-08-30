@@ -5,7 +5,7 @@ import { adminApi } from '../api/adminApi';
 import { publicApi } from '../api/publicApi';
 import { objectPathToUrl } from '../api/mediaUrl';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail, User, Phone, Sparkles, AlertCircle, Search, Upload } from 'lucide-react';
+import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail, User, Phone, Sparkles, AlertCircle, Search, Upload, Ticket } from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
 import Modal from '../components/common/Modal';
 import ActionButton from '../components/common/ActionButton';
@@ -43,7 +43,7 @@ export default function AdminDashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState<'team' | 'pricing' | 'stories' | 'orders' | 'showcase' | 'messages' | 'customers' | 'visitors'>('orders');
+  const [tab, setTab] = useState<'team' | 'pricing' | 'coupons' | 'stories' | 'orders' | 'showcase' | 'messages' | 'customers' | 'visitors'>('orders');
   const [team, setTeam] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
@@ -1578,6 +1578,7 @@ export default function AdminDashboard() {
                 { id: 'showcase', label: t('admin.tab_showcase', 'الكتب الجاهزة'), icon: BookOpen },
                 { id: 'stories', label: t('admin.tab_stories'), icon: BookOpen },
                 { id: 'pricing', label: t('admin.tab_pricing'), icon: Settings },
+                { id: 'coupons', label: t('admin.tab_coupons', 'أكواد الخصم'), icon: Ticket },
                 { id: 'team', label: t('admin.tab_team'), icon: Users },
               ].map((tItem) => (
                 <button
@@ -2743,121 +2744,129 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  {/* Coupons. There was no way to make one before this: the
-                      three built-in codes were the only codes that existed,
-                      and updateSettings ignored the field entirely. */}
-                  <div className="mt-8 p-4 bg-white/5 rounded-xl border border-white/10">
-                    <h3 className="font-arabic font-bold text-white mb-1">{t('admin.coupons_title', 'أكواد الخصم')}</h3>
-                    <p className="font-arabic text-white/40 text-xs mb-4">
-                      {t('admin.coupons_hint2', 'خصم ١٠٠٪ = الكتاب مجاني تماماً، بدون رسوم توصيل. خانة العدد تحدّد كم مرة يُستخدم الكود (٠ = بلا حد) — كل استخدام لكود مجاني هو كتاب حقيقي بتكلفة حقيقية.')}
-                    </p>
-
-                    <div className="space-y-2">
-                      {(settings.coupons || []).map((c: any, i: number) => {
-                        const setCoupon = (patch: any) => {
-                          const next = [...(settings.coupons || [])];
-                          next[i] = { ...next[i], ...patch };
-                          setSettings({ ...settings, coupons: next });
-                        };
-                        const free = c.type === 'percent' && Number(c.value) >= 100;
-                        const used = Number(c.usedCount) || 0;
-                        const usedUp = Number(c.maxUses) > 0 && used >= Number(c.maxUses);
-                        return (
-                          <div key={i} className="flex flex-wrap items-center gap-2 p-2 rounded-lg bg-dark-800/60 border border-white/10">
-                            <input
-                              type="text"
-                              dir="ltr"
-                              placeholder="CODE"
-                              className="magic-input flex-1 min-w-[110px] text-center font-mono uppercase"
-                              value={c.code || ''}
-                              onChange={(e) => setCoupon({ code: e.target.value.toUpperCase() })}
-                            />
-                            <select
-                              className="magic-input font-arabic text-xs"
-                              value={c.type || 'percent'}
-                              onChange={(e) => setCoupon({ type: e.target.value })}
-                            >
-                              <option value="percent" className="bg-[#0a1628]">{t('admin.coupon_percent', 'خصم بالنسبة ٪')}</option>
-                              <option value="freeDelivery" className="bg-[#0a1628]">{t('admin.coupon_free_delivery', 'توصيل مجاني')}</option>
-                            </select>
-                            {c.type !== 'freeDelivery' && (
-                              <input
-                                type="number"
-                                min={0}
-                                max={100}
-                                dir="ltr"
-                                className="magic-input w-20 text-center"
-                                value={c.value ?? 0}
-                                onChange={(e) => setCoupon({ value: Number(e.target.value) })}
-                              />
-                            )}
-                            {free && (
-                              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 font-arabic text-[10px]">
-                                {t('admin.coupon_is_free', 'مجاني بالكامل')}
-                              </span>
-                            )}
-                            {/* How many orders may use it. 0 = unlimited, which
-                                is fine for 20% off and dangerous for 100%. */}
-                            <input
-                              type="number"
-                              min={0}
-                              dir="ltr"
-                              className="magic-input w-16 text-center"
-                              title={t('admin.coupon_max_uses', 'عدد مرات الاستخدام (٠ = بلا حد)')}
-                              placeholder="∞"
-                              value={c.maxUses || ''}
-                              onChange={(e) => setCoupon({ maxUses: Number(e.target.value) || 0 })}
-                            />
-                            {/* The counter the owner actually needs: used up
-                                turns red, because that code stops working. */}
-                            <span
-                              className={`font-arabic text-[10px] px-1.5 py-0.5 rounded ${
-                                usedUp ? 'bg-red-500/20 text-red-300' : 'text-white/40'
-                              }`}
-                              title={t('admin.coupon_used_hint', 'كم مرة استُخدم هذا الكود')}
-                            >
-                              {Number(c.maxUses) > 0
-                                ? t('admin.coupon_used_of', 'استُخدم {{n}} من {{m}}', { n: used, m: c.maxUses })
-                                : t('admin.coupon_used_n', 'استُخدم {{n}}', { n: used })}
-                            </span>
-                            {used > 0 && (
-                              <button
-                                type="button"
-                                onClick={() => setCoupon({ resetUses: true })}
-                                className="px-1.5 py-0.5 rounded text-[10px] font-arabic text-white/50 hover:text-gold-400 border border-white/10"
-                                title={t('admin.coupon_reset_hint', 'يصفّر العداد عند الحفظ')}
-                              >
-                                {c.resetUses ? t('admin.coupon_will_reset', 'سيُصفّر ↺') : t('admin.coupon_reset', 'صفّر')}
-                              </button>
-                            )}
-                            <label className="flex items-center gap-1.5 font-arabic text-white/60 text-xs cursor-pointer">
-                              <input type="checkbox" checked={c.active !== false} onChange={(e) => setCoupon({ active: e.target.checked })} />
-                              {t('admin.coupon_active', 'فعّال')}
-                            </label>
-                            <button
-                              type="button"
-                              onClick={() => setSettings({ ...settings, coupons: (settings.coupons || []).filter((_: any, j: number) => j !== i) })}
-                              className="p-1.5 rounded-lg text-red-300/70 hover:text-red-300 hover:bg-red-500/10"
-                              title={t('admin.coupon_delete', 'حذف الكود')}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setSettings({ ...settings, coupons: [...(settings.coupons || []), { code: '', type: 'percent', value: 100, active: true, maxUses: 1, usedCount: 0 }] })}
-                      className="mt-3 px-3 py-1.5 rounded-lg bg-magic-500/20 text-magic-200 border border-magic-500/30 font-arabic font-bold text-xs hover:bg-magic-500/30"
-                    >
-                      + {t('admin.coupon_add', 'أضف كود خصم')}
-                    </button>
-                  </div>
 
                   <MagicButton onClick={() => saveSettings(settings)} className="mt-4">{t('admin.save_pricing')}</MagicButton>
                 </div>
+              </div>
+            ) : tab === 'coupons' ? (
+              <div>
+                <h2 className="font-arabic font-bold text-xl text-white mb-1">{t('admin.tab_coupons', 'أكواد الخصم')}</h2>
+                <p className="font-arabic text-white/40 text-xs mb-6">
+                  {t('admin.coupons_page_hint', 'أنشئ كود خصم: الاسم، نسبة الخصم، وعدد مرات الاستخدام. الكود يعمل في صفحة الدفع مباشرة.')}
+                </p>
+                {/* Coupons. There was no way to make one before this: the
+                    three built-in codes were the only codes that existed,
+                    and updateSettings ignored the field entirely. */}
+                <div className="mt-8 p-4 bg-white/5 rounded-xl border border-white/10">
+                  <h3 className="font-arabic font-bold text-white mb-1">{t('admin.coupons_title', 'أكواد الخصم')}</h3>
+                  <p className="font-arabic text-white/40 text-xs mb-4">
+                    {t('admin.coupons_hint2', 'خصم ١٠٠٪ = الكتاب مجاني تماماً، بدون رسوم توصيل. خانة العدد تحدّد كم مرة يُستخدم الكود (٠ = بلا حد) — كل استخدام لكود مجاني هو كتاب حقيقي بتكلفة حقيقية.')}
+                  </p>
+
+                  <div className="space-y-2">
+                    {(settings.coupons || []).map((c: any, i: number) => {
+                      const setCoupon = (patch: any) => {
+                        const next = [...(settings.coupons || [])];
+                        next[i] = { ...next[i], ...patch };
+                        setSettings({ ...settings, coupons: next });
+                      };
+                      const free = c.type === 'percent' && Number(c.value) >= 100;
+                      const used = Number(c.usedCount) || 0;
+                      const usedUp = Number(c.maxUses) > 0 && used >= Number(c.maxUses);
+                      return (
+                        <div key={i} className="flex flex-wrap items-center gap-2 p-2 rounded-lg bg-dark-800/60 border border-white/10">
+                          <input
+                            type="text"
+                            dir="ltr"
+                            placeholder="CODE"
+                            className="magic-input flex-1 min-w-[110px] text-center font-mono uppercase"
+                            value={c.code || ''}
+                            onChange={(e) => setCoupon({ code: e.target.value.toUpperCase() })}
+                          />
+                          <select
+                            className="magic-input font-arabic text-xs"
+                            value={c.type || 'percent'}
+                            onChange={(e) => setCoupon({ type: e.target.value })}
+                          >
+                            <option value="percent" className="bg-[#0a1628]">{t('admin.coupon_percent', 'خصم بالنسبة ٪')}</option>
+                            <option value="freeDelivery" className="bg-[#0a1628]">{t('admin.coupon_free_delivery', 'توصيل مجاني')}</option>
+                          </select>
+                          {c.type !== 'freeDelivery' && (
+                            <input
+                              type="number"
+                              min={0}
+                              max={100}
+                              dir="ltr"
+                              className="magic-input w-20 text-center"
+                              value={c.value ?? 0}
+                              onChange={(e) => setCoupon({ value: Number(e.target.value) })}
+                            />
+                          )}
+                          {free && (
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 font-arabic text-[10px]">
+                              {t('admin.coupon_is_free', 'مجاني بالكامل')}
+                            </span>
+                          )}
+                          {/* How many orders may use it. 0 = unlimited, which
+                              is fine for 20% off and dangerous for 100%. */}
+                          <input
+                            type="number"
+                            min={0}
+                            dir="ltr"
+                            className="magic-input w-16 text-center"
+                            title={t('admin.coupon_max_uses', 'عدد مرات الاستخدام (٠ = بلا حد)')}
+                            placeholder="∞"
+                            value={c.maxUses || ''}
+                            onChange={(e) => setCoupon({ maxUses: Number(e.target.value) || 0 })}
+                          />
+                          {/* The counter the owner actually needs: used up
+                              turns red, because that code stops working. */}
+                          <span
+                            className={`font-arabic text-[10px] px-1.5 py-0.5 rounded ${
+                              usedUp ? 'bg-red-500/20 text-red-300' : 'text-white/40'
+                            }`}
+                            title={t('admin.coupon_used_hint', 'كم مرة استُخدم هذا الكود')}
+                          >
+                            {Number(c.maxUses) > 0
+                              ? t('admin.coupon_used_of', 'استُخدم {{n}} من {{m}}', { n: used, m: c.maxUses })
+                              : t('admin.coupon_used_n', 'استُخدم {{n}}', { n: used })}
+                          </span>
+                          {used > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setCoupon({ resetUses: true })}
+                              className="px-1.5 py-0.5 rounded text-[10px] font-arabic text-white/50 hover:text-gold-400 border border-white/10"
+                              title={t('admin.coupon_reset_hint', 'يصفّر العداد عند الحفظ')}
+                            >
+                              {c.resetUses ? t('admin.coupon_will_reset', 'سيُصفّر ↺') : t('admin.coupon_reset', 'صفّر')}
+                            </button>
+                          )}
+                          <label className="flex items-center gap-1.5 font-arabic text-white/60 text-xs cursor-pointer">
+                            <input type="checkbox" checked={c.active !== false} onChange={(e) => setCoupon({ active: e.target.checked })} />
+                            {t('admin.coupon_active', 'فعّال')}
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setSettings({ ...settings, coupons: (settings.coupons || []).filter((_: any, j: number) => j !== i) })}
+                            className="p-1.5 rounded-lg text-red-300/70 hover:text-red-300 hover:bg-red-500/10"
+                            title={t('admin.coupon_delete', 'حذف الكود')}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setSettings({ ...settings, coupons: [...(settings.coupons || []), { code: '', type: 'percent', value: 100, active: true, maxUses: 1, usedCount: 0 }] })}
+                    className="mt-3 px-3 py-1.5 rounded-lg bg-magic-500/20 text-magic-200 border border-magic-500/30 font-arabic font-bold text-xs hover:bg-magic-500/30"
+                  >
+                    + {t('admin.coupon_add', 'أضف كود خصم')}
+                  </button>
+                </div>
+                <MagicButton onClick={() => saveSettings(settings)} className="mt-5">{t('admin.save_coupons', 'حفظ الأكواد')}</MagicButton>
               </div>
             ) : tab === 'stories' ? (
               <div>

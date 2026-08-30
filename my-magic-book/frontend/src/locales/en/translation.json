@@ -1178,7 +1178,10 @@
     "coupon_used_hint": "How many times this code has been used",
     "coupon_reset": "Reset",
     "coupon_will_reset": "Will reset ↺",
-    "coupon_reset_hint": "Clears the counter when you save"
+    "coupon_reset_hint": "Clears the counter when you save",
+    "tab_coupons": "Discount codes",
+    "coupons_page_hint": "Create a code: its name, the percentage off, and how many times it may be used. It works at checkout straight away.",
+    "save_coupons": "Save codes"
   },
   "title_page": {
     "presents": "Presented to",
