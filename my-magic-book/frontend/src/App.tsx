@@ -3,29 +3,57 @@ import { Toaster } from 'react-hot-toast';
 import MainLayout from './layouts/MainLayout';
 import Home from './pages/Home';
 import Stories from './pages/Stories';
-import CreateStory from './pages/CreateStory';
-import AboutUs from './pages/AboutUs';
-import ContactUs from './pages/ContactUs';
-import Policy from './pages/Policy';
-import Dashboard from './pages/Dashboard';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
 
-import AdminDashboard from './pages/AdminDashboard';
-import StoryBookPage from './pages/StoryBookPage';
-import ColoringBookPage from './pages/ColoringBookPage';
-import OrderSuccess from './pages/OrderSuccess';
 import AccessibilityWidget from './components/common/AccessibilityWidget';
 import AdminBookGuard from './components/common/AdminBookGuard';
 import RequireAuth from './components/common/RequireAuth';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { publicApi } from './api/publicApi';
 import { useAuth } from './context/AuthContext';
 import BirthdayPrompt from './components/common/BirthdayPrompt';
+
+/**
+ * Everything past the front door is fetched when someone actually goes there.
+ *
+ * One bundle used to carry the whole site — the admin dashboard, the book
+ * viewer, the story wizard — to every visitor, including a parent who tapped
+ * a link on their phone to look at the home page. 402 KB of compressed
+ * JavaScript before anything could be read.
+ *
+ * Home and Stories stay eager on purpose: they are where people land, and a
+ * spinner on the page someone arrives at costs more than the bytes it saves.
+ */
+const CreateStory = lazy(() => import('./pages/CreateStory'));
+const AboutUs = lazy(() => import('./pages/AboutUs'));
+const ContactUs = lazy(() => import('./pages/ContactUs'));
+const Policy = lazy(() => import('./pages/Policy'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const StoryBookPage = lazy(() => import('./pages/StoryBookPage'));
+const ColoringBookPage = lazy(() => import('./pages/ColoringBookPage'));
+const OrderSuccess = lazy(() => import('./pages/OrderSuccess'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+
+
+/**
+ * Shown only while a route's code is on its way. Deliberately the site's own
+ * background with a quiet lantern rather than a white flash or a spinner: on a
+ * fast connection it is gone before it registers, and on a slow one it should
+ * look like the page arriving, not like something broken.
+ */
+function RouteLoading() {
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center" role="status" aria-live="polite">
+      <div className="text-4xl animate-pulse" aria-hidden="true">🏮</div>
+      <span className="sr-only">Loading</span>
+    </div>
+  );
+}
 
 export default function App() {
   const { i18n } = useTranslation();
@@ -106,6 +134,7 @@ export default function App() {
         }}
       />
       <BirthdayPrompt />
+      <Suspense fallback={<RouteLoading />}>
       <Routes>
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
@@ -131,6 +160,7 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
       </Routes>
+      </Suspense>
       <AccessibilityWidget />
     </>
   );
