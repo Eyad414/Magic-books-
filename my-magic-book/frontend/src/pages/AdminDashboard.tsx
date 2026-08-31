@@ -1892,10 +1892,30 @@ export default function AdminDashboard() {
                                   : t('admin.confirm_payment', 'تأكيد الدفع')}
                               </ActionButton>
                             )}
-                            {/* Admin-only: download the print-ready files */}
-                            <ActionButton variant="ghost" icon={Download} onClick={() => handleSaveFolder(order)} disabled={!order.printInteriorUrl && !order.printCoverUrl}>
-                              {t('admin.save_folder', 'حفظ الملفات')}
-                            </ActionButton>
+                            {/* Admin-only: download the print-ready files.
+                                Building a book makes the IMAGES; the print PDFs
+                                only exist after "إعادة تجهيز الملفات" or a send
+                                to BookPod. A grey button with no reason reads as
+                                broken — so when there is nothing to save it says
+                                what to do instead. */}
+                            {(() => {
+                              const hasFiles = !!(order.printInteriorUrl || order.printCoverUrl);
+                              return (
+                                <ActionButton
+                                  variant="ghost"
+                                  icon={Download}
+                                  onClick={() => handleSaveFolder(order)}
+                                  disabled={!hasFiles}
+                                  title={hasFiles
+                                    ? t('admin.save_folder', 'حفظ الملفات')
+                                    : t('admin.save_folder_needs_files', 'لا توجد ملفات طباعة بعد — اضغط «إعادة تجهيز الملفات» أولاً (مجاني)')}
+                                >
+                                  {hasFiles
+                                    ? t('admin.save_folder', 'حفظ الملفات')
+                                    : t('admin.save_folder_disabled', 'جهّز الملفات أولاً')}
+                                </ActionButton>
+                              );
+                            })()}
 
                             {/* PRO bundle: the coloring book — its own view / send / re-render / save */}
                             {order.storyId?.bookPackage === 'pro' && !!(order.storyId?.coloringImages?.length) && (

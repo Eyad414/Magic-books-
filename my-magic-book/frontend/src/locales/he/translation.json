@@ -1202,7 +1202,9 @@
     "saving_files": "מוריד קבצים…",
     "saved_files": "הורדו {{n}} קבצים ✅",
     "saved_files_partial": "הורדו {{n}} מתוך {{m}} — נסו שוב",
-    "saved_files_failed": "לא ניתן להוריד את הקבצים"
+    "saved_files_failed": "לא ניתן להוריד את הקבצים",
+    "save_folder_disabled": "הכינו קבצים תחילה",
+    "save_folder_needs_files": "אין עדיין קבצי הדפסה — לחצו «הכנת קבצים מחדש» תחילה (חינם)"
   },
   "title_page": {
     "presents": "מוגש ל",

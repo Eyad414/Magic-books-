@@ -1202,7 +1202,9 @@
     "saving_files": "Downloading files…",
     "saved_files": "Downloaded {{n}} file(s) ✅",
     "saved_files_partial": "Downloaded {{n}} of {{m}} — try again",
-    "saved_files_failed": "Could not download the files"
+    "saved_files_failed": "Could not download the files",
+    "save_folder_disabled": "Prepare files first",
+    "save_folder_needs_files": "No print files yet — press “Re-prepare files” first (free)"
   },
   "title_page": {
     "presents": "Presented to",

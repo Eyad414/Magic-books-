@@ -1202,7 +1202,9 @@
     "saving_files": "جارٍ تحميل الملفات…",
     "saved_files": "تم تحميل {{n}} ملف ✅",
     "saved_files_partial": "تم تحميل {{n}} من {{m}} — أعد المحاولة",
-    "saved_files_failed": "تعذّر تحميل الملفات"
+    "saved_files_failed": "تعذّر تحميل الملفات",
+    "save_folder_disabled": "جهّز الملفات أولاً",
+    "save_folder_needs_files": "لا توجد ملفات طباعة بعد — اضغط «إعادة تجهيز الملفات» أولاً (مجاني)"
   },
   "title_page": {
     "presents": "يُقدّم لـ",
