@@ -2758,6 +2758,57 @@ export default function AdminDashboard() {
                   </div>
 
 
+                  {/* Where a customer sends money when they pay by transfer.
+                      Empty until the owner types his own details, and the
+                      option stays hidden from customers until then — a wrong
+                      account number here would send real money to a stranger,
+                      so nothing is guessed or pre-filled. */}
+                  <div className="mt-8 p-4 bg-white/5 rounded-xl border border-white/10">
+                    <div className="flex items-center justify-between gap-3 mb-1 flex-wrap">
+                      <h3 className="font-arabic font-bold text-white">{t('admin.transfer_title', 'الدفع بالتحويل (Bit / بنك)')}</h3>
+                      <label className="flex items-center gap-2 font-arabic text-white/70 text-xs cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={!!settings.transferPayment?.enabled}
+                          onChange={(e) => setSettings({ ...settings, transferPayment: { ...(settings.transferPayment || {}), enabled: e.target.checked } })}
+                        />
+                        {t('admin.transfer_enable', 'أظهره للعملاء')}
+                      </label>
+                    </div>
+                    <p className="font-arabic text-white/40 text-xs mb-4">
+                      {t('admin.transfer_hint', 'يحوّل العميل المبلغ بنفسه، ثم تؤكّد أنت وصوله من زر «تأكيد الدفع» في الطلب. لن يظهر الخيار للعملاء قبل تعبئة رقم Bit أو رقم الحساب.')}
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {[
+                        { key: 'bitPhone', label: t('admin.transfer_bit', 'رقم Bit'), ltr: true },
+                        { key: 'accountHolder', label: t('admin.transfer_holder', 'اسم صاحب الحساب'), ltr: false },
+                        { key: 'bankName', label: t('admin.transfer_bank', 'اسم البنك'), ltr: false },
+                        { key: 'bankBranch', label: t('admin.transfer_branch', 'رقم الفرع'), ltr: true },
+                        { key: 'bankAccount', label: t('admin.transfer_account', 'رقم الحساب'), ltr: true },
+                      ].map((f) => (
+                        <div key={f.key}>
+                          <label className="block font-arabic text-white/70 text-xs mb-1">{f.label}</label>
+                          <input
+                            type="text"
+                            dir={f.ltr ? 'ltr' : undefined}
+                            className="magic-input w-full"
+                            value={(settings.transferPayment || {})[f.key] || ''}
+                            onChange={(e) => setSettings({ ...settings, transferPayment: { ...(settings.transferPayment || {}), [f.key]: e.target.value } })}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3">
+                      <label className="block font-arabic text-white/70 text-xs mb-1">{t('admin.transfer_note', 'ملاحظة للعميل (اختياري)')}</label>
+                      <input
+                        type="text"
+                        className="magic-input w-full"
+                        value={settings.transferPayment?.note || ''}
+                        onChange={(e) => setSettings({ ...settings, transferPayment: { ...(settings.transferPayment || {}), note: e.target.value } })}
+                      />
+                    </div>
+                  </div>
+
                   <MagicButton onClick={() => saveSettings(settings)} className="mt-4">{t('admin.save_pricing')}</MagicButton>
                 </div>
               </div>

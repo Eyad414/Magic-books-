@@ -122,12 +122,32 @@ export const DEFAULT_COUPONS: ICoupon[] = [
   { code: 'FANOOS', type: 'freeDelivery', value: 0, active: true },
 ];
 
+/**
+ * Where a customer sends money when they pay by transfer.
+ *
+ * Every field is filled in by the OWNER in the dashboard. Nothing here has a
+ * default: a wrong account number would send a real payment to a stranger, so
+ * the option stays hidden until he has typed his own details.
+ */
+export interface ITransferPayment {
+  enabled: boolean;
+  /** Bit works by phone number. */
+  bitPhone?: string;
+  bankName?: string;
+  bankBranch?: string;
+  bankAccount?: string;
+  accountHolder?: string;
+  /** Anything else he wants the customer to read. */
+  note?: string;
+}
+
 export interface ISiteSettings extends Document {
   bookPackages: IBookPackage[];
   themes: ITheme[];
   coupons?: ICoupon[];
   demoCards?: Record<string, IDemoCardVisibility>;
   homeStats?: IHomeStats;
+  transferPayment?: ITransferPayment;
   /** Wizard step 1: show the "no photo" button so a customer can order without
    *  uploading a child photo. Off by default — the photo is required. */
   allowSkipPhoto?: boolean;
@@ -199,6 +219,15 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
       happyFamilies: { type: String, default: '' },
       readyStories: { type: String, default: '' },
       rating: { type: String, default: '' },
+    },
+    transferPayment: {
+      enabled: { type: Boolean, default: false },
+      bitPhone: { type: String, default: '' },
+      bankName: { type: String, default: '' },
+      bankBranch: { type: String, default: '' },
+      bankAccount: { type: String, default: '' },
+      accountHolder: { type: String, default: '' },
+      note: { type: String, default: '' },
     },
     coupons: {
       type: [{

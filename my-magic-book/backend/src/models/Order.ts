@@ -35,7 +35,13 @@ export interface IOrder extends Document {
   paymentStatus: PaymentStatus;
   /** How the customer chose to pay. Cash/COD orders must not be shown as
    *  "awaiting payment" — that wording is for card checkouts. */
-  paymentMethod?: 'cash' | 'card';
+  /**
+   * 'transfer' = the customer sent the money themselves (Bit or a bank
+   * transfer) and a human confirms it in the dashboard. It exists because
+   * cash-on-delivery only reaches people the owner can physically meet, and
+   * a card gateway needs a registered business he does not have yet.
+   */
+  paymentMethod?: 'cash' | 'card' | 'transfer';
   paidAt?: Date;
   paidConfirmedBy?: string;
   stripeSessionId?: string;
@@ -96,7 +102,7 @@ const OrderSchema = new Schema<IOrder>(
     // shekels. It was labelled SAR from an early Saudi-market assumption, so
     // every order card read "70 SAR" for a price nobody ever charged in riyals.
     currency: { type: String, default: 'ILS' },
-    paymentMethod: { type: String, enum: ['cash', 'card'], default: 'card' },
+    paymentMethod: { type: String, enum: ['cash', 'card', 'transfer'], default: 'card' },
     paymentStatus: {
       type: String,
       enum: ['pending', 'paid', 'failed', 'refunded'],

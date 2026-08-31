@@ -783,6 +783,23 @@ export const getPublicSettings = async (_req: Request, res: Response): Promise<v
       themes: settings.themes.filter((t: any) => t.ready === true),
       demoCards: settings.demoCards || {},
       homeStats: settings.homeStats || DEFAULT_HOME_STATS,
+      // Only offered once the owner has actually filled in where the money
+      // should go. An enabled-but-empty option would take a real payment and
+      // tell the customer nothing about where to send it.
+      transferPayment: (() => {
+        const tp: any = (settings as any).transferPayment || {};
+        const hasDetails = !!(String(tp.bitPhone || '').trim() || String(tp.bankAccount || '').trim());
+        if (!tp.enabled || !hasDetails) return { enabled: false };
+        return {
+          enabled: true,
+          bitPhone: tp.bitPhone || '',
+          bankName: tp.bankName || '',
+          bankBranch: tp.bankBranch || '',
+          bankAccount: tp.bankAccount || '',
+          accountHolder: tp.accountHolder || '',
+          note: tp.note || '',
+        };
+      })(),
       allowSkipPhoto: !!settings.allowSkipPhoto,
       aiModeEnabled: !!settings.aiModeEnabled,
       // Whether the wizard should offer card payment at all. True only once a
@@ -801,7 +818,7 @@ export const getPublicSettings = async (_req: Request, res: Response): Promise<v
 // @route PUT /api/admin/settings
 export const updateSettings = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { bookPackages, themes, homeStats, allowSkipPhoto, aiModeEnabled, demoCards, coupons } = req.body;
+    const { bookPackages, themes, homeStats, allowSkipPhoto, aiModeEnabled, demoCards, coupons, transferPayment } = req.body;
     let settings = await SiteSettings.findOne();
 
     if (!settings) {
@@ -852,6 +869,19 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
             return true;
           }) as any;
         settings.markModified('coupons');
+      }
+      if (transferPayment && typeof transferPayment === 'object') {
+        const tp: any = transferPayment;
+        settings.transferPayment = {
+          enabled: !!tp.enabled,
+          bitPhone: String(tp.bitPhone || '').trim(),
+          bankName: String(tp.bankName || '').trim(),
+          bankBranch: String(tp.bankBranch || '').trim(),
+          bankAccount: String(tp.bankAccount || '').trim(),
+          accountHolder: String(tp.accountHolder || '').trim(),
+          note: String(tp.note || '').trim(),
+        } as any;
+        settings.markModified('transferPayment');
       }
       if (homeStats) {
         settings.homeStats = homeStats;

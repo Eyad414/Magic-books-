@@ -617,7 +617,8 @@
     "expiry_date": "Expiry Date",
     "pay_now": "Pay 💳 {price} ₪ Now",
     "login_to_pay": "Login to Pay",
-    "discount": "Discount"
+    "discount": "Discount",
+    "transfer": "Bank transfer / Bit"
   },
   "footer": {
     "description": "Create a personalized magic story for your child with AI. Stories printed and shipped to your door.",
@@ -1186,7 +1187,16 @@
     "coupons_page_hint": "Create a code: its name, the percentage off, and how many times it may be used. It works at checkout straight away.",
     "save_coupons": "Save codes",
     "msg_mail_failed": "Email did not send ✕",
-    "msg_mail_sent": "Email sent ✉"
+    "msg_mail_sent": "Email sent ✉",
+    "transfer_title": "Transfer payment (Bit / bank)",
+    "transfer_enable": "Show to customers",
+    "transfer_hint": "The customer transfers the money themselves, then you confirm it arrived with the order's 'confirm payment' button. Customers won't see the option until a Bit number or account number is filled in.",
+    "transfer_bit": "Bit number",
+    "transfer_holder": "Account holder",
+    "transfer_bank": "Bank name",
+    "transfer_branch": "Branch",
+    "transfer_account": "Account number",
+    "transfer_note": "Note to the customer (optional)"
   },
   "title_page": {
     "presents": "Presented to",
@@ -1865,7 +1875,14 @@
     "bookpod_title": "You'll finish paying on BookPod's secure page",
     "hosted_title": "You'll finish paying on the secure payment page",
     "hosted_desc": "We'll take you there to enter your card, then bring you straight back. Your card details never pass through our site.",
-    "continue_to_pay": "Continue to payment — {price} ₪"
+    "continue_to_pay": "Continue to payment — {price} ₪",
+    "transfer_title": "Transfer the amount and we'll confirm your order",
+    "transfer_bit": "Bit to number",
+    "transfer_bank": "Bank",
+    "transfer_branch": "Branch",
+    "transfer_account": "Account number",
+    "transfer_holder": "In the name of",
+    "transfer_after": "After you place the order we'll show your order number — put it in the transfer note. We start preparing the book as soon as the money is confirmed."
   },
   "common": {
     "loading": "Loading…",

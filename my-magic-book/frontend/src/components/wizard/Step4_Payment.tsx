@@ -58,9 +58,10 @@ export default function Step4_Payment({ onPrev }: Props) {
   // The server decides — a card button with nothing behind it is worse than no
   // card button. Today that means BookPod's payment link, once they supply it.
   const onlinePaymentsEnabled = !!liveSettings?.onlinePayment;
+  const transfer = liveSettings?.transferPayment;
   const paysOnBookPod = liveSettings?.onlinePaymentProvider === 'bookpod';
 
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal' | 'applepay' | 'cash'>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal' | 'applepay' | 'cash' | 'transfer'>('cash');
 
   // Default to card the moment a hosted checkout exists, without overriding a
   // customer who has already picked cash on this screen.
@@ -174,6 +175,15 @@ export default function Step4_Payment({ onPrev }: Props) {
                 icon: '💵',
                 soon: false,
               },
+              // Bit or a bank transfer. Appears only once the owner has filled
+              // in where the money goes — an option with no account behind it
+              // takes a real payment into nowhere.
+              ...(transfer?.enabled ? [{
+                id: 'transfer',
+                label: t('step5.transfer', 'تحويل بنكي / Bit'),
+                icon: '🏦',
+                soon: false,
+              }] : []),
             // Three greyed-out "قريباً" chips against one real option made the
             // last screen before paying look like a shop that is not open yet.
             // A method the customer cannot choose is not information, it is
@@ -218,6 +228,58 @@ export default function Step4_Payment({ onPrev }: Props) {
                 {t('payment.hosted_desc', 'ننقلك إلى صفحة الدفع لإدخال بطاقتك، ثم نعيدك إلى هنا. بيانات بطاقتك لا تمر عبر موقعنا إطلاقاً.')}
               </p>
             </div>
+          </div>
+        )}
+        {/* Where to send the money, before they commit — not after. A
+            customer who orders and only then learns they must transfer
+            somewhere has been surprised, and a surprised customer at the
+            payment step is a lost one. Every value here was typed by the
+            owner; nothing is invented. */}
+        {paymentMethod === 'transfer' && transfer?.enabled && (
+          <div className="mt-3 p-3.5 rounded-xl bg-blue-500/[0.07] border border-blue-400/25 animate-fade-in space-y-2">
+            <p className="font-arabic text-white/85 text-xs font-bold">
+              🏦 {t('payment.transfer_title', 'حوّل المبلغ ثم نؤكّد طلبك')}
+            </p>
+            <div className="space-y-1.5 font-arabic text-[11px]">
+              {transfer.bitPhone && (
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-white/50">{t('payment.transfer_bit', 'Bit إلى الرقم')}</span>
+                  <span className="text-white font-black" dir="ltr">{transfer.bitPhone}</span>
+                </div>
+              )}
+              {transfer.bankAccount && (
+                <>
+                  {transfer.bankName && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-white/50">{t('payment.transfer_bank', 'البنك')}</span>
+                      <span className="text-white/90">{transfer.bankName}</span>
+                    </div>
+                  )}
+                  {transfer.bankBranch && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-white/50">{t('payment.transfer_branch', 'الفرع')}</span>
+                      <span className="text-white/90" dir="ltr">{transfer.bankBranch}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-white/50">{t('payment.transfer_account', 'رقم الحساب')}</span>
+                    <span className="text-white font-black" dir="ltr">{transfer.bankAccount}</span>
+                  </div>
+                  {transfer.accountHolder && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-white/50">{t('payment.transfer_holder', 'باسم')}</span>
+                      <span className="text-white/90">{transfer.accountHolder}</span>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            {transfer.note && (
+              <p className="font-arabic text-white/45 text-[10px] leading-relaxed">{transfer.note}</p>
+            )}
+            <p className="font-arabic text-blue-200/70 text-[10px] leading-relaxed border-t border-white/10 pt-2">
+              {t('payment.transfer_after', 'بعد إتمام الطلب سنعرض لك رقم الطلب — اكتبه في ملاحظة التحويل. نبدأ تجهيز الكتاب فور تأكيد وصول المبلغ.')}
+            </p>
           </div>
         )}
         {paymentMethod === 'cash' && (

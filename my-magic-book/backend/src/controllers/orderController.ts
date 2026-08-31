@@ -108,7 +108,7 @@ export const createCheckout = async (req: Request, res: Response): Promise<void>
         deliveryFee: price.deliveryFee,
         couponCode: price.couponCode,
         currency: 'ILS',
-        paymentMethod: paymentMethod === 'cash' ? 'cash' : 'card',
+        paymentMethod: paymentMethod === 'cash' ? 'cash' : paymentMethod === 'transfer' ? 'transfer' : 'card',
         paymentStatus: 'pending',
       });
     } catch (e) {
@@ -121,6 +121,34 @@ export const createCheckout = async (req: Request, res: Response): Promise<void>
     // Cash on delivery / self-pickup — no online payment. The order is placed
     // as pending and handled offline; generation triggers once an admin (or the
     // delivery confirmation) marks it paid via /admin/orders/:id/build.
+    // Bit or a bank transfer: the customer sends the money themselves and a
+    // human confirms it. Nothing is charged here and nothing is promised —
+    // the order sits pending until the owner sees the money arrive, exactly
+    // like cash on delivery, which is the flow he already trusts.
+    if (paymentMethod === 'transfer') {
+      const settings: any = await SiteSettings.findOne().lean();
+      const tp = settings?.transferPayment || {};
+      res.json({
+        success: true,
+        order,
+        checkoutUrl: null,
+        paymentMethod: 'transfer',
+        // Sent back so the confirmation screen can repeat them without a
+        // second request — a customer who closes the page loses the details.
+        transfer: {
+          bitPhone: tp.bitPhone || '',
+          bankName: tp.bankName || '',
+          bankBranch: tp.bankBranch || '',
+          bankAccount: tp.bankAccount || '',
+          accountHolder: tp.accountHolder || '',
+          note: tp.note || '',
+          reference: String(order._id).slice(-8).toUpperCase(),
+          amount: totalPrice,
+        },
+      });
+      return;
+    }
+
     if (paymentMethod === 'cash') {
       res.json({ success: true, order, checkoutUrl: null, paymentMethod: 'cash' });
       return;
