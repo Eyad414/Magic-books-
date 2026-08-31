@@ -470,7 +470,9 @@
     "theme_eid_first": "החג הראשון",
     "theme_eid_first_desc": "בגדי חג, עידייה, ושמחה שמתחלקת",
     "theme_big_brother": "אח גדול",
-    "theme_big_brother_desc": "חדשות, דובי שנותנים, ולב שגדל"
+    "theme_big_brother_desc": "חדשות, דובי שנותנים, ולב שגדל",
+    "pay_hint_transfer": "תשלום במזומן בקבלה, או בהעברת ביט מכל מקום.",
+    "pay_hint_cash": "תשלום במזומן בקבלה."
   },
   "step3": {
     "title": "התאם אישית את הספר שלך",

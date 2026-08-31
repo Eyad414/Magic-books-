@@ -470,7 +470,9 @@
     "theme_eid_first": "عيد الأول",
     "theme_eid_first_desc": "ثياب العيد، والعيدية، وفرح يُقسَّم",
     "theme_big_brother": "أخ كبير",
-    "theme_big_brother_desc": "خبر جديد، ودبٌّ يُهدى، وقلبٌ يكبر"
+    "theme_big_brother_desc": "خبر جديد، ودبٌّ يُهدى، وقلبٌ يكبر",
+    "pay_hint_transfer": "الدفع نقداً عند الاستلام، أو تحويل عبر Bit من أي مكان.",
+    "pay_hint_cash": "الدفع نقداً عند الاستلام."
   },
   "step3": {
     "title": "خصّص كتابك",

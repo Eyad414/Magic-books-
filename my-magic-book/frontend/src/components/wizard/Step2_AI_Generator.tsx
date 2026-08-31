@@ -586,9 +586,19 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
 
       </div>
 
-      {/* Book Format / Package: full-color story, coloring book, audio, e-book … */}
+      {/* Book Format / Package: full-color story, colouring book, e-book … */}
       <div>
         <label className="block font-arabic text-white/80 text-sm mb-3">{t('step3.packages_label')}</label>
+        {/* How they can pay, said HERE rather than only on the last screen.
+            Someone weighing up a 130 ILS book needs to know they can pay
+            without meeting anyone — a customer outside Jerusalem who assumes
+            it is cash-on-delivery only never starts the order at all. */}
+        <p className="font-arabic text-white/45 text-[11px] mb-3 flex items-center gap-1.5">
+          <span aria-hidden="true">💳</span>
+          {liveSettings?.transferPayment?.enabled
+            ? t('step2.pay_hint_transfer', 'الدفع نقداً عند الاستلام، أو تحويل عبر Bit من أي مكان.')
+            : t('step2.pay_hint_cash', 'الدفع نقداً عند الاستلام.')}
+        </p>
         <div className="flex gap-2 w-full">
           {packages.map((pkg) => {
             const isSoon = (pkg as any).soon;   // e.g. audio — not available yet

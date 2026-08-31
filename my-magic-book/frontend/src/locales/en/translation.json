@@ -470,7 +470,9 @@
     "theme_eid_first": "First Eid",
     "theme_eid_first_desc": "Eid clothes, the eidiyah, and a joy worth dividing",
     "theme_big_brother": "Big Brother",
-    "theme_big_brother_desc": "News, a teddy given away, and a heart that grows"
+    "theme_big_brother_desc": "News, a teddy given away, and a heart that grows",
+    "pay_hint_transfer": "Pay cash on receipt, or by Bit transfer from anywhere.",
+    "pay_hint_cash": "Pay cash on receipt."
   },
   "step3": {
     "title": "Customize Your Book",
