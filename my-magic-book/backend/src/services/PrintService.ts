@@ -857,8 +857,13 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
   for (let i = 0; i < input.imagePaths.length; i++) {
     interior.push(storyTextPageHtml(input.pageTexts[i] || '', i, lanternUri));
     interior.push(linePageHtml(dataUri(images[i].buffer, images[i].mime)));
+    // Free each buffer as soon as its base64 exists. Dropping them all after
+    // the loop meant every image was held TWICE — as bytes and as base64,
+    // which is a third larger again — at the exact moment memory is tightest.
+    (images as any)[i] = undefined;
   }
-  images.length = 0; // drop the upscaled buffers — the base64 is now in the HTML
+  images.length = 0;
+  logMem('interior html built');
   // Back matter: lantern separator, the final story page (moral + questions +
   // conclusion), then the copyright page — mirrors the on-screen book.
   interior.push(fanoosPageHtml());
