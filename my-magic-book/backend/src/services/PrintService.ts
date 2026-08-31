@@ -812,9 +812,24 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
   logUpscaleSummary();
   logMem('images upscaled');
   // Phase 2 — crop each to the print square SEQUENTIALLY, so only one hi-res photo
-  // decodes in sharp (~23MB) at a time and peak RAM stays under the 512MB cap.
+  // decodes in sharp (~23MB) at a time.
+  //
+  // Cropping one at a time was not enough on its own: the whole `hiRes` array
+  // stayed alive beside the growing `images` array, so BOTH full sets of 13 were
+  // held at once. On the day Imagen's upscale model started 404ing, the fallback
+  // enlarged locally to 2400px and those sources became large enough to push
+  // this past Render's 512MB and get the process killed mid-crop — rss went
+  // 245MB → 504MB → dead, and no print file was ever written.
+  //
+  // Each source is released the moment it has been cropped, so the hi-res set
+  // shrinks as the cropped set grows instead of both peaking together.
   const images: Array<{ buffer: Buffer; mime: string }> = [];
-  for (const buf of hiRes) images.push(await upscaleForPrint(buf, { px: PRINT_PHOTO_PX }));
+  for (let i = 0; i < hiRes.length; i++) {
+    images.push(await upscaleForPrint(hiRes[i], { px: PRINT_PHOTO_PX }));
+    (hiRes as any)[i] = undefined;
+    if (i % 4 === 3) logMem(`cropped ${i + 1}/${hiRes.length}`);
+  }
+  hiRes.length = 0;
   logMem('images cropped');
   // Dedication photo — best-effort (skip the page if it can't be fetched, e.g.
   // a non-GCS URL), so it never fails the whole build.
