@@ -21,7 +21,7 @@ export async function sendPasswordReset(data: {
   resetUrl: string;
 }): Promise<boolean> {
   const from = process.env.RESEND_FROM || 'Magic Fanoos <onboarding@resend.dev>';
-  const replyTo = process.env.CONTACT_TO || 'eyadat720@gmail.com';
+  const replyTo = REPLY_TO;
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey || apiKey === 'your_resend_api_key') {
@@ -72,6 +72,21 @@ ${data.resetUrl}
     return false;
   }
 }
+
+/**
+ * Two addresses, two jobs — they used to be the same one.
+ *
+ * REPLY_TO is where a CUSTOMER lands when they hit reply. That belongs on the
+ * brand mailbox: they were written to by hello@magicfanoos.com, and a reply
+ * arriving at someone's personal Gmail is a different shop answering.
+ *
+ * CONTACT_TO is where the SHOP is alerted that a customer wrote in. That stays
+ * on the address the owner actually watches all day. Pointing the alerts at a
+ * mailbox he opens occasionally would mean a customer waiting while the
+ * message sat unread — which is the exact failure this week was spent
+ * removing.
+ */
+const REPLY_TO = process.env.REPLY_TO || 'hello@magicfanoos.com';
 
 export async function sendAdminNotification(data: {
   name: string;
@@ -176,7 +191,7 @@ export async function sendCustomerMessageEmail(data: {
   preview: string;
 }): Promise<{ sent: boolean; reason?: string }> {
   const from = process.env.RESEND_FROM || 'Magic Fanoos <onboarding@resend.dev>';
-  const replyTo = process.env.CONTACT_TO || 'eyadat720@gmail.com';
+  const replyTo = REPLY_TO;
   const apiKey = process.env.RESEND_API_KEY;
   const url = `${process.env.FRONTEND_URL || 'https://magicfanoos.com'}/dashboard`;
 

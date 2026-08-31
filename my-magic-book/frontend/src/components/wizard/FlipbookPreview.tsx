@@ -348,7 +348,7 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                   </div>
                   <div className="fbp-cdiv" />
                   <p className="font-arabic text-gold-300/80 text-[7px]">✦ MagicFanoos.com</p>
-                  <p className="font-arabic text-gold-300/80 text-[7px]">✦ magicfanoose@gmail.com</p>
+                  <p className="font-arabic text-gold-300/80 text-[7px]">✦ hello@magicfanoos.com</p>
                   <div className="fbp-cdiv fbp-cdiv--sm" />
                   <p className="font-arabic text-white/60 text-[6.5px] leading-relaxed max-w-[92%]">
                     <strong className="text-white/80">{ftLocal('storybook.policy_content', 'سياسة المحتوى')}:</strong>{' '}

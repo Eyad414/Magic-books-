@@ -23,7 +23,7 @@ export default function CopyrightPage() {
         </div>
         <div className="cp-info-row">
           <span className="cp-info-icon" style={{ color: '#D4A937' }} aria-hidden="true">✦</span>
-          <a href="mailto:magicfanoose@gmail.com" className="cp-link">magicfanoose@gmail.com</a>
+          <a href="mailto:hello@magicfanoos.com" className="cp-link">hello@magicfanoos.com</a>
         </div>
       </div>
 
