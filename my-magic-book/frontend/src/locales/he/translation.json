@@ -1198,7 +1198,11 @@
     "transfer_bank": "שם הבנק",
     "transfer_branch": "סניף",
     "transfer_account": "מספר חשבון",
-    "transfer_note": "הערה ללקוח (רשות)"
+    "transfer_note": "הערה ללקוח (רשות)",
+    "saving_files": "מוריד קבצים…",
+    "saved_files": "הורדו {{n}} קבצים ✅",
+    "saved_files_partial": "הורדו {{n}} מתוך {{m}} — נסו שוב",
+    "saved_files_failed": "לא ניתן להוריד את הקבצים"
   },
   "title_page": {
     "presents": "מוגש ל",

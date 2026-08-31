@@ -1198,7 +1198,11 @@
     "transfer_bank": "اسم البنك",
     "transfer_branch": "رقم الفرع",
     "transfer_account": "رقم الحساب",
-    "transfer_note": "ملاحظة للعميل (اختياري)"
+    "transfer_note": "ملاحظة للعميل (اختياري)",
+    "saving_files": "جارٍ تحميل الملفات…",
+    "saved_files": "تم تحميل {{n}} ملف ✅",
+    "saved_files_partial": "تم تحميل {{n}} من {{m}} — أعد المحاولة",
+    "saved_files_failed": "تعذّر تحميل الملفات"
   },
   "title_page": {
     "presents": "يُقدّم لـ",

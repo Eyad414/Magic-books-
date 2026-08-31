@@ -1198,7 +1198,11 @@
     "transfer_bank": "Bank name",
     "transfer_branch": "Branch",
     "transfer_account": "Account number",
-    "transfer_note": "Note to the customer (optional)"
+    "transfer_note": "Note to the customer (optional)",
+    "saving_files": "Downloading files…",
+    "saved_files": "Downloaded {{n}} file(s) ✅",
+    "saved_files_partial": "Downloaded {{n}} of {{m}} — try again",
+    "saved_files_failed": "Could not download the files"
   },
   "title_page": {
     "presents": "Presented to",

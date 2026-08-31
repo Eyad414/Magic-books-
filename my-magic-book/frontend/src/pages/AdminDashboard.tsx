@@ -439,7 +439,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleSaveFolder = (order: any, kind: 'story' | 'coloring' = 'story') => {
+  const handleSaveFolder = async (order: any, kind: 'story' | 'coloring' = 'story') => {
     // Rebuild the link from the stored object path so old localhost-based URLs
     // (built before RENDER_EXTERNAL_URL) still resolve against the live API.
     const fixUrl = (url?: string): string | undefined => {
@@ -461,17 +461,44 @@ export default function AdminDashboard() {
       toast.error(t('admin.no_files_yet', 'لا توجد ملفات بعد — أرسل الطلب للطباعة أولاً'));
       return;
     }
-    files.forEach((f) => {
-      const a = document.createElement('a');
-      a.href = f.url;
-      a.download = f.name;
-      a.target = '_blank';
-      a.rel = 'noopener';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    });
-    toast.success(t('admin.files_downloading', 'جاري تنزيل ملفات الطباعة 📁'));
+
+    // The files live on the API host, not on this one, and the browser IGNORES
+    // the `download` attribute across origins — so the old version opened two
+    // tabs at once instead of saving, and the popup blocker stopped them. To
+    // the owner that looked like a dead button.
+    //
+    // Fetching the bytes first and saving from a blob keeps it a real download,
+    // and doing them one at a time avoids the blocker entirely.
+    const toastId = toast.loading(t('admin.saving_files', 'جارٍ تحميل الملفات…'));
+    let saved = 0;
+    for (const f of files) {
+      try {
+        const res = await fetch(f.url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        const href = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = href;
+        a.download = f.name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(href);
+        saved++;
+      } catch (err: any) {
+        console.error('[saveFolder]', f.name, err?.message || err);
+      }
+    }
+
+    // Say what actually happened. "Saved" over a file that never downloaded is
+    // how the owner ends up at the printer without an interior.
+    if (saved === files.length) {
+      toast.success(t('admin.saved_files', 'تم تحميل {{n}} ملف ✅', { n: saved }), { id: toastId });
+    } else if (saved > 0) {
+      toast.error(t('admin.saved_files_partial', 'تم تحميل {{n}} من {{m}} — أعد المحاولة', { n: saved, m: files.length }), { id: toastId, duration: 7000 });
+    } else {
+      toast.error(t('admin.saved_files_failed', 'تعذّر تحميل الملفات'), { id: toastId, duration: 7000 });
+    }
   };
 
   const handleGeneratePhotoreal = async (themeId: string) => {
