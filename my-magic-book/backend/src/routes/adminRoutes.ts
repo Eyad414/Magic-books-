@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam, getSettings, updateSettings, getAllOrders, confirmOrderPayment, buildOrderBook, getOrderBuildStatus, reRenderOrderFiles, reRenderOrderColoring, submitOrderColoring, printBook, printBookSubmit, generatePreviewIllustrations, generatePhotorealPreview, generateColoringPreview, sendBookToCustomer, payPrintJob, sendOrderDigital, trimStoryBorders, grantBirthdayCoupons,
+import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam, getSettings, updateSettings, getAllOrders, confirmOrderPayment, buildOrderBook, getOrderBuildStatus, reRenderOrderFiles,
+  attachOrderPrintFiles, reRenderOrderColoring, submitOrderColoring, printBook, printBookSubmit, generatePreviewIllustrations, generatePhotorealPreview, generateColoringPreview, sendBookToCustomer, payPrintJob, sendOrderDigital, trimStoryBorders, grantBirthdayCoupons,
   importBookPdf,
   submitImportedBook,
   designImportedCover,
@@ -31,6 +32,7 @@ router.post('/orders/:id/confirm-payment', confirmOrderPayment);
 router.post('/orders/:id/build', buildOrderBook);
 router.get('/orders/:id/build-status', getOrderBuildStatus);
 router.post('/orders/:id/rerender-files', reRenderOrderFiles);
+router.post('/orders/:id/attach-print-files', attachOrderPrintFiles);
 router.post('/orders/:id/coloring/rerender', reRenderOrderColoring);
 router.post('/orders/:id/coloring/submit', submitOrderColoring);
 router.post('/check-payments', checkPayments);

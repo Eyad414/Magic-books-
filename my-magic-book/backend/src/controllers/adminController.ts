@@ -20,7 +20,7 @@ import PrintJob from '../models/PrintJob';
 import Visit from '../models/Visit';
 import { resolveCoupon } from '../services/Pricing';
 import { publicProxyUrl } from '../services/PrintService';
-import { uploadBuffer, pdfFolderPath, listObjects, deleteObject } from '../services/StorageService';
+import { uploadBuffer, pdfFolderPath, listObjects, deleteObject, objectExists } from '../services/StorageService';
 import { submitPrintJob, isBookPodConfigured, fetchOurJobStatuses, payOrderWithCard } from '../services/BookPodService';
 import { trimStoredImage, measureWhiteFrame } from '../services/TrimBorders';
 import { resolveBirthdayCoupon, grantNow } from '../services/BirthdayCoupon';
@@ -1065,6 +1065,49 @@ export const reRenderOrderFiles = async (req: Request, res: Response): Promise<v
     res.json({ success: true, order: updated });
   } catch (err: any) {
     console.error('reRenderOrderFiles failed:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @route POST /api/admin/orders/:id/attach-print-files
+// Point an order at print PDFs that already exist in the bucket.
+//
+// The 512MB box gets OOM-killed building a print PDF (the Vertex upscaler 404s,
+// so every illustration falls back to a local 2400px enlarge). When that
+// happens the same code is run on a workstation and the PDFs are uploaded to
+// the paths an order rebuild would have used — this route is how the order then
+// finds them, so «حفظ الملفات» and the BookPod submit work as normal.
+export const attachOrderPrintFiles = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      res.status(404).json({ success: false, message: 'order not found' });
+      return;
+    }
+    const { coverPath, interiorPath, interiorPages } = req.body || {};
+    const folder = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
+    const ok = (p: any) =>
+      typeof p === 'string' && p.startsWith(`${folder}/print/`) && p.endsWith('.pdf') && !p.includes('..');
+    if (!ok(coverPath) || !ok(interiorPath)) {
+      res.status(400).json({ success: false, message: 'coverPath/interiorPath must be print PDFs in the bucket' });
+      return;
+    }
+    // Never let an order point at a file that is not there — that is how a book
+    // reaches the printer with a missing interior.
+    for (const p of [coverPath, interiorPath]) {
+      if (!(await objectExists(p))) {
+        res.status(404).json({ success: false, message: `not in the bucket: ${p}` });
+        return;
+      }
+    }
+
+    order.printCoverUrl = publicProxyUrl(coverPath);
+    order.printInteriorUrl = publicProxyUrl(interiorPath);
+    if (Number(interiorPages) > 0) order.printInteriorPages = Number(interiorPages);
+    await order.save();
+    res.json({ success: true, order });
+  } catch (err: any) {
+    console.error('attachOrderPrintFiles failed:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
