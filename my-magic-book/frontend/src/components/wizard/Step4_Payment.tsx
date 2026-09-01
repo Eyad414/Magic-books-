@@ -247,6 +247,15 @@ export default function Step4_Payment({ onPrev }: Props) {
                   <span className="text-white font-black" dir="ltr">{transfer.bitPhone}</span>
                 </div>
               )}
+              {/* The name belongs with the Bit number, not buried in the bank
+                  block. A phone number on its own asks someone to send money
+                  into the void; a name next to it says who is being paid. */}
+              {transfer.accountHolder && !transfer.bankAccount && (
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-white/50">{t('payment.transfer_holder', 'باسم')}</span>
+                  <span className="text-white/90">{transfer.accountHolder}</span>
+                </div>
+              )}
               {transfer.bankAccount && (
                 <>
                   {transfer.bankName && (
