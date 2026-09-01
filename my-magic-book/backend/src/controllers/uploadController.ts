@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import path from 'path';
 import { randomUUID } from 'crypto';
-import { uploadBuffer, pdfFolderPath, getReadSignedUrl } from '../services/StorageService';
+import { uploadBuffer, pdfFolderPath, getReadSignedUrl, streamObject } from '../services/StorageService';
 
 const PDF_FOLDER = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
 
@@ -37,6 +37,22 @@ export const proxyImage = async (req: Request, res: Response): Promise<void> => 
       res.status(400).json({ success: false, message: 'invalid path' });
       return;
     }
+    // A SAVE, not a view. The redirect below is fine for <img>, which needs no
+    // CORS — but fetch() follows it to storage.googleapis.com, and the signed
+    // URL comes back without an Access-Control-Allow-Origin header, so the
+    // browser throws "Failed to fetch" and the admin's save button dies.
+    // Streaming the bytes through here keeps the response on our own origin,
+    // where the CORS middleware already allows the site.
+    if (String(req.query.download || '') === '1') {
+      const name = objectPath.split('/').pop() || 'file';
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${name.replace(/[^\w.-]/g, '_')}"; filename*=UTF-8''${encodeURIComponent(name)}`
+      );
+      await streamObject(objectPath, res, req);
+      return;
+    }
+
     // Sign a short-lived READ url LOCALLY (no outbound Google call) and hand it
     // to the browser, which fetches the image straight from GCS. Avoids the
     // backend needing outbound access to Google Storage (geo-blocked from some

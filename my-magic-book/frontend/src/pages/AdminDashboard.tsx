@@ -442,11 +442,17 @@ export default function AdminDashboard() {
   const handleSaveFolder = async (order: any, kind: 'story' | 'coloring' = 'story') => {
     // Rebuild the link from the stored object path so old localhost-based URLs
     // (built before RENDER_EXTERNAL_URL) still resolve against the live API.
+    // `download=1` makes the API stream the bytes instead of redirecting to a
+    // signed Google Storage URL. The redirect is invisible to <img>, but fetch()
+    // follows it and GCS answers without a CORS header — which is exactly how
+    // this button failed with "تعذّر تحميل الملفات".
     const fixUrl = (url?: string): string | undefined => {
       if (!url) return url;
       try {
-        const p = new URL(url, window.location.origin).searchParams.get('path');
-        return p ? objectPathToUrl(p) : url;
+        const u = new URL(url, window.location.origin);
+        const p = u.searchParams.get('path');
+        const base = p ? objectPathToUrl(p) : url;
+        return `${base}${base.includes('?') ? '&' : '?'}download=1`;
       } catch { return url; }
     };
     const isColoring = kind === 'coloring';
