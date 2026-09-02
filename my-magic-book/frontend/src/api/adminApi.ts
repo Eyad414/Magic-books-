@@ -1,5 +1,18 @@
 import axiosInstance from './axiosInstance';
 
+/**
+ * A print build that dies WITH the server sends no response at all, so axios
+ * reports a bare "Network Error" and the console shows a CORS failure — the two
+ * least informative ways to say "the box ran out of memory". Say what happened.
+ */
+function printRequestError(err: any): Error {
+  if (err?.response) return err;
+  return new Error(
+    'انقطع الاتصال بالخادم أثناء تجهيز ملف الطباعة — على الأغلب نفدت ذاكرته وتوقّف. ' +
+    'ليست مشكلة في الموقع: جهّز الملفات من الجهاز ثم اربطها بالطلب.'
+  );
+}
+
 export const adminApi = {
   getAllStories: async () => {
     const response = await axiosInstance.get('/admin/stories');
@@ -227,8 +240,12 @@ export const adminApi = {
     childPhotoPath?: string;
     isColoring?: boolean;
   }) => {
-    const response = await axiosInstance.post('/admin/print-book', payload);
-    return response.data;
+    try {
+      const response = await axiosInstance.post('/admin/print-book', payload);
+      return response.data;
+    } catch (err: any) {
+      throw printRequestError(err);
+    }
   },
   // Build a showcase book AND submit it to BookPod for printing. BILLABLE —
   // prints + ships a physical book. Only call after an explicit confirmation.
@@ -244,8 +261,12 @@ export const adminApi = {
     isColoring?: boolean;
     shipping: { fullName: string; phone: string; city?: string; street?: string; buildingNo?: string; deliveryMethod?: 'delivery' | 'pickup' };
   }) => {
-    const response = await axiosInstance.post('/admin/print-book/submit', payload);
-    return response.data;
+    try {
+      const response = await axiosInstance.post('/admin/print-book/submit', payload);
+      return response.data;
+    } catch (err: any) {
+      throw printRequestError(err);
+    }
   },
   // Generate (or fetch cached) Nano-Banana preview illustrations for a theme.
   // Long-running: ~2.5 min for a fresh 13-page + portrait generation.

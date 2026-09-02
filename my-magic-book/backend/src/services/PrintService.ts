@@ -109,6 +109,62 @@ const RENDER_BATCH_PAGES = 3;
 // quota (429s are waited out + retried in UpscaleService).
 const UPSCALE_CONCURRENCY = Number(process.env.GEMINI_UPSCALE_CONCURRENCY) || 4;
 
+/**
+ * The memory ceiling this process actually runs under, in MB — the CONTAINER's
+ * limit, not the host's. `os.totalmem()` reports the whole machine on Render and
+ * would happily claim 8GB on a 512MB instance.
+ *
+ * Returns 0 when it cannot be determined (a dev Mac, an unusual runtime), and
+ * callers must treat 0 as "unknown, allow" — refusing to work on a box we simply
+ * failed to measure would be worse than the crash we are avoiding.
+ */
+export function containerMemoryLimitMb(): number {
+  try {
+    const constrained = (process as any).constrainedMemory?.();
+    if (constrained > 0) return Math.round(constrained / 1024 / 1024);
+  } catch { /* not available on this runtime */ }
+  // cgroup v2, then v1. "max" means no limit set.
+  for (const file of ['/sys/fs/cgroup/memory.max', '/sys/fs/cgroup/memory/memory.limit_in_bytes']) {
+    try {
+      const raw = fs.readFileSync(file, 'utf8').trim();
+      if (raw === 'max') return 0;
+      const bytes = Number(raw);
+      // v1 reports an absurd sentinel (~8EB) when unlimited.
+      if (Number.isFinite(bytes) && bytes > 0 && bytes < 1024 ** 4) return Math.round(bytes / 1024 / 1024);
+    } catch { /* try the next one */ }
+  }
+  return 0;
+}
+
+/**
+ * What a full-colour story build needs. Measured, not guessed: the node process
+ * alone peaks at ~370MB (13 illustrations enlarged to PRINT_PHOTO_PX), and
+ * Chromium renders alongside it in the same container.
+ */
+export const PRINT_STORY_MIN_MEMORY_MB = Number(process.env.PRINT_MIN_MEMORY_MB ?? 900);
+
+/**
+ * Refuse a story print build the box cannot finish.
+ *
+ * Without this the process is OOM-killed part-way through: the caller gets no
+ * response at all (the browser reports it as a CORS failure, which sends the
+ * owner hunting for a bug that isn't there), and — worse — the API is down for
+ * ~20s for every customer on the site while it restarts. A clear refusal costs
+ * nothing and breaks nothing.
+ *
+ * Set PRINT_MIN_MEMORY_MB=0 to disable once the box is big enough.
+ */
+export function assertCanBuildStoryPrint(): void {
+  if (PRINT_STORY_MIN_MEMORY_MB <= 0) return;
+  const limit = containerMemoryLimitMb();
+  if (limit === 0 || limit >= PRINT_STORY_MIN_MEMORY_MB) return;
+  throw new Error(
+    `لا يمكن بناء ملفات الطباعة على هذا الخادم: الذاكرة المتاحة ${limit}MB والبناء يحتاج ~${PRINT_STORY_MIN_MEMORY_MB}MB. ` +
+    `لو بدأ هنا لتوقّف الخادم في منتصفه وتعطّل الموقع للزوار لحوالي ٢٠ ثانية. ` +
+    `جهّز الملفات من الجهاز (scripts/build-print-local.ts) ثم اربطها بالطلب، أو ارفع حجم الخادم.`
+  );
+}
+
 // Log resident memory at a labelled point in the print build so an OOM kill's
 // last line pinpoints where it died.
 export function logMem(label: string): void {
@@ -801,6 +857,7 @@ export interface StoryPrintInput {
 }
 
 export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<PrintFiles> {
+  assertCanBuildStoryPrint();
   logMem(`story build start (${input.imagePaths.length} images @ ${PRINT_PX}px)`);
   // Phase 1 — AI-upscale all illustrations in parallel (network-bound, low RAM):
   // hiResBuffer returns the Imagen x3 (~300 DPI) version, cached in GCS. Holding
