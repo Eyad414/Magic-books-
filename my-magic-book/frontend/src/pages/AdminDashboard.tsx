@@ -71,6 +71,15 @@ export default function AdminDashboard() {
   const [buildingOrderId, setBuildingOrderId] = useState<string | null>(null);
   // Which order id is currently re-rendering its print files (for the spinner).
   const [rerenderingOrderId, setRerenderingOrderId] = useState<string | null>(null);
+  // Orders ticked for ONE shared BookPod print order. BookPod bills shipping per
+  // order, not per book, so a batch collected in one delivery costs one shipment.
+  const [batchIds, setBatchIds] = useState<string[]>([]);
+  const [batchOpen, setBatchOpen] = useState(false);
+  const [batchBusy, setBatchBusy] = useState(false);
+  const [batchForm, setBatchForm] = useState({
+    method: 'pickup' as 'pickup' | 'delivery',
+    name: '', phone: '', email: '', city: '', street: '', house: '', notes: '',
+  });
   // Which order's child gender is currently being toggled (boy/girl pill).
   const [genderUpdatingId, setGenderUpdatingId] = useState<string | null>(null);
   // Which order's Pro coloring book is currently rebuilding/sending (spinner).
@@ -173,6 +182,64 @@ export default function AdminDashboard() {
       toast.error(err?.response?.data?.message || err.message || t('admin.send_failed', 'فشل الإرسال للطباعة'), { id: toastId });
     } finally {
       setBuildingOrderId(null);
+    }
+  };
+
+  // An order can join a batch once its PDFs exist and it has not already been
+  // sent — the batch reuses those files rather than rebuilding them.
+  const canBatch = (order: any) => !!(order.printCoverUrl && order.printInteriorUrl) && !order.bookpodJobId;
+
+  const toggleBatch = (id: string) =>
+    setBatchIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const submitBatch = async () => {
+    const { method, name, phone, city, street } = batchForm;
+    if (!name.trim() || !phone.trim()) {
+      toast.error(t('admin.batch_needs_contact', 'الاسم ورقم الهاتف مطلوبان'));
+      return;
+    }
+    if (method === 'delivery' && (!city.trim() || !street.trim())) {
+      toast.error(t('admin.batch_needs_address', 'المدينة والشارع مطلوبان للتوصيل'));
+      return;
+    }
+    // Real books, really printed, really billed — and once BookPod has them
+    // there is no undo on this side.
+    if (!window.confirm(
+      t('admin.batch_confirm', 'إرسال {{n}} كتاب إلى BookPod في طلب طباعة واحد؟ هذه طباعة حقيقية ومدفوعة.', { n: batchIds.length })
+    )) return;
+
+    setBatchBusy(true);
+    const toastId = toast.loading(t('admin.batch_sending', 'جاري الإرسال إلى BookPod...'));
+    try {
+      const res = await adminApi.bulkPrintOrders({
+        orderIds: batchIds,
+        shipping: {
+          method,
+          name: name.trim(),
+          phone: phone.trim(),
+          email: batchForm.email.trim() || undefined,
+          ...(method === 'delivery'
+            ? { city: city.trim(), street: street.trim(), house: batchForm.house.trim() || '1' }
+            : {}),
+          notes: batchForm.notes.trim() || undefined,
+        },
+      });
+      if (res?.success) {
+        toast.success(
+          t('admin.batch_sent', 'تم إرسال {{n}} كتاب في طلب واحد ✅ (#{{job}})', { n: res.books?.length ?? batchIds.length, job: res.jobId }),
+          { id: toastId, duration: 10000 }
+        );
+        setBatchIds([]);
+        setBatchOpen(false);
+        fetchOrders();
+        loadPrintJobs();
+      } else {
+        toast.error(res?.message || t('admin.batch_failed', 'فشل الإرسال إلى BookPod'), { id: toastId, duration: 9000 });
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || t('admin.batch_failed', 'فشل الإرسال إلى BookPod'), { id: toastId, duration: 9000 });
+    } finally {
+      setBatchBusy(false);
     }
   };
 
@@ -1657,6 +1724,117 @@ export default function AdminDashboard() {
                   />
                 </div>
 
+                {/* One print order for everything ticked above. Sits with the
+                    list so the count is visible while picking. */}
+                {batchIds.length > 0 && (
+                  <div className="mb-3 rounded-2xl border border-gold-500/40 bg-gold-500/10 p-3 flex flex-wrap items-center gap-3">
+                    <Package className="w-5 h-5 text-gold-400 shrink-0" />
+                    <p className="font-arabic text-sm text-white/90 flex-1 min-w-[12rem]">
+                      {t('admin.batch_selected', 'تم اختيار {{n}} كتاب — تُرسل في طلب طباعة واحد بشحنة واحدة', { n: batchIds.length })}
+                    </p>
+                    <button
+                      onClick={() => setBatchOpen(true)}
+                      className="px-4 py-2 rounded-xl bg-gold-500 hover:bg-gold-400 text-dark-900 font-arabic font-bold text-sm transition-colors"
+                    >
+                      {t('admin.batch_send', 'إرسال للطباعة')}
+                    </button>
+                    <button
+                      onClick={() => setBatchIds([])}
+                      className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 font-arabic text-sm transition-colors"
+                    >
+                      {t('admin.batch_clear', 'إلغاء التحديد')}
+                    </button>
+
+                    {batchOpen && (
+                      <div className="w-full mt-1 pt-3 border-t border-gold-500/20">
+                        <p className="font-arabic text-xs text-white/60 mb-2">
+                          {t('admin.batch_ship_note', 'الكتب كلها تُشحن إلى عنوان واحد — استلمها ووزّعها على الزبائن.')}
+                        </p>
+                        <div className="flex gap-2 mb-2">
+                          {(['pickup', 'delivery'] as const).map((m) => (
+                            <button
+                              key={m}
+                              onClick={() => setBatchForm({ ...batchForm, method: m })}
+                              className={`px-3 py-1.5 rounded-xl font-arabic text-xs font-bold transition-colors ${
+                                batchForm.method === m ? 'bg-gold-500 text-dark-900' : 'bg-white/5 text-white/60 hover:bg-white/10'
+                              }`}
+                            >
+                              {m === 'pickup'
+                                ? t('admin.batch_pickup', '🏭 استلام من المطبعة')
+                                : t('admin.batch_delivery', '🚚 توصيل لعنوان واحد')}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="grid gap-1.5 sm:grid-cols-3 mb-2">
+                          <input
+                            value={batchForm.name}
+                            onChange={(e) => setBatchForm({ ...batchForm, name: e.target.value })}
+                            placeholder={t('admin.batch_name', 'اسم المستلم *') as string}
+                            className="px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] font-arabic placeholder:text-white/30"
+                          />
+                          <input
+                            value={batchForm.phone}
+                            onChange={(e) => setBatchForm({ ...batchForm, phone: e.target.value })}
+                            placeholder={t('admin.batch_phone', 'رقم الهاتف *') as string}
+                            className="px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] font-arabic placeholder:text-white/30"
+                          />
+                          <input
+                            value={batchForm.email}
+                            onChange={(e) => setBatchForm({ ...batchForm, email: e.target.value })}
+                            placeholder={t('admin.batch_email', 'الإيميل (اختياري)') as string}
+                            className="px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] font-arabic placeholder:text-white/30"
+                          />
+                          {batchForm.method === 'delivery' && (
+                            <>
+                              <input
+                                value={batchForm.city}
+                                onChange={(e) => setBatchForm({ ...batchForm, city: e.target.value })}
+                                placeholder={t('admin.batch_city', 'المدينة *') as string}
+                                className="px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] font-arabic placeholder:text-white/30"
+                              />
+                              <input
+                                value={batchForm.street}
+                                onChange={(e) => setBatchForm({ ...batchForm, street: e.target.value })}
+                                placeholder={t('admin.batch_street', 'الشارع *') as string}
+                                className="px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] font-arabic placeholder:text-white/30"
+                              />
+                              <input
+                                value={batchForm.house}
+                                onChange={(e) => setBatchForm({ ...batchForm, house: e.target.value })}
+                                placeholder={t('admin.batch_house', 'رقم البيت') as string}
+                                className="px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] font-arabic placeholder:text-white/30"
+                              />
+                            </>
+                          )}
+                          <input
+                            value={batchForm.notes}
+                            onChange={(e) => setBatchForm({ ...batchForm, notes: e.target.value })}
+                            placeholder={t('admin.batch_notes', 'ملاحظة للمطبعة (اختياري)') as string}
+                            className="px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] font-arabic placeholder:text-white/30 sm:col-span-2"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={submitBatch}
+                            disabled={batchBusy}
+                            className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-dark-900 font-arabic font-bold text-sm transition-colors"
+                          >
+                            {batchBusy
+                              ? t('admin.batch_sending_short', 'جاري الإرسال...')
+                              : t('admin.batch_confirm_btn', 'تأكيد الإرسال — {{n}} كتاب', { n: batchIds.length })}
+                          </button>
+                          <button
+                            onClick={() => setBatchOpen(false)}
+                            className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 font-arabic text-xs transition-colors"
+                          >
+                            {t('common.cancel', 'إلغاء')}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="space-y-3">
                   {shownOrders.length === 0 && orderSearch.trim() ? (
                     <div className="text-center py-16 bg-white/5 rounded-3xl border border-dashed border-white/10">
@@ -1677,6 +1855,20 @@ export default function AdminDashboard() {
                           {/* Order Info */}
                           <div className="flex-1">
                             <div className="flex flex-wrap items-center gap-2 mb-2.5">
+                              {/* Tick to add this book to one shared print order.
+                                  Only shown once its files exist and it has not
+                                  already gone to BookPod. */}
+                              {canBatch(order) && (
+                                <label className="flex items-center gap-1.5 cursor-pointer select-none" title={t('admin.batch_pick', 'أضِف هذا الكتاب إلى طلب طباعة واحد') as string}>
+                                  <input
+                                    type="checkbox"
+                                    checked={batchIds.includes(order._id)}
+                                    onChange={() => toggleBatch(order._id)}
+                                    className="w-4 h-4 accent-gold-500 cursor-pointer"
+                                  />
+                                  <span className="font-arabic text-[11px] text-white/45">{t('admin.batch_pick_short', 'للطباعة')}</span>
+                                </label>
+                              )}
                               <div className="px-2 py-0.5 bg-gold-500/10 text-gold-500 rounded-lg text-xs font-bold font-mono">
                                 #{order._id.slice(-8).toUpperCase()}
                               </div>

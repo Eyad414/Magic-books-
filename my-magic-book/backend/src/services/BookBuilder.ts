@@ -1,5 +1,5 @@
 import Order, { IOrder } from '../models/Order';
-import Story from '../models/Story';
+import Story, { IStory } from '../models/Story';
 import { generateIllustration } from './ImageGenerator';
 import { buildBookHtml, BookData } from './HtmlTemplateBuilder';
 import { generateBookPdf } from './PdfGenerator';
@@ -9,7 +9,8 @@ import { getSceneTemplate, buildScenePrompt, buildColoringCoverPrompt, buildColo
 import { coverPreviewSlug, findPreviewCover } from './coverPreviewKey';
 import { describeCoverScene } from './CoverConcept';
 import { printAndSubmitForOrder, printAndSubmitColoringForOrder, buildColoringPrintForOrder, buildPrintFilesForStory, PrintBuildOpts } from './PrintOrchestrator';
-import { isBookPodConfigured } from './BookPodService';
+import { isBookPodConfigured, registerBook, createPrintOrder, type BookPodShipping } from './BookPodService';
+import { PRINT_TRIM_MM, PRINT_BLEED_MM } from './PrintService';
 import { localizeName } from '../utils/translit';
 import fs from 'fs';
 import path from 'path';
@@ -580,6 +581,100 @@ export async function reRenderPrintFilesForOrder(orderId: string): Promise<IOrde
   order.printInteriorPages = urls.interiorPages;
   await order.save();
   return order;
+}
+
+/** The bucket object behind a stored print URL (…/uploads/image?path=<object>). */
+function printObjectPath(url?: string): string | null {
+  if (!url) return null;
+  try {
+    const p = new URL(url).searchParams.get('path');
+    return p || null;
+  } catch {
+    return null;
+  }
+}
+
+export interface BulkPrintResult {
+  jobId: string;
+  books: { orderId: string; bookId: string; title: string }[];
+}
+
+/**
+ * Send SEVERAL finished orders to BookPod as ONE print order.
+ *
+ * Two things make this different from submitting orders one by one:
+ *  - One BookPod order, one delivery. The books share `shipping`, so this is for
+ *    a batch the owner collects (or has sent to one address) and hands out
+ *    himself — BookPod bills shipping per order, not per book.
+ *  - It REUSES each order's existing print PDFs instead of rebuilding them.
+ *    Rebuilding is what gets OOM-killed on the 512MB instance, and rebuilding a
+ *    file the owner has already checked is a way to print something he never saw.
+ *
+ * Nothing is submitted unless every selected order already has its files.
+ */
+export async function submitOrdersToBookPodTogether(
+  orderIds: string[],
+  shipping: BookPodShipping
+): Promise<BulkPrintResult> {
+  if (!isBookPodConfigured()) {
+    throw new Error('BookPod is not configured on the server (missing BOOKPOD_USER_ID / BOOKPOD_TOKEN).');
+  }
+  if (!orderIds.length) throw new Error('No orders selected.');
+
+  // Load and validate EVERYTHING first: a half-sent batch would leave some
+  // orders billed and printing while the owner is looking at an error.
+  const prepared: { order: IOrder; story: IStory; title: string; isColoring: boolean; coverPath: string; interiorPath: string }[] = [];
+  for (const id of orderIds) {
+    const order = await Order.findById(id);
+    if (!order) throw new Error(`Order ${id} not found`);
+    const short = String(order._id).slice(-8).toUpperCase();
+    if (order.bookpodJobId) {
+      throw new Error(`#${short} was already sent to BookPod (job ${order.bookpodJobId}).`);
+    }
+    const coverPath = printObjectPath(order.printCoverUrl);
+    const interiorPath = printObjectPath(order.printInteriorUrl);
+    if (!coverPath || !interiorPath) {
+      throw new Error(`#${short} has no print files yet — prepare its files first.`);
+    }
+    const story = await Story.findById(order.storyId);
+    if (!story) throw new Error(`Story for #${short} not found`);
+    story.childName = localizeName(story.childName, (story as any).language || 'ar');
+    const opts = reconstructPrintOpts(story);
+    prepared.push({ order, story, title: opts.title, isColoring: !!opts.isColoring, coverPath, interiorPath });
+  }
+
+  // Register each book (uploads its PDFs). Still nothing printed at this point.
+  const items: { bookId: string; quantity: number }[] = [];
+  const books: BulkPrintResult['books'] = [];
+  for (const p of prepared) {
+    const lang = (p.story as any).language || 'ar';
+    const { bookId } = await registerBook({
+      externalId: String(p.order._id),
+      title: p.title,
+      author: 'Magic Fanoos',
+      isColoring: p.isColoring,
+      readingDirection: lang === 'en' ? 'left' : 'right',
+      widthCm: PRINT_TRIM_MM / 10,
+      heightCm: PRINT_TRIM_MM / 10,
+      bleed: PRINT_BLEED_MM > 0,
+      coverPath: p.coverPath,
+      interiorPath: p.interiorPath,
+    });
+    items.push({ bookId, quantity: 1 });
+    books.push({ orderId: String(p.order._id), bookId, title: p.title });
+  }
+
+  // One order for the lot.
+  const reference = prepared.map((p) => String(p.order._id).slice(-8)).join('+').slice(0, 100);
+  const { jobId } = await createPrintOrder(items, shipping, reference);
+
+  for (const p of prepared) {
+    p.order.bookpodJobId = jobId;
+    p.order.bookpodStatus = 'submitted';
+    await p.order.save();
+  }
+  console.log(`[BookPod] batch job ${jobId}: ${books.length} book(s) — ${books.map((b) => b.title).join(', ')}`);
+  return { jobId, books };
 }
 
 /**

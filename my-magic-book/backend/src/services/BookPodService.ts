@@ -29,7 +29,8 @@ export interface BookPodShipping {
   notes?: string;
 }
 
-export interface BookPodJobInput {
+/** Everything BookPod needs to REGISTER a book, with no order attached yet. */
+export interface BookPodBookInput {
   externalId: string;        // our order id → reference_num1 (must be unique)
   title: string;
   author?: string;
@@ -48,6 +49,9 @@ export interface BookPodJobInput {
   bleed: boolean;
   coverPath: string;         // our GCS object path for the cover PDF
   interiorPath: string;      // our GCS object path for the interior PDF
+}
+
+export interface BookPodJobInput extends BookPodBookInput {
   quantity: number;
   totalPrice?: number;
   shipping: BookPodShipping;
@@ -234,10 +238,11 @@ function slug(s: string): string {
 }
 
 /**
- * Registers a finished book with BookPod and creates the print/ship order.
- * Returns BookPod's order_no (jobId) + bookId for tracking.
+ * Uploads a book's PDFs and registers it with BookPod. No order is placed, so
+ * nothing is printed or billed yet — that happens in createPrintOrder, which
+ * can put SEVERAL registered books on one order going to one address.
  */
-export async function submitPrintJob(input: BookPodJobInput): Promise<BookPodJobResult> {
+export async function registerBook(input: BookPodBookInput): Promise<{ bookId: string; raw: any }> {
   const { baseUrl, headers, bucket } = cfg();
 
   // File names per BookPod convention: <slug>_<YYYYMM>_v<major>.<minor>.pdf
@@ -288,13 +293,31 @@ export async function submitPrintJob(input: BookPodJobInput): Promise<BookPodJob
     throw new Error(`BookPod create-book returned no id: ${JSON.stringify(bookRes).slice(0, 300)}`);
   }
 
-  // 4. Create the order
-  const s = input.shipping;
+  return { bookId, raw: bookRes };
+}
+
+/**
+ * Places ONE print order for one or more already-registered books.
+ *
+ * BookPod's order takes an `items` array but a single shippingDetails, so books
+ * can only share an order when they share a destination — the owner collecting
+ * a batch himself, or one address he then distributes from. Different customer
+ * addresses still need separate orders.
+ */
+export async function createPrintOrder(
+  items: { bookId: string; quantity: number }[],
+  shipping: BookPodShipping,
+  referenceId: string
+): Promise<{ jobId: string; raw: any }> {
+  const { baseUrl, headers } = cfg();
+  if (!items.length) throw new Error('createPrintOrder: no books to order');
+
+  const s = shipping;
   const shippingDetails: any = {
     name: s.name,
     phoneNumber: (s.phone || '').replace(/\D/g, ''),
     email: s.email,
-    reference_num1: input.externalId,
+    reference_num1: referenceId,
     acceptTerms: true,
   };
   if (s.method === 'pickup') {
@@ -313,17 +336,31 @@ export async function submitPrintJob(input: BookPodJobInput): Promise<BookPodJob
   }
   const orderBody: any = {
     shippingDetails,
-    items: [{ bookid: Number(bookId), quantity: input.quantity }],
+    items: items.map((it) => ({ bookid: Number(it.bookId), quantity: it.quantity })),
   };
   // Intentionally do NOT send a price/total to BookPod — per requirement, only
   // the customer's address is recorded, with no delivery fees or order value.
 
   const orderRes = await postJson(`${baseUrl}/api/v1/orders`, headers, orderBody);
+  return { jobId: String(orderRes.order_no ?? orderRes.orderNo ?? ''), raw: orderRes };
+}
+
+/**
+ * Registers a finished book with BookPod and creates its print/ship order.
+ * Returns BookPod's order_no (jobId) + bookId for tracking.
+ */
+export async function submitPrintJob(input: BookPodJobInput): Promise<BookPodJobResult> {
+  const book = await registerBook(input);
+  const order = await createPrintOrder(
+    [{ bookId: book.bookId, quantity: input.quantity }],
+    input.shipping,
+    input.externalId
+  );
   return {
-    jobId: String(orderRes.order_no ?? orderRes.orderNo ?? ''),
-    bookId,
+    jobId: order.jobId,
+    bookId: book.bookId,
     status: 'submitted',
-    raw: { book: bookRes, order: orderRes },
+    raw: { book: book.raw, order: order.raw },
   };
 }
 

@@ -174,6 +174,29 @@ export const adminApi = {
     const response = await axiosInstance.get(`/admin/orders/${id}/build-status`);
     return response.data;
   },
+  /**
+   * Send SEVERAL finished orders to BookPod as ONE print order — one delivery
+   * for the batch, so shipping is billed once instead of per book. Reuses each
+   * order's existing PDFs; it never rebuilds them.
+   */
+  bulkPrintOrders: async (payload: {
+    orderIds: string[];
+    shipping: {
+      method: 'pickup' | 'delivery';
+      name: string;
+      phone: string;
+      email?: string;
+      city?: string;
+      street?: string;
+      house?: string;
+      floor?: number;
+      zipCode?: string;
+      notes?: string;
+    };
+  }) => {
+    const response = await axiosInstance.post('/admin/orders/bulk-print', payload);
+    return response.data;
+  },
   // Rebuild ONLY the print-ready PDFs from an order's already-generated images.
   // Free (no AI cost) and never re-submits to BookPod — brings an older order up
   // to the current print layout.

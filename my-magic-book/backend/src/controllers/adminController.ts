@@ -7,7 +7,7 @@ import ContactMessage from '../models/ContactMessage';
 import CustomerMessage from '../models/CustomerMessage';
 import { sendCustomerMessageEmail } from '../utils/mailer';
 import { pollPaymentsOnce } from '../services/PaymentPoller';
-import { arabicStoryPages, buildBookForOrder, reRenderPrintFilesForOrder, submitOrderToBookPod, reRenderColoringForOrder, submitColoringForOrder, buildPreviewPrintFiles, submitPreviewToBookPod } from '../services/BookBuilder';
+import { arabicStoryPages, buildBookForOrder, reRenderPrintFilesForOrder, submitOrdersToBookPodTogether, submitOrderToBookPod, reRenderColoringForOrder, submitColoringForOrder, buildPreviewPrintFiles, submitPreviewToBookPod } from '../services/BookBuilder';
 import { generateIllustration, COST_PER_IMAGE_USD } from '../services/ImageGenerator';
 import { buildIllustrationPrompt, buildPhotorealPrompt, buildCoverPrompt } from '../services/promptBuilder';
 import { swapFace } from '../services/FaceSwapService';
@@ -1065,6 +1065,32 @@ export const reRenderOrderFiles = async (req: Request, res: Response): Promise<v
     res.json({ success: true, order: updated });
   } catch (err: any) {
     console.error('reRenderOrderFiles failed:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @route POST /api/admin/orders/bulk-print
+// Send several finished orders to BookPod as ONE print order (one delivery).
+// Real money and a real print run — the dashboard confirms before calling this.
+export const bulkPrintOrders = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { orderIds, shipping } = req.body || {};
+    if (!Array.isArray(orderIds) || orderIds.length === 0) {
+      res.status(400).json({ success: false, message: 'اختر طلباً واحداً على الأقل' });
+      return;
+    }
+    if (!shipping || !shipping.name || !shipping.phone) {
+      res.status(400).json({ success: false, message: 'الاسم ورقم الهاتف مطلوبان للشحن' });
+      return;
+    }
+    if (shipping.method !== 'pickup' && (!shipping.city || !shipping.street)) {
+      res.status(400).json({ success: false, message: 'المدينة والشارع مطلوبان للتوصيل' });
+      return;
+    }
+    const result = await submitOrdersToBookPodTogether(orderIds.map(String), shipping);
+    res.json({ success: true, ...result });
+  } catch (err: any) {
+    console.error('bulkPrintOrders failed:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
