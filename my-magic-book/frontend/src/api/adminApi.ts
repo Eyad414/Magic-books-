@@ -5,6 +5,19 @@ import axiosInstance from './axiosInstance';
  * reports a bare "Network Error" and the console shows a CORS failure — the two
  * least informative ways to say "the box ran out of memory". Say what happened.
  */
+export interface BatchShipping {
+  method: 'pickup' | 'delivery';
+  name: string;
+  phone: string;
+  email?: string;
+  city?: string;
+  street?: string;
+  house?: string;
+  floor?: number;
+  zipCode?: string;
+  notes?: string;
+}
+
 function printRequestError(err: any): Error {
   if (err?.response) return err;
   return new Error(
@@ -187,26 +200,22 @@ export const adminApi = {
     const response = await axiosInstance.get(`/admin/orders/${id}/build-status`);
     return response.data;
   },
+  /** Which ready-library books already have their print PDFs in the bucket. */
+  booksPrintReadiness: async (storyIds: string[]) => {
+    const response = await axiosInstance.post('/admin/books/print-readiness', { storyIds });
+    return response.data;
+  },
+  /** Send SEVERAL ready-library books to BookPod as ONE print order. Billable. */
+  bulkPrintBooks: async (payload: { storyIds: string[]; shipping: BatchShipping }) => {
+    const response = await axiosInstance.post('/admin/books/bulk-print', payload);
+    return response.data;
+  },
   /**
    * Send SEVERAL finished orders to BookPod as ONE print order — one delivery
    * for the batch, so shipping is billed once instead of per book. Reuses each
    * order's existing PDFs; it never rebuilds them.
    */
-  bulkPrintOrders: async (payload: {
-    orderIds: string[];
-    shipping: {
-      method: 'pickup' | 'delivery';
-      name: string;
-      phone: string;
-      email?: string;
-      city?: string;
-      street?: string;
-      house?: string;
-      floor?: number;
-      zipCode?: string;
-      notes?: string;
-    };
-  }) => {
+  bulkPrintOrders: async (payload: { orderIds: string[]; shipping: BatchShipping }) => {
     const response = await axiosInstance.post('/admin/orders/bulk-print', payload);
     return response.data;
   },

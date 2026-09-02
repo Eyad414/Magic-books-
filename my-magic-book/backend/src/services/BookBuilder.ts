@@ -3,7 +3,7 @@ import Story, { IStory } from '../models/Story';
 import { generateIllustration } from './ImageGenerator';
 import { buildBookHtml, BookData } from './HtmlTemplateBuilder';
 import { generateBookPdf } from './PdfGenerator';
-import { uploadBuffer, pdfFolderPath, copyObject } from './StorageService';
+import { uploadBuffer, pdfFolderPath, copyObject, objectExists } from './StorageService';
 import { splitStoryIntoPages, buildIllustrationPrompt, buildFallbackCoverPrompt, buildFallbackPortraitPrompt, NO_TEXT_RULE, type FallbackArtStyle } from './promptBuilder';
 import { getSceneTemplate, buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, resolveTokens, resolveGender, resolveColoringScenes, wantsColoringBook, COLORING_PAGES } from './sceneTemplates';
 import { coverPreviewSlug, findPreviewCover } from './coverPreviewKey';
@@ -594,6 +594,114 @@ function printObjectPath(url?: string): string | null {
   }
 }
 
+interface BatchBookInput {
+  externalId: string;
+  title: string;
+  isColoring: boolean;
+  language: string;
+  coverPath: string;
+  interiorPath: string;
+}
+
+/**
+ * Register every book, then place ONE BookPod order for all of them.
+ *
+ * Registration uploads PDFs but prints nothing, so a failure part-way leaves
+ * unused books on BookPod's side rather than a half-printed batch — which is
+ * why the order comes last, after every upload has succeeded.
+ */
+async function registerAndOrderTogether(
+  books: BatchBookInput[],
+  shipping: BookPodShipping
+): Promise<{ jobId: string; books: { externalId: string; bookId: string; title: string }[] }> {
+  const items: { bookId: string; quantity: number }[] = [];
+  const registered: { externalId: string; bookId: string; title: string }[] = [];
+  for (const b of books) {
+    const { bookId } = await registerBook({
+      externalId: b.externalId,
+      title: b.title,
+      author: 'Magic Fanoos',
+      isColoring: b.isColoring,
+      readingDirection: b.language === 'en' ? 'left' : 'right',
+      widthCm: PRINT_TRIM_MM / 10,
+      heightCm: PRINT_TRIM_MM / 10,
+      bleed: PRINT_BLEED_MM > 0,
+      coverPath: b.coverPath,
+      interiorPath: b.interiorPath,
+    });
+    items.push({ bookId, quantity: 1 });
+    registered.push({ externalId: b.externalId, bookId, title: b.title });
+  }
+  const reference = books.map((b) => b.externalId.slice(-8)).join('+').slice(0, 100);
+  const { jobId } = await createPrintOrder(items, shipping, reference);
+  console.log(`[BookPod] batch job ${jobId}: ${registered.length} book(s) — ${registered.map((b) => b.title).join(', ')}`);
+  return { jobId, books: registered };
+}
+
+/** Where a story's print PDFs live once they have been built. */
+export function storyPrintPaths(storyId: string): { coverPath: string; interiorPath: string } {
+  return {
+    coverPath: pdfFolderPath('print', `${storyId}-cover.pdf`),
+    interiorPath: pdfFolderPath('print', `${storyId}-interior.pdf`),
+  };
+}
+
+/** Which of these stories already have both print PDFs in the bucket. */
+export async function storiesPrintReadiness(storyIds: string[]): Promise<Record<string, boolean>> {
+  const out: Record<string, boolean> = {};
+  await Promise.all(storyIds.map(async (id) => {
+    const { coverPath, interiorPath } = storyPrintPaths(id);
+    const [cover, interior] = await Promise.all([objectExists(coverPath), objectExists(interiorPath)]);
+    out[id] = cover && interior;
+  }));
+  return out;
+}
+
+/**
+ * Send several READY-LIBRARY books (الكتب الجاهزة) to BookPod as one print order.
+ *
+ * Unlike an order, a library book has nowhere to record a print URL, so its PDFs
+ * are located by convention at magic-fanoose/print/<storyId>-{cover,interior}.pdf
+ * — the same path a rebuild writes. Books whose files are not there are named in
+ * the error rather than silently skipped: a batch that quietly prints four of
+ * five books is worse than one that refuses.
+ */
+export async function submitStoriesToBookPodTogether(
+  storyIds: string[],
+  shipping: BookPodShipping
+): Promise<{ jobId: string; books: { storyId: string; bookId: string; title: string }[] }> {
+  if (!isBookPodConfigured()) {
+    throw new Error('BookPod is not configured on the server (missing BOOKPOD_USER_ID / BOOKPOD_TOKEN).');
+  }
+  if (!storyIds.length) throw new Error('No books selected.');
+
+  const prepared: BatchBookInput[] = [];
+  const missing: string[] = [];
+  for (const id of storyIds) {
+    const story = await Story.findById(id);
+    if (!story) throw new Error(`Story ${id} not found`);
+    story.childName = localizeName(story.childName, (story as any).language || 'ar');
+    const { coverPath, interiorPath } = storyPrintPaths(id);
+    const [hasCover, hasInterior] = await Promise.all([objectExists(coverPath), objectExists(interiorPath)]);
+    const opts = reconstructPrintOpts(story);
+    if (!hasCover || !hasInterior) { missing.push(`${story.childName} — ${opts.title}`); continue; }
+    prepared.push({
+      externalId: `story-${id}`,
+      title: opts.title,
+      isColoring: !!opts.isColoring,
+      language: (story as any).language || 'ar',
+      coverPath,
+      interiorPath,
+    });
+  }
+  if (missing.length) {
+    throw new Error(`ملفات الطباعة غير جاهزة لـ: ${missing.join('، ')} — جهّزها أولاً ثم أعد المحاولة.`);
+  }
+
+  const { jobId, books } = await registerAndOrderTogether(prepared, shipping);
+  return { jobId, books: books.map((b) => ({ storyId: b.externalId.replace(/^story-/, ''), bookId: b.bookId, title: b.title })) };
+}
+
 export interface BulkPrintResult {
   jobId: string;
   books: { orderId: string; bookId: string; title: string }[];
@@ -643,38 +751,24 @@ export async function submitOrdersToBookPodTogether(
     prepared.push({ order, story, title: opts.title, isColoring: !!opts.isColoring, coverPath, interiorPath });
   }
 
-  // Register each book (uploads its PDFs). Still nothing printed at this point.
-  const items: { bookId: string; quantity: number }[] = [];
-  const books: BulkPrintResult['books'] = [];
-  for (const p of prepared) {
-    const lang = (p.story as any).language || 'ar';
-    const { bookId } = await registerBook({
+  const { jobId, books } = await registerAndOrderTogether(
+    prepared.map((p) => ({
       externalId: String(p.order._id),
       title: p.title,
-      author: 'Magic Fanoos',
       isColoring: p.isColoring,
-      readingDirection: lang === 'en' ? 'left' : 'right',
-      widthCm: PRINT_TRIM_MM / 10,
-      heightCm: PRINT_TRIM_MM / 10,
-      bleed: PRINT_BLEED_MM > 0,
+      language: (p.story as any).language || 'ar',
       coverPath: p.coverPath,
       interiorPath: p.interiorPath,
-    });
-    items.push({ bookId, quantity: 1 });
-    books.push({ orderId: String(p.order._id), bookId, title: p.title });
-  }
-
-  // One order for the lot.
-  const reference = prepared.map((p) => String(p.order._id).slice(-8)).join('+').slice(0, 100);
-  const { jobId } = await createPrintOrder(items, shipping, reference);
+    })),
+    shipping,
+  );
 
   for (const p of prepared) {
     p.order.bookpodJobId = jobId;
     p.order.bookpodStatus = 'submitted';
     await p.order.save();
   }
-  console.log(`[BookPod] batch job ${jobId}: ${books.length} book(s) — ${books.map((b) => b.title).join(', ')}`);
-  return { jobId, books };
+  return { jobId, books: books.map((b) => ({ orderId: b.externalId, bookId: b.bookId, title: b.title })) };
 }
 
 /**
