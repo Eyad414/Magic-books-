@@ -71,7 +71,7 @@ export const EMPTY_BATCH_FORM: BatchForm = {
 };
 
 function BatchPrintPanel({
-  rows, open, setOpen, form, setForm, busy, onSubmit, onClear, onRemove, t,
+  rows, open, setOpen, form, setForm, busy, onSubmit, onClear, onRemove, onPrepare, preparing, prepareDisabledReason, t,
 }: {
   rows: BatchRow[];
   open: boolean;
@@ -82,6 +82,10 @@ function BatchPrintPanel({
   onSubmit: () => void;
   onClear: () => void;
   onRemove: (id: string) => void;
+  /** Optional: build the missing print files for the blocked rows. */
+  onPrepare?: () => void;
+  preparing?: boolean;
+  prepareDisabledReason?: string;
   t: any;
 }) {
   if (rows.length === 0) return null;
@@ -174,6 +178,19 @@ function BatchPrintPanel({
               <p className="font-arabic text-amber-200 text-xs flex-1 min-w-[12rem]">
                 {t('admin.batch_blocked', '{{n}} من المختارة ملف طباعتها غير جاهز، فما بتنطبع. جهّزها أولاً أو شيلها من الطلب.', { n: blocked.length })}
               </p>
+              {onPrepare && (
+                <button
+                  type="button"
+                  onClick={onPrepare}
+                  disabled={!!preparing || !!prepareDisabledReason}
+                  title={prepareDisabledReason || undefined}
+                  className="px-2.5 py-1 rounded-lg bg-gold-500 hover:bg-gold-400 disabled:opacity-40 disabled:cursor-not-allowed text-dark-900 font-arabic text-[11px] font-bold transition-colors"
+                >
+                  {preparing
+                    ? t('admin.batch_preparing', 'جارٍ التجهيز...')
+                    : t('admin.batch_prepare', 'جهّز ملفات الطباعة ({{n}})', { n: blocked.length })}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => blocked.forEach((r) => onRemove(r.id))}
@@ -245,6 +262,10 @@ export default function AdminDashboard() {
   const [bookBatchBusy, setBookBatchBusy] = useState(false);
   const [bookBatchForm, setBookBatchForm] = useState<BatchForm>(EMPTY_BATCH_FORM);
   const [printReady, setPrintReady] = useState<Record<string, boolean>>({});
+  const [preparing, setPreparing] = useState(false);
+  // What the SERVER says about its own capacity, so the button is honest about
+  // why it cannot run rather than failing on click.
+  const [canBuildPrint, setCanBuildPrint] = useState<{ ok: boolean; limitMb?: number; needMb?: number } | null>(null);
   const [batchOpen, setBatchOpen] = useState(false);
   const [batchBusy, setBatchBusy] = useState(false);
   const [batchForm, setBatchForm] = useState({
@@ -411,6 +432,61 @@ export default function AdminDashboard() {
       toast.error(err?.response?.data?.message || err.message || t('admin.batch_failed', 'فشل الإرسال إلى BookPod'), { id: toastId, duration: 9000 });
     } finally {
       setBatchBusy(false);
+    }
+  };
+
+  /** What the server needs to identify a library book — a story, or the
+   *  artwork of a showcase book that has no story document. */
+  const bookPick = (key: string) => {
+    const b: any = allBooks.find((x: any) => x.printKey === key);
+    if (b?.storyId) return { printKey: key, storyId: b.storyId };
+    return {
+      printKey: key,
+      themeId: b?.theme,
+      childName: b?.childName,
+      childGender: b?.childGender,
+      language: i18n.language,
+      isColoring: !!b?.isColoring,
+      coverPath: b?.cover,
+      backPath: b?.back,
+      imagePaths: b?.images || [],
+    };
+  };
+
+  const prepareBatchFiles = async () => {
+    const missing = bookBatchIds.filter((id) => !printReady[id]);
+    if (!missing.length) return;
+    setPreparing(true);
+    const toastId = toast.loading(
+      t('admin.batch_preparing_toast', 'جارٍ تجهيز ملفات {{n}} كتاب... (دقيقة تقريباً للكتاب)', { n: missing.length })
+    );
+    try {
+      const res = await adminApi.prepareBooksPrint(missing.map(bookPick));
+      if (res?.success) {
+        const done: string[] = res.prepared || [];
+        setPrintReady((prev) => {
+          const next = { ...prev };
+          done.forEach((k) => { next[k] = true; });
+          return next;
+        });
+        const failed = res.failed || [];
+        if (failed.length) {
+          toast.error(
+            t('admin.batch_prepared_partial', 'جهّزت {{n}} — وفشل {{m}}: {{why}}', {
+              n: done.length, m: failed.length, why: failed.map((f: any) => f.message).join('، ').slice(0, 160),
+            }),
+            { id: toastId, duration: 12000 }
+          );
+        } else {
+          toast.success(t('admin.batch_prepared', 'جهّزت ملفات {{n}} كتاب ✅', { n: done.length }), { id: toastId });
+        }
+      } else {
+        toast.error(res?.message || t('admin.batch_prepare_failed', 'تعذّر تجهيز الملفات'), { id: toastId, duration: 12000 });
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || t('admin.batch_prepare_failed', 'تعذّر تجهيز الملفات'), { id: toastId, duration: 12000 });
+    } finally {
+      setPreparing(false);
     }
   };
 
@@ -1828,6 +1904,12 @@ export default function AdminDashboard() {
     // Which library books already have print PDFs in the bucket. Every book can
     // be ticked; this decides which ones can actually be SENT, since the batch
     // sends files and never builds them.
+    // Whether this server can build a print file at all — reported rather than
+    // discovered by clicking a button that then fails.
+    fetch(`${import.meta.env.VITE_API_URL || 'https://magicfanoos-api-us.onrender.com/api'}/health`)
+      .then((r) => r.json())
+      .then((h) => setCanBuildPrint({ ok: !!h?.print?.canBuildStory, limitMb: h?.print?.memoryLimitMb, needMb: h?.print?.minMemoryMb }))
+      .catch(() => setCanBuildPrint(null));
     const keys = allBooks.map((b: any) => b.printKey).filter(Boolean);
     if (keys.length) {
       adminApi.booksPrintReadiness(keys)
@@ -4419,6 +4501,11 @@ export default function AdminDashboard() {
                     onSubmit={submitBookBatch}
                     onClear={() => setBookBatchIds([])}
                     onRemove={toggleBookBatch}
+                    onPrepare={prepareBatchFiles}
+                    preparing={preparing}
+                    prepareDisabledReason={canBuildPrint && !canBuildPrint.ok
+                      ? (t('admin.batch_prepare_blocked', 'الخادم الحالي ({{limit}}MB) لا تكفيه ذاكرته لبناء ملف طباعة — يحتاج ~{{need}}MB. جهّزها من الجهاز أو ارفع حجم الخادم.', { limit: canBuildPrint.limitMb ?? '؟', need: canBuildPrint.needMb ?? 900 }) as string)
+                      : undefined}
                   />
                   {bookGroups.map((g) => (
                   <div key={g.id}>

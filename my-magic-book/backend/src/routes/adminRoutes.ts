@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam, getSettings, updateSettings, getAllOrders, confirmOrderPayment, buildOrderBook, getOrderBuildStatus, reRenderOrderFiles,
-  attachOrderPrintFiles, bulkPrintOrders, bulkPrintBooks, booksPrintReadiness, reRenderOrderColoring, submitOrderColoring, printBook, printBookSubmit, generatePreviewIllustrations, generatePhotorealPreview, generateColoringPreview, sendBookToCustomer, payPrintJob, sendOrderDigital, trimStoryBorders, grantBirthdayCoupons,
+  attachOrderPrintFiles, bulkPrintOrders, bulkPrintBooks, booksPrintReadiness, prepareBooksPrint, reRenderOrderColoring, submitOrderColoring, printBook, printBookSubmit, generatePreviewIllustrations, generatePhotorealPreview, generateColoringPreview, sendBookToCustomer, payPrintJob, sendOrderDigital, trimStoryBorders, grantBirthdayCoupons,
   importBookPdf,
   submitImportedBook,
   designImportedCover,
@@ -34,6 +34,7 @@ router.get('/orders/:id/build-status', getOrderBuildStatus);
 router.post('/orders/:id/rerender-files', reRenderOrderFiles);
 router.post('/orders/bulk-print', bulkPrintOrders);
 router.post('/books/print-readiness', booksPrintReadiness);
+router.post('/books/prepare-print', prepareBooksPrint);
 router.post('/books/bulk-print', bulkPrintBooks);
 router.post('/orders/:id/attach-print-files', attachOrderPrintFiles);
 router.post('/orders/:id/coloring/rerender', reRenderOrderColoring);

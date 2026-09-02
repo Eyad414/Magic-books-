@@ -7,7 +7,7 @@ import ContactMessage from '../models/ContactMessage';
 import CustomerMessage from '../models/CustomerMessage';
 import { sendCustomerMessageEmail } from '../utils/mailer';
 import { pollPaymentsOnce } from '../services/PaymentPoller';
-import { arabicStoryPages, buildBookForOrder, reRenderPrintFilesForOrder, submitOrdersToBookPodTogether, submitStoriesToBookPodTogether, booksPrintReady, submitOrderToBookPod, reRenderColoringForOrder, submitColoringForOrder, buildPreviewPrintFiles, submitPreviewToBookPod } from '../services/BookBuilder';
+import { arabicStoryPages, buildBookForOrder, reRenderPrintFilesForOrder, submitOrdersToBookPodTogether, submitStoriesToBookPodTogether, booksPrintReady, prepareLibraryPrintFiles, submitOrderToBookPod, reRenderColoringForOrder, submitColoringForOrder, buildPreviewPrintFiles, submitPreviewToBookPod } from '../services/BookBuilder';
 import { generateIllustration, COST_PER_IMAGE_USD } from '../services/ImageGenerator';
 import { buildIllustrationPrompt, buildPhotorealPrompt, buildCoverPrompt } from '../services/promptBuilder';
 import { swapFace } from '../services/FaceSwapService';
@@ -19,7 +19,7 @@ import { resolveColoringScenes, getSceneTemplate } from '../services/sceneTempla
 import PrintJob from '../models/PrintJob';
 import Visit from '../models/Visit';
 import { resolveCoupon } from '../services/Pricing';
-import { publicProxyUrl } from '../services/PrintService';
+import { publicProxyUrl, assertCanBuildStoryPrint } from '../services/PrintService';
 import { uploadBuffer, pdfFolderPath, listObjects, deleteObject, objectExists } from '../services/StorageService';
 import { submitPrintJob, isBookPodConfigured, fetchOurJobStatuses, payOrderWithCard } from '../services/BookPodService';
 import { trimStoredImage, measureWhiteFrame } from '../services/TrimBorders';
@@ -1081,6 +1081,31 @@ export const booksPrintReadiness = async (req: Request, res: Response): Promise<
     res.json({ success: true, ready });
   } catch (err: any) {
     console.error('booksPrintReadiness failed:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @route POST /api/admin/books/prepare-print
+// Build print PDFs for library books that lack them, so a whole batch can then
+// go out at once. Free (no AI generation) — but heavy, hence the memory guard.
+export const prepareBooksPrint = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { books } = req.body || {};
+    if (!Array.isArray(books) || books.length === 0) {
+      res.status(400).json({ success: false, message: 'اختر كتاباً واحداً على الأقل' });
+      return;
+    }
+    // Say up front when this box cannot do it, rather than after the first book.
+    try {
+      assertCanBuildStoryPrint();
+    } catch (err: any) {
+      res.status(507).json({ success: false, message: err.message });
+      return;
+    }
+    const result = await prepareLibraryPrintFiles(books);
+    res.json({ success: true, ...result });
+  } catch (err: any) {
+    console.error('prepareBooksPrint failed:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 };

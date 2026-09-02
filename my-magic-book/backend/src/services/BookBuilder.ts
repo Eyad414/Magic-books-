@@ -3,7 +3,7 @@ import Story, { IStory } from '../models/Story';
 import { generateIllustration } from './ImageGenerator';
 import { buildBookHtml, BookData } from './HtmlTemplateBuilder';
 import { generateBookPdf } from './PdfGenerator';
-import { uploadBuffer, pdfFolderPath, copyObject, objectExists } from './StorageService';
+import { uploadBuffer, pdfFolderPath, copyObject, objectExists, deleteObject } from './StorageService';
 import { splitStoryIntoPages, buildIllustrationPrompt, buildFallbackCoverPrompt, buildFallbackPortraitPrompt, NO_TEXT_RULE, type FallbackArtStyle } from './promptBuilder';
 import { getSceneTemplate, buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, resolveTokens, resolveGender, resolveColoringScenes, wantsColoringBook, COLORING_PAGES } from './sceneTemplates';
 import { coverPreviewSlug, findPreviewCover } from './coverPreviewKey';
@@ -666,6 +666,75 @@ export async function booksPrintReady(printKeys: string[]): Promise<Record<strin
 }
 
 /**
+ * Build the print PDFs for library books that don't have them yet, so a batch
+ * can go out in one go instead of one book at a time.
+ *
+ * Each book is built and stored under its print key, and every book is reported
+ * individually: one failure must not hide the ones that worked, and must not
+ * stop the rest — the owner would otherwise have to guess where it got to.
+ */
+export async function prepareLibraryPrintFiles(
+  picks: LibraryBookPick[]
+): Promise<{ prepared: string[]; failed: { printKey: string; message: string }[] }> {
+  const prepared: string[] = [];
+  const failed: { printKey: string; message: string }[] = [];
+
+  for (const pick of picks) {
+    try {
+      const { coverPath, interiorPath } = printKeyPaths(pick.printKey);
+      const [hasCover, hasInterior] = await Promise.all([objectExists(coverPath), objectExists(interiorPath)]);
+      if (hasCover && hasInterior) { prepared.push(pick.printKey); continue; }
+
+      let theme: string, childName: string, childGender: any, language: string, isColoring: boolean;
+      let coverSrc: string, backSrc: string, images: string[], childPhoto: string | undefined;
+
+      if (pick.storyId) {
+        const story: any = await Story.findById(pick.storyId);
+        if (!story) throw new Error('story not found');
+        theme = story.theme;
+        childName = localizeName(story.childName, story.language || 'ar');
+        childGender = story.childGender;
+        language = story.language || 'ar';
+        isColoring = String(story.bookPackage || '').includes('coloring');
+        coverSrc = story.generatedCover;
+        backSrc = story.generatedPortrait || story.generatedCover;
+        images = story.generatedImages || [];
+        childPhoto = story.childPhotoUrl;
+      } else {
+        if (!pick.themeId || !pick.childName) throw new Error('needs a theme and a name');
+        if (!pick.coverPath || !(pick.imagePaths || []).length) throw new Error('no artwork to print');
+        theme = pick.themeId;
+        childName = localizeName(pick.childName, pick.language || 'ar');
+        childGender = pick.childGender;
+        language = pick.language || 'ar';
+        isColoring = !!pick.isColoring;
+        coverSrc = pick.coverPath;
+        backSrc = pick.backPath || pick.coverPath;
+        images = pick.imagePaths || [];
+      }
+      if (!coverSrc || !images.length) throw new Error('no artwork to print');
+
+      const built = await buildPreviewPrintFiles({
+        theme, childName, childGender, language,
+        coverPath: coverSrc, backPath: backSrc, imagePaths: images,
+        childPhotoPath: childPhoto, isColoring,
+      });
+      // The preview builder keys its objects on a throwaway id; move them where
+      // the batch looks for them.
+      await copyObject(built.coverPath, coverPath);
+      await copyObject(built.interiorPath, interiorPath);
+      await deleteObject(built.coverPath).catch(() => undefined);
+      await deleteObject(built.interiorPath).catch(() => undefined);
+      prepared.push(pick.printKey);
+    } catch (err: any) {
+      console.error(`prepareLibraryPrintFiles ${pick.printKey} failed:`, err?.message || err);
+      failed.push({ printKey: pick.printKey, message: err?.message || 'failed' });
+    }
+  }
+  return { prepared, failed };
+}
+
+/**
  * Send several READY-LIBRARY books (الكتب الجاهزة) to BookPod as one print order.
  *
  * Unlike an order, a library book has nowhere to record a print URL, so its PDFs
@@ -676,6 +745,10 @@ export async function booksPrintReady(printKeys: string[]): Promise<Record<strin
  */
 export interface LibraryBookPick {
   printKey: string;
+  /** Artwork for a showcase book, which has no Story doc to read it from. */
+  coverPath?: string;
+  backPath?: string;
+  imagePaths?: string[];
   /** A real story — its title, language and kind are read from the DB. */
   storyId?: string;
   /** A showcase book instead: no Story doc, so the title is derived from these. */

@@ -7,6 +7,9 @@ import axiosInstance from './axiosInstance';
  */
 export interface LibraryBookPick {
   printKey: string;
+  coverPath?: string;
+  backPath?: string;
+  imagePaths?: string[];
   storyId?: string;
   themeId?: string;
   childName?: string;
@@ -213,6 +216,11 @@ export const adminApi = {
   /** Which library books already have their print PDFs in the bucket. */
   booksPrintReadiness: async (printKeys: string[]) => {
     const response = await axiosInstance.post('/admin/books/print-readiness', { printKeys });
+    return response.data;
+  },
+  /** Build the print PDFs for library books that don't have them yet. Free. */
+  prepareBooksPrint: async (books: LibraryBookPick[]) => {
+    const response = await axiosInstance.post('/admin/books/prepare-print', { books });
     return response.data;
   },
   /** Send SEVERAL library books to BookPod as ONE print order. Billable. */
