@@ -638,21 +638,29 @@ async function registerAndOrderTogether(
   return { jobId, books: registered };
 }
 
-/** Where a story's print PDFs live once they have been built. */
-export function storyPrintPaths(storyId: string): { coverPath: string; interiorPath: string } {
+/**
+ * Where a book's print PDFs live once built. The key is the story id for a real
+ * story and `demo-<card key>` for a showcase book, which has no Story document
+ * at all — its artwork hangs off the theme.
+ */
+export function printKeyPaths(printKey: string): { coverPath: string; interiorPath: string } {
+  const safe = String(printKey).replace(/[^A-Za-z0-9_-]/g, '');
+  if (!safe) throw new Error('invalid print key');
   return {
-    coverPath: pdfFolderPath('print', `${storyId}-cover.pdf`),
-    interiorPath: pdfFolderPath('print', `${storyId}-interior.pdf`),
+    coverPath: pdfFolderPath('print', `${safe}-cover.pdf`),
+    interiorPath: pdfFolderPath('print', `${safe}-interior.pdf`),
   };
 }
 
-/** Which of these stories already have both print PDFs in the bucket. */
-export async function storiesPrintReadiness(storyIds: string[]): Promise<Record<string, boolean>> {
+/** Which of these books already have both print PDFs in the bucket. */
+export async function booksPrintReady(printKeys: string[]): Promise<Record<string, boolean>> {
   const out: Record<string, boolean> = {};
-  await Promise.all(storyIds.map(async (id) => {
-    const { coverPath, interiorPath } = storyPrintPaths(id);
-    const [cover, interior] = await Promise.all([objectExists(coverPath), objectExists(interiorPath)]);
-    out[id] = cover && interior;
+  await Promise.all(printKeys.map(async (key) => {
+    try {
+      const { coverPath, interiorPath } = printKeyPaths(key);
+      const [cover, interior] = await Promise.all([objectExists(coverPath), objectExists(interiorPath)]);
+      out[key] = cover && interior;
+    } catch { out[key] = false; }
   }));
   return out;
 }
@@ -666,30 +674,63 @@ export async function storiesPrintReadiness(storyIds: string[]): Promise<Record<
  * the error rather than silently skipped: a batch that quietly prints four of
  * five books is worse than one that refuses.
  */
+export interface LibraryBookPick {
+  printKey: string;
+  /** A real story — its title, language and kind are read from the DB. */
+  storyId?: string;
+  /** A showcase book instead: no Story doc, so the title is derived from these. */
+  themeId?: string;
+  childName?: string;
+  childGender?: 'male' | 'female';
+  language?: string;
+  isColoring?: boolean;
+}
+
 export async function submitStoriesToBookPodTogether(
-  storyIds: string[],
+  picks: LibraryBookPick[],
   shipping: BookPodShipping
-): Promise<{ jobId: string; books: { storyId: string; bookId: string; title: string }[] }> {
+): Promise<{ jobId: string; books: { printKey: string; bookId: string; title: string }[] }> {
   if (!isBookPodConfigured()) {
     throw new Error('BookPod is not configured on the server (missing BOOKPOD_USER_ID / BOOKPOD_TOKEN).');
   }
-  if (!storyIds.length) throw new Error('No books selected.');
+  if (!picks.length) throw new Error('No books selected.');
 
   const prepared: BatchBookInput[] = [];
   const missing: string[] = [];
-  for (const id of storyIds) {
-    const story = await Story.findById(id);
-    if (!story) throw new Error(`Story ${id} not found`);
-    story.childName = localizeName(story.childName, (story as any).language || 'ar');
-    const { coverPath, interiorPath } = storyPrintPaths(id);
+  for (const pick of picks) {
+    // A real story is authoritative — never take its title from the client.
+    // A showcase book has no document, so it is described the same way the
+    // preview print builder describes one: theme + name.
+    let source: any;
+    if (pick.storyId) {
+      const story = await Story.findById(pick.storyId);
+      if (!story) throw new Error(`Story ${pick.storyId} not found`);
+      story.childName = localizeName(story.childName, (story as any).language || 'ar');
+      source = story;
+    } else {
+      if (!pick.themeId || !pick.childName) {
+        throw new Error(`Book ${pick.printKey} has neither a story nor a theme+name to print from.`);
+      }
+      source = {
+        _id: pick.printKey,
+        theme: pick.themeId,
+        childName: localizeName(pick.childName, pick.language || 'ar'),
+        childGender: pick.childGender,
+        language: pick.language || 'ar',
+        bookPackage: pick.isColoring ? 'coloring' : 'story',
+        mode: 'template',
+        generatedImages: [],
+      };
+    }
+    const opts = reconstructPrintOpts(source);
+    const { coverPath, interiorPath } = printKeyPaths(pick.printKey);
     const [hasCover, hasInterior] = await Promise.all([objectExists(coverPath), objectExists(interiorPath)]);
-    const opts = reconstructPrintOpts(story);
-    if (!hasCover || !hasInterior) { missing.push(`${story.childName} — ${opts.title}`); continue; }
+    if (!hasCover || !hasInterior) { missing.push(`${source.childName} — ${opts.title}`); continue; }
     prepared.push({
-      externalId: `story-${id}`,
+      externalId: `book-${pick.printKey}`,
       title: opts.title,
       isColoring: !!opts.isColoring,
-      language: (story as any).language || 'ar',
+      language: source.language || 'ar',
       coverPath,
       interiorPath,
     });
@@ -699,7 +740,7 @@ export async function submitStoriesToBookPodTogether(
   }
 
   const { jobId, books } = await registerAndOrderTogether(prepared, shipping);
-  return { jobId, books: books.map((b) => ({ storyId: b.externalId.replace(/^story-/, ''), bookId: b.bookId, title: b.title })) };
+  return { jobId, books: books.map((b) => ({ printKey: b.externalId.replace(/^book-/, ''), bookId: b.bookId, title: b.title })) };
 }
 
 export interface BulkPrintResult {

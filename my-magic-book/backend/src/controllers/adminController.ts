@@ -7,7 +7,7 @@ import ContactMessage from '../models/ContactMessage';
 import CustomerMessage from '../models/CustomerMessage';
 import { sendCustomerMessageEmail } from '../utils/mailer';
 import { pollPaymentsOnce } from '../services/PaymentPoller';
-import { arabicStoryPages, buildBookForOrder, reRenderPrintFilesForOrder, submitOrdersToBookPodTogether, submitStoriesToBookPodTogether, storiesPrintReadiness, submitOrderToBookPod, reRenderColoringForOrder, submitColoringForOrder, buildPreviewPrintFiles, submitPreviewToBookPod } from '../services/BookBuilder';
+import { arabicStoryPages, buildBookForOrder, reRenderPrintFilesForOrder, submitOrdersToBookPodTogether, submitStoriesToBookPodTogether, booksPrintReady, submitOrderToBookPod, reRenderColoringForOrder, submitColoringForOrder, buildPreviewPrintFiles, submitPreviewToBookPod } from '../services/BookBuilder';
 import { generateIllustration, COST_PER_IMAGE_USD } from '../services/ImageGenerator';
 import { buildIllustrationPrompt, buildPhotorealPrompt, buildCoverPrompt } from '../services/promptBuilder';
 import { swapFace } from '../services/FaceSwapService';
@@ -1072,12 +1072,12 @@ export const reRenderOrderFiles = async (req: Request, res: Response): Promise<v
 // @route POST /api/admin/books/print-readiness  — which library books can be sent
 export const booksPrintReadiness = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { storyIds } = req.body || {};
-    if (!Array.isArray(storyIds)) {
-      res.status(400).json({ success: false, message: 'storyIds required' });
+    const { printKeys } = req.body || {};
+    if (!Array.isArray(printKeys)) {
+      res.status(400).json({ success: false, message: 'printKeys required' });
       return;
     }
-    const ready = await storiesPrintReadiness(storyIds.map(String));
+    const ready = await booksPrintReady(printKeys.map(String));
     res.json({ success: true, ready });
   } catch (err: any) {
     console.error('booksPrintReadiness failed:', err);
@@ -1089,8 +1089,8 @@ export const booksPrintReadiness = async (req: Request, res: Response): Promise<
 // Send several ready-library books to BookPod as ONE print order. Billable.
 export const bulkPrintBooks = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { storyIds, shipping } = req.body || {};
-    if (!Array.isArray(storyIds) || storyIds.length === 0) {
+    const { books, shipping } = req.body || {};
+    if (!Array.isArray(books) || books.length === 0) {
       res.status(400).json({ success: false, message: 'اختر كتاباً واحداً على الأقل' });
       return;
     }
@@ -1102,7 +1102,7 @@ export const bulkPrintBooks = async (req: Request, res: Response): Promise<void>
       res.status(400).json({ success: false, message: 'المدينة والشارع مطلوبان للتوصيل' });
       return;
     }
-    const result = await submitStoriesToBookPodTogether(storyIds.map(String), shipping);
+    const result = await submitStoriesToBookPodTogether(books, shipping);
     res.json({ success: true, ...result });
   } catch (err: any) {
     console.error('bulkPrintBooks failed:', err);

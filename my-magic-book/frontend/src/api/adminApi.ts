@@ -5,6 +5,16 @@ import axiosInstance from './axiosInstance';
  * reports a bare "Network Error" and the console shows a CORS failure — the two
  * least informative ways to say "the box ran out of memory". Say what happened.
  */
+export interface LibraryBookPick {
+  printKey: string;
+  storyId?: string;
+  themeId?: string;
+  childName?: string;
+  childGender?: 'male' | 'female';
+  language?: string;
+  isColoring?: boolean;
+}
+
 export interface BatchShipping {
   method: 'pickup' | 'delivery';
   name: string;
@@ -200,13 +210,13 @@ export const adminApi = {
     const response = await axiosInstance.get(`/admin/orders/${id}/build-status`);
     return response.data;
   },
-  /** Which ready-library books already have their print PDFs in the bucket. */
-  booksPrintReadiness: async (storyIds: string[]) => {
-    const response = await axiosInstance.post('/admin/books/print-readiness', { storyIds });
+  /** Which library books already have their print PDFs in the bucket. */
+  booksPrintReadiness: async (printKeys: string[]) => {
+    const response = await axiosInstance.post('/admin/books/print-readiness', { printKeys });
     return response.data;
   },
-  /** Send SEVERAL ready-library books to BookPod as ONE print order. Billable. */
-  bulkPrintBooks: async (payload: { storyIds: string[]; shipping: BatchShipping }) => {
+  /** Send SEVERAL library books to BookPod as ONE print order. Billable. */
+  bulkPrintBooks: async (payload: { books: LibraryBookPick[]; shipping: BatchShipping }) => {
     const response = await axiosInstance.post('/admin/books/bulk-print', payload);
     return response.data;
   },

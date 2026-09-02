@@ -50,6 +50,8 @@ export interface BatchRow {
   title: string;
   subtitle?: string;
   detail?: string;
+  /** Selected, but not sendable yet — its print file has not been built. */
+  blocked?: boolean;
   onUseAddress?: () => void;
 }
 
@@ -84,6 +86,9 @@ function BatchPrintPanel({
 }) {
   if (rows.length === 0) return null;
   const input = 'px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-[11px] font-arabic placeholder:text-white/30';
+  // A book with no print file cannot be printed, and dropping it quietly would
+  // send four of five books with nothing to say which is missing.
+  const blocked = rows.filter((r) => r.blocked);
   return (
     <div className="mb-3 rounded-2xl border border-gold-500/40 bg-gold-500/10 p-3 flex flex-wrap items-center gap-3">
       <Package className="w-5 h-5 text-gold-400 shrink-0" />
@@ -114,7 +119,7 @@ function BatchPrintPanel({
                 {r.code && <span className="font-mono text-[11px] text-gold-500/90">#{r.code}</span>}
                 <span className="font-arabic text-xs text-white font-bold">{r.title}</span>
                 {r.subtitle && <span className="font-arabic text-[11px] text-white/50">{r.subtitle}</span>}
-                <span className="font-arabic text-[11px] text-white/40 flex-1 min-w-[8rem] truncate" dir="auto">{r.detail || ''}</span>
+                <span className={`font-arabic text-[11px] flex-1 min-w-[8rem] truncate ${r.blocked ? 'text-amber-300/90' : 'text-white/40'}`} dir="auto">{r.detail || ''}</span>
                 {r.onUseAddress && (
                   <button
                     type="button"
@@ -164,11 +169,26 @@ function BatchPrintPanel({
             )}
             <input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder={t('admin.batch_notes', 'ملاحظة للمطبعة (اختياري)') as string} className={`${input} sm:col-span-2`} />
           </div>
+          {blocked.length > 0 && (
+            <div className="mb-2 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-400/30 flex flex-wrap items-center gap-2">
+              <p className="font-arabic text-amber-200 text-xs flex-1 min-w-[12rem]">
+                {t('admin.batch_blocked', '{{n}} من المختارة ملف طباعتها غير جاهز، فما بتنطبع. جهّزها أولاً أو شيلها من الطلب.', { n: blocked.length })}
+              </p>
+              <button
+                type="button"
+                onClick={() => blocked.forEach((r) => onRemove(r.id))}
+                className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 font-arabic text-[11px] transition-colors"
+              >
+                {t('admin.batch_drop_unready', 'شيل غير الجاهزة')}
+              </button>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <button
               onClick={onSubmit}
-              disabled={busy}
-              className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-dark-900 font-arabic font-bold text-sm transition-colors"
+              disabled={busy || blocked.length > 0}
+              title={blocked.length > 0 ? (t('admin.batch_blocked_hint', 'كل كتاب في الطلب لازم يكون ملف طباعته جاهزاً') as string) : undefined}
+              className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-dark-900 font-arabic font-bold text-sm transition-colors"
             >
               {busy ? t('admin.batch_sending_short', 'جاري الإرسال...') : t('admin.batch_confirm_btn', 'تأكيد الإرسال — {{n}} كتاب', { n: rows.length })}
             </button>
@@ -415,7 +435,21 @@ export default function AdminDashboard() {
     const toastId = toast.loading(t('admin.batch_sending', 'جاري الإرسال إلى BookPod...'));
     try {
       const res = await adminApi.bulkPrintBooks({
-        storyIds: bookBatchIds,
+        books: bookBatchIds.map((key) => {
+          const b = allBooks.find((x: any) => x.printKey === key);
+          return {
+            printKey: key,
+            // A real story is looked up server-side; a showcase book has no
+            // document, so it is described by theme + name instead.
+            ...(b?.storyId ? { storyId: b.storyId } : {
+              themeId: b?.theme,
+              childName: b?.childName,
+              childGender: b?.childGender,
+              language: i18n.language,
+              isColoring: !!b?.isColoring,
+            }),
+          };
+        }),
         shipping: {
           method,
           name: name.trim(),
@@ -642,21 +676,7 @@ export default function AdminDashboard() {
       .catch(() => { /* the fields still work; they just show — */ });
   }, [tab]);
 
-  useEffect(() => {
-    if (tab !== 'showcase') return;
-    loadPrintJobs();
-    // Which library books already have print PDFs sitting in the bucket. A book
-    // without them cannot join a batch — the batch never rebuilds, by design.
-    const ids = allStories
-      .filter((x: any) => (x?.generatedImages?.length ?? 0) > 0 || x?.generatedCover)
-      .map((x: any) => String(x._id));
-    if (ids.length) {
-      adminApi.booksPrintReadiness(ids)
-        .then((r) => { if (r?.success) setPrintReady(r.ready || {}); })
-        .catch(() => { /* the checkbox just stays hidden */ });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, allStories.length]);
+
 
   // The messenger refreshes itself while it is open — a reply that arrives
   // while the owner is looking at the inbox should appear there, not on the
@@ -1625,6 +1645,7 @@ export default function AdminDashboard() {
       .map((s: any) => ({
         key: `story-${s._id}`,
         storyId: s._id,
+        printKey: String(s._id),
         // Demos have no owner and always count as the owner's own.
         isMine: staffIds.has(String(s.userId?._id || s.userId || '')),
         showcase: !!s.showcase,
@@ -1669,6 +1690,9 @@ export default function AdminDashboard() {
         date: '',
         isDemo: true,
         demoKey: c.key,
+        // Showcase books have no Story document, so their print PDFs are keyed
+        // by the card instead — same bucket path, different name.
+        printKey: `demo-${c.key}`,
         // Demo cards have no Story doc, so their visibility lives in settings.
         // These are the EFFECTIVE states — an unticked demo is still live on the
         // Stories page by default, so the button must reflect that, not the raw
@@ -1699,6 +1723,7 @@ export default function AdminDashboard() {
       .filter((th: any) => (th.coloringCover || th.coloringImages?.length) && !cardedColoringThemes.has(th.id))
       .map((th: any) => ({
         key: `coloring-${th.id}`,
+        printKey: `demo-coloring-${th.id}`,
         isMine: true,
         childName: t('admin.coloring_book', 'كتاب تلوين'),
         theme: th.id,
@@ -1796,6 +1821,21 @@ export default function AdminDashboard() {
     }
   };
 
+
+  useEffect(() => {
+    if (tab !== 'showcase') return;
+    loadPrintJobs();
+    // Which library books already have print PDFs in the bucket. Every book can
+    // be ticked; this decides which ones can actually be SENT, since the batch
+    // sends files and never builds them.
+    const keys = allBooks.map((b: any) => b.printKey).filter(Boolean);
+    if (keys.length) {
+      adminApi.booksPrintReadiness(keys)
+        .then((r) => { if (r?.success) setPrintReady(r.ready || {}); })
+        .catch(() => { /* rows just show as needing preparation */ });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, allBooks.length]);
   const shownBooks = useMemo(() => {
     const q = bookSearch.trim().toLowerCase();
     return allBooks.filter((b: any) => {
@@ -4360,12 +4400,15 @@ export default function AdminDashboard() {
                   <BatchPrintPanel
                     t={t}
                     rows={bookBatchIds.map((id) => {
-                      const b = shownBooks.find((x: any) => x.storyId === id) || allBooks.find((x: any) => x.storyId === id);
+                      const b = allBooks.find((x: any) => x.printKey === id);
                       return {
                         id,
                         title: localizeName(b?.childName || '—', i18n.language),
                         subtitle: b?.themeLabel,
-                        detail: b?.isMine ? t('admin.books_mine', 'كتبي') : t('admin.book_customer', 'كتاب عميل'),
+                        detail: printReady[id]
+                          ? t('admin.batch_row_ready', '✅ ملف الطباعة جاهز')
+                          : t('admin.batch_row_unready', '⚠️ يحتاج تجهيز ملف الطباعة'),
+                        blocked: !printReady[id],
                       };
                     })}
                     open={bookBatchOpen}
@@ -4390,12 +4433,14 @@ export default function AdminDashboard() {
                           {/* Only a book whose print PDFs already exist can join
                               a batch — the batch sends files, it never builds
                               them (this box cannot finish a build). */}
-                          {!b.isDemo && b.storyId && printReady[b.storyId] && (
+                          {b.printKey && !b.coverOnly && (
                             <input
                               type="checkbox"
-                              checked={bookBatchIds.includes(b.storyId)}
-                              onChange={() => toggleBookBatch(b.storyId)}
-                              title={t('admin.batch_pick', 'أضِف هذا الكتاب إلى طلب طباعة واحد') as string}
+                              checked={bookBatchIds.includes(b.printKey)}
+                              onChange={() => toggleBookBatch(b.printKey)}
+                              title={(printReady[b.printKey]
+                                ? t('admin.batch_pick', 'أضِف هذا الكتاب إلى طلب طباعة واحد')
+                                : t('admin.batch_pick_unready', 'اختره — لكن ملف طباعته يحتاج تجهيزاً قبل الإرسال')) as string}
                               className="w-4 h-4 accent-gold-500 cursor-pointer shrink-0"
                             />
                           )}
