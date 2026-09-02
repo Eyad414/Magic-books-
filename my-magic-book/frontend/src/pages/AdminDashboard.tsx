@@ -1747,8 +1747,56 @@ export default function AdminDashboard() {
 
                     {batchOpen && (
                       <div className="w-full mt-1 pt-3 border-t border-gold-500/20">
+                        {/* Who is in this batch. Without it the owner is picking
+                            a shipping address for a list of order codes he can
+                            no longer see, and has no way to check he ticked the
+                            right books before a billed print run. */}
+                        <div className="mb-3 space-y-1.5">
+                          {batchIds.map((id) => {
+                            const o = orders.find((x: any) => x._id === id);
+                            if (!o) return null;
+                            const sa = o.shippingAddress || {};
+                            const addr = sa.deliveryMethod === 'pickup'
+                              ? t('admin.batch_row_pickup', 'استلام شخصي')
+                              : [sa.city, sa.street, sa.buildingNo].filter(Boolean).join('، ') || '—';
+                            return (
+                              <div key={id} className="flex flex-wrap items-center gap-2 rounded-xl bg-black/20 border border-white/10 px-2.5 py-1.5">
+                                <span className="font-mono text-[11px] text-gold-500/90">#{id.slice(-8).toUpperCase()}</span>
+                                <span className="font-arabic text-xs text-white font-bold">{o.storyId?.childName || '—'}</span>
+                                <span className="font-arabic text-[11px] text-white/50">{o.userId?.name || '—'}</span>
+                                <span className="font-arabic text-[11px] text-white/40 flex-1 min-w-[8rem] truncate" dir="auto">
+                                  {addr}{sa.phone ? ` · ${sa.phone}` : ''}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => setBatchForm({
+                                    ...batchForm,
+                                    method: sa.deliveryMethod === 'pickup' ? 'pickup' : 'delivery',
+                                    name: sa.fullName || o.userId?.name || '',
+                                    phone: sa.phone || '',
+                                    email: o.userId?.email || '',
+                                    city: sa.city || '',
+                                    street: sa.street || '',
+                                    house: sa.buildingNo || '',
+                                  })}
+                                  className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-white/70 font-arabic text-[11px] transition-colors"
+                                >
+                                  {t('admin.batch_use_address', 'استعمل عنوانه')}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => toggleBatch(id)}
+                                  title={t('admin.batch_remove', 'أزِلْه من الطلب') as string}
+                                  className="px-1.5 text-white/35 hover:text-red-400 transition-colors"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
                         <p className="font-arabic text-xs text-white/60 mb-2">
-                          {t('admin.batch_ship_note', 'الكتب كلها تُشحن إلى عنوان واحد — استلمها ووزّعها على الزبائن.')}
+                          {t('admin.batch_ship_note', 'المطبعة تقبل عنواناً واحداً للطلب الواحد — كل الكتب فوق تُشحن لنفس المكان. استلمها ووزّعها على الزبائن، أو اضغط «استعمل عنوانه» لتشحنها لعنوان أحدهم.')}
                         </p>
                         <div className="flex gap-2 mb-2">
                           {(['pickup', 'delivery'] as const).map((m) => (
