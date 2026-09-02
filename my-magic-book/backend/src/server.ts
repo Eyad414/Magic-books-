@@ -21,6 +21,7 @@ import publicRoutes from './routes/publicRoutes';
 import uploadRoutes from './routes/uploadRoutes';
 import { envFlag } from './utils/envFlag';
 import { SCENE_TEMPLATES } from './services/sceneTemplates';
+import { containerMemoryLimitMb, PRINT_STORY_MIN_MEMORY_MB } from './services/PrintService';
 import { upscaleProbe } from './services/UpscaleService';
 
 const app = express();
@@ -74,6 +75,16 @@ app.get('/api/health', async (req, res) => {
       studioAvailable,
       location: process.env.GCP_LOCATION || 'global',
       imageModel: process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image',
+    },
+    // Whether this box can finish a print build, and the ceiling it measured.
+    // Reported so the answer is checkable without starting a build — which, on a
+    // box that cannot finish one, means an OOM kill and ~20s of downtime.
+    print: {
+      memoryLimitMb: containerMemoryLimitMb() || null,
+      minMemoryMb: PRINT_STORY_MIN_MEMORY_MB,
+      canBuildStory: PRINT_STORY_MIN_MEMORY_MB <= 0
+        || containerMemoryLimitMb() === 0
+        || containerMemoryLimitMb() >= PRINT_STORY_MIN_MEMORY_MB,
     },
     // Which story scene-templates this build knows about (confirms deploys).
     stories: Object.keys(SCENE_TEMPLATES),
