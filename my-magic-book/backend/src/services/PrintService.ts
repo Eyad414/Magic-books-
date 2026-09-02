@@ -3,6 +3,8 @@ import puppeteer from 'puppeteer';
 import QRCode from 'qrcode';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
+import { randomUUID } from 'crypto';
 import { Storage } from '@google-cloud/storage';
 import { PDFDocument } from 'pdf-lib';
 import { uploadBuffer, pdfFolderPath } from './StorageService';
@@ -102,7 +104,7 @@ export const PRINT_PX = 864;
 export const PRINT_PHOTO_PX = 2400;
 // Interior pages rendered per Chromium pass. Each hi-res photo decodes to ~23MB;
 // 3 pages (≤2 photos) keeps peak well under the 512MB host cap.
-const RENDER_BATCH_PAGES = 3;
+const RENDER_BATCH_PAGES = Number(process.env.PRINT_RENDER_BATCH_PAGES) || 3;
 // How many illustrations to AI-upscale at once on a cold build. The upscale calls
 // are network-bound (~30s each) and hold little RAM, so parallelising them cuts a
 // first build from ~8 min to ~2. Kept modest to stay within Imagen's per-minute
@@ -652,7 +654,12 @@ function wraparoundDoc(a: WraparoundDocArgs): string {
 </head><body><div class="wrap" dir="ltr">${order.join('')}</div></body></html>`;
 }
 
-export async function renderPrintPdf(html: string, widthMm = PRINT_PAGE_MM, heightMm = PRINT_PAGE_MM): Promise<Buffer> {
+export async function renderPrintPdf(
+  html: string,
+  widthMm = PRINT_PAGE_MM,
+  heightMm = PRINT_PAGE_MM,
+  baseDir?: string,
+): Promise<Buffer> {
   // Low-memory Chromium flags — the print pages embed large images, and the host
   // may only have 512MB RAM. --disable-dev-shm-usage (tiny /dev/shm in containers)
   // and --single-process are the key ones that keep this under the memory cap.
@@ -670,7 +677,20 @@ export async function renderPrintPdf(html: string, widthMm = PRINT_PAGE_MM, heig
   });
   try {
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'load' });
+    // Load from a FILE, not setContent. An interior page's illustration is
+    // ~2400px; as a base64 data URI it costs the bytes twice in node (utf-16
+    // string) and again while Chromium parses it. Written to disk beside this
+    // html it is a plain <img src="...">, which Chromium streams — the single
+    // biggest saving on a box this size.
+    const dir = baseDir || fs.mkdtempSync(path.join(os.tmpdir(), 'mf-print-'));
+    const file = path.join(dir, `doc-${randomUUID()}.html`);
+    fs.writeFileSync(file, html);
+    try {
+      await page.goto(`file://${file}`, { waitUntil: 'load' });
+    } finally {
+      try { fs.unlinkSync(file); } catch { /* best effort */ }
+      if (!baseDir) { try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* best effort */ } }
+    }
     await page.evaluate(async () => {
       // @ts-ignore
       if (document.fonts && document.fonts.ready) await document.fonts.ready;
@@ -712,10 +732,11 @@ async function renderPagesBatched(
   heightMm = PRINT_PAGE_MM,
   batchSize = RENDER_BATCH_PAGES,
   rtl = true,
+  baseDir?: string,
 ): Promise<Buffer> {
   const pdfs: Buffer[] = [];
   for (let i = 0; i < pages.length; i += batchSize) {
-    pdfs.push(await renderPrintPdf(squareDoc(pages.slice(i, i + batchSize), rtl), widthMm, heightMm));
+    pdfs.push(await renderPrintPdf(squareDoc(pages.slice(i, i + batchSize), rtl), widthMm, heightMm, baseDir));
     logMem(`interior batch ${pdfs.length} (${Math.min(i + batchSize, pages.length)}/${pages.length} pages)`);
   }
   return mergePdfBuffers(pdfs);
@@ -753,8 +774,20 @@ export async function buildWraparoundCoverPdf(o: WraparoundInput): Promise<Wrapa
       : [downloadObject(o.frontPath), downloadObject(o.backPath)],
   );
   const cropOpts = photo ? { px: PRINT_PHOTO_PX } : {};
+  // Same reason as the interior: the two cover panels are 2400px each, and as
+  // data URIs they were the build's highest peak of all.
+  const coverDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mf-cover-'));
+  const toFile = (name: string, buf: Buffer, mime: string): string => {
+    const file = `${name}.${mime === 'image/png' ? 'png' : 'jpg'}`;
+    fs.writeFileSync(path.join(coverDir, file), buf);
+    return file;
+  };
   const front = await upscaleForPrint(frontSrc, cropOpts);
+  const frontFile = toFile('front', front.buffer, front.mime);
+  (front as any).buffer = undefined;
   const back = await upscaleForPrint(backSrc, cropOpts);
+  const backFile = toFile('back', back.buffer, back.mime);
+  (back as any).buffer = undefined;
   // Real uploaded kid photo for the story back-cover circle (best-effort — skip
   // if missing/non-GCS, then the circle falls back to the AI portrait).
   let childPhotoSrc = '';
@@ -763,7 +796,7 @@ export async function buildWraparoundCoverPdf(o: WraparoundInput): Promise<Wrapa
     if (!/^https?:/i.test(objPath)) {
       try {
         const c = await upscaleForPrint(await downloadObject(objPath), { px: 900 });
-        childPhotoSrc = dataUri(c.buffer, c.mime);
+        childPhotoSrc = toFile('kid', c.buffer, c.mime);
       } catch (e: any) {
         console.warn('[PrintService] back-cover kid photo skipped:', e?.message || e);
       }
@@ -774,8 +807,8 @@ export async function buildWraparoundCoverPdf(o: WraparoundInput): Promise<Wrapa
   const widthMm = 2 * PRINT_TRIM_MM + 2 * PRINT_BLEED_MM + spineMm;
   const heightMm = PRINT_PAGE_MM;
   const html = wraparoundDoc({
-    frontSrc: dataUri(front.buffer, front.mime),
-    backSrc: dataUri(back.buffer, back.mime),
+    frontSrc: frontFile,
+    backSrc: backFile,
     title: o.title,
     childName: o.childName,
     kind: o.kind,
@@ -787,7 +820,12 @@ export async function buildWraparoundCoverPdf(o: WraparoundInput): Promise<Wrapa
     theme: o.theme,
     childPhotoSrc,
   });
-  const pdf = await renderPrintPdf(html, widthMm, heightMm);
+  let pdf: Buffer;
+  try {
+    pdf = await renderPrintPdf(html, widthMm, heightMm, coverDir);
+  } finally {
+    try { fs.rmSync(coverDir, { recursive: true, force: true }); } catch { /* best effort */ }
+  }
   return { pdf, widthMm, heightMm, spineMm };
 }
 
@@ -859,35 +897,33 @@ export interface StoryPrintInput {
 export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<PrintFiles> {
   assertCanBuildStoryPrint();
   logMem(`story build start (${input.imagePaths.length} images @ ${PRINT_PX}px)`);
-  // Phase 1 — AI-upscale all illustrations in parallel (network-bound, low RAM):
-  // hiResBuffer returns the Imagen x3 (~300 DPI) version, cached in GCS. Holding
-  // the ~13 upscaled JPEGs (~1MB each) is cheap; parallelising cuts a cold build
-  // from ~8 min to ~2.
+  // ONE image at a time: fetch (or AI-upscale) it, crop it to the print square,
+  // write it to disk, drop it.
+  //
+  // It used to upscale all 13 in parallel and hold both the source set and the
+  // cropped set in memory. That was cheap while Imagen did the enlarging — the
+  // step was network-bound and the buffers small. Since Imagen started 404ing
+  // the enlarge happens HERE, in sharp, so four at once meant four 2400px
+  // decodes at once, and the peak landed past Render's 512MB mid-crop:
+  // rss went 245MB → 504MB → killed, with no print file written.
+  //
+  // Sequential costs wall-clock only while the upscaler is down (each call
+  // returns immediately), and nothing at all once it works again.
   resetUpscaleStats();
   _upscaleCacheHits = 0;
-  const hiRes = await mapWithConcurrency(input.imagePaths, UPSCALE_CONCURRENCY, (p) => hiResBuffer(p));
-  logUpscaleSummary();
-  logMem('images upscaled');
-  // Phase 2 — crop each to the print square SEQUENTIALLY, so only one hi-res photo
-  // decodes in sharp (~23MB) at a time.
-  //
-  // Cropping one at a time was not enough on its own: the whole `hiRes` array
-  // stayed alive beside the growing `images` array, so BOTH full sets of 13 were
-  // held at once. On the day Imagen's upscale model started 404ing, the fallback
-  // enlarged locally to 2400px and those sources became large enough to push
-  // this past Render's 512MB and get the process killed mid-crop — rss went
-  // 245MB → 504MB → dead, and no print file was ever written.
-  //
-  // Each source is released the moment it has been cropped, so the hi-res set
-  // shrinks as the cropped set grows instead of both peaking together.
-  const images: Array<{ buffer: Buffer; mime: string }> = [];
-  for (let i = 0; i < hiRes.length; i++) {
-    images.push(await upscaleForPrint(hiRes[i], { px: PRINT_PHOTO_PX }));
-    (hiRes as any)[i] = undefined;
-    if (i % 4 === 3) logMem(`cropped ${i + 1}/${hiRes.length}`);
+  const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mf-print-'));
+  const imageFiles: string[] = [];
+  for (let i = 0; i < input.imagePaths.length; i++) {
+    const src = await hiResBuffer(input.imagePaths[i]);
+    const cropped = await upscaleForPrint(src, { px: PRINT_PHOTO_PX });
+    const name = `img-${i}.${cropped.mime === 'image/png' ? 'png' : 'jpg'}`;
+    fs.writeFileSync(path.join(workDir, name), cropped.buffer);
+    imageFiles.push(name);
+    (cropped as any).buffer = undefined;
+    if (i % 4 === 3) logMem(`prepared ${i + 1}/${input.imagePaths.length}`);
   }
-  hiRes.length = 0;
-  logMem('images cropped');
+  logUpscaleSummary();
+  logMem('images prepared')
   // Dedication photo — best-effort (skip the page if it can't be fetched, e.g.
   // a non-GCS URL), so it never fails the whole build.
   let photoSrc = '';
@@ -913,13 +949,8 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
   // Body: each story page is a decorative TEXT page + its full-bleed illustration.
   for (let i = 0; i < input.imagePaths.length; i++) {
     interior.push(storyTextPageHtml(input.pageTexts[i] || '', i, lanternUri));
-    interior.push(linePageHtml(dataUri(images[i].buffer, images[i].mime)));
-    // Free each buffer as soon as its base64 exists. Dropping them all after
-    // the loop meant every image was held TWICE — as bytes and as base64,
-    // which is a third larger again — at the exact moment memory is tightest.
-    (images as any)[i] = undefined;
+    interior.push(linePageHtml(imageFiles[i]));
   }
-  images.length = 0;
   logMem('interior html built');
   // Back matter: lantern separator, the final story page (moral + questions +
   // conclusion), then the copyright page — mirrors the on-screen book.
@@ -933,7 +964,14 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
   const padded = padToMultipleOf4(interior);
   // Same direction as the cover binding, which this input already carried and
   // the interior never used.
-  const interiorPdf = await renderPagesBatched(padded, PRINT_PAGE_MM, PRINT_PAGE_MM, RENDER_BATCH_PAGES, input.rtl !== false);
+  let interiorPdf: Buffer;
+  try {
+    interiorPdf = await renderPagesBatched(padded, PRINT_PAGE_MM, PRINT_PAGE_MM, RENDER_BATCH_PAGES, input.rtl !== false, workDir);
+  } finally {
+    // Ephemeral disk, but a failed build must not leave 40MB of pages behind:
+    // enough of those and the next build has nowhere to write.
+    try { fs.rmSync(workDir, { recursive: true, force: true }); } catch { /* best effort */ }
+  }
   logMem('interior PDF rendered');
 
   const cover = await buildWraparoundCoverPdf({
