@@ -139,11 +139,14 @@ export function containerMemoryLimitMb(): number {
 }
 
 /**
- * What a full-colour story build needs. Measured, not guessed: the node process
- * alone peaks at ~370MB (13 illustrations enlarged to PRINT_PHOTO_PX), and
- * Chromium renders alongside it in the same container.
+ * What a full-colour story build needs, measured on the COMPILED build (an
+ * earlier figure was taken through tsx, which compiles TypeScript in-process
+ * and inflated it): ~150MB to load the build path, rising to ~360MB at the
+ * cover — and Chromium renders alongside it in the same container. Collecting
+ * garbage between phases reclaims nothing, so that is real usage, not a
+ * high-water mark left behind.
  */
-export const PRINT_STORY_MIN_MEMORY_MB = Number(process.env.PRINT_MIN_MEMORY_MB ?? 900);
+export const PRINT_STORY_MIN_MEMORY_MB = Number(process.env.PRINT_MIN_MEMORY_MB ?? 768);
 
 /**
  * Refuse a story print build the box cannot finish.
@@ -169,6 +172,25 @@ export function assertCanBuildStoryPrint(): void {
 
 // Log resident memory at a labelled point in the print build so an OOM kill's
 // last line pinpoints where it died.
+/**
+ * Hand memory back between the heavy phases.
+ *
+ * The build's peak is not one phase needing a lot at once — it is each phase
+ * leaving its pages behind for the next one. Sharp's decode buffers and V8's
+ * old space both keep the high-water mark, so a build that never exceeds ~220MB
+ * in any single step still reports 368MB by the cover. Collecting between
+ * phases is what turns that into the number the phases actually need.
+ *
+ * Needs --expose-gc; without it this is a no-op and nothing breaks.
+ */
+export function reclaim(label: string): void {
+  const before = process.memoryUsage().rss;
+  try { (global as any).gc?.(); } catch { /* not exposed */ }
+  const after = process.memoryUsage().rss;
+  const mb = (n: number) => Math.round(n / 1024 / 1024);
+  if (before !== after) console.log(`[Print][mem] ${label}: reclaimed ${mb(before)}MB → ${mb(after)}MB`);
+}
+
 export function logMem(label: string): void {
   const rssMb = Math.round(process.memoryUsage().rss / 1024 / 1024);
   console.log(`[Print][mem] ${label}: rss=${rssMb}MB`);
@@ -923,6 +945,7 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
     if (i % 4 === 3) logMem(`prepared ${i + 1}/${input.imagePaths.length}`);
   }
   logUpscaleSummary();
+  reclaim('after images prepared');
   logMem('images prepared')
   // Dedication photo — best-effort (skip the page if it can't be fetched, e.g.
   // a non-GCS URL), so it never fails the whole build.
@@ -972,6 +995,7 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
     // enough of those and the next build has nowhere to write.
     try { fs.rmSync(workDir, { recursive: true, force: true }); } catch { /* best effort */ }
   }
+  reclaim('after interior render');
   logMem('interior PDF rendered');
 
   const cover = await buildWraparoundCoverPdf({

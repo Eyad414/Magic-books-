@@ -4631,8 +4631,17 @@ export default function AdminDashboard() {
                           <button
                             type="button"
                             onClick={() => handlePrintBook(b)}
-                            disabled={printingBookKey === b.key || !b.canPrint}
-                            title={b.canPrint ? t('admin.book_print_help', 'تجهيز ملف الطباعة (PDF) وفتحه') : t('admin.book_print_missing', 'ينقص هذا الكتاب صور — لا يمكن تجهيز الطباعة')}
+                            disabled={printingBookKey === b.key || !b.canPrint || !!(canBuildPrint && !canBuildPrint.ok)}
+                            title={
+                              canBuildPrint && !canBuildPrint.ok
+                                // Firing this at a box that cannot finish the build
+                                // returned a 500 the console showed as a bare failed
+                                // request. Say it here instead.
+                                ? (t('admin.batch_prepare_blocked', 'الخادم الحالي ({{limit}}MB) لا تكفيه ذاكرته لبناء ملف طباعة — يحتاج ~{{need}}MB. جهّزها من الجهاز أو ارفع حجم الخادم.', { limit: canBuildPrint.limitMb ?? '؟', need: canBuildPrint.needMb ?? 768 }) as string)
+                                : b.canPrint
+                                ? t('admin.book_print_help', 'تجهيز ملف الطباعة (PDF) وفتحه')
+                                : t('admin.book_print_missing', 'ينقص هذا الكتاب صور — لا يمكن تجهيز الطباعة')
+                            }
                             className="flex items-center justify-center gap-1.5 px-2 py-2 bg-gold-500 text-[#0a1628] rounded-xl font-arabic font-bold text-xs hover:bg-gold-400 transition disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             {printingBookKey === b.key
