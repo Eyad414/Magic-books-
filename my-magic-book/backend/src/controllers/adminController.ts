@@ -19,7 +19,7 @@ import { resolveColoringScenes, getSceneTemplate } from '../services/sceneTempla
 import PrintJob from '../models/PrintJob';
 import Visit from '../models/Visit';
 import { resolveCoupon } from '../services/Pricing';
-import { publicProxyUrl, assertCanBuildStoryPrint } from '../services/PrintService';
+import { publicProxyUrl } from '../services/PrintService';
 import { uploadBuffer, pdfFolderPath, listObjects, deleteObject, objectExists } from '../services/StorageService';
 import { submitPrintJob, isBookPodConfigured, fetchOurJobStatuses, payOrderWithCard } from '../services/BookPodService';
 import { trimStoredImage, measureWhiteFrame } from '../services/TrimBorders';
@@ -1095,13 +1095,10 @@ export const prepareBooksPrint = async (req: Request, res: Response): Promise<vo
       res.status(400).json({ success: false, message: 'اختر كتاباً واحداً على الأقل' });
       return;
     }
-    // Say up front when this box cannot do it, rather than after the first book.
-    try {
-      assertCanBuildStoryPrint();
-    } catch (err: any) {
-      res.status(507).json({ success: false, message: err.message });
-      return;
-    }
+    // No blanket refusal: a colouring book is line art at PRINT_PX and builds in
+    // ~70MB, well inside what this box has — it was only the full-colour story
+    // build that could not finish. Each book is checked as it is built, and a
+    // story that cannot run is reported against that book.
     const result = await prepareLibraryPrintFiles(books);
     res.json({ success: true, ...result });
   } catch (err: any) {

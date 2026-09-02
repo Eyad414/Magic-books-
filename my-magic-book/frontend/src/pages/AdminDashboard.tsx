@@ -52,6 +52,8 @@ export interface BatchRow {
   detail?: string;
   /** Selected, but not sendable yet — its print file has not been built. */
   blocked?: boolean;
+  /** Line art at PRINT_PX: builds in ~70MB, so a small box can still do it. */
+  isColoring?: boolean;
   onUseAddress?: () => void;
 }
 
@@ -93,6 +95,12 @@ function BatchPrintPanel({
   // A book with no print file cannot be printed, and dropping it quietly would
   // send four of five books with nothing to say which is missing.
   const blocked = rows.filter((r) => r.blocked);
+  // Only the full-colour story build is too big for a small box; colouring
+  // books are line art and build fine, so they must not be held back by it.
+  const blockedNeedingBigBox = blocked.filter((r) => !r.isColoring);
+  const prepareBlocked = prepareDisabledReason && blockedNeedingBigBox.length > 0
+    ? prepareDisabledReason
+    : undefined;
   return (
     <div className="mb-3 rounded-2xl border border-gold-500/40 bg-gold-500/10 p-3 flex flex-wrap items-center gap-3">
       <Package className="w-5 h-5 text-gold-400 shrink-0" />
@@ -182,8 +190,8 @@ function BatchPrintPanel({
                 <button
                   type="button"
                   onClick={onPrepare}
-                  disabled={!!preparing || !!prepareDisabledReason}
-                  title={prepareDisabledReason || undefined}
+                  disabled={!!preparing || !!prepareBlocked}
+                  title={prepareBlocked || undefined}
                   className="px-2.5 py-1 rounded-lg bg-gold-500 hover:bg-gold-400 disabled:opacity-40 disabled:cursor-not-allowed text-dark-900 font-arabic text-[11px] font-bold transition-colors"
                 >
                   {preparing
@@ -4491,6 +4499,7 @@ export default function AdminDashboard() {
                           ? t('admin.batch_row_ready', '✅ ملف الطباعة جاهز')
                           : t('admin.batch_row_unready', '⚠️ يحتاج تجهيز ملف الطباعة'),
                         blocked: !printReady[id],
+                        isColoring: !!b?.isColoring,
                       };
                     })}
                     open={bookBatchOpen}
@@ -4631,9 +4640,9 @@ export default function AdminDashboard() {
                           <button
                             type="button"
                             onClick={() => handlePrintBook(b)}
-                            disabled={printingBookKey === b.key || !b.canPrint || !!(canBuildPrint && !canBuildPrint.ok)}
+                            disabled={printingBookKey === b.key || !b.canPrint || !!(canBuildPrint && !canBuildPrint.ok && !b.isColoring)}
                             title={
-                              canBuildPrint && !canBuildPrint.ok
+                              canBuildPrint && !canBuildPrint.ok && !b.isColoring
                                 // Firing this at a box that cannot finish the build
                                 // returned a 500 the console showed as a bare failed
                                 // request. Say it here instead.
