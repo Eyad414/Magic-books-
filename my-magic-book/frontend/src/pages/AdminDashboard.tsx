@@ -1747,6 +1747,11 @@ export default function AdminDashboard() {
         mode: s.mode,
         date: dateOf(s.createdAt),
         isDemo: false,
+        // A copy the owner placed in a customer's account by hand. It is the
+        // same book as the original, so it must not look like a second one to
+        // print — and it must never be deleted as a duplicate: it is what that
+        // customer opens in «قصصي».
+        grantedCopy: !!s.sentByAdmin,
         isColoring: String(s.bookPackage || '').includes('coloring'),
         viewHref: String(s.bookPackage || '').includes('coloring') ? `/book/${s._id}?view=coloring` : `/book/${s._id}`,
       }));
@@ -4529,7 +4534,7 @@ export default function AdminDashboard() {
                           {/* Only a book whose print PDFs already exist can join
                               a batch — the batch sends files, it never builds
                               them (this box cannot finish a build). */}
-                          {b.printKey && !b.coverOnly && (
+                          {b.printKey && !b.coverOnly && !b.grantedCopy && (
                             <input
                               type="checkbox"
                               checked={bookBatchIds.includes(b.printKey)}
@@ -4558,6 +4563,14 @@ export default function AdminDashboard() {
                               {b.isDemo ? t('admin.book_demo', 'كتاب عرض') : t('admin.book_customer', 'كتاب عميل')}
                               {b.date ? ` · ${b.date}` : ''}{b.mode === 'ai' ? ' · AI' : ''}
                             </p>
+                            {b.grantedCopy && (
+                              <span
+                                title={t('admin.granted_copy_help', 'نسخة وضعتها بحساب زبون — هي نفس الكتاب الأصلي، فلا تُختار للطباعة مرة ثانية، ولا تُحذف: الزبون يفتحها من «قصصي».') as string}
+                                className="inline-block mt-0.5 px-1.5 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 font-arabic text-[10px] font-bold"
+                              >
+                                🎁 {t('admin.granted_copy', 'نسخة بحساب زبون')}
+                              </span>
+                            )}
                             {/* Says out loud what the disabled print button only
                                 implies: there is a cover here and nothing else. */}
                             {b.coverOnly && (
