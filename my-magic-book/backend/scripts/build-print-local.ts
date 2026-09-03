@@ -18,6 +18,8 @@
  *   npx tsx scripts/build-print-local.ts \
  *     --story 6a85b98295b4ffbba4c078ec --theme school_hero \
  *     --name مريم --gender female --photo gs://.../face.jpg [--code A4C0794C]
+ *     [--folder magic-fanoose/generated/<other-id>]   # when the artwork is not
+ *                                                     # under this story's id
  *
  * Every value comes straight from the order's story document (admin → orders).
  */
@@ -49,7 +51,11 @@ function arg(name: string, fallback?: string): string {
   const code = arg('code', storyId.slice(-8)).toLowerCase();
   const outDir = arg('out', path.join(process.env.HOME || '.', 'Downloads'));
 
-  const dir = `magic-fanoose/generated/${storyId}`;
+  // NEVER assume the artwork sits under the story's own id. Several stories are
+  // duplicate records pointing at ANOTHER story's folder — building those by
+  // convention fails with "No such object". Pass --folder with what the story's
+  // generatedImages actually say; the id is only the default.
+  const dir = arg('folder', `magic-fanoose/generated/${storyId}`);
   const imagePaths = Array.from({ length: pages }, (_, i) => `${dir}/page-${String(i + 1).padStart(2, '0')}.png`);
 
   console.log(`\n=== ${code} — ${childName} / ${theme} (${pages} images) ===`);
