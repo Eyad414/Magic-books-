@@ -66,6 +66,29 @@ export default function HeroSection() {
               {t('hero.description')}
             </p>
 
+            {/* The three things a parent asks before anything else: what does it
+                cost, what language will it be in, and can I talk to a human.
+                None of them were anywhere on the page, so the only way to learn
+                the price was to complete the wizard. */}
+            <div className="flex flex-wrap items-center justify-center lg:justify-end gap-2.5 mb-6">
+              {fromPrice !== null && (
+                <span className="px-3 py-1.5 rounded-xl bg-gold-500/10 border border-gold-500/30 text-gold-400 font-arabic text-sm font-bold">
+                  {t('hero.from_price', 'من {{price}} ₪', { price: fromPrice })}
+                </span>
+              )}
+              <span className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/15 text-white/70 font-arabic text-sm">
+                {t('hero.three_languages', '🌍 عربي · إنجليزي · عبري')}
+              </span>
+              <a
+                href={`https://wa.me/${WHATSAPP.replace(/\D/g, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 font-arabic text-sm font-bold hover:bg-emerald-500/20 transition-colors"
+              >
+                {t('hero.whatsapp', '💬 واتساب')}
+              </a>
+            </div>
+
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-end gap-4">
               <button
                 id="hero-cta-btn"
@@ -83,29 +106,6 @@ export default function HeroSection() {
                 <span>{t('hero.browse_stories')}</span>
                 <ArrowLeft className="w-4 h-4 rtl:rotate-0 ltr:rotate-180 transition-transform" />
               </Link>
-            </div>
-
-            {/* The three things a parent asks before anything else: what does it
-                cost, what language will it be in, and can I talk to a human.
-                None of them were anywhere on the page, so the only way to learn
-                the price was to complete the wizard. */}
-            <div className="flex flex-wrap items-center justify-center lg:justify-end gap-2.5 mt-6">
-              {fromPrice !== null && (
-                <span className="px-3 py-1.5 rounded-xl bg-gold-500/10 border border-gold-500/30 text-gold-400 font-arabic text-sm font-bold">
-                  {t('hero.from_price', 'من {{price}} ₪', { price: fromPrice })}
-                </span>
-              )}
-              <span className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/15 text-white/70 font-arabic text-sm">
-                {t('hero.three_languages', '🌍 عربي · إنجليزي · عبري')}
-              </span>
-              <a
-                href={`https://wa.me/${WHATSAPP.replace(/\D/g, '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 font-arabic text-sm font-bold hover:bg-emerald-500/20 transition-colors"
-              >
-                {t('hero.whatsapp', '💬 واتساب')}
-              </a>
             </div>
 
             {/* Stats */}
