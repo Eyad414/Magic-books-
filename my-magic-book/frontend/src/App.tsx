@@ -139,10 +139,13 @@ export default function App() {
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
           <Route path="stories" element={<Stories />} />
-          {/* Creating a story needs an account: the wizard uploads the child's
-              photo and the cover preview quota is per-account. RequireAuth
-              remembers the destination, so login lands them back here. */}
-          <Route path="create" element={<RequireAuth><CreateStory /></RequireAuth>} />
+          {/* Open to visitors. Creating a story DOES need an account — the photo
+              upload and the cover-preview quota are both per-account — but
+              asking for one at the door meant a parent met a login form before
+              seeing a single story, a theme or a price. The wizard now asks at
+              the first step that actually needs it, once they know what they
+              are signing up for, and keeps what they filled in. */}
+          <Route path="create" element={<CreateStory />} />
           <Route path="about" element={<AboutUs />} />
           <Route path="contact" element={<ContactUs />} />
           <Route path="policy" element={<Policy />} />

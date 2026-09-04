@@ -4,12 +4,16 @@ import MagicButton from '../common/MagicButton';
 import { User, Baby, ChevronLeft, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { uploadApi } from '../../api/uploadApi';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { useSiteFlags } from '../../hooks/useSiteFlags';
 
 // Props Interface: Defines the properties this component expects to receive from its parent (CreateStory.tsx)
 interface Props { onNext: () => void; }
 
 export default function Step1_ChildDetails({ onNext }: Props) { // To move to the next page in the steps
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const { progress, setChildDetails } = useStoryProgress(); // To save User Choices in the steps
   const { t } = useTranslation();
   // The photo is required unless the owner re-enables "order without a photo".
@@ -49,6 +53,15 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
   // Function: Called when user clicks the "Next" button. It validates, uploads any pending photo, saves to global context, and triggers the next step.
   const handleNext = async () => {
     if (!validate()) return;
+
+    // An account is genuinely needed from here on: the photo uploads against it
+    // and the cover-preview quota is counted per account. Ask now — not at the
+    // front door — and keep what they typed so signing in costs them nothing.
+    if (!user) {
+      setChildDetails(form);
+      navigate('/login', { state: { from: '/create', reason: 'create' } });
+      return;
+    }
 
     let nextForm = form;
     if (wantsPhoto && pendingFile) {

@@ -147,7 +147,7 @@ export default function Register() {
 
           {/* One tap instead of a password. Renders nothing until a Google
               client id is configured, so it never appears half-working. */}
-          <GoogleButton onDone={() => navigate('/dashboard')} />
+          <GoogleButton onDone={() => navigate('/create')} />
 
           <p className="font-arabic text-white/40 text-sm text-center mt-6">
             {t('auth.have_account')}

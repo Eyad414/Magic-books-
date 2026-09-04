@@ -18,6 +18,10 @@ export default function Login() {
   // RequireAuth stores where the visitor was headed (e.g. /create), so send
   // them back there after login instead of dumping them on the dashboard.
   const from = (location.state as any)?.from as string | undefined;
+  // Someone sent here from the wizard is not "back" — they were part-way
+  // through making a book, and a page that greets them with «مرحباً بعودتك»
+  // reads as if they are in the wrong place and their work is gone.
+  const fromCreate = (location.state as any)?.reason === 'create';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,8 +57,14 @@ export default function Login() {
 
         <div className="glass-card p-8">
           <div className="text-center mb-8">
-            <h1 className="font-arabic font-black text-white text-2xl mb-2">{t('auth.welcome_back')}</h1>
-            <p className="font-arabic text-white/50 text-sm">{t('auth.login_desc')}</p>
+            <h1 className="font-arabic font-black text-white text-2xl mb-2">
+              {fromCreate ? t('auth.create_gate_title', 'خطوة أخيرة قبل ما نبدأ') : t('auth.welcome_back')}
+            </h1>
+            <p className="font-arabic text-white/50 text-sm">
+              {fromCreate
+                ? t('auth.create_gate_desc', 'صورة طفلك وقصته بتنحفظوا بحسابك — سجّل دخولك أو أنشئ حساباً مجانياً، وبنكمّل من نفس المكان. ما ضاع شي مما كتبته.')
+                : t('auth.login_desc')}
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -121,11 +131,11 @@ export default function Login() {
 
           {/* One tap instead of a password. Renders nothing until a Google
               client id is configured, so it never appears half-working. */}
-          <GoogleButton onDone={() => navigate('/dashboard')} />
+          <GoogleButton onDone={() => navigate(from || '/dashboard')} />
 
           <p className="font-arabic text-white/40 text-sm text-center mt-6">
             {t('auth.no_account')}
-            <Link to="/register" className="text-gold-500 hover:underline font-bold">
+            <Link to="/register" state={location.state} className="text-gold-500 hover:underline font-bold">
               {t('auth.create_account')}
             </Link>
           </p>
