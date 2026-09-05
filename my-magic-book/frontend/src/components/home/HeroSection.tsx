@@ -3,9 +3,6 @@ import { Sparkles, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useStoryProgress } from '../../context/StoryProgressContext';
 import { useSiteStats } from '../../hooks/useSiteStats';
-import { useEffect, useState } from 'react';
-import { publicApi } from '../../api/publicApi';
-
 /** The shop's own number, the way it is written on the marketing posts. */
 const WHATSAPP = '972585502072';
 
@@ -19,18 +16,6 @@ export default function HeroSection() {
   // from the database now: whatever the shop has actually done, and nothing
   // more. Small is fine; untrue is not. The About page reads the same hook.
   const stats = useSiteStats();
-  // Read the cheapest package from settings rather than hardcoding it — a price
-  // the owner changes in the dashboard must not stay wrong on the front page.
-  const [fromPrice, setFromPrice] = useState<number | null>(null);
-  useEffect(() => {
-    publicApi.getSettings()
-      .then((r: any) => {
-        const pkgs = (r?.settings?.bookPackages || r?.bookPackages || []) as any[];
-        const prices = pkgs.map((p) => Number(p?.price)).filter((n) => Number.isFinite(n) && n > 0);
-        if (prices.length) setFromPrice(Math.min(...prices));
-      })
-      .catch(() => { /* the badge just stays hidden */ });
-  }, []);
 
   const handleStartStory = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -66,16 +51,10 @@ export default function HeroSection() {
               {t('hero.description')}
             </p>
 
-            {/* The three things a parent asks before anything else: what does it
-                cost, what language will it be in, and can I talk to a human.
-                None of them were anywhere on the page, so the only way to learn
-                the price was to complete the wizard. */}
+            {/* Language and a way to reach a human. The price is deliberately
+                NOT here — the owner wants it discovered in the wizard, where the
+                package it belongs to is on screen beside it. */}
             <div className="flex flex-wrap items-center justify-center lg:justify-end gap-2.5 mb-6">
-              {fromPrice !== null && (
-                <span className="px-3 py-1.5 rounded-xl bg-gold-500/10 border border-gold-500/30 text-gold-400 font-arabic text-sm font-bold">
-                  {t('hero.from_price', 'من {{price}} ₪', { price: fromPrice })}
-                </span>
-              )}
               <span className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/15 text-white/70 font-arabic text-sm">
                 {t('hero.three_languages', '🌍 عربي · إنجليزي · عبري')}
               </span>
