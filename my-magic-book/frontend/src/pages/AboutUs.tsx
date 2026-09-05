@@ -1,4 +1,5 @@
 import { Star, BookOpen, Heart, Award, Globe, Zap, Languages } from 'lucide-react';
+import { usePageMeta } from '../hooks/usePageMeta';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStoryProgress } from '../context/StoryProgressContext';
@@ -51,6 +52,7 @@ function FAQ() {
 }
 
 export default function AboutUs() {
+  usePageMeta('من نحن', 'الفانوس السحري من القدس: نصنع كتباً مطبوعة يكون طفلك بطلها — اسمه في كل صفحة ووجهه في كل رسمة.');
   const { t } = useTranslation();
   const { resetProgress } = useStoryProgress();
   const navigate = useNavigate();

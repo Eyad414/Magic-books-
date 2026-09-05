@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { usePageMeta } from '../hooks/usePageMeta';
 import { contactApi } from '../api/orderApi';
 import MagicButton from '../components/common/MagicButton';
 import { Mail, Phone, Send, MessageCircle } from 'lucide-react';
@@ -6,6 +7,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 export default function ContactUs() {
+  usePageMeta('تواصل معنا', 'أسئلة عن الطلب أو الطباعة أو التوصيل؟ راسلنا على واتساب أو بالبريد ونرد عليك.');
   const { t } = useTranslation();
   const [form, setForm] = useState({ name: '', email: '', phone: '', subject: '', message: '' });
   const [isLoading, setIsLoading] = useState(false);

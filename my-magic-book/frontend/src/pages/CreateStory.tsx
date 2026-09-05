@@ -1,4 +1,5 @@
 import { useStoryProgress } from '../context/StoryProgressContext';
+import { usePageMeta } from '../hooks/usePageMeta';
 import Step1_ChildDetails from '../components/wizard/Step1_ChildDetails';
 import Step2_AI_Generator from '../components/wizard/Step2_AI_Generator';
 import Step3_Checkout from '../components/wizard/Step3_Checkout';
@@ -10,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 const TOTAL_STEPS = 4;
 
 export default function CreateStory() {
+  usePageMeta('ابدأ قصة طفلك', 'أربع خطوات: اسم طفلك وصورته، اختيار القصة واللغة، ثم الطباعة والتوصيل.');
   const { progress, setStep } = useStoryProgress();
   const { user } = useAuth();
   // Admins can jump freely between steps (to review pages) without filling in

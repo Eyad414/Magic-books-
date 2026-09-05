@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { usePageMeta } from '../hooks/usePageMeta';
 import { Lock, Eye, Shield, FileText, CreditCard } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -17,6 +18,7 @@ const Section = ({ id, icon: Icon, title, children }: any) => (
 );
 
 export default function Policy() {
+  usePageMeta('السياسات والشروط');
   const { t } = useTranslation();
 
   return (

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { usePageMeta } from '../hooks/usePageMeta';
 import { Star, BookOpen, Eye, X, Heart } from 'lucide-react';
 import FlipbookPreview, { buildThemePreview } from '../components/wizard/FlipbookPreview';
 import { useNavigate } from 'react-router-dom';
@@ -22,6 +23,7 @@ const storyImgs = (id: string) =>
   Array.from({ length: 13 }, (_, i) => `magic-fanoose/generated/${id}/page-${String(i + 1).padStart(2, '0')}.png`);
 
 export default function Stories() {
+  usePageMeta('قصص جاهزة لطفلك — بالعربية والإنجليزية والعبرية', 'تصفّح قصصنا الجاهزة: حديقة الحيوان، الفضاء، القراصنة، بطل المدرسة وغيرها — كل قصة يصير طفلك بطلها، بالعربية أو الإنجليزية أو العبرية.');
   const [themes, setThemes] = useState<Record<string, any>>({});
   const [selected, setSelected] = useState<Card | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
