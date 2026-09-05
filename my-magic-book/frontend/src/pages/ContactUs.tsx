@@ -7,8 +7,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 export default function ContactUs() {
-  usePageMeta('تواصل معنا', 'أسئلة عن الطلب أو الطباعة أو التوصيل؟ راسلنا على واتساب أو بالبريد ونرد عليك.');
   const { t } = useTranslation();
+  usePageMeta(t('meta.contact_title'), t('meta.contact_desc'));
   const [form, setForm] = useState({ name: '', email: '', phone: '', subject: '', message: '' });
   const [isLoading, setIsLoading] = useState(false);
 

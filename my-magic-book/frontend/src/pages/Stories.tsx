@@ -23,11 +23,11 @@ const storyImgs = (id: string) =>
   Array.from({ length: 13 }, (_, i) => `magic-fanoose/generated/${id}/page-${String(i + 1).padStart(2, '0')}.png`);
 
 export default function Stories() {
-  usePageMeta('قصص جاهزة لطفلك — بالعربية والإنجليزية والعبرية', 'تصفّح قصصنا الجاهزة: حديقة الحيوان، الفضاء، القراصنة، بطل المدرسة وغيرها — كل قصة يصير طفلك بطلها، بالعربية أو الإنجليزية أو العبرية.');
   const [themes, setThemes] = useState<Record<string, any>>({});
   const [selected, setSelected] = useState<Card | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
   const { t, i18n } = useTranslation();
+  usePageMeta(t('meta.stories_title'), t('meta.stories_desc'));
   const { resetProgress, setStoryConfig } = useStoryProgress();
   const navigate = useNavigate();
   // Favourites are per-account (guest bucket when logged out).

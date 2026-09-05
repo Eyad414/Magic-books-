@@ -52,8 +52,8 @@ function FAQ() {
 }
 
 export default function AboutUs() {
-  usePageMeta('من نحن', 'الفانوس السحري من القدس: نصنع كتباً مطبوعة يكون طفلك بطلها — اسمه في كل صفحة ووجهه في كل رسمة.');
   const { t } = useTranslation();
+  usePageMeta(t('meta.about_title'), t('meta.about_desc'));
   const { resetProgress } = useStoryProgress();
   const navigate = useNavigate();
   // Counted from the database, exactly like the Home hero. This page used to

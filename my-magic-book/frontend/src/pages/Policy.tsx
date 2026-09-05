@@ -18,8 +18,8 @@ const Section = ({ id, icon: Icon, title, children }: any) => (
 );
 
 export default function Policy() {
-  usePageMeta('السياسات والشروط');
   const { t } = useTranslation();
+  usePageMeta(t('meta.policy_title'));
 
   return (
     <div className="min-h-screen pt-24 pb-16 px-4 sm:px-6 lg:px-8">

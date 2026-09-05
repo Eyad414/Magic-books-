@@ -1,4 +1,5 @@
 import { useTranslation, Trans } from 'react-i18next';
+import { usePageMeta } from '../hooks/usePageMeta';
 import HeroSection from '../components/home/HeroSection';
 import WorkFlow from '../components/home/WorkFlow';
 import BestSellers from '../components/home/BestSellers';
@@ -15,6 +16,8 @@ function ScrollIndicator() {
 }
 
 export default function Home() {
+  const { t } = useTranslation();
+  usePageMeta(t('meta.home_title'));
   return (
     <div>
       <HeroSection />

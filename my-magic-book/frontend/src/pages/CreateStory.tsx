@@ -11,7 +11,6 @@ import { useAuth } from '../context/AuthContext';
 const TOTAL_STEPS = 4;
 
 export default function CreateStory() {
-  usePageMeta('ابدأ قصة طفلك', 'أربع خطوات: اسم طفلك وصورته، اختيار القصة واللغة، ثم الطباعة والتوصيل.');
   const { progress, setStep } = useStoryProgress();
   const { user } = useAuth();
   // Admins can jump freely between steps (to review pages) without filling in
@@ -21,6 +20,7 @@ export default function CreateStory() {
   // an out-of-range slot. Payment is now step 4, so 4 is valid again.
   const currentStep = Math.min(Math.max(progress.currentStep || 1, 1), TOTAL_STEPS);
   const { t } = useTranslation();
+  usePageMeta(t('meta.create_title'), t('meta.create_desc'));
 
   const STEPS = [
     { number: 1, label: t('wizard.step1_label'), emoji: '👶' },

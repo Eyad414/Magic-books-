@@ -1908,5 +1908,17 @@
     "day": "Day",
     "month": "Month",
     "year": "Year"
+  },
+  "meta": {
+    "stories_title": "Ready stories for your child — in Arabic, English and Hebrew",
+    "stories_desc": "Browse our ready stories: the zoo, space, pirates, school hero and more — in every one your child is the hero, in Arabic, English or Hebrew.",
+    "about_title": "About us",
+    "about_desc": "Magic Fanoos, from Jerusalem: printed books where your child is the hero — their name on every page and their face in every illustration.",
+    "contact_title": "Contact us",
+    "contact_desc": "Questions about ordering, printing or delivery? Message us on WhatsApp or by email and we will get back to you.",
+    "policy_title": "Policies and terms",
+    "create_title": "Start your child's story",
+    "create_desc": "Four steps: your child's name and photo, choose the story and language, then printing and delivery.",
+    "home_title": "Magic Fanoos — personalised story books for your child"
   }
 }
