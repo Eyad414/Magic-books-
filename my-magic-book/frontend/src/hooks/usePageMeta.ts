@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
-const SUFFIX = 'الفانوس السحري';
-const DEFAULT_TITLE = 'الفانوس السحري — قصص مخصصة لطفلك | Magic Fanoos';
+const SUFFIX = 'Magic Fanoos | ماجيك فانوس';
+const DEFAULT_TITLE = 'Magic Fanoos | ماجيك فانوس — قصص مخصصة لطفلك';
 
 /**
  * Give a page its own title and description.

@@ -738,7 +738,12 @@ export const getLiveStats = async (_req: Request, res: Response): Promise<void> 
     const children = new Set(
       (stories as any[]).map((s) => String(s.childName || '').trim()).filter(Boolean),
     ).size;
-    const ready = ((settings as any)?.themes || []).filter((t: any) => t.isPublic !== false).length;
+    // Colouring themes are the SAME story drawn as line art, not another story
+    // to choose from — counting zoo_adventure and zoo_coloring separately told
+    // a visitor there were 23 stories when the shop offers 20.
+    const ready = ((settings as any)?.themes || []).filter(
+      (t: any) => t.isPublic !== false && !String(t.id || '').includes('coloring'),
+    ).length;
     // Every story is written in Arabic, Hebrew and English — a fact, unlike the
     // five-star rating this replaces, which had no reviews behind it at all.
     const languages = 3;
