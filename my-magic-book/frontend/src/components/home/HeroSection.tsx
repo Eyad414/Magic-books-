@@ -54,7 +54,11 @@ export default function HeroSection() {
             {/* Language and a way to reach a human. The price is deliberately
                 NOT here — the owner wants it discovered in the wizard, where the
                 package it belongs to is on screen beside it. */}
-            <div className="flex flex-wrap items-center justify-center lg:justify-end gap-2.5 mb-6">
+            {/* pe- keeps this row clear of the floating accessibility button,
+                which is fixed to the physical bottom-left and would otherwise
+                sit on top of the WhatsApp link — tapping near its edge opened
+                the accessibility panel instead. */}
+            <div className="flex flex-wrap items-center justify-center lg:justify-end gap-2.5 mb-6 pe-14 sm:pe-0">
               <span className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/15 text-white/70 font-arabic text-sm">
                 {t('hero.three_languages', '🌍 عربي · إنجليزي · عبري')}
               </span>
