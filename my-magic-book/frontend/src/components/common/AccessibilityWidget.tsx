@@ -55,11 +55,15 @@ export default function AccessibilityWidget() {
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 left-6 z-[9999] w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-2xl flex items-center justify-center transition-all hover:scale-110 border-2 border-white/20"
+        // Smaller and tucked further into the corner on a phone: at 56px sitting
+        // 24px up it covered the hero's own buttons, which is the one thing on
+        // the page a visitor is meant to press. Full size returns on desktop,
+        // where there is room for it.
+        className="fixed bottom-3 left-3 sm:bottom-6 sm:left-6 z-[9999] w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-2xl flex items-center justify-center transition-all hover:scale-110 border-2 border-white/20 opacity-80 hover:opacity-100 focus-visible:opacity-100"
         aria-label={t('a11y.title', 'إتاحة الوصول')}
         title={t('a11y.title', 'إتاحة الوصول')}
       >
-        <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg className="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="4.5" r="2.5" fill="currentColor" stroke="none" />
           <path d="M12 7.5V14" />
           <path d="M7 10.5L12 9L17 10.5" />
@@ -69,7 +73,7 @@ export default function AccessibilityWidget() {
 
       {/* Panel */}
       {isOpen && (
-        <div className="fixed bottom-24 left-6 z-[9999] w-72 rounded-2xl bg-dark-800 border border-white/10 shadow-2xl overflow-hidden animate-fade-in">
+        <div className="fixed bottom-16 left-3 sm:bottom-24 sm:left-6 z-[9999] w-[min(18rem,calc(100vw-1.5rem))] rounded-2xl bg-dark-800 border border-white/10 shadow-2xl overflow-hidden animate-fade-in">
           {/* Header */}
           <div className="p-4 bg-blue-600 flex items-center justify-between">
             <div className="flex items-center gap-2">
