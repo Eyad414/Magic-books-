@@ -974,20 +974,29 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
   logUpscaleSummary();
   reclaim('after images prepared');
   logMem('images prepared')
-  // Dedication photo — best-effort (skip the page if it can't be fetched, e.g.
-  // a non-GCS URL), so it never fails the whole build.
+  // Dedication portrait. Best-effort throughout — a photo that cannot be
+  // fetched must never fail the whole build.
+  //
+  // Falls back to the SAME image the back cover shows, so the two always agree:
+  // the real photo when the order came with one, the story's own portrait when
+  // it did not. An empty circle here while the back cover carried a face looked
+  // like something had failed.
   let photoSrc = '';
-  if (input.childPhotoPath) {
-    const objPath = toObjectPath(input.childPhotoPath);
-    if (!/^https?:/i.test(objPath)) {
-      try {
-        const u = await upscaleForPrint(await downloadObject(objPath), { px: 900 });
-        photoSrc = dataUri(u.buffer, u.mime);
-      } catch (e: any) {
-        console.warn('[PrintService] dedication photo skipped:', e?.message || e);
-      }
+  const portraitFrom = async (ref?: string): Promise<string> => {
+    if (!ref) return '';
+    const objPath = toObjectPath(ref);
+    if (/^https?:/i.test(objPath)) return '';
+    try {
+      const u = await upscaleForPrint(await downloadObject(objPath), { px: 900 });
+      const uri = dataUri(u.buffer, u.mime);
+      (u as any).buffer = undefined;
+      return uri;
+    } catch (e: any) {
+      console.warn('[PrintService] dedication portrait skipped:', e?.message || e);
+      return '';
     }
-  }
+  };
+  photoSrc = (await portraitFrom(input.childPhotoPath)) || (await portraitFrom(input.backPath));
 
   const qrSrc = await websiteQrDataUri();
   const lanternUri = lanternDataUri();
