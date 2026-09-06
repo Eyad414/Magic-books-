@@ -104,7 +104,18 @@ export const PRINT_PX = 864;
 export const PRINT_PHOTO_PX = 2400;
 // Interior pages rendered per Chromium pass. Each hi-res photo decodes to ~23MB;
 // 3 pages (≤2 photos) keeps peak well under the 512MB host cap.
-const RENDER_BATCH_PAGES = Number(process.env.PRINT_RENDER_BATCH_PAGES) || 3;
+/**
+ * Interior pages per Chromium pass. Each hi-res photo decodes to ~23MB, so on a
+ * small box one page at a time is the difference between finishing and being
+ * OOM-killed; where there is room, three is faster (fewer browser launches).
+ * Read lazily because the container limit is measured further down this file.
+ */
+function renderBatchPages(): number {
+  const forced = Number(process.env.PRINT_RENDER_BATCH_PAGES);
+  if (forced > 0) return forced;
+  const limit = containerMemoryLimitMb();
+  return limit > 0 && limit < 1024 ? 1 : 3;
+}
 // How many illustrations to AI-upscale at once on a cold build. The upscale calls
 // are network-bound (~30s each) and hold little RAM, so parallelising them cuts a
 // first build from ~8 min to ~2. Kept modest to stay within Imagen's per-minute
@@ -146,7 +157,7 @@ export function containerMemoryLimitMb(): number {
  * garbage between phases reclaims nothing, so that is real usage, not a
  * high-water mark left behind.
  */
-export const PRINT_STORY_MIN_MEMORY_MB = Number(process.env.PRINT_MIN_MEMORY_MB ?? 768);
+export const PRINT_STORY_MIN_MEMORY_MB = Number(process.env.PRINT_MIN_MEMORY_MB ?? 450);
 
 /**
  * Refuse a story print build the box cannot finish.
@@ -752,7 +763,7 @@ async function renderPagesBatched(
   pages: string[],
   widthMm = PRINT_PAGE_MM,
   heightMm = PRINT_PAGE_MM,
-  batchSize = RENDER_BATCH_PAGES,
+  batchSize = renderBatchPages(),
   rtl = true,
   baseDir?: string,
 ): Promise<Buffer> {
@@ -989,7 +1000,7 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
   // the interior never used.
   let interiorPdf: Buffer;
   try {
-    interiorPdf = await renderPagesBatched(padded, PRINT_PAGE_MM, PRINT_PAGE_MM, RENDER_BATCH_PAGES, input.rtl !== false, workDir);
+    interiorPdf = await renderPagesBatched(padded, PRINT_PAGE_MM, PRINT_PAGE_MM, renderBatchPages(), input.rtl !== false, workDir);
   } finally {
     // Ephemeral disk, but a failed build must not leave 40MB of pages behind:
     // enough of those and the next build has nowhere to write.
