@@ -81,6 +81,9 @@ app.get('/api/health', async (req, res) => {
     // box that cannot finish one, means an OOM kill and ~20s of downtime.
     print: {
       memoryLimitMb: containerMemoryLimitMb() || null,
+      // What the process is using while idle. The build adds ~210MB on top of
+      // this, so it says how much room there actually is before trying one.
+      idleRssMb: Math.round(process.memoryUsage().rss / 1024 / 1024),
       minMemoryMb: PRINT_STORY_MIN_MEMORY_MB,
       canBuildStory: PRINT_STORY_MIN_MEMORY_MB <= 0
         || containerMemoryLimitMb() === 0

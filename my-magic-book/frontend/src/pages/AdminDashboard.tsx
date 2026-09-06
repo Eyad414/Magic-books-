@@ -138,9 +138,13 @@ function BatchPrintPanel({
                   <button
                     type="button"
                     onClick={() => onPrepareOne(r.id)}
-                    disabled={!!preparing || (!!prepareDisabledReason && !r.isColoring)}
+                    disabled={!!preparing}
                     title={(!r.isColoring && prepareDisabledReason) || t('admin.batch_prepare_one_help', 'جهّز ملف الطباعة لهذا الكتاب وحده') as string}
-                    className="px-2 py-1 rounded-lg bg-gold-500 hover:bg-gold-400 disabled:opacity-40 disabled:cursor-not-allowed text-dark-900 font-arabic text-[11px] font-bold transition-colors"
+                    className={`px-2 py-1 rounded-lg font-arabic text-[11px] font-bold transition-colors disabled:opacity-40 ${
+                      !r.isColoring && prepareDisabledReason
+                        ? 'bg-white/10 text-white/60 hover:bg-white/20'
+                        : 'bg-gold-500 hover:bg-gold-400 text-dark-900'
+                    }`}
                   >
                     {preparing ? '…' : t('admin.batch_prepare_one', 'جهّز')}
                   </button>
@@ -203,9 +207,11 @@ function BatchPrintPanel({
                 <button
                   type="button"
                   onClick={onPrepare}
-                  disabled={!!preparing || !!prepareBlocked}
+                  disabled={!!preparing}
                   title={prepareBlocked || undefined}
-                  className="px-2.5 py-1 rounded-lg bg-gold-500 hover:bg-gold-400 disabled:opacity-40 disabled:cursor-not-allowed text-dark-900 font-arabic text-[11px] font-bold transition-colors"
+                  className={`px-2.5 py-1 rounded-lg font-arabic text-[11px] font-bold transition-colors disabled:opacity-40 ${
+                    prepareBlocked ? 'bg-white/10 text-white/60 hover:bg-white/20' : 'bg-gold-500 hover:bg-gold-400 text-dark-900'
+                  }`}
                 >
                   {preparing
                     ? t('admin.batch_preparing', 'جارٍ التجهيز...')
@@ -480,6 +486,16 @@ export default function AdminDashboard() {
   const prepareBatchFiles = async (only?: string[]) => {
     const missing = (only ?? bookBatchIds).filter((id) => !printReady[id]);
     if (!missing.length) return;
+    // Say why, on screen. The reason used to live in a title attribute, which
+    // never appears on a phone — so the button just looked broken.
+    const needsBigBox = missing.some((id) => !allBooks.find((b: any) => b.printKey === id)?.isColoring);
+    if (canBuildPrint && !canBuildPrint.ok && needsBigBox) {
+      toast.error(
+        t('admin.batch_prepare_blocked', 'الخادم الحالي ({{limit}}MB) لا تكفيه ذاكرته لبناء ملف طباعة — يحتاج ~{{need}}MB. جهّزها من الجهاز أو ارفع حجم الخادم.', { limit: canBuildPrint.limitMb ?? '؟', need: canBuildPrint.needMb ?? 768 }),
+        { duration: 12000 }
+      );
+      return;
+    }
     setPreparing(true);
     const toastId = toast.loading(
       t('admin.batch_preparing_toast', 'جارٍ تجهيز ملفات {{n}} كتاب... (دقيقة تقريباً للكتاب)', { n: missing.length })
