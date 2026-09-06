@@ -417,6 +417,7 @@ const SHARED_CSS = `
   .fp-logo { max-width:82%; max-height:82%; object-fit:contain; border-radius:6mm; filter:drop-shadow(0 6mm 20mm rgba(0,0,0,0.55)); }
   /* Dedication page */
   .ded2-page { background:linear-gradient(145deg,#fdf8ee,#fef3d0 50%,#fff8e1); border:2mm solid #D4A937; display:flex; flex-direction:column; align-items:center; gap:6mm; padding:22mm 18mm; text-align:center; }
+  .ded2-photo-empty { background:radial-gradient(circle at 50% 35%, #fffdf6, #f6e7bd); }
   .ded2-photo { width:54mm; height:54mm; border-radius:50%; object-fit:cover; border:2.5mm solid #D4A937; box-shadow:0 0 0 4mm rgba(212,169,55,0.18); }
   .ded2-heading { font-size:22pt; font-weight:900; color:#8B5E0A; }
   .ded2-divider { width:52mm; height:0.6mm; background:linear-gradient(90deg,transparent,#D4A937,transparent); }
@@ -465,8 +466,15 @@ function linePageHtml(src: string): string {
 }
 function dedicationPageHtml(photoSrc: string, childName: string, text?: string): string {
   const body = text || `إلى البطل الرائع ${childName}،<br/>نتمنى أن تكون حياتك مليئة بالمغامرات والسعادة.`;
+  // The portrait is the ONLY optional part. This page also carries the lines
+  // the giver writes their message on, so it must print whether or not a photo
+  // came with the order — dropping the whole page left the book without its
+  // dedication at all.
+  const portrait = photoSrc
+    ? `<img class="ded2-photo" src="${photoSrc}" alt="${childName}" />`
+    : '<div class="ded2-photo ded2-photo-empty"></div>';
   return `<div class="page ded2-page">
-    <img class="ded2-photo" src="${photoSrc}" alt="${childName}" />
+    ${portrait}
     <div class="ded2-heading">${sparkSpan(6)} إهداء خاص ${sparkSpan(6)}</div>
     <div class="ded2-divider"></div>
     <div class="ded2-text">${body}</div>
@@ -986,7 +994,7 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
   const interior: string[] = [];
   // Front matter: inside title, then the dedication (before the logo separator).
   interior.push(titlePageHtml(input.title, input.childName));
-  if (photoSrc) interior.push(dedicationPageHtml(photoSrc, input.childName, input.dedication));
+  interior.push(dedicationPageHtml(photoSrc, input.childName, input.dedication));
   interior.push(fanoosPageHtml());
   // Body: each story page is a decorative TEXT page + its full-bleed illustration.
   for (let i = 0; i < input.imagePaths.length; i++) {
