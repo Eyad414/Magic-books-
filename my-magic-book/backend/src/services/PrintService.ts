@@ -157,7 +157,15 @@ export function containerMemoryLimitMb(): number {
  * garbage between phases reclaims nothing, so that is real usage, not a
  * high-water mark left behind.
  */
-export const PRINT_STORY_MIN_MEMORY_MB = Number(process.env.PRINT_MIN_MEMORY_MB ?? 450);
+/**
+ * 768 is not a guess any more. With the threshold at 450 and Chromium rendering
+ * ONE page at a time, a real build on the 512MB instance was measured climbing
+ * 124 → 154 → 301 → 430 → 455MB and then the process was killed: the API went
+ * 502 and restarted. The node side alone reaches ~455MB before Chromium's own
+ * usage counts, so this box cannot finish a colour story build at any batch
+ * size. Raise the box, not this number.
+ */
+export const PRINT_STORY_MIN_MEMORY_MB = Number(process.env.PRINT_MIN_MEMORY_MB ?? 768);
 
 /**
  * Refuse a story print build the box cannot finish.
