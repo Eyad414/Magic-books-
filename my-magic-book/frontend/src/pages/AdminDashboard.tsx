@@ -73,7 +73,7 @@ export const EMPTY_BATCH_FORM: BatchForm = {
 };
 
 function BatchPrintPanel({
-  rows, open, setOpen, form, setForm, busy, onSubmit, onClear, onRemove, onPrepare, preparing, prepareDisabledReason, t,
+  rows, open, setOpen, form, setForm, busy, onSubmit, onClear, onRemove, onPrepare, onPrepareOne, preparing, prepareDisabledReason, t,
 }: {
   rows: BatchRow[];
   open: boolean;
@@ -86,6 +86,8 @@ function BatchPrintPanel({
   onRemove: (id: string) => void;
   /** Optional: build the missing print files for the blocked rows. */
   onPrepare?: () => void;
+  /** Prepare ONE book's files, from its own row. */
+  onPrepareOne?: (id: string) => void;
   preparing?: boolean;
   prepareDisabledReason?: string;
   t: any;
@@ -132,6 +134,17 @@ function BatchPrintPanel({
                 <span className="font-arabic text-xs text-white font-bold">{r.title}</span>
                 {r.subtitle && <span className="font-arabic text-[11px] text-white/50">{r.subtitle}</span>}
                 <span className={`font-arabic text-[11px] flex-1 min-w-[8rem] truncate ${r.blocked ? 'text-amber-300/90' : 'text-white/40'}`} dir="auto">{r.detail || ''}</span>
+                {r.blocked && onPrepareOne && (
+                  <button
+                    type="button"
+                    onClick={() => onPrepareOne(r.id)}
+                    disabled={!!preparing || (!!prepareDisabledReason && !r.isColoring)}
+                    title={(!r.isColoring && prepareDisabledReason) || t('admin.batch_prepare_one_help', 'جهّز ملف الطباعة لهذا الكتاب وحده') as string}
+                    className="px-2 py-1 rounded-lg bg-gold-500 hover:bg-gold-400 disabled:opacity-40 disabled:cursor-not-allowed text-dark-900 font-arabic text-[11px] font-bold transition-colors"
+                  >
+                    {preparing ? '…' : t('admin.batch_prepare_one', 'جهّز')}
+                  </button>
+                )}
                 {r.onUseAddress && (
                   <button
                     type="button"
@@ -461,8 +474,11 @@ export default function AdminDashboard() {
     };
   };
 
-  const prepareBatchFiles = async () => {
-    const missing = bookBatchIds.filter((id) => !printReady[id]);
+  /** Prepare one book from its own row — same call, one item. */
+  const prepareOneBookFile = (id: string) => prepareBatchFiles([id]);
+
+  const prepareBatchFiles = async (only?: string[]) => {
+    const missing = (only ?? bookBatchIds).filter((id) => !printReady[id]);
     if (!missing.length) return;
     setPreparing(true);
     const toastId = toast.loading(
@@ -4515,7 +4531,8 @@ export default function AdminDashboard() {
                     onSubmit={submitBookBatch}
                     onClear={() => setBookBatchIds([])}
                     onRemove={toggleBookBatch}
-                    onPrepare={prepareBatchFiles}
+                    onPrepare={() => prepareBatchFiles()}
+                    onPrepareOne={prepareOneBookFile}
                     preparing={preparing}
                     prepareDisabledReason={canBuildPrint && !canBuildPrint.ok
                       ? (t('admin.batch_prepare_blocked', 'الخادم الحالي ({{limit}}MB) لا تكفيه ذاكرته لبناء ملف طباعة — يحتاج ~{{need}}MB. جهّزها من الجهاز أو ارفع حجم الخادم.', { limit: canBuildPrint.limitMb ?? '؟', need: canBuildPrint.needMb ?? 900 }) as string)
