@@ -54,6 +54,9 @@ export interface BatchRow {
   blocked?: boolean;
   /** Line art at PRINT_PX: builds in ~70MB, so a small box can still do it. */
   isColoring?: boolean;
+  /** The built PDFs, so the book can be read before it is paid to print. */
+  coverUrl?: string;
+  interiorUrl?: string;
   onUseAddress?: () => void;
 }
 
@@ -148,6 +151,32 @@ function BatchPrintPanel({
                   >
                     {preparing ? '…' : t('admin.batch_prepare_one', 'جهّز')}
                   </button>
+                )}
+                {/* Look at the actual file before paying to print it. The
+                    dedication page went missing for months precisely because
+                    nobody could see the book without opening the printer's
+                    portal. */}
+                {r.coverUrl && (
+                  <a
+                    href={r.coverUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={t('admin.batch_view_cover_help', 'افتح ملف الغلاف كما سيُطبع') as string}
+                    className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-white/70 font-arabic text-[11px] transition-colors"
+                  >
+                    👁 {t('admin.batch_view_cover', 'الغلاف')}
+                  </a>
+                )}
+                {r.interiorUrl && (
+                  <a
+                    href={r.interiorUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={t('admin.batch_view_interior_help', 'افتح الصفحات الداخلية كما ستُطبع') as string}
+                    className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-white/70 font-arabic text-[11px] transition-colors"
+                  >
+                    👁 {t('admin.batch_view_interior', 'الداخلية')}
+                  </a>
                 )}
                 {r.onUseAddress && (
                   <button
@@ -2118,6 +2147,8 @@ export default function AdminDashboard() {
                       title: o?.storyId?.childName || '—',
                       subtitle: o?.userId?.name || '—',
                       detail: `${addr}${sa.phone ? ` · ${sa.phone}` : ''}`,
+                      coverUrl: o?.printCoverUrl || undefined,
+                      interiorUrl: o?.printInteriorUrl || undefined,
                       onUseAddress: () => setBatchForm({
                         ...batchForm,
                         method: sa.deliveryMethod === 'pickup' ? 'pickup' : 'delivery',
@@ -4537,6 +4568,10 @@ export default function AdminDashboard() {
                           : t('admin.batch_row_unready', '⚠️ يحتاج تجهيز ملف الطباعة'),
                         blocked: !printReady[id],
                         isColoring: !!b?.isColoring,
+                        ...(printReady[id] ? {
+                          coverUrl: objectPathToUrl(`magic-fanoose/print/${id}-cover.pdf`),
+                          interiorUrl: objectPathToUrl(`magic-fanoose/print/${id}-interior.pdf`),
+                        } : {}),
                       };
                     })}
                     open={bookBatchOpen}
