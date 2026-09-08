@@ -108,9 +108,10 @@ export default function BestSellers() {
   const ordered = [...published].sort((a, b) => rank(a) - rank(b));
   const cards = ordered.length ? ordered.slice(0, 4) : bestSellers;
 
-  // Build the full illustrated flipbook preview for the selected showcase book —
-  // these are sample stories, so we show them complete (every page, including
-  // the last). The customer still pays to generate their OWN book.
+  // Build the flipbook teaser for the selected showcase book. These previews
+  // are LOCKED: the first ~30% of pages read normally, the rest are blurred
+  // behind a lock page. Showing the sample complete gave away the whole story
+  // for free, so there was nothing left to buy.
   const previewPages = useMemo(() => {
     if (!selected) return [];
     const book = (selected as any).book;
@@ -126,7 +127,7 @@ export default function BestSellers() {
         pageImages: (book.images || []).map(toDisplayUrl),
         portraitImage: book.portrait ? toDisplayUrl(book.portrait) : '',
         i18n,
-        full: true,
+        full: false,
       });
     }
 
@@ -152,7 +153,7 @@ export default function BestSellers() {
       pageImages,
       portraitImage,
       i18n,
-      full: true,
+      full: false,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, themes, i18n.language]);
@@ -216,7 +217,7 @@ export default function BestSellers() {
                       {book.tag}
                     </div>
                   )}
-                  {/* Preview (eye) — opens the full sample flipbook (same as the Stories page) */}
+                  {/* Preview (eye) — opens the locked teaser (same as the Stories page) */}
                   <button
                     type="button"
                     onClick={() => setSelected(book)}
@@ -259,7 +260,7 @@ export default function BestSellers() {
       </div>
     </section>
 
-    {/* Illustrated book preview modal — the full sample story (same as Stories) */}
+    {/* Illustrated book preview modal — locked teaser, same as the Stories page */}
     {selected && (
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 lg:p-8 animate-fade-in text-center">
         <div className="absolute inset-0 bg-dark-900/90 backdrop-blur-md" onClick={() => setSelected(null)} />

@@ -134,6 +134,12 @@ export default function Stories() {
     navigate('/create');
   };
 
+  /**
+   * The sample book as a TEASER, not the whole thing: cover + the first ~30% of
+   * pages readable, the rest blurred, then a lock page. `full: true` here used
+   * to render every sheet including the ending, which left a visitor with no
+   * reason to order — they had already read the book.
+   */
   const previewPages = useMemo(() => {
     if (!selected) return [];
     return buildThemePreview({
@@ -144,7 +150,7 @@ export default function Stories() {
       pageImages: imagesFor(selected),
       portraitImage: portraitFor(selected),
       i18n,
-      full: true,
+      full: false,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, i18n.language, themes]);
@@ -194,7 +200,7 @@ export default function Stories() {
                     {t('stories_page.theme')} {themeLabelFor(card)}
                   </p>
 
-                  {/* View row — the whole sample book is readable */}
+                  {/* View row — opens the locked teaser (first ~30%), not the whole book */}
                   <div className="flex flex-wrap items-center justify-between p-3 rounded-xl bg-dark-700 border border-white/10 mb-4 gap-2 mt-auto">
                     <button onClick={() => setSelected(card)} className="flex items-center gap-1 pr-3 py-2 -my-1 min-h-[44px] group cursor-pointer">
                       <Eye className="w-3.5 h-3.5 text-gold-500 group-hover:scale-125 transition-transform" />
@@ -303,7 +309,7 @@ export default function Stories() {
         </div>
       </div>
 
-      {/* Illustrated book preview modal — the full sample story, end to end */}
+      {/* Illustrated book preview modal — cover + the first ~30%, then a lock */}
       {selected && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 lg:p-8 animate-fade-in text-center">
           <div className="absolute inset-0 bg-dark-900/90 backdrop-blur-md" onClick={() => setSelected(null)} />
