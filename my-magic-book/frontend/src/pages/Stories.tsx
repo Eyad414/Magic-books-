@@ -290,9 +290,10 @@ export default function Stories() {
             ))}
           </div>
 
+          {/* No price here either — the colouring book's cost belongs on the
+              packages step, where the customer is actually choosing. */}
           <div className="text-center mt-7">
-            <span className="font-arabic text-gold-500 font-black text-2xl" dir="ltr">₪60</span>
-            <span className="font-arabic text-white/45 text-sm mr-2">
+            <span className="font-arabic text-white/45 text-sm">
               {t('stories_page.coloring_price_note', 'للكتاب — أو ضمن الباقة الشاملة')}
             </span>
           </div>
@@ -330,8 +331,9 @@ export default function Stories() {
               <FlipbookPreview pages={previewPages} language={i18n.language as any} />
             </div>
             {/* Closing the preview used to drop the reader on an empty
-                wizard. This keeps the story they just read, names it, and says
-                what it costs — the decision is made here, not two pages later. */}
+                wizard. This keeps the story they just read and names it — the
+                decision is made here, not two pages later. No price: the packages
+                belong in the wizard's own step, not on a story card. */}
             <div className="mt-5 rounded-2xl border border-gold-500/30 bg-gradient-to-l from-gold-500/10 to-magic-500/10 p-5">
               <p className="font-arabic text-white text-lg font-bold text-center">
                 {t('stories_page.modal_swap', 'هاي القصة… بس البطل يكون {{name}}', { name: t('stories_page.modal_your_child', 'طفلك') })}
@@ -346,9 +348,6 @@ export default function Stories() {
                 >
                   ✨ {t('stories_page.modal_cta_theme', 'اصنع هذه القصة لطفلك')}
                 </button>
-                <span className="font-arabic text-white/50 text-sm">
-                  {t('stories_page.modal_price_hint', 'تبدأ من ₪40 · المطبوعة ₪130')}
-                </span>
               </div>
             </div>
           </div>
