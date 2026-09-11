@@ -29,6 +29,7 @@ import path from 'path';
 import { buildPreviewPrintFiles } from '../src/services/BookBuilder';
 import { downloadObject, publicProxyUrl } from '../src/services/PrintService';
 import { copyObject, deleteObject, pdfFolderPath } from '../src/services/StorageService';
+import { localizeName } from '../src/utils/translit';
 
 function arg(name: string, fallback?: string): string {
   const i = process.argv.indexOf(`--${name}`);
@@ -43,9 +44,14 @@ function arg(name: string, fallback?: string): string {
 (async () => {
   const storyId = arg('story');
   const theme = arg('theme');
-  const childName = arg('name');
+  // The server path localizes the name before building (prepareLibraryPrintFiles
+  // and reRenderPrintFilesForOrder both do). Passing --name straight through
+  // printed "Lora" in Latin inside an Arabic book, where every other copy says
+  // «لورا» — so do the same thing here.
+  const childNameRaw = arg('name');
   const childGender = arg('gender', 'female') as 'male' | 'female';
   const language = arg('lang', 'ar');
+  const childName = localizeName(childNameRaw, language);
   const childPhotoPath = arg('photo', '');
   const pages = Number(arg('pages', '13'));
   const code = arg('code', storyId.slice(-8)).toLowerCase();
