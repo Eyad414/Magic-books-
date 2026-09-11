@@ -6,6 +6,7 @@ import SiteSettings from '../models/SiteSettings';
 import { resolveCoupon, priceOrder, claimCouponUse, releaseCouponUse } from '../services/Pricing';
 import { resolveBirthdayCoupon, claimBirthdayCoupon } from '../services/BirthdayCoupon';
 import { buildBookForOrder } from '../services/BookBuilder';
+import { sendAdminNotification } from '../utils/mailer';
 
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' as any })
@@ -117,6 +118,47 @@ export const createCheckout = async (req: Request, res: Response): Promise<void>
       await releaseCouponUse(price.couponCode);
       throw e;
     }
+
+    /**
+     * Tell the owner an order arrived.
+     *
+     * Nothing on this path notified anyone: the contact form and customer
+     * messages both email him, an actual sale did not. Every order waits on him
+     * — cash and transfer orders sit `pending` until he marks them paid — so an
+     * order he has not noticed is an order that is not being made. That became
+     * urgent the day Bit went live: the customer sends real money and then
+     * waits, with nothing at the other end but a dashboard nobody told him to
+     * open.
+     *
+     * Deliberately not awaited and deliberately swallowing its own errors. The
+     * order already exists; a mail outage must not turn a placed order into a
+     * 500 for a customer who has just paid.
+     */
+    void (async () => {
+      const ref = String(order._id).slice(-8).toUpperCase();
+      const how = paymentMethod === 'transfer'
+        ? 'تحويل / Bit — بانتظار تأكيدك لوصول المبلغ'
+        : paymentMethod === 'cash' ? 'نقداً عند الاستلام/التوصيل' : 'بطاقة';
+      const addr: any = shippingAddress || {};
+      await sendAdminNotification({
+        name: addr.fullName || user.name || 'عميل',
+        email: user.email || '',
+        phone: addr.phone || '',
+        subject: `طلب جديد #${ref} — ${totalPrice} ₪ — ${how}`,
+        message: [
+          `رقم الطلب: #${ref}`,
+          `المبلغ: ${totalPrice} ₪`,
+          `طريقة الدفع: ${how}`,
+          `الطفل: ${story.childName || '—'} · ${story.theme || '—'}`,
+          `الباقة: ${bookPackage || story.bookPackage || '—'}`,
+          addr.deliveryMethod === 'pickup'
+            ? 'الاستلام: من القدس'
+            : `التوصيل: ${[addr.city, addr.street, addr.buildingNo].filter(Boolean).join('، ') || '—'}`,
+          '',
+          'افتح لوحة الإدارة ← طلبات العملاء لمتابعته.',
+        ].join('\n'),
+      });
+    })().catch((err) => console.error('[Order] owner notification failed:', err?.message || err));
 
     // Cash on delivery / self-pickup — no online payment. The order is placed
     // as pending and handled offline; generation triggers once an admin (or the
