@@ -261,9 +261,15 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
   // Step 3 ends at the customer's details: validate, save the address, and hand
   // over to the payment step. Placing the order now happens there.
   const handleContinue = () => {
+    // This is now the wizard's ONLY account wall, and the first one a customer
+    // meets. It has to keep everything they filled in — child, photo, story,
+    // package, address — or they have done all that work for nothing. The
+    // progress lives in localStorage, and `from` brings them back to the step
+    // they were on; `reason` makes the login screen explain itself rather than
+    // appearing as a bare wall.
     if (!isAuthenticated) {
       toast.error(t('step5.err_login'));
-      navigate('/login');
+      navigate('/login', { state: { from: '/create', reason: 'create' } });
       return;
     }
     if (!validateShipping()) {

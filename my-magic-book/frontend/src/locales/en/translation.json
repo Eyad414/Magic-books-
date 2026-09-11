@@ -1876,7 +1876,9 @@
     "error": "Couldn't create the cover, please try again",
     "name_as": "The name will appear in the story as:",
     "name_reset": "Reset",
-    "name_edit_hint": "You can change how the name is spelled — this is how it will be printed."
+    "name_edit_hint": "You can change how the name is spelled — this is how it will be printed.",
+    "need_account": "The free preview needs an account — sign in and we’ll bring you right back here.",
+    "sign_in": "Sign in to see the cover"
   },
   "payment": {
     "title": "Payment",

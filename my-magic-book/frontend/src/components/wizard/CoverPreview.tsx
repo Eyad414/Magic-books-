@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Sparkles, Lock, ImageIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { storyApi } from '../../api/storyApi';
 import { toDisplayUrl } from '../../api/mediaUrl';
 import { resolveGender, applyGenderTokens } from '../../utils/gender';
@@ -32,6 +34,13 @@ export default function CoverPreview({ childName, childGender, childPhotoUrl, th
   const [cover, setCover] = useState('');
   const [error, setError] = useState('');
   const [blocked, setBlocked] = useState(false);
+  // The cover preview is the one thing in the wizard that really does need an
+  // account — the free-preview quota is counted per user. Now that the wizard
+  // no longer asks for one at step 1, a logged-out visitor reaching this button
+  // would otherwise get the API's raw "Not authorized" text.
+  const [needsAccount, setNeedsAccount] = useState(false);
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
   const timer = useRef<number | undefined>(undefined);
 
@@ -68,7 +77,12 @@ export default function CoverPreview({ childName, childGender, childPhotoUrl, th
 
   const generate = async () => {
     if (busy) return;
-    setError(''); setBlocked(false); setBusy(true); startBar();
+    if (!isAuthenticated) {
+      setNeedsAccount(true);
+      setError(t('cover_preview.need_account', 'المعاينة المجانية بتحتاج حساب — سجّل دخولك وبنرجّعك لنفس المكان.'));
+      return;
+    }
+    setError(''); setBlocked(false); setNeedsAccount(false); setBusy(true); startBar();
     try {
       const res = await storyApi.coverPreview({ childName, childGender, childPhotoUrl, theme, language });
       setCover(res.objectPath ? toDisplayUrl(res.objectPath) : res.signedUrl || '');
@@ -198,9 +212,21 @@ export default function CoverPreview({ childName, childGender, childPhotoUrl, th
       )}
 
       {error && (
-        <p className={`font-arabic text-xs mt-2 leading-relaxed ${blocked ? 'text-amber-300' : 'text-red-400'}`}>
-          {blocked ? <Lock className="w-3.5 h-3.5 inline ml-1" /> : null}{error}
+        <p className={`font-arabic text-xs mt-2 leading-relaxed ${blocked || needsAccount ? 'text-amber-300' : 'text-red-400'}`}>
+          {blocked || needsAccount ? <Lock className="w-3.5 h-3.5 inline ml-1" /> : null}{error}
         </p>
+      )}
+
+      {/* Take them to sign in and bring them straight back, rather than leaving
+          them to find the login page and lose the story they were building. */}
+      {needsAccount && (
+        <button
+          type="button"
+          onClick={() => navigate('/login', { state: { from: '/create', reason: 'create' } })}
+          className="mt-2 mx-auto w-full max-w-[260px] flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gold-500 text-dark-900 font-arabic font-bold text-sm hover:bg-gold-400 transition-all"
+        >
+          {t('cover_preview.sign_in', 'سجّل دخولك وشوف الغلاف')}
+        </button>
       )}
 
       {!blocked && (

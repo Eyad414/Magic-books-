@@ -18,7 +18,6 @@ import type { StoryMode } from '../../context/StoryProgressContext';
 import { buildThemePreview, type PreviewPage } from './FlipbookPreview';
 import { useSiteFlags } from '../../hooks/useSiteFlags';
 import CoverPreview from './CoverPreview';
-import { useAuth } from '../../context/AuthContext';
 
 // Props Interface: Defines navigation callbacks passed from the parent wizard container
 interface Props { onNext: () => void; onPrev: () => void; }
@@ -68,7 +67,6 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
   const { t, i18n } = useTranslation();
   // "Write with AI" stays hidden until the owner turns it on in the dashboard.
   const { aiModeEnabled } = useSiteFlags();
-  const { user } = useAuth();
 
   // Themes come from the admin panel via /api/public/settings. The backend
   // already filters to ready===true so half-finished stories never appear.
@@ -512,7 +510,11 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
         childPhotoUrl={progress.childDetails.childPhotoUrl || ''}
         theme={form.theme}
         language={form.language}
-        enabled={!!user && !!progress.childDetails.childPhotoUrl && form.theme !== 'custom'}
+        // Shown to signed-out visitors too. It used to require !!user, which
+        // hid the single strongest reason to open an account — seeing your own
+        // child on the cover — from everyone who did not already have one. The
+        // button itself asks them to sign in, and brings them back here.
+        enabled={!!progress.childDetails.childPhotoUrl && form.theme !== 'custom'}
       />
 
       {/* How the child's name will be written once the language is chosen —
