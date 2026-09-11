@@ -2053,6 +2053,31 @@ export default function AdminDashboard() {
     { id: 'customers', label: t('admin.books_customers', 'كتب العملاء'), books: shownBooks.filter((b: any) => !b.isMine) },
   ].filter((g) => g.books.length > 0), [shownBooks, t]);
 
+  /**
+   * Save the Bit / bank block on its own.
+   *
+   * "أظهره للعملاء" reads as a switch and sits next to switches that DO apply
+   * on click (saveFlag). It did not: it only set local state, and was committed
+   * by a button at the bottom of the page labelled «حفظ أسعار الباقات» — which
+   * says nothing about transfers. The details got saved and the switch did not,
+   * so the option stayed hidden from customers with no sign anything was wrong.
+   *
+   * Sends only transferPayment; updateSettings applies just the fields it is
+   * given, so nothing else on the page can be clobbered by a stray click.
+   */
+  const saveTransfer = async (next: any) => {
+    const previous = settings.transferPayment;
+    setSettings({ ...settings, transferPayment: next });
+    try {
+      const res = await adminApi.updateSettings({ transferPayment: next });
+      if (!res.success) throw new Error();
+      toast.success(t('admin.save_settings_ok', 'تم الحفظ'));
+    } catch {
+      setSettings({ ...settings, transferPayment: previous });
+      toast.error(t('admin.save_settings_fail'));
+    }
+  };
+
   const saveFlag = async (key: 'allowSkipPhoto' | 'aiModeEnabled', value: boolean) => {
     setSettings({ ...settings, [key]: value });
     try {
@@ -3351,7 +3376,7 @@ export default function AdminDashboard() {
                         <input
                           type="checkbox"
                           checked={!!settings.transferPayment?.enabled}
-                          onChange={(e) => setSettings({ ...settings, transferPayment: { ...(settings.transferPayment || {}), enabled: e.target.checked } })}
+                          onChange={(e) => saveTransfer({ ...(settings.transferPayment || {}), enabled: e.target.checked })}
                         />
                         {t('admin.transfer_enable', 'أظهره للعملاء')}
                       </label>
@@ -3388,6 +3413,15 @@ export default function AdminDashboard() {
                         onChange={(e) => setSettings({ ...settings, transferPayment: { ...(settings.transferPayment || {}), note: e.target.value } })}
                       />
                     </div>
+                    {/* Its own button. These fields used to be committed only
+                        by «حفظ أسعار الباقات» further down, which no one would
+                        read as "save my bank details". */}
+                    <MagicButton
+                      onClick={() => saveTransfer({ ...(settings.transferPayment || {}) })}
+                      className="mt-4"
+                    >
+                      {t('admin.transfer_save', 'حفظ بيانات التحويل')}
+                    </MagicButton>
                   </div>
 
                   <MagicButton onClick={() => saveSettings(settings)} className="mt-4">{t('admin.save_pricing')}</MagicButton>
