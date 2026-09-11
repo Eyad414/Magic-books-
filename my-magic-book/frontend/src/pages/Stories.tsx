@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStoryProgress } from '../context/StoryProgressContext';
 import { publicApi } from '../api/publicApi';
-import { toDisplayUrl } from '../api/mediaUrl';
+import { toDisplayUrl, toCardUrl } from '../api/mediaUrl';
 import { localizeName } from '../utils/translit';
 import { detectGender, applyGenderTokens } from '../utils/gender';
 import { SHOWCASE_CARDS as CARDS, demoOnStoriesPage, type DemoVisibility, type ShowcaseCard as Card } from '../data/showcaseCards';
@@ -74,6 +74,14 @@ export default function Stories() {
     card.storyId
       ? toDisplayUrl(`magic-fanoose/generated/${card.storyId}/page-00.png`)
       : (themes[card.themeId]?.generatedCover ? toDisplayUrl(themes[card.themeId].generatedCover) : '');
+  /** The grid renders this at ~340px — it must not pull the full-size cover.
+   *  coverFor stays full-res for the reading preview. */
+  const cardCoverFor = (card: Card) => toCardUrl(
+    card.storyId
+      ? `magic-fanoose/generated/${card.storyId}/page-00.png`
+      : (themes[card.themeId]?.generatedCover || ''),
+    480,
+  );
   const imagesFor = (card: Card) =>
     card.storyId
       ? storyImgs(card.storyId).map(toDisplayUrl)
@@ -172,7 +180,7 @@ export default function Stories() {
               off the public site. Add a name here when a new demo uses a real
               family photo rather than a stock/demo face. */}
           {CARDS.filter(isVisible).map((card, idx) => {
-            const cover = coverFor(card);
+            const cover = cardCoverFor(card);
             const rating = [5.0, 4.9, 4.8][idx % 3];
             const isFav = favorites.includes(card.key);
             return (

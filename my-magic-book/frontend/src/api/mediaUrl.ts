@@ -34,3 +34,21 @@ export function toDisplayUrl(ref?: string): string {
   // Treat anything else as a bucket object path.
   return objectPathToUrl(ref);
 }
+
+/**
+ * The same image, sized for a card.
+ *
+ * A generated cover is a ~2.4MB PNG at full generation size, and a card renders
+ * it around 340px wide. Four of those on the home page is ~9MB and the stories
+ * page has twenty — which is what a visitor arriving from Instagram on a phone
+ * would have had to download before seeing anything.
+ *
+ * `w` is a hint: the backend rounds it to a width it is willing to build, makes
+ * the WebP once, and serves the original if it cannot. Use it for cards and
+ * thumbnails; the book preview and anything a customer reads stays full-res.
+ */
+export function toCardUrl(ref?: string, w: number = 480): string {
+  const url = toDisplayUrl(ref);
+  if (!url || !url.includes('/uploads/image?path=')) return url;
+  return `${url}&w=${w}`;
+}

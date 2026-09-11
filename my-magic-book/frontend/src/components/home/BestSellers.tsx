@@ -3,7 +3,7 @@ import { Star, TrendingUp, Eye, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { publicApi } from '../../api/publicApi';
-import { toDisplayUrl } from '../../api/mediaUrl';
+import { toDisplayUrl, toCardUrl } from '../../api/mediaUrl';
 import { localizeName } from '../../utils/translit';
 import FlipbookPreview, { buildThemePreview } from '../wizard/FlipbookPreview';
 import { SHOWCASE_CARDS, type DemoVisibility, type HomeTag } from '../../data/showcaseCards';
@@ -185,10 +185,12 @@ export default function BestSellers() {
             // A published real book shows its own cover; otherwise the fast local
             // thumbnail (instant from CDN), falling back to the proxied cover.
             const cover = (book as any).book?.cover
-              ? toDisplayUrl((book as any).book.cover)
+              // Card-sized: the preview modal above still builds from the
+              // full-resolution cover, this is the ~340px grid image.
+              ? toCardUrl((book as any).book.cover, 480)
               : (book as any).localCover
-                || ((book as any).coverPath ? toDisplayUrl((book as any).coverPath)
-                  : theme?.generatedCover ? toDisplayUrl(theme.generatedCover) : '');
+                || ((book as any).coverPath ? toCardUrl((book as any).coverPath, 480)
+                  : theme?.generatedCover ? toCardUrl(theme.generatedCover, 480) : '');
             const themeLabel = t(`step2.theme_${book.themeId}`, { defaultValue: theme?.label || '' });
             const desc = t(`step2.theme_${book.themeId}_desc`, { defaultValue: theme?.desc || '' });
             return (

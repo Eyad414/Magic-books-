@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { ensureThumb, nearestWidth } from '../services/ThumbnailService';
 import path from 'path';
 import { randomUUID } from 'crypto';
 import { uploadBuffer, pdfFolderPath, getReadSignedUrl, streamObject } from '../services/StorageService';
@@ -53,6 +54,18 @@ export const proxyImage = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
+    // A card asking for a width gets a card-sized WebP instead of the full
+    // ~2.4MB generation-size PNG it would otherwise pull. Built once on the
+    // first miss and stored, so this is a redirect to an existing file from
+    // then on. Falls back to the original whenever a derivative cannot be
+    // made — a heavy image beats a broken one.
+    const wanted = nearestWidth(Number(req.query.w));
+    let servePath = objectPath;
+    if (wanted) {
+      const thumb = await ensureThumb(objectPath, wanted);
+      if (thumb) servePath = thumb;
+    }
+
     // Sign a short-lived READ url LOCALLY (no outbound Google call) and hand it
     // to the browser, which fetches the image straight from GCS. Avoids the
     // backend needing outbound access to Google Storage (geo-blocked from some
@@ -62,8 +75,14 @@ export const proxyImage = async (req: Request, res: Response): Promise<void> => 
     // don't show without a hard-refresh. A short window lets a normal reload
     // pick up a fresh signed URL — and therefore the updated image — while
     // still avoiding a proxy round-trip on every image within a single view.
-    const url = await getReadSignedUrl(objectPath);
-    res.setHeader('Cache-Control', 'private, max-age=30, must-revalidate');
+    const url = await getReadSignedUrl(servePath);
+    // A derivative is immutable — its path carries the width, and regenerated
+    // artwork lands on a fresh path — so it can be cached properly instead of
+    // re-fetching the redirect every 30 seconds like the mutable original.
+    res.setHeader(
+      'Cache-Control',
+      servePath === objectPath ? 'private, max-age=30, must-revalidate' : 'private, max-age=86400'
+    );
     res.redirect(302, url);
   } catch (err: any) {
     console.error('proxyImage failed:', err);
