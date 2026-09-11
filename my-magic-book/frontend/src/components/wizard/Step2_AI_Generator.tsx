@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useStoryProgress } from '../../context/StoryProgressContext';
+import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import MagicButton from '../common/MagicButton';
 import { Sparkles, ChevronLeft, ChevronRight, Globe, ChevronDown, ChevronUp, Loader2, BookOpen } from 'lucide-react';
 import FlipbookPreview from './FlipbookPreview';
@@ -18,6 +20,7 @@ import type { StoryMode } from '../../context/StoryProgressContext';
 import { buildThemePreview, type PreviewPage } from './FlipbookPreview';
 import { useSiteFlags } from '../../hooks/useSiteFlags';
 import CoverPreview from './CoverPreview';
+import { uploadApi } from '../../api/uploadApi';
 
 // Props Interface: Defines navigation callbacks passed from the parent wizard container
 interface Props { onNext: () => void; onPrev: () => void; }
@@ -64,6 +67,36 @@ interface ApiTheme {
 
 export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To move to the next page in the steps
   const { progress, setStoryConfig, setBookCustomization, setChildDetails } = useStoryProgress(); // To save User Choices in the steps
+
+  // The child's photo lives HERE, not in step 1. It is asked for after the
+  // parent has picked a story, and it pays off immediately: the cover preview
+  // right below turns on the moment it lands. Asking first, before showing a
+  // single story, is what the funnel died of.
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const { allowSkipPhoto } = useSiteFlags();
+  const [optedIntoPhoto, setOptedIntoPhoto] = useState(!!progress.childDetails.childPhotoUrl);
+  const wantsPhoto = allowSkipPhoto ? optedIntoPhoto : true;
+  const [photoPreview, setPhotoPreview] = useState<string>(progress.childDetails.childPhotoUrl || '');
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState('');
+
+  // Uploaded as soon as it is chosen rather than held until "Next": the cover
+  // preview needs a stored photo to render, and that is the whole reason this
+  // sits on the same screen.
+  const onPhotoPicked = async (file: File) => {
+    setPhotoError('');
+    setPhotoPreview(URL.createObjectURL(file));
+    setPhotoUploading(true);
+    try {
+      const { gcsUri } = await uploadApi.childPhoto(file);
+      setChildDetails({ childPhotoUrl: gcsUri });
+    } catch (err: any) {
+      setPhotoPreview('');
+      setPhotoError(err?.response?.data?.message || err?.message || t('step1.err_photo'));
+    }
+    setPhotoUploading(false);
+  };
   const { t, i18n } = useTranslation();
   // "Write with AI" stays hidden until the owner turns it on in the dashboard.
   const { aiModeEnabled } = useSiteFlags();
@@ -293,6 +326,34 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
       return;
     }
 
+    // The photo is asked for on this screen now, so it is also checked here.
+    // It is not optional in any real sense: createOrder refuses a photo-less
+    // order with CHILD_PHOTO_REQUIRED because the illustrator has no face to
+    // draw. Catching it now beats letting someone fill in an address and a
+    // payment method first. (allowSkipPhoto still lets the owner turn the ask
+    // off; the server stays the backstop.)
+    if (wantsPhoto && !String(progress.childDetails?.childPhotoUrl || '').trim()) {
+      setPhotoError(t('step1.err_photo'));
+      toast.error(t('step1.err_photo'));
+      return;
+    }
+    if (photoUploading) {
+      toast.error(t('step1.uploading', 'جاري رفع الصورة...'));
+      return;
+    }
+
+    // Everything past this point is persisted: POST /stories/create is
+    // `protect`ed, so a signed-out visitor got a 401 and the generic "couldn't
+    // save your story" toast — a dead end with no way out of it. This is the
+    // real earliest point an account is needed, and by now they have browsed
+    // all twenty stories, chosen one, added a photo and seen the cover, which
+    // is a far better moment to ask than the front door was.
+    if (!isAuthenticated) {
+      setStoryConfig({ ...form, mode, generatedText: mode === 'ai' ? generatedText : undefined });
+      navigate('/login', { state: { from: '/create', reason: 'create' } });
+      return;
+    }
+
     let nextStoryId = storyId;
     if (mode === 'template') {
       // Only create the DB row if we haven't already (e.g. user returns to step 2).
@@ -500,6 +561,68 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
         )}
       </div>
       )}
+
+      {/* The child's photo — moved here from step 1. It sits directly above the
+          cover preview so the reward for handing it over is immediate: upload,
+          and the next block renders the child on the cover of the story they
+          just picked. */}
+      <div className="mt-6">
+        <label className="block font-arabic text-white/80 text-sm mb-3">
+          {allowSkipPhoto ? t('step1.photo_label_optional') : t('step1.photo_label')}
+        </label>
+
+        {allowSkipPhoto && (
+          <div className="flex gap-4 mb-4">
+            <button
+              type="button"
+              onClick={() => setOptedIntoPhoto(true)}
+              className={`flex-1 py-2 rounded-xl border-2 transition-all font-arabic text-sm ${wantsPhoto ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-white/10 text-white/60 hover:border-white/30'}`}
+            >
+              {t('step1.photo_yes')}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setOptedIntoPhoto(false);
+                setChildDetails({ childPhotoUrl: '' });
+                setPhotoPreview('');
+              }}
+              className={`flex-1 py-2 rounded-xl border-2 transition-all font-arabic text-sm ${!wantsPhoto ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-white/10 text-white/60 hover:border-white/30'}`}
+            >
+              {t('step1.photo_no')}
+            </button>
+          </div>
+        )}
+
+        {wantsPhoto && (
+          <div className="border-2 border-dashed border-white/20 rounded-xl p-6 text-center hover:bg-white/5 hover:border-gold-500/30 transition-all cursor-pointer relative animate-fade-in">
+            <input
+              type="file"
+              accept="image/*"
+              disabled={photoUploading}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) onPhotoPicked(f); }}
+            />
+            {photoPreview ? (
+              <div className="flex flex-col items-center gap-2">
+                <img src={toDisplayUrl(photoPreview)} alt="" className="w-24 h-24 object-cover rounded-full border-4 border-gold-500 shadow-gold-glow" />
+                {photoUploading && (
+                  <span className="font-arabic text-xs text-gold-400">{t('step1.uploading', 'جاري رفع الصورة...')}</span>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 rounded-full bg-gold-500/10 flex items-center justify-center mb-2">
+                  <span className="text-2xl">📸</span>
+                </div>
+                <span className="font-arabic text-sm text-gold-500">{t('step1.upload_photo')}</span>
+                <span className="font-arabic text-xs text-white/40 mt-1">{t('step1.photo_hint')}</span>
+              </div>
+            )}
+          </div>
+        )}
+        {photoError && <p className="text-red-400 text-xs font-arabic mt-2">{photoError}</p>}
+      </div>
 
       {/* Let the customer see their OWN child on the chosen cover before paying.
           Needs a signed-in account (the free allowance is per account) and an

@@ -15,12 +15,15 @@ export function objectPathToUrl(objectPath: string): string {
  * Normalize any image reference into something an <img> can load:
  *   - gs://bucket/path         -> proxy URL (strip bucket, keep object path)
  *   - magic-fanoose/...        -> proxy URL
- *   - http(s)://... or data:   -> returned unchanged
+ *   - http(s)://, data:, blob: -> returned unchanged
  *   - empty                    -> '' (caller decides fallback)
  */
 export function toDisplayUrl(ref?: string): string {
   if (!ref) return '';
-  if (ref.startsWith('http://') || ref.startsWith('https://') || ref.startsWith('data:')) {
+  // blob: belongs here too — a just-picked File previewed via
+  // URL.createObjectURL is already loadable, and falling through to the proxy
+  // turned it into a broken .../uploads/image?path=blob%3A… request.
+  if (ref.startsWith('http://') || ref.startsWith('https://') || ref.startsWith('data:') || ref.startsWith('blob:')) {
     return ref;
   }
   if (ref.startsWith('gs://')) {

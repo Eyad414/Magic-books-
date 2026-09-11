@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { useStoryProgress } from '../../context/StoryProgressContext';
 import MagicButton from '../common/MagicButton';
-import { User, Baby, ChevronLeft, Loader2 } from 'lucide-react';
+import { User, Baby, ChevronLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { uploadApi } from '../../api/uploadApi';
-import { useSiteFlags } from '../../hooks/useSiteFlags';
 
 // Props Interface: Defines the properties this component expects to receive from its parent (CreateStory.tsx)
 interface Props { onNext: () => void; }
@@ -12,8 +10,6 @@ interface Props { onNext: () => void; }
 export default function Step1_ChildDetails({ onNext }: Props) { // To move to the next page in the steps
   const { progress, setChildDetails } = useStoryProgress(); // To save User Choices in the steps
   const { t } = useTranslation();
-  // The photo is required unless the owner re-enables "order without a photo".
-  const { allowSkipPhoto } = useSiteFlags();
 
   // Local State: Manages the form inputs specifically for this step before saving them globally
   const [form, setForm] = useState({
@@ -26,57 +22,25 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
   // Local State: Manages validation error strings for each input field
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Local State: Tracks if the user wants to add a photo. Only meaningful when
-  // the owner allows skipping — otherwise the upload is always shown/required.
-  const [optedIntoPhoto, setOptedIntoPhoto] = useState(!!progress.childDetails.childPhotoUrl);
-  const wantsPhoto = allowSkipPhoto ? optedIntoPhoto : true;
-
-  // Local State: holds the File picked by the user (null once it's been uploaded to GCS)
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string>(form.childPhotoUrl);
-  const [isUploading, setIsUploading] = useState(false);
-
   // Function: Validates that all required fields are filled correctly before proceeding
   const validate = () => {
     const errs: Record<string, string> = {};
     if (!form.childName.trim()) errs.childName = t('step1.err_child_name');
     if (!form.childAge) errs.childAge = t('step1.err_child_age');
-    if (wantsPhoto && !pendingFile && !form.childPhotoUrl) errs.childPhotoUrl = t('step1.err_photo');
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
-  // Function: Called when user clicks the "Next" button. It validates, uploads any pending photo, saves to global context, and triggers the next step.
-  const handleNext = async () => {
+  /**
+   * Nothing here is worth an upload or an account. The photo moved to step 2,
+   * next to the story it illustrates and the cover preview that uses it: a
+   * parent asked for their child's face before being shown a single story
+   * mostly just left. In the week to 2026-09-11, 4 of 27 visitors started a
+   * book here and none reached payment.
+   */
+  const handleNext = () => {
     if (!validate()) return;
-
-    // No account needed to get this far. The claim that one was — "the photo
-    // uploads against it" — was not true: POST /uploads/child-photo carries no
-    // `protect`. Only the optional cover preview needs an account, and it now
-    // asks for one itself.
-    //
-    // This gate cost real customers. Of 27 visitors in the week to 2026-09-11,
-    // 4 started a story and 0 reached payment: a parent had to hand over their
-    // child's photo AND open an account before being shown a single story. The
-    // account is asked for in step 3, where an order is actually placed.
-
-    let nextForm = form;
-    if (wantsPhoto && pendingFile) {
-      setIsUploading(true);
-      try {
-        const { gcsUri } = await uploadApi.childPhoto(pendingFile);
-        nextForm = { ...form, childPhotoUrl: gcsUri };
-        setForm(nextForm);
-        setPendingFile(null);
-      } catch (err: any) {
-        setErrors({ childPhotoUrl: err?.response?.data?.message || err.message || 'Upload failed' });
-        setIsUploading(false);
-        return;
-      }
-      setIsUploading(false);
-    }
-
-    setChildDetails(nextForm);
+    setChildDetails(form);
     onNext();
   };
 
@@ -161,63 +125,6 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
         </div>
       </div>
 
-      {/* Photo Upload: Conditional rendering based on user choice */}
-      <div>
-        <label className="block font-arabic text-white/80 text-sm mb-3">
-          {allowSkipPhoto ? t('step1.photo_label_optional') : t('step1.photo_label')}
-        </label>
-        {/* The yes/no choice only appears when the owner has re-enabled
-            "order without a photo" in the dashboard. */}
-        {allowSkipPhoto && (
-          <div className="flex gap-4 mb-4">
-            <button
-              type="button"
-              onClick={() => setOptedIntoPhoto(true)}
-              className={`flex-1 py-2 rounded-xl border-2 transition-all font-arabic text-sm ${wantsPhoto ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-white/10 text-white/60 hover:border-white/30'}`}
-            >
-              {t('step1.photo_yes')}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setOptedIntoPhoto(false);
-                setForm({ ...form, childPhotoUrl: '' });
-                setPendingFile(null);
-                setPreviewUrl('');
-              }}
-              className={`flex-1 py-2 rounded-xl border-2 transition-all font-arabic text-sm ${!wantsPhoto ? 'border-gold-500 bg-gold-500/10 text-gold-500' : 'border-white/10 text-white/60 hover:border-white/30'}`}
-            >
-              {t('step1.photo_no')}
-            </button>
-          </div>
-        )}
-
-        {wantsPhoto && (
-          <div className="border-2 border-dashed border-white/20 rounded-xl p-6 text-center hover:bg-white/5 hover:border-gold-500/30 transition-all cursor-pointer relative animate-fade-in">
-            <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  setPendingFile(file);
-                  setPreviewUrl(URL.createObjectURL(file));
-                  setErrors((prev) => ({ ...prev, childPhotoUrl: '' }));
-                }
-            }} />
-            {previewUrl ? (
-                <img src={previewUrl} alt="Child" className="w-24 h-24 object-cover mx-auto rounded-full border-4 border-gold-500 shadow-gold-glow" />
-            ) : (
-                <div className="flex flex-col items-center">
-                  <div className="w-12 h-12 rounded-full bg-gold-500/10 flex items-center justify-center mb-2">
-                      <span className="text-2xl">📸</span>
-                  </div>
-                  <span className="font-arabic text-sm text-gold-500">{t('step1.upload_photo')}</span>
-                  <span className="font-arabic text-xs text-white/40 mt-1">{t('step1.photo_hint')}</span>
-                </div>
-            )}
-          </div>
-        )}
-        {errors.childPhotoUrl && <p className="text-red-400 text-xs font-arabic mt-2">{errors.childPhotoUrl}</p>}
-      </div>
-
       {/* Preview */}
       {form.childName && (
         <div className="p-4 rounded-xl bg-magic-500/10 border border-magic-500/20">
@@ -240,10 +147,9 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
         fullWidth
         size="lg"
         onClick={handleNext}
-        disabled={isUploading}
-        icon={isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ChevronLeft className="w-5 h-5 nav-icon" />}
+        icon={<ChevronLeft className="w-5 h-5 nav-icon" />}
       >
-        {isUploading ? t('step1.uploading', 'جاري رفع الصورة...') : t('step1.next_btn')}
+        {t('step1.next_btn')}
       </MagicButton>
     </div>
   );
