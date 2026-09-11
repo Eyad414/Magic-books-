@@ -521,8 +521,14 @@ async function maybeSubmitProColoring(order: any, story: any): Promise<void> {
  */
 function reconstructPrintOpts(story: any): PrintBuildOpts {
   const template = getSceneTemplate(story.theme);
-  const isColoringBook =
-    story.bookPackage === 'coloring' && !!template?.coloringScenes && !!template?.coloringCoverScene;
+  // Whether a colouring book can be GENERATED depends on its template carrying
+  // colouring prompts. Whether an already-drawn one can be LAID OUT does not —
+  // the branch below uses no template at all: blank page texts and a fixed
+  // title. Requiring the prompts here sent two books whose artwork was already
+  // in the bucket (Ahmad's, and the realistic-space set, both sourced from
+  // `space_real`, which carries no colouring scenes) down the STORY path, where
+  // they were refused by the memory guard that only full-colour stories need.
+  const isColoringBook = story.bookPackage === 'coloring';
   const loc = localizedStory(story.theme, (story as any).language || 'ar');
   const rt = (s?: string) => (s ? resolveTokens(s, story.childName, story.childGender) : undefined);
   const images: string[] = story.generatedImages || [];

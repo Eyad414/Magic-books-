@@ -202,7 +202,9 @@
     "reset_mismatch": "The passwords don't match",
     "reset_no_token_title": "Incomplete link",
     "reset_no_token_desc": "Open the link from the email exactly as it is, or request a new one.",
-    "forgot_sent_hint": "Didn't get it? Check that you entered the same email you registered with, and look in your spam folder."
+    "forgot_sent_hint": "Didn't get it? Check that you entered the same email you registered with, and look in your spam folder.",
+    "create_gate_title": "One last step before we start",
+    "create_gate_desc": "Your child's photo and story are saved to your account — sign in or create a free one, and we'll pick up exactly where you left off. Nothing you entered is lost."
   },
   "dashboard": {
     "admin_special_desc": "This is the story you ordered — ready to view and print (220×220 mm)",
