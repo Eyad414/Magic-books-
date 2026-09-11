@@ -12,6 +12,38 @@ const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' as any })
   : null;
 
+// @route GET /api/orders/transfer-details
+// Where to send a Bit or bank transfer. Behind `protect` on purpose: the public
+// settings endpoint says only WHETHER the option exists, because it is called
+// from the home page by everyone. Only someone signed in and checking out has
+// any reason to see the owner's account.
+export const getTransferDetails = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const settings: any = await SiteSettings.findOne().lean();
+    const tp = settings?.transferPayment || {};
+    const hasDetails = !!(String(tp.bitPhone || '').trim() || String(tp.bankAccount || '').trim());
+    if (!tp.enabled || !hasDetails) {
+      res.json({ success: true, transfer: { enabled: false } });
+      return;
+    }
+    res.json({
+      success: true,
+      transfer: {
+        enabled: true,
+        bitPhone: tp.bitPhone || '',
+        bankName: tp.bankName || '',
+        bankBranch: tp.bankBranch || '',
+        bankAccount: tp.bankAccount || '',
+        accountHolder: tp.accountHolder || '',
+        note: tp.note || '',
+      },
+    });
+  } catch (err: any) {
+    console.error('getTransferDetails failed:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 // @route POST /api/orders/checkout
 export const createCheckout = async (req: Request, res: Response): Promise<void> => {
   try {

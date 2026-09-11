@@ -788,22 +788,23 @@ export const getPublicSettings = async (_req: Request, res: Response): Promise<v
       themes: settings.themes.filter((t: any) => t.ready === true),
       demoCards: settings.demoCards || {},
       homeStats: settings.homeStats || DEFAULT_HOME_STATS,
-      // Only offered once the owner has actually filled in where the money
-      // should go. An enabled-but-empty option would take a real payment and
-      // tell the customer nothing about where to send it.
+      // Whether the option EXISTS is public; where the money goes is not.
+      //
+      // This endpoint is unauthenticated and the home page, the stories page
+      // and useSiteFlags all call it, so returning the details here published
+      // the owner's personal Bit number and account name to every visitor on
+      // every page — a different number from the business one in the footer,
+      // and one he never chose to put on the internet. The details now come
+      // from GET /api/orders/transfer-details, behind `protect`, at the point
+      // a signed-in customer is actually paying.
+      //
+      // Still gated on the details existing: an enabled-but-empty option would
+      // take a real payment and tell the customer nothing about where to send
+      // it.
       transferPayment: (() => {
         const tp: any = (settings as any).transferPayment || {};
         const hasDetails = !!(String(tp.bitPhone || '').trim() || String(tp.bankAccount || '').trim());
-        if (!tp.enabled || !hasDetails) return { enabled: false };
-        return {
-          enabled: true,
-          bitPhone: tp.bitPhone || '',
-          bankName: tp.bankName || '',
-          bankBranch: tp.bankBranch || '',
-          bankAccount: tp.bankAccount || '',
-          accountHolder: tp.accountHolder || '',
-          note: tp.note || '',
-        };
+        return { enabled: !!(tp.enabled && hasDetails) };
       })(),
       allowSkipPhoto: !!settings.allowSkipPhoto,
       aiModeEnabled: !!settings.aiModeEnabled,

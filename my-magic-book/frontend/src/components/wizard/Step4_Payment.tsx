@@ -58,7 +58,24 @@ export default function Step4_Payment({ onPrev }: Props) {
   // The server decides — a card button with nothing behind it is worse than no
   // card button. Today that means BookPod's payment link, once they supply it.
   const onlinePaymentsEnabled = !!liveSettings?.onlinePayment;
-  const transfer = liveSettings?.transferPayment;
+  // Public settings say only WHETHER transfer is offered. The account itself is
+  // fetched here, behind auth, because the public endpoint is called by the home
+  // page and would otherwise hand the owner's Bit number to every visitor.
+  const transferOffered = !!liveSettings?.transferPayment?.enabled;
+  const [transferDetails, setTransferDetails] = useState<any>(null);
+  useEffect(() => {
+    if (!transferOffered || transferDetails) return;
+    let alive = true;
+    orderApi.getTransferDetails()
+      .then((res) => { if (alive && res?.transfer?.enabled) setTransferDetails(res.transfer); })
+      .catch(() => undefined);
+    return () => { alive = false; };
+  }, [transferOffered, transferDetails]);
+  // The chip appears as soon as the option is offered; the account fills in when
+  // it arrives, so a slow request never hides the payment method itself.
+  const transfer = transferDetails
+    ? { ...transferDetails, enabled: true }
+    : (transferOffered ? { enabled: true } : { enabled: false });
   const paysOnBookPod = liveSettings?.onlinePaymentProvider === 'bookpod';
 
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal' | 'applepay' | 'cash' | 'transfer'>('cash');
