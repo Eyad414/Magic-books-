@@ -56,6 +56,21 @@ export const createCheckout = async (req: Request, res: Response): Promise<void>
       return;
     }
 
+    // Checking out SOMEONE ELSE'S story was possible: this route only required
+    // that you were signed in, and storyId comes from the request body. With
+    // another customer's id you could rewrite their package and price (the save
+    // below), and place an order for their book — their child's name and photo,
+    // printed and shipped to your address.
+    //
+    // Same rule the story routes already apply (storyController reads and
+    // deletes both check it), and the same 404 rather than 403, so this cannot
+    // be used to test whether a given story id exists. Admins are excepted:
+    // the dashboard places orders on a customer's behalf.
+    if (String(story.userId) !== String(user._id) && user.role !== 'admin') {
+      res.status(404).json({ success: false, message: 'القصة غير موجودة' });
+      return;
+    }
+
     // Every package illustrates the child, and the illustrator needs a reference
     // photo — ImageGenerator throws "childPhotoUrl is empty" on the first page
     // otherwise. Without this check the customer pays first and the build dies
