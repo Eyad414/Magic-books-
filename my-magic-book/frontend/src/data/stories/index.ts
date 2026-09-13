@@ -24,6 +24,7 @@ import { ramadanFirst } from './story18_ramadan';
 import { eidFirst } from './story19_eid';
 import { bigBrother } from './story20_bigbrother';
 import { alphabetAbc } from './story21_alphabet';
+import { arabicLetters } from './story22_arabicletters';
 import { firstGrade } from './story16_firstgrade';
 import { firstDaySchool } from './story15_firstday';
 import { happyKindergarten } from './story14_kindergarten';
@@ -87,6 +88,7 @@ export const STORIES: StoryDefinition[] = [
   // musicAdventure,
   // friendshipStory,
   alphabetAbc,
+  arabicLetters,
 ].sort((a, b) => a.order - b.order);
 
 /** Helper: look up a story by its id.

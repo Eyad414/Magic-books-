@@ -476,7 +476,9 @@
     "pay_hint_transfer": "Pay cash on receipt, or by Bit transfer from anywhere.",
     "pay_hint_cash": "Pay cash on receipt.",
     "theme_alphabet_abc": "English Alphabet A-Z",
-    "theme_alphabet_abc_desc": "26 letters, your child on every page"
+    "theme_alphabet_abc_desc": "26 letters, your child on every page",
+    "theme_alphabet_ar": "Arabic Alphabet ا-ي",
+    "theme_alphabet_ar_desc": "28 letters by family, your child on every page"
   },
   "step3": {
     "title": "Customize Your Book",
@@ -1852,6 +1854,34 @@
         "10": "U is for Umbrella. The rain tapped on [NAME]'s clear umbrella.\nV is for Violin. Tucked safe underneath was a little wooden violin.",
         "11": "W is for Whale. A huge soft blue whale lay on the playroom floor.\nX is for Xylophone. [NAME] tapped every colour, from low to high.",
         "12": "Y is for Yo-yo. Down, up, and down again — [NAME] never dropped it once.\nZ is for Zebra. Behind the fence stood a zebra in black and white stripes."
+      }
+    },
+    "alphabet_ar": {
+      "title": "[NAME]'s Arabic Letters",
+      "tagline": "Twenty-eight letters, and [NAME] is the star of every page",
+      "moral": "Know your letters and every story in the world opens to you.",
+      "conclusion": "Well done, [NAME]! You know all the letters of the Arabic alphabet.",
+      "dedication": "For [NAME], who learns a new letter every day — this book is yours alone.",
+      "questions": [
+        "Which letter does your name begin with?",
+        "Which animal in the book did you like most?",
+        "Can you find something at home that starts with ب?",
+        "ب, ت and ث share one shape — what tells them apart?"
+      ],
+      "pages": {
+        "0": "ا (alif) — أَسَد, a lion. [NAME] stood before the great lion and was not afraid.",
+        "1": "ب (baa) — بَطَّة, a duck, paddling in the pond.\nت (taa) — تُفَّاحَة, an apple, red and shiny in [NAME]'s hand.\nث (thaa) — ثَعْلَب, a fox, watching from behind the bush.",
+        "2": "ج (jeem) — جَمَل, a camel walking slowly over the sand.\nح (haa) — حِصَان, a brown horse standing beside [NAME].\nخ (khaa) — خَرُوف, a little white sheep eating grass.",
+        "3": "د (daal) — دُبّ, a soft brown bear [NAME] hugs tight.\nذ (dhaal) — ذُرَة, a golden cob of corn on the table.",
+        "4": "ر (raa) — رُمَّانَة, a pomegranate split open, its seeds shining.\nز (zay) — زَهْرَة, a small yellow flower in [NAME]'s hand.",
+        "5": "س (seen) — سَمَكَة, an orange fish swimming in a glass bowl.\nش (sheen) — شَمْس, the warm sun coming through the window.",
+        "6": "ص (saad) — صَقْر, a strong falcon on a high branch.\nض (daad) — ضِفْدَع, a little green frog hopping on a leaf.",
+        "7": "ط (taa) — طَاوُوس, a peacock opening its blue and green feathers.\nظ (dhaa) — ظِلّ, and [NAME]'s shadow stretching long on the ground.",
+        "8": "ع (ayn) — عِنَب, a big bunch of purple grapes.\nغ (ghayn) — غَيْمَة, a white cloud drifting across the sky.",
+        "9": "ف (faa) — فِيل, a huge grey elephant lifting its trunk.\nق (qaaf) — قِطَّة, a little cat sitting at [NAME]'s feet.",
+        "10": "ك (kaaf) — كِتَاب, an open book on [NAME]'s knees.\nل (laam) — لَيْمُونَة, a yellow lemon on the table.",
+        "11": "م (meem) — مَوْزَة, a yellow banana in [NAME]'s hand.\nن (noon) — نَحْلَة, a little bee flying around the blossom.",
+        "12": "ه (haa) — هِلَال, a thin silver crescent in the night sky.\nو (waw) — وَرْدَة, a red rose in the vase.\nي (yaa) — يَد, and [NAME]'s small hand waving goodnight."
       }
     }
   },
