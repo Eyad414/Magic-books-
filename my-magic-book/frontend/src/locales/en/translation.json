@@ -1839,19 +1839,19 @@
         "Which animal in the book did you like most?"
       ],
       "pages": {
-        "0": "A is for Apple · B is for Ball",
-        "1": "C is for Cat · D is for Dog",
-        "2": "E is for Elephant · F is for Fish",
-        "3": "G is for Giraffe · H is for Hat",
-        "4": "I is for Ice cream · J is for Jar",
-        "5": "K is for Kite · L is for Lion",
-        "6": "M is for Moon · N is for Nest",
-        "7": "O is for Orange · P is for Penguin",
-        "8": "Q is for Quilt · R is for Rabbit",
-        "9": "S is for Sun · T is for Tree",
-        "10": "U is for Umbrella · V is for Violin",
-        "11": "W is for Whale · X is for Xylophone",
-        "12": "Y is for Yo-yo · Z is for Zebra"
+        "0": "A is for Apple. [NAME] found the reddest apple in the whole orchard.\nB is for Ball. The big striped ball rolled through the grass to [NAME]'s feet.",
+        "1": "C is for Cat. The ginger cat curled up close and began to purr.\nD is for Dog. The golden dog stretched out on the other side, warm and sleepy.",
+        "2": "E is for Elephant. Across the water, the elephant lifted its long grey trunk.\nF is for Fish. Bright orange fish darted just below [NAME].",
+        "3": "G is for Giraffe. The tall giraffe bent its long neck down to say hello.\nH is for Hat. [NAME] held on tight to a wide straw hat.",
+        "4": "I is for Ice cream. Two pink and white scoops, and not one drop spilled.\nJ is for Jar. A glass jar of golden honey waited on the table.",
+        "5": "K is for Kite. [NAME] ran and ran until the red kite climbed high.\nL is for Lion. The soft lion sat in the grass and watched.",
+        "6": "M is for Moon. The big round moon filled the whole window.\nN is for Nest. On the windowsill, a little nest held three blue eggs.",
+        "7": "O is for Orange. [NAME] held one bright orange on an open hand.\nP is for Penguin. A round little penguin waddled over to look.",
+        "8": "Q is for Quilt. [NAME] wrapped up warm in a patchwork quilt.\nR is for Rabbit. A white rabbit with long soft ears hopped into [NAME]'s lap.",
+        "9": "S is for Sun. The sun sank low and turned the whole sky to gold.\nT is for Tree. [NAME] stood under the biggest tree in the garden.",
+        "10": "U is for Umbrella. The rain tapped on [NAME]'s clear umbrella.\nV is for Violin. Tucked safe underneath was a little wooden violin.",
+        "11": "W is for Whale. A huge soft blue whale lay on the playroom floor.\nX is for Xylophone. [NAME] tapped every colour, from low to high.",
+        "12": "Y is for Yo-yo. Down, up, and down again — [NAME] never dropped it once.\nZ is for Zebra. Behind the fence stood a zebra in black and white stripes."
       }
     }
   },
