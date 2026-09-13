@@ -474,7 +474,9 @@
     "theme_big_brother": "Big Brother",
     "theme_big_brother_desc": "News, a teddy given away, and a heart that grows",
     "pay_hint_transfer": "Pay cash on receipt, or by Bit transfer from anywhere.",
-    "pay_hint_cash": "Pay cash on receipt."
+    "pay_hint_cash": "Pay cash on receipt.",
+    "theme_alphabet_abc": "English Alphabet A-Z",
+    "theme_alphabet_abc_desc": "26 letters, your child on every page"
   },
   "step3": {
     "title": "Customize Your Book",
@@ -1822,6 +1824,34 @@
         "11": "Little hero! Can you see the tiny BLUE SOCK right in front of the cot?",
         "12": "Mum hugged [NAME] and said: “My heart is big enough for both of you. You are the big one now.”",
         "13": "Before bed, [NAME] whispered to the baby: “I’ll teach you everything… and I’ll always keep you safe.”"
+      }
+    },
+    "alphabet_abc": {
+      "title": "[NAME]'s Alphabet",
+      "tagline": "Twenty-six letters, and [NAME] is the star of every page",
+      "dedication": "For [NAME], who learns a new letter every day — this book is yours alone.",
+      "moral": "Every letter is a small door — open them all and you can read the world.",
+      "conclusion": "Well done, [NAME]! You know your letters from A all the way to Z.",
+      "questions": [
+        "Which letter does your name start with?",
+        "Which thing in the book is your favourite?",
+        "Can you find something at home that starts with B?",
+        "Which animal in the book did you like most?"
+      ],
+      "pages": {
+        "0": "A is for Apple · B is for Ball",
+        "1": "C is for Cat · D is for Dog",
+        "2": "E is for Elephant · F is for Fish",
+        "3": "G is for Giraffe · H is for Hat",
+        "4": "I is for Ice cream · J is for Jar",
+        "5": "K is for Kite · L is for Lion",
+        "6": "M is for Moon · N is for Nest",
+        "7": "O is for Orange · P is for Penguin",
+        "8": "Q is for Quilt · R is for Rabbit",
+        "9": "S is for Sun · T is for Tree",
+        "10": "U is for Umbrella · V is for Violin",
+        "11": "W is for Whale · X is for Xylophone",
+        "12": "Y is for Yo-yo · Z is for Zebra"
       }
     }
   },
