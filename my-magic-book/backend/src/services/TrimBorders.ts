@@ -84,3 +84,38 @@ export async function trimStoredImage(objectPath: string, minMargin = 4): Promis
   await uploadBuffer(out, objectPath, 'image/png');
   return { path: objectPath, trimmed: true, margins: { left: l, right: r, top: t, bottom: b }, backupPath };
 }
+
+/**
+ * Trim the white frame off an image that has not been stored yet.
+ *
+ * Same measurement and the same guards as trimStoredImage, minus the backup —
+ * a freshly generated buffer has never been seen by anyone, so there is nothing
+ * to preserve and no reason to leave a .orig.png behind for every page.
+ *
+ * Cheap enough to run on every generated image: the frame is intermittent (of
+ * the first two alphabet pages, one came back padded 127px each side and the
+ * other clean), and noticing it afterwards depends on somebody looking.
+ * Returns the buffer untouched whenever there is nothing to cut.
+ */
+export async function trimBuffer(buf: Buffer, minMargin = 4): Promise<{ buffer: Buffer; trimmed: boolean; margins?: { left: number; right: number; top: number; bottom: number } }> {
+  try {
+    const { l, r, t, b, W, H } = await measureWhiteFrame(buf);
+    if (Math.max(l, r, t, b) < minMargin) return { buffer: buf, trimmed: false };
+
+    const width = W - l - r;
+    const height = H - t - b;
+    // Same rule as the stored version: more than half the page reading white is
+    // a snowy scene, not a border.
+    if (width < W / 2 || height < H / 2) return { buffer: buf, trimmed: false };
+
+    const out = await sharp(buf)
+      .extract({ left: l, top: t, width, height })
+      .resize(W, H, { fit: 'cover', position: 'centre', kernel: sharp.kernel.lanczos3 })
+      .png()
+      .toBuffer();
+    return { buffer: out, trimmed: true, margins: { left: l, right: r, top: t, bottom: b } };
+  } catch {
+    // Never let a cosmetic crop lose a page that cost real money to make.
+    return { buffer: buf, trimmed: false };
+  }
+}

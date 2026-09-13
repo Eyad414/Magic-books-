@@ -1,6 +1,7 @@
 import sharp from 'sharp';
 import { Storage } from '@google-cloud/storage';
 import { uploadBuffer, pdfFolderPath, StoredObject } from './StorageService';
+import { trimBuffer } from './TrimBorders';
 import { backendOrder, clientFor, markBackendDepleted } from './genaiClient';
 
 interface GenerateOpts {
@@ -114,12 +115,18 @@ export async function generateImageFromPrompt(
   const ext = contentType.includes('jpeg') ? 'jpg' : 'png';
   const objectPath = pdfFolderPath(opts.folder || 'generated', opts.filename || `${Date.now()}.${ext}`);
 
+  // Some pages come back with the drawing padded inside a white frame. Nothing
+  // downstream can hide it — viewer and print sheet both cover a square page
+  // with a square image — so it comes off before the page is ever stored.
+  const trim = await trimBuffer(imgBuffer);
+  if (trim.trimmed) console.log(`[ImageGenerator] trimmed white frame ${JSON.stringify(trim.margins)}`);
+
   _imagesGenerated += 1;
   console.log(
     `[ImageGenerator] image #${_imagesGenerated} → ${objectPath} ` +
     `(~$${COST_PER_IMAGE_USD.toFixed(3)}, session total ~$${(_imagesGenerated * COST_PER_IMAGE_USD).toFixed(2)})`
   );
-  return uploadBuffer(imgBuffer, objectPath, contentType);
+  return uploadBuffer(trim.buffer, objectPath, contentType);
 }
 
 export async function generateIllustration(
@@ -171,13 +178,16 @@ export async function generateIllustration(
     : `${Date.now()}.${ext}`;
   const objectPath = pdfFolderPath(folder, filename);
 
+  const trim = await trimBuffer(imgBuffer);
+  if (trim.trimmed) console.log(`[ImageGenerator] trimmed white frame ${JSON.stringify(trim.margins)}`);
+
   _imagesGenerated += 1;
   console.log(
     `[ImageGenerator] image #${_imagesGenerated} → ${objectPath} ` +
     `(~$${COST_PER_IMAGE_USD.toFixed(3)}, session total ~$${(_imagesGenerated * COST_PER_IMAGE_USD).toFixed(2)})`
   );
 
-  return uploadBuffer(imgBuffer, objectPath, contentType);
+  return uploadBuffer(trim.buffer, objectPath, contentType);
 }
 
 /**
