@@ -4,6 +4,7 @@ import { Menu, X, User, LogOut, LayoutDashboard, Sparkles } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useStoryProgress } from '../../context/StoryProgressContext';
 import LanguageSwitcher from './LanguageSwitcher';
+import ThemeToggle from './ThemeToggle';
 import { useTranslation } from 'react-i18next';
 
 const navLinks = [
@@ -84,6 +85,7 @@ export default function Navbar() {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
+            <ThemeToggle />
             <LanguageSwitcher />
             <button
               id="navbar-create-btn"
@@ -156,7 +158,8 @@ export default function Navbar() {
         <div className="md:hidden bg-dark-900/98 backdrop-blur-xl border-t border-white/10">
           <div className="px-4 py-4 space-y-2">
             
-            <div className="flex justify-end pb-2 mb-2 border-b border-white/5">
+            <div className="flex justify-end items-center gap-1 pb-2 mb-2 border-b border-white/5">
+              <ThemeToggle />
               <LanguageSwitcher />
             </div>
             {navLinks.map((link) => (

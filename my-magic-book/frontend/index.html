@@ -61,6 +61,22 @@
       href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Lalezar&family=Marhey:wght@600;700&family=Noto+Kufi+Arabic:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+    <!-- Stamp the theme BEFORE first paint. Without this the page renders in
+         the default theme and then repaints, which reads as a flash of the
+         wrong colour on every load. Kept inline and tiny for that reason. -->
+    <script>
+      (function () {
+        try {
+          var v = localStorage.getItem('mmb_theme');
+          if (v !== 'dark' && v !== 'light') {
+            v = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+          }
+          document.documentElement.setAttribute('data-theme', v);
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

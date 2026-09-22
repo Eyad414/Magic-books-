@@ -1984,5 +1984,9 @@
     "create_title": "Start your child's story",
     "create_desc": "Four steps: your child's name and photo, choose the story and language, then printing and delivery.",
     "home_title": "Magic Fanoos — personalised story books for your child"
+  },
+  "theme": {
+    "to_light": "Light mode",
+    "to_dark": "Dark mode"
   }
 }

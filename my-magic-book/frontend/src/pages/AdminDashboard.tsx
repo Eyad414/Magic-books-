@@ -5044,7 +5044,7 @@ function FlagSwitch({ on, label, help, onToggle }: { on: boolean; label: string;
       }`}
     >
       <span className={`relative shrink-0 mt-0.5 w-9 h-5 rounded-full transition-colors ${on ? 'bg-emerald-500' : 'bg-white/20'}`}>
-        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${on ? 'left-[18px]' : 'left-0.5'}`} />
+        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-paper transition-all ${on ? 'left-[18px]' : 'left-0.5'}`} />
       </span>
       <span className="min-w-0">
         <span className="block font-arabic text-white text-xs font-bold leading-snug">{label}</span>

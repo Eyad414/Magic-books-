@@ -25,6 +25,75 @@ html.lang-en body {
   text-align: left;
 }
 
+/* =============================================
+   THEME — dark is the brand, light is a choice
+   =============================================
+   Declared as raw channel triples because the Tailwind palette reads them as
+   rgb(var(--c-fg) / <alpha-value>); that is what keeps text-white/50 and
+   bg-white/5 working while following the theme.
+
+   `--c-fg` is the FOREGROUND, not the colour white. Dark mode reads it as a
+   pale ink on a midnight ground; light mode as a deep navy ink on near-white.
+   Everything the site already wrote as text-white/N therefore flips on its own.
+
+   The gold and magic accents do NOT flip — they are the brand, and a lantern is
+   gold on either ground. Gold is only darkened for light mode, where the bright
+   #F5A623 fails contrast on white.                                            */
+:root {
+  --c-fg:   232 234 246;   /* pale ink   */
+  --c-s900:  13  15  26;   /* page       */
+  --c-s800:  17  19  32;
+  --c-s700:  22  24  41;
+  --c-s600:  28  31  53;
+  --c-s500:  37  40  68;   /* raised     */
+
+  --c-glass:      27  31  94;
+  --c-glass-a:    0.40;
+  --c-input-a:    0.30;
+  --c-input-focus-a: 0.50;
+  --c-gold-ink:  245 166  35;
+  --c-shadow-a:   0.50;
+  --page-fade:   #0D0F1A;
+  --g-magic: linear-gradient(135deg, #0D0F1A 0%, #1B1F5E 50%, #6C3FC5 100%);
+  --g-hero:  radial-gradient(ellipse at center, #252844 0%, #0D0F1A 70%);
+  --g-card:  linear-gradient(145deg, rgba(27,31,94,0.8) 0%, rgba(108,63,197,0.3) 100%);
+  --star-a:  1;
+  --g-tile:  linear-gradient(135deg, #1B1F5E, #252844);
+}
+
+:root[data-theme="light"] {
+  --c-fg:    26  28  46;   /* deep navy ink on a light ground */
+  --c-s900: 246 245 249;   /* page — biased toward the magic purple, not grey */
+  --c-s800: 255 255 255;
+  --c-s700: 240 239 246;
+  --c-s600: 232 231 242;
+  --c-s500: 223 222 237;   /* raised */
+
+  --c-glass:     255 255 255;
+  --c-glass-a:    0.72;
+  --c-input-a:    0.92;
+  --c-input-focus-a: 1;
+  --c-gold-ink:  168 118  26;   /* darkened: #F5A623 is unreadable on white */
+  --c-shadow-a:   0.12;
+  --page-fade:   #f6f5f9;
+  /* A whisper of the brand instead of a wash of it: the same hues at a few
+     percent, so the hero reads as light paper with a warm tint rather than
+     washed-out purple. */
+  --g-magic: linear-gradient(135deg, #ffffff 0%, #f1eff9 50%, #eae5f7 100%);
+  --g-hero:  radial-gradient(ellipse at center, #ffffff 0%, #f2f1f7 70%);
+  --g-card:  linear-gradient(145deg, rgba(255,255,255,0.92) 0%, rgba(108,63,197,0.06) 100%);
+  /* Floating stars are a night sky. Hidden in the light rather than left as
+     grey specks on white. */
+  --star-a:  0;
+  --g-tile:  linear-gradient(135deg, #ffffff, #efedf8);
+}
+
+/* No flash of the wrong theme: the inline script in index.html stamps
+   data-theme before first paint, and this keeps the native controls
+   (scrollbars, form widgets) in step. */
+:root { color-scheme: dark; }
+:root[data-theme="light"] { color-scheme: light; }
+
 html.lang-he body {
   font-family: 'Assistant', 'Heebo', sans-serif;
   text-align: right;
@@ -32,8 +101,8 @@ html.lang-he body {
 
 body {
   font-family: 'Noto Kufi Arabic', sans-serif;
-  background-color: #0D0F1A;
-  color: #e8eaf6;
+  background-color: rgb(var(--c-s900));
+  color: rgb(var(--c-fg));
   overflow-x: hidden;
   line-height: 1.7;
 }
@@ -44,6 +113,10 @@ body {
 
 /* Floating stars in background */
 .stars-bg {
+  /* A night sky belongs to the dark theme; in the light it would be grey
+     specks drifting over white paper. --star-a is 0 in light mode. */
+  opacity: var(--star-a);
+  transition: opacity .25s ease;
   position: fixed;
   width: 100%;
   height: 100%;
@@ -100,9 +173,17 @@ body {
   display: none;
 }
 
+/* Brand glow orbs.
+   A huge blurred circle of magic-purple at 20% reads as a soft glow on a
+   midnight ground and as a bruise on white paper. Rather than edit the eight
+   places that draw one, dim the pattern itself in the light theme. */
+:root[data-theme="light"] .blur-3xl {
+  opacity: 0.35;
+}
+
 /* Glassmorphism card */
 .glass-card {
-  background: rgba(27, 31, 94, 0.4);
+  background: rgb(var(--c-glass) / var(--c-glass-a));
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(245, 166, 35, 0.15);
@@ -116,15 +197,15 @@ body {
 .glass-card-hover:hover {
   transform: translateY(-8px);
   border-color: rgba(245, 166, 35, 0.4);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(245, 166, 35, 0.2);
+  box-shadow: 0 20px 50px rgb(0 0 0 / var(--c-shadow-a)), 0 0 30px rgba(245, 166, 35, 0.2);
 }
 
 /* Gold border glow on focus/active */
 .magic-input {
-  background: rgba(27, 31, 94, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgb(var(--c-glass) / var(--c-input-a));
+  border: 1px solid rgb(var(--c-fg) / 0.12);
   border-radius: 12px;
-  color: #e8eaf6;
+  color: rgb(var(--c-fg));
   padding: 12px 16px;
   width: 100%;
   transition: all 0.3s ease;
@@ -136,11 +217,11 @@ body {
 .magic-input:focus {
   border-color: #F5A623;
   box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.15);
-  background: rgba(27, 31, 94, 0.5);
+  background: rgb(var(--c-glass) / var(--c-input-focus-a));
 }
 
 .magic-input::placeholder {
-  color: rgba(232, 234, 246, 0.4);
+  color: rgb(var(--c-fg) / 0.45);
 }
 
 /* Scroll bar styling */
@@ -208,7 +289,7 @@ body {
   left: 0;
   right: 0;
   height: 60%;
-  background: linear-gradient(to bottom, transparent, #0D0F1A 90%);
+  background: linear-gradient(to bottom, transparent, var(--page-fade) 90%);
 }
 
 /* Loading page flip book */
@@ -327,4 +408,39 @@ html.highlight-links a {
 }
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
+}
+
+/* =============================================
+   LIGHT-MODE OPACITY RAMP
+   =============================================
+   The same alpha does not carry the same contrast in both directions. 40%
+   pale-ink over near-black is comfortable secondary text; 40% near-black ink
+   over near-white is a ghost — measured at 2.44:1, below any usable threshold.
+   And /40 and /50 are where most of this site's secondary text lives (169 uses
+   between them).
+
+   So the light theme re-weights the ramp rather than inheriting it. Measured
+   against the #f6f5f9 ground, with /50 and up clearing 4.5:1 and the two
+   decorative steps clearing 3:1. Written per utility because the alpha is
+   baked into the class name and cannot be reached with a variable.           */
+:root[data-theme="light"] {
+  .text-white\/20 { color: rgb(var(--c-fg) / 0.46); }
+  .text-white\/30 { color: rgb(var(--c-fg) / 0.54); }
+  .text-white\/35 { color: rgb(var(--c-fg) / 0.58); }
+  .text-white\/40 { color: rgb(var(--c-fg) / 0.62); }
+  .text-white\/45 { color: rgb(var(--c-fg) / 0.66); }
+  .text-white\/50 { color: rgb(var(--c-fg) / 0.70); }
+  .text-white\/60 { color: rgb(var(--c-fg) / 0.78); }
+  .text-white\/70 { color: rgb(var(--c-fg) / 0.85); }
+  .text-white\/80 { color: rgb(var(--c-fg) / 0.90); }
+  .text-white\/90 { color: rgb(var(--c-fg) / 0.95); }
+
+  /* Separators and veils need to be SEEN, not read. Ink at 5% over white is
+     almost nothing, where white at 5% over midnight was a clear lift. */
+  .border-white\/5  { border-color: rgb(var(--c-fg) / 0.10); }
+  .border-white\/10 { border-color: rgb(var(--c-fg) / 0.14); }
+  .border-white\/15 { border-color: rgb(var(--c-fg) / 0.18); }
+  .border-white\/20 { border-color: rgb(var(--c-fg) / 0.22); }
+  .bg-white\/5      { background-color: rgb(var(--c-fg) / 0.045); }
+  .bg-white\/10     { background-color: rgb(var(--c-fg) / 0.07); }
 }

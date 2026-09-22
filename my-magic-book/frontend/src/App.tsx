@@ -118,18 +118,20 @@ export default function App() {
         position="top-center"
         toastOptions={{
           style: {
-            background: '#1B1F5E',
-            color: '#e8eaf6',
+            // Follows the theme: a navy toast over a light page read as a
+            // leftover from the dark design.
+            background: 'rgb(var(--c-s700))',
+            color: 'rgb(var(--c-fg))',
             border: '1px solid rgba(245,166,35,0.3)',
             borderRadius: '12px',
             fontFamily: i18n.language.startsWith('ar') ? 'Noto Kufi Arabic, sans-serif' : 'Inter, sans-serif',
             direction: i18n.dir(),
           },
           success: {
-            iconTheme: { primary: '#F5A623', secondary: '#0D0F1A' },
+            iconTheme: { primary: '#F5A623', secondary: 'rgb(var(--c-s900))' },
           },
           error: {
-            iconTheme: { primary: '#ef4444', secondary: '#0D0F1A' },
+            iconTheme: { primary: '#ef4444', secondary: 'rgb(var(--c-s900))' },
           },
         }}
       />

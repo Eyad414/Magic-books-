@@ -41,12 +41,26 @@ export default {
           800: '#5b21b6',
           900: '#4c1d95',
         },
+        /**
+         * The surfaces and the foreground are the theme.
+         *
+         * `white` in this codebase never meant the colour — it meant the
+         * foreground: text-white/50, border-white/10, bg-white/5 are "ink at
+         * N%" over a dark ground, used about 1,100 times across 35 files.
+         * Pointing it at a channel triple makes every one of those follow the
+         * theme, opacity intact, without touching a single class name. The six
+         * places that genuinely wanted white paper use `bg-paper`.
+         *
+         * `<alpha-value>` is what lets Tailwind keep the /50 modifiers working.
+         */
+        white: 'rgb(var(--c-fg) / <alpha-value>)',
+        paper: '#ffffff',
         dark: {
-          900: '#0D0F1A',
-          800: '#111320',
-          700: '#161829',
-          600: '#1c1f35',
-          500: '#252844',
+          900: 'rgb(var(--c-s900) / <alpha-value>)',
+          800: 'rgb(var(--c-s800) / <alpha-value>)',
+          700: 'rgb(var(--c-s700) / <alpha-value>)',
+          600: 'rgb(var(--c-s600) / <alpha-value>)',
+          500: 'rgb(var(--c-s500) / <alpha-value>)',
         },
       },
       fontFamily: {
@@ -55,10 +69,13 @@ export default {
         brand: ['"Cinzel Decorative"', 'Georgia', 'serif'],
       },
       backgroundImage: {
-        'magic-gradient': 'linear-gradient(135deg, #0D0F1A 0%, #1B1F5E 50%, #6C3FC5 100%)',
+        // These were fixed dark hexes, which in light mode painted a muddy
+        // lavender wash over the whole hero. Routed through variables so each
+        // theme supplies its own ground; the gold gradient is brand and stays.
+        'magic-gradient': 'var(--g-magic)',
         'gold-gradient': 'linear-gradient(135deg, #F5A623 0%, #e6951a 100%)',
-        'hero-radial': 'radial-gradient(ellipse at center, #252844 0%, #0D0F1A 70%)',
-        'card-gradient': 'linear-gradient(145deg, rgba(27,31,94,0.8) 0%, rgba(108,63,197,0.3) 100%)',
+        'hero-radial': 'var(--g-hero)',
+        'card-gradient': 'var(--g-card)',
       },
       animation: {
         'float': 'float 6s ease-in-out infinite',

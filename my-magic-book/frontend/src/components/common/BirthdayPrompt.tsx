@@ -55,7 +55,7 @@ export default function BirthdayPrompt() {
   const thisYear = new Date().getFullYear();
   const years = Array.from({ length: 90 }, (_, i) => String(thisYear - 5 - i));
   const selectClass =
-    'w-full px-2 py-3 rounded-xl border border-[#d9dee8] bg-white text-[#1b2437] font-arabic text-sm text-center ' +
+    'w-full px-2 py-3 rounded-xl border border-[#d9dee8] bg-paper text-[#1b2437] font-arabic text-sm text-center ' +
     'focus:outline-none focus:border-[#D4A937] focus:ring-2 focus:ring-[#D4A937]/25 transition';
   const { user, updateUser } = useAuth() as any;
   const [open, setOpen] = useState(false);
@@ -128,7 +128,7 @@ export default function BirthdayPrompt() {
           instead of blending into the page behind. Clicking the backdrop
           closes it — a dialog you cannot get out of is a wall. */}
       <div
-        className="w-full max-w-[420px] rounded-2xl bg-white shadow-2xl px-7 py-8 text-center"
+        className="w-full max-w-[420px] rounded-2xl bg-paper shadow-2xl px-7 py-8 text-center"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mx-auto mb-5 w-16 h-16 rounded-full bg-[#FDF3D6] flex items-center justify-center text-3xl">

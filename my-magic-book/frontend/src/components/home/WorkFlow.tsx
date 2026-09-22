@@ -76,7 +76,7 @@ export default function WorkFlow() {
                 <div
                   className="relative w-20 h-20 rounded-2xl flex items-center justify-center text-3xl mb-5 transition-all duration-300 group-hover:-translate-y-3 group-hover:scale-110 z-10"
                   style={{
-                    background: `linear-gradient(135deg, #1B1F5E, #252844)`,
+                    background: 'var(--g-tile)',
                     border: '2px solid rgba(245,166,35,0.2)',
                     boxShadow: `0 8px 30px ${step.glow}`,
                   }}

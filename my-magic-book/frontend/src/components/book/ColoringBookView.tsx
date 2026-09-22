@@ -32,7 +32,7 @@ export default function ColoringBookView({ childName, place, cover, backCover, p
       <div className="max-w-2xl mx-auto space-y-5">
         {/* FRONT cover (full color) with the child's name overlaid */}
         {cover && (
-          <div className="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-gold-500/30 aspect-square bg-white">
+          <div className="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-gold-500/30 aspect-square bg-paper">
             <img src={cover} alt="front cover" className="w-full h-full object-cover" />
             <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-6 text-center">
               <h2 className="text-white font-arabic font-black text-4xl sm:text-5xl drop-shadow-[0_3px_10px_rgba(0,0,0,0.9)] leading-tight">{title}</h2>
@@ -43,7 +43,7 @@ export default function ColoringBookView({ childName, place, cover, backCover, p
 
         {/* Line-art pages (no text) */}
         {pages.map((src, i) => (
-          <div key={i} className="relative rounded-2xl overflow-hidden bg-white shadow-xl aspect-square">
+          <div key={i} className="relative rounded-2xl overflow-hidden bg-paper shadow-xl aspect-square">
             <img src={src} alt={`صفحة ${i + 1}`} className="w-full h-full object-contain" loading="lazy" />
             <span className="absolute bottom-2 left-3 text-[#333] text-xs font-bold bg-white/80 rounded-full px-2 py-0.5 border border-gold-500/30">
               {i + 1}
@@ -53,7 +53,7 @@ export default function ColoringBookView({ childName, place, cover, backCover, p
 
         {/* BACK cover (full color), after the last page */}
         {backCover && (
-          <div className="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-gold-500/30 aspect-square bg-white">
+          <div className="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-gold-500/30 aspect-square bg-paper">
             <img src={backCover} alt="back cover" className="w-full h-full object-cover" />
             <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-5 text-center">
               <p className="text-white font-arabic font-black text-xl drop-shadow-lg">🌟 أحسنت يا {childName}!</p>
