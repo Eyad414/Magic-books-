@@ -52,6 +52,12 @@ html.lang-en body {
   --c-input-a:    0.30;
   --c-input-focus-a: 0.50;
   --c-gold-ink:  245 166  35;
+  --c-gold-text: 245 166  35;   /* on midnight the brand gold reads fine */
+  --c-magic-text: 168 133 232;
+  --c-on-bright:  13  15  26;
+  --sh-card: none;              /* dark mode separates with glow, not shadow */
+  --sh-lift: 0 20px 50px rgb(0 0 0 / 0.5);
+  --g-shimmer: linear-gradient(90deg, #F5A623 0%, #fff8e1 30%, #F5A623 60%, #e6951a 100%);
   --c-shadow-a:   0.50;
   --page-fade:   #0D0F1A;
   --g-magic: linear-gradient(135deg, #0D0F1A 0%, #1B1F5E 50%, #6C3FC5 100%);
@@ -62,30 +68,55 @@ html.lang-en body {
 }
 
 :root[data-theme="light"] {
-  --c-fg:    26  28  46;   /* deep navy ink on a light ground */
-  --c-s900: 246 245 249;   /* page — biased toward the magic purple, not grey */
-  --c-s800: 255 255 255;
-  --c-s700: 240 239 246;
-  --c-s600: 232 231 242;
-  --c-s500: 223 222 237;   /* raised */
+  /* DAYLIGHT ON THE STORYBOOK TABLE.
+     Not a white page — a pale periwinkle paper taken from the brand's own
+     navy family (navy-50 is #e8eaf6). Two reasons over the obvious warm cream:
+     it keeps the lantern's indigo identity instead of trading it for a generic
+     document look, and a tinted ground lets PURE WHITE cards sit on it with a
+     visible edge. Dark mode separates surfaces with glow; light mode separates
+     them with paper and elevation.                                           */
+  --c-fg:    27  32  80;   /* #1b2050 deep brand indigo — softer than black,
+                              13.5:1 on the page, 15.3:1 on a card */
+  --c-s900: 233 237 248;   /* the paper */
+  --c-s800: 255 255 255;   /* a card lifted off it */
+  --c-s700: 243 245 252;
+  --c-s600: 226 231 245;
+  --c-s500: 216 222 241;   /* pressed / inset */
 
   --c-glass:     255 255 255;
-  --c-glass-a:    0.72;
-  --c-input-a:    0.92;
+  --c-glass-a:    1;       /* opaque white: a translucent card on pale paper
+                              had 1.06:1 against it — no edge at all */
+  --c-input-a:    1;
   --c-input-focus-a: 1;
-  --c-gold-ink:  168 118  26;   /* darkened: #F5A623 is unreadable on white */
-  --c-shadow-a:   0.12;
-  --page-fade:   #f6f5f9;
-  /* A whisper of the brand instead of a wash of it: the same hues at a few
-     percent, so the hero reads as light paper with a warm tint rather than
-     washed-out purple. */
-  --g-magic: linear-gradient(135deg, #ffffff 0%, #f1eff9 50%, #eae5f7 100%);
-  --g-hero:  radial-gradient(ellipse at center, #ffffff 0%, #f2f1f7 70%);
-  --g-card:  linear-gradient(145deg, rgba(255,255,255,0.92) 0%, rgba(108,63,197,0.06) 100%);
-  /* Floating stars are a night sky. Hidden in the light rather than left as
-     grey specks on white. */
+
+  /* Gold splits in two here, and this is the whole trick.
+     As TEXT (159 uses) #F5A623 measured 1.87:1 on light — invisible. As a FILL
+     (105 uses) it is the brand and must stay bright. So text gold becomes a
+     bronze that clears AA on both paper and card (4.68 / 5.32), and the fill is
+     left alone with dark ink on top (8.5:1).                                 */
+  --c-gold-text: 154  93  10;   /* #9a5d0a */
+  --c-magic-text: 91  33 182;   /* #5b21b6 — 7.9:1, for the shimmer's far end */
+  --c-on-bright:  20  23  58;   /* ink that sits ON gold; never flips */
+
+  --c-shadow-a:   0.10;
+  --page-fade:   #e9edf8;
+
+  /* Brand hues at a few percent, so the hero reads as lit paper rather than a
+     lavender wash. */
+  --g-magic: linear-gradient(135deg, #ffffff 0%, #f4f2fd 55%, #ece7fb 100%);
+  --g-hero:  radial-gradient(ellipse at center, #ffffff 0%, #eaeefa 72%);
+  --g-card:  linear-gradient(145deg, #ffffff 0%, #f6f4fe 100%);
+  --g-tile:  linear-gradient(135deg, #ffffff, #eceafb);
+
+  /* Floating stars are a night sky — hidden in daylight rather than left as
+     grey specks on paper. */
   --star-a:  0;
-  --g-tile:  linear-gradient(135deg, #ffffff, #efedf8);
+
+  /* Elevation, tinted with the ground's own indigo rather than neutral grey,
+     which is what stops a white card reading as a cut-out. */
+  --sh-card: 0 1px 2px rgb(27 32 80 / 0.06), 0 8px 24px -8px rgb(27 32 80 / 0.14);
+  --sh-lift: 0 2px 4px rgb(27 32 80 / 0.07), 0 18px 40px -12px rgb(27 32 80 / 0.22);
+  --g-shimmer: linear-gradient(90deg, #8a5510 0%, #c9820f 28%, #9a5d0a 58%, #5b21b6 100%);
 }
 
 /* No flash of the wrong theme: the inline script in index.html stamps
@@ -138,11 +169,12 @@ body {
 
 /* Gold shimmer text effect */
 .shimmer-text {
-  background: linear-gradient(90deg,
-      #F5A623 0%,
-      #fff8e1 30%,
-      #F5A623 60%,
-      #e6951a 100%);
+  /* The stop at 30% was #fff8e1 — near-white. On midnight that is the glint
+     travelling along the letters; on pale paper it made the middle third of
+     every headline white-on-white, which is why the words looked broken.
+     --g-shimmer keeps the glint in dark mode and, in light, runs bronze ->
+     gold -> violet: still a moving sheen, never invisible. */
+  background: var(--g-shimmer);
   background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
@@ -188,6 +220,8 @@ body {
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(245, 166, 35, 0.15);
   border-radius: 20px;
+  /* none in dark (the glow does the separating), real elevation in light */
+  box-shadow: var(--sh-card);
 }
 
 .glass-card-hover {
@@ -197,7 +231,7 @@ body {
 .glass-card-hover:hover {
   transform: translateY(-8px);
   border-color: rgba(245, 166, 35, 0.4);
-  box-shadow: 0 20px 50px rgb(0 0 0 / var(--c-shadow-a)), 0 0 30px rgba(245, 166, 35, 0.2);
+  box-shadow: var(--sh-lift), 0 0 30px rgba(245, 166, 35, 0.2);
 }
 
 /* Gold border glow on focus/active */
@@ -424,6 +458,22 @@ html.highlight-links a {
    decorative steps clearing 3:1. Written per utility because the alpha is
    baked into the class name and cannot be reached with a variable.           */
 :root[data-theme="light"] {
+  /* Gold is the brand as a FILL and unreadable as TEXT — 1.87:1 measured. So
+     only the text utilities move, to a bronze that clears AA on paper and on a
+     white card. bg-gold-* and the gold gradients are untouched. */
+  .text-gold-500, .text-gold-400, .text-gold-300 { color: rgb(var(--c-gold-text)); }
+  .text-magic-400, .text-magic-300 { color: rgb(var(--c-magic-text)); }
+
+  /* Ink that sits ON a bright fill — the label inside a gold button. dark-900
+     is the PAGE in light mode, so left alone this turned every gold CTA's text
+     pale-on-gold. It means "dark ink" here and must not flip. */
+  .text-dark-900, .text-dark-800, .text-dark-700 { color: rgb(var(--c-on-bright)); }
+
+  /* A gold border at 30% over paper nearly vanishes; deepen it so outlined
+     buttons and selected states keep their edge. */
+  .border-gold-500\/30 { border-color: rgb(var(--c-gold-text) / 0.45); }
+  .border-gold-500\/40 { border-color: rgb(var(--c-gold-text) / 0.55); }
+
   .text-white\/20 { color: rgb(var(--c-fg) / 0.46); }
   .text-white\/30 { color: rgb(var(--c-fg) / 0.54); }
   .text-white\/35 { color: rgb(var(--c-fg) / 0.58); }
