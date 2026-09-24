@@ -45,7 +45,8 @@ export default function Step4_Payment({ onPrev }: Props) {
       .catch(() => setCoupon(null));
   }, [storyConfig?.couponCode]);
 
-  const { selectedPkg, deliveryFee, discountedBase, totalPrice, liveSettings } = useCheckoutTotals({
+  const { selectedPkg, deliveryFee, discountedBase, totalPrice, liveSettings,
+          pricesReady, pricesFailed, retryPrices } = useCheckoutTotals({
     bookPackage: bookCustomization?.bookPackage,
     isPickup,
     couponApplied: !!coupon,
@@ -90,6 +91,13 @@ export default function Step4_Payment({ onPrev }: Props) {
   const [isSuccess, setIsSuccess] = useState(false);
 
   const handleCheckout = async () => {
+    // The button is disabled without prices, but an order must never be created
+    // against a total the server has not quoted.
+    if (!pricesReady) {
+      toast.error(t('step3.prices_failed', 'تعذّر تحميل الأسعار. لا نريد أن نُظهر لك سعراً غير صحيح.'));
+      retryPrices();
+      return;
+    }
     if (!isAuthenticated) {
       toast.error(t('step5.err_login'));
       navigate('/login');
@@ -161,15 +169,31 @@ export default function Step4_Payment({ onPrev }: Props) {
 
       {/* What is being paid for — short, since step 3 has the full review. */}
       <div className="p-3 rounded-xl bg-dark-700 border border-white/10 space-y-1.5">
-        <Row label={selectedPkg?.label || ''} value={`${discountedBase} ₪`} />
+        <Row label={selectedPkg?.label || ''}
+             value={pricesReady ? `${discountedBase} ₪` : <span className="inline-block h-4 w-14 rounded bg-white/15 animate-pulse" />} />
         <Row
           label={t('step5.delivery_fee')}
           value={deliveryFee === 0 ? `${t('step3.free_delivery', 'مجاني')} 🎉` : `${deliveryFee} ₪`}
         />
         <div className="mt-1 flex items-center justify-between rounded-xl bg-gold-500/15 border border-gold-500/40 px-3 py-2.5">
           <span className="font-arabic font-black text-white text-lg">{t('step5.total')}</span>
-          <span className="font-arabic font-black text-gold-500 text-2xl drop-shadow-[0_0_10px_rgba(212,169,55,0.4)]">{totalPrice} ₪</span>
+          {pricesReady ? (
+            <span className="font-arabic font-black text-gold-500 text-2xl drop-shadow-[0_0_10px_rgba(212,169,55,0.4)]">{totalPrice} ₪</span>
+          ) : (
+            <span className="inline-block h-6 w-20 rounded-lg bg-gold-500/20 animate-pulse" />
+          )}
         </div>
+        {pricesFailed && (
+          <div className="px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-between gap-3">
+            <span className="font-arabic text-red-300 text-xs leading-relaxed">
+              {t('step3.prices_failed', 'تعذّر تحميل الأسعار. لا نريد أن نُظهر لك سعراً غير صحيح.')}
+            </span>
+            <button type="button" onClick={retryPrices}
+              className="font-arabic text-xs font-bold text-gold-500 underline flex-shrink-0">
+              {t('common.retry', 'إعادة المحاولة')}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Payment method */}
@@ -341,9 +365,12 @@ export default function Step4_Payment({ onPrev }: Props) {
               size="lg"
               onClick={handleCheckout}
               isLoading={isProcessing}
+              disabled={!pricesReady}
               icon={<CreditCard className="w-5 h-5" />}
             >
-              {!isAuthenticated
+              {!pricesReady
+                ? t('step3.loading_prices', 'جاري تحميل الأسعار…')
+                : !isAuthenticated
                 ? t('step5.login_to_pay')
                 : onlinePaymentsEnabled && paymentMethod === 'card'
                   ? t('payment.continue_to_pay', 'متابعة الدفع — {price} ₪').replace('{price}', String(totalPrice))
@@ -356,7 +383,7 @@ export default function Step4_Payment({ onPrev }: Props) {
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4">
       <span className="font-arabic text-white/50 text-sm flex-shrink-0">{label}:</span>

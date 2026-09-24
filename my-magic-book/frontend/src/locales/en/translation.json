@@ -535,7 +535,10 @@
     "help_desc": "Ask on WhatsApp — we answer quickly and can help you pick the right package.",
     "coupon_free_delivery": "Code applied — delivery is free 🚚",
     "coupon_free_delivery_row": "free-delivery code",
-    "coupon_only_package": "This code only works with “{{pkg}}” — switch package to use it."
+    "coupon_only_package": "This code only works with “{{pkg}}” — switch package to use it.",
+    "loading_price": "Loading price",
+    "loading_prices": "Loading prices…",
+    "prices_failed": "We couldn't load prices. We'd rather show you nothing than the wrong price."
   },
   "step4": {
     "err_pickup_location": "Please choose a pickup point",
@@ -1954,7 +1957,8 @@
   "common": {
     "loading": "Loading…",
     "close": "Close",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "retry": "Try again"
   },
   "birthday": {
     "title": "When is your birthday?",

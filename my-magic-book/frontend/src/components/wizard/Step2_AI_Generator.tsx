@@ -11,7 +11,7 @@ import { toDisplayUrl } from '../../api/mediaUrl';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { localizeName } from '../../utils/translit';
-import { getPackageLabel, getPackageDesc } from '../../utils/packageLabel';
+import { usePackages } from '../../hooks/usePackages';
 import { getThemeLabel, getThemeDesc } from '../../utils/themeLabel';
 import { STORY_TEMPLATES } from '../../data/stories/templates';
 import ThemeChatHelper from './ThemeChatHelper';
@@ -187,44 +187,10 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
   // Merged in from the old "Customize" step so story + format live on one screen.
   const [bookPackage, setBookPackage] = useState(progress.bookCustomization?.bookPackage || 'color');
 
-  // Package list with live admin prices (falls back to sensible defaults).
-  const lang = i18n.language;
-  const packages = useMemo(() => {
-    const DEFAULT_PACKAGES = [
-      { id: 'color', label: t('step3.pkg_color'), price: 60, emoji: '🌈', desc: t('step3.pkg_color_desc') },
-      { id: 'coloring', label: t('step3.pkg_coloring'), price: 50, emoji: '🖍️', desc: t('step3.pkg_coloring_desc') },
-      { id: 'ebook', label: t('step3.pkg_ebook'), price: 20, emoji: '📱', desc: t('step3.pkg_ebook_desc') },
-      { id: 'pro', label: t('step3.pkg_pro'), price: 120, originalPrice: 140, emoji: '✨', desc: t('step3.pkg_pro_desc') },
-    ];
-    if (liveSettings?.bookPackages) {
-      return DEFAULT_PACKAGES
-        .map((defaultPkg) => {
-          const livePkg = liveSettings.bookPackages.find((p: any) => p.id === defaultPkg.id);
-          if (!livePkg) return defaultPkg;
-          // The dashboard's name/description edits only ever reached the price
-          // and hidden flags before, so a rename in the admin never showed to a
-          // customer. Admin text is typed in Arabic and packages have no
-          // per-language field, so it wins for Arabic and en/he keep the
-          // built-in translation.
-
-          // Keep the "was" price only when it is genuinely higher than the
-          // live one. The default carries originalPrice: 140 while the admin
-          // has raised pro to 170, which rendered a struck-through 140 next to
-          // 170 — a discount advertised off a LOWER price.
-          const was = (defaultPkg as any).originalPrice;
-          return {
-            ...defaultPkg,
-            label: getPackageLabel(livePkg, t, lang, defaultPkg.label),
-            desc: getPackageDesc(livePkg, t, lang, (defaultPkg as any).desc),
-            price: livePkg.price,
-            hidden: livePkg.hidden,
-            originalPrice: was && was > livePkg.price ? was : undefined,
-          };
-        })
-        .filter((pkg) => !(pkg as any).hidden); // admin-hidden packages don't show
-    }
-    return DEFAULT_PACKAGES;
-  }, [liveSettings, t, lang]);
+  // Packages and prices come from one place — see usePackages. There is no
+  // local price table here on purpose: the one that used to live here quoted a
+  // colour story at 60 ₪ while checkout charged 130.
+  const { packages } = usePackages();
   
   // Local State: Tracks if the AI is currently generating the text to show a loading indicator
   const [isGenerating, setIsGenerating] = useState(false);
@@ -749,9 +715,13 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
               </span>
               {isSoon ? (
                 <span className="font-arabic text-white/60 font-bold text-xs">{t('step3.coming_soon', 'قريباً')}</span>
-              ) : 'originalPrice' in pkg && pkg.originalPrice ? (
+              ) : pkg.price === null ? (
+                /* The price is not known yet. A placeholder is honest; a
+                   hard-coded number here is what quoted 60 ₪ for a 130 ₪ book. */
+                <span className="inline-block h-3 w-10 rounded bg-white/15 animate-pulse" aria-label={t('step3.loading_price', 'جاري تحميل السعر')} />
+              ) : pkg.originalPrice ? (
                 <div className="flex items-center gap-1 justify-center">
-                  <span className="font-arabic text-white/30 text-xs line-through">{(pkg as any).originalPrice} ₪</span>
+                  <span className="font-arabic text-white/30 text-xs line-through">{pkg.originalPrice} ₪</span>
                   <span className="font-arabic text-gold-500 font-bold text-xs">{pkg.price} ₪</span>
                 </div>
               ) : (

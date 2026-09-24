@@ -535,7 +535,10 @@
     "help_desc": "שאלו בוואטסאפ — עונים מהר ועוזרים לבחור את החבילה המתאימה.",
     "coupon_free_delivery": "הקוד הופעל — המשלוח חינם 🚚",
     "coupon_free_delivery_row": "קוד משלוח חינם",
-    "coupon_only_package": "הקוד תקף רק ל”{{pkg}}” — החליפו חבילה כדי להשתמש בו."
+    "coupon_only_package": "הקוד תקף רק ל”{{pkg}}” — החליפו חבילה כדי להשתמש בו.",
+    "loading_price": "טוען מחיר",
+    "loading_prices": "טוען מחירים…",
+    "prices_failed": "לא הצלחנו לטעון את המחירים. לא נציג לך מחיר שאינו נכון."
   },
   "step4": {
     "err_pickup_location": "אנא בחר נקודת איסוף",
@@ -1954,7 +1957,8 @@
   "common": {
     "loading": "טוען…",
     "close": "סגור",
-    "cancel": "ביטול"
+    "cancel": "ביטול",
+    "retry": "נסה שוב"
   },
   "birthday": {
     "title": "מתי יום ההולדת שלך?",

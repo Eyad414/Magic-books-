@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { getPackageLabel, getPackageDesc } from '../../utils/packageLabel';
+import { useState } from 'react';
+import { usePackages } from '../../hooks/usePackages';
 import { useStoryProgress } from '../../context/StoryProgressContext';
 import { useAuth } from '../../context/AuthContext';
 import MagicButton from '../common/MagicButton';
@@ -99,54 +99,10 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // ── Review / payment state (from old step 5) ─────────────────────────
-  const [liveSettings, setLiveSettings] = useState<any>(null);
-
-  useEffect(() => {
-    publicApi.getSettings().then(res => {
-      if (res.success && res.settings) setLiveSettings(res.settings);
-    }).catch(err => console.error('Failed to load pricing:', err));
-  }, []);
-
-  // Read the package NAME off `selectedPkg.label` — never re-translate by id.
-  // t() returns the key itself when a string is missing, so `t(...) || label`
-  // never reaches the fallback and silently discards the admin's rename.
-  const lang = i18n.language;
-  const packages = useMemo(() => {
-    const DEFAULT_PACKAGES = [
-      { id: 'color', label: t('step3.pkg_color', 'قصة ملونة'), price: 60, emoji: '🌈', desc: t('step3.pkg_color_desc') },
-      { id: 'coloring', label: t('step3.pkg_coloring', 'دفتر تلوين'), price: 50, emoji: '🖍️', desc: t('step3.pkg_coloring_desc') },
-      { id: 'ebook', label: t('step3.pkg_ebook', 'نسخة رقمية (E-Book)'), price: 20, emoji: '📱', desc: t('step3.pkg_ebook_desc') },
-      { id: 'pro', label: t('step3.pkg_pro', 'باقة Pro الشاملة'), price: 120, originalPrice: 140, emoji: '✨', desc: t('step3.pkg_pro_desc') },
-    ];
-    if (liveSettings?.bookPackages) {
-      return DEFAULT_PACKAGES
-        .map(defaultPkg => {
-          const livePkg = liveSettings.bookPackages.find((p: any) => p.id === defaultPkg.id);
-          if (!livePkg) return defaultPkg;
-          // The dashboard's name/description edits only ever reached the price
-          // and hidden flags before, so a rename in the admin never showed to a
-          // customer. Admin text is typed in Arabic and packages have no
-          // per-language field, so it wins for Arabic and en/he keep the
-          // built-in translation.
-
-          // Keep the "was" price only when it is genuinely higher than the
-          // live one. The default carries originalPrice: 140 while the admin
-          // has raised pro to 170, which rendered a struck-through 140 next to
-          // 170 — a discount advertised off a LOWER price.
-          const was = (defaultPkg as any).originalPrice;
-          return {
-            ...defaultPkg,
-            label: getPackageLabel(livePkg, t, lang, defaultPkg.label),
-            desc: getPackageDesc(livePkg, t, lang, (defaultPkg as any).desc),
-            price: livePkg.price,
-            hidden: livePkg.hidden,
-            originalPrice: was && was > livePkg.price ? was : undefined,
-          };
-        })
-        .filter((pkg) => !(pkg as any).hidden); // admin-hidden packages don't show
-    }
-    return DEFAULT_PACKAGES;
-  }, [liveSettings, t, lang]);
+  // Packages and prices come from usePackages, which has no fallback price by
+  // design: the copy that used to live here quoted a colour story at 60 ₪ while
+  // the server charged 130.
+  const { packages, pricesReady, pricesFailed, retryPrices } = usePackages();
 
   // One book per order. To order another book (a different theme/child), the
   // customer creates a brand-new story — its own order and payment.
@@ -223,7 +179,9 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
   const isPickup = shippingForm.deliveryMethod === 'pickup';
   // Arabic uses its own comma; an English address line reading "Silwan، Jerusalem" looks broken.
   const addrSep = i18n.language?.startsWith('ar') ? '،' : ',';
-  const basePrice = selectedPkg.price;
+  // null until the server has quoted; the summary and the Continue button below
+  // both wait on pricesReady rather than rendering a number nobody promised.
+  const basePrice = selectedPkg?.price ?? 0;
   // Changing the package after applying must drop a code that no longer fits,
   // or the summary keeps a discount the server will not honour.
   const couponFitsPackage = !couponOnlyPackage || couponOnlyPackage === selectedPkg.id;
@@ -601,7 +559,9 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
                 {(selectedPkg as any).originalPrice && (
                   <span className="font-arabic text-white/30 text-xs line-through">{(selectedPkg as any).originalPrice} ₪</span>
                 )}
-                <span className="font-arabic text-white text-sm">{basePrice} ₪</span>
+                {pricesReady
+                  ? <span className="font-arabic text-white text-sm">{basePrice} ₪</span>
+                  : <span className="inline-block h-4 w-14 rounded bg-white/15 animate-pulse" />}
               </div>
             </div>
             {pkgUnavailable && (
@@ -618,8 +578,23 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
             <Row label={t('step5.delivery_fee')} value={deliveryFee === 0 ? `${t('step3.free_delivery', 'مجاني')} 🎉` : `${deliveryFee} ₪`} />
             <div className="mt-2 flex items-center justify-between rounded-2xl bg-gradient-to-l from-gold-500/25 to-gold-500/10 border border-gold-500/50 px-4 py-3.5 shadow-lg shadow-gold-500/10">
               <span className="font-arabic font-black text-white text-lg">{t('step5.total')}</span>
-              <span className="font-arabic font-black text-gold-500 text-3xl drop-shadow-[0_0_14px_rgba(212,169,55,0.5)]">{totalPrice} ₪</span>
+              {pricesReady ? (
+                <span className="font-arabic font-black text-gold-500 text-3xl drop-shadow-[0_0_14px_rgba(212,169,55,0.5)]">{totalPrice} ₪</span>
+              ) : (
+                <span className="inline-block h-7 w-24 rounded-lg bg-gold-500/20 animate-pulse" />
+              )}
             </div>
+            {pricesFailed && (
+              <div className="mt-2 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-between gap-3">
+                <span className="font-arabic text-red-300 text-xs leading-relaxed">
+                  {t('step3.prices_failed', 'تعذّر تحميل الأسعار. لا نريد أن نُظهر لك سعراً غير صحيح.')}
+                </span>
+                <button type="button" onClick={retryPrices}
+                  className="font-arabic text-xs font-bold text-gold-500 underline flex-shrink-0">
+                  {t('common.retry', 'إعادة المحاولة')}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -643,8 +618,10 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
         <MagicButton variant="outline" size="lg" onClick={onPrev} icon={<ChevronRight className="w-5 h-5 nav-icon" />}>
           {t('wizard.prev_btn')}
         </MagicButton>
-        <MagicButton fullWidth size="lg" onClick={handleContinue} icon={<CreditCard className="w-5 h-5" />}>
-          {t('checkout.to_payment', 'التالي — الدفع')}
+        <MagicButton fullWidth size="lg" onClick={handleContinue} disabled={!pricesReady} icon={<CreditCard className="w-5 h-5" />}>
+          {pricesReady
+            ? t('checkout.to_payment', 'التالي — الدفع')
+            : t('step3.loading_prices', 'جاري تحميل الأسعار…')}
         </MagicButton>
       </div>
     </div>
