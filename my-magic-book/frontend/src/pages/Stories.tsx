@@ -52,17 +52,6 @@ export default function Stories() {
   }, []);
   const isVisible = (c: Card) => demoOnStoriesPage(c, vis);
 
-  // Colouring books made for a real child and published from the dashboard.
-  // The grid below shows what each STORY looks like as a colouring book; these
-  // show what a real one looks like with a real child's face in it, which is
-  // the thing a parent is actually deciding about.
-  const [kidColoring, setKidColoring] = useState<any[]>([]);
-  useEffect(() => {
-    publicApi.getStoriesPageBooks()
-      .then((res) => setKidColoring((res?.books || []).filter((b: any) => b.coloringCover)))
-      .catch(() => {});
-  }, []);
-
 
   const ft = useMemo(() => i18n.getFixedT(i18n.language), [i18n.language]);
   const nameL = (card: Card) => localizeName(card.name, i18n.language);
@@ -115,13 +104,6 @@ export default function Stories() {
     saveFavorites(user.id, next);
     toast.success(isFav ? t('stories_page.remove_from_favorites') : t('stories_page.add_to_favorites'));
   };
-
-  // Colouring is a format, not a catalogue: any story theme can be ordered as
-  // one, so this lists the stories themselves rather than a parallel set.
-  const colorableThemes = useMemo(
-    () => Object.values(themes).filter((th: any) => th && !th.isColoring && th.id),
-    [themes],
-  );
 
   const handleStartStory = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -228,83 +210,6 @@ export default function Stories() {
               </div>
             );
           })}
-        </div>
-
-        {/* Every story is also a colouring book.
-            Not a separate catalogue: the pages ARE the story the customer
-            picks, drawn as line art with their own child in them — so listing
-            twenty more cards would be listing the same twenty stories twice. */}
-        <div className="mt-14 glass-card p-8 sm:p-10">
-          <div className="text-center">
-            <div className="text-4xl mb-3">🖍️</div>
-            <h2 className="font-arabic font-bold text-white text-2xl mb-2">
-              {t('stories_page.coloring_title', 'كل قصة متوفرة ككتاب تلوين')}
-            </h2>
-            <p className="font-arabic text-white/55 max-w-2xl mx-auto">
-              {t('stories_page.coloring_desc', 'نفس القصة اللي بتختارها — مرسومة خطوط، ووجه طفلك بكل صفحة. ١٦ صفحة يلوّنها بإيده.')}
-            </p>
-          </div>
-
-          {/* Real books first, when there are any. A generic cover shows the
-              idea; a real child's book shows the product. */}
-          {kidColoring.length > 0 && (
-            <div className="mt-7">
-              <p className="font-arabic text-gold-500 text-sm text-center mb-3">
-                {t('stories_page.coloring_real', 'كتب تلوين عملناها لأطفال حقيقيين')}
-              </p>
-              <div className="flex flex-wrap justify-center gap-4">
-                {kidColoring.map((b) => (
-                  <div key={b.id} className="w-40">
-                    <div className="aspect-square rounded-2xl overflow-hidden bg-white/5 border border-gold-500/30">
-                      <img
-                        src={toDisplayUrl(b.coloringCover)}
-                        alt={b.childName}
-                        loading="lazy"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <p className="font-arabic text-white/70 text-xs text-center mt-1.5">
-                      {localizeName(b.childName, i18n.language)}
-                      <span className="text-white/35"> · {b.coloringImages?.length || 0} </span>
-                      {t('stories_page.coloring_pages', 'صفحة')}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Every story now has a colouring cover of its own, so this shows
-              the books rather than a list of names. */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3 mt-7">
-            {colorableThemes.map((th) => (
-              <div key={th.id} className="group">
-                <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-white/5 border border-white/10 group-hover:border-gold-500/40 transition-colors">
-                  {th.coloringCover ? (
-                    <img
-                      src={toDisplayUrl(th.coloringCover)}
-                      alt={th.label}
-                      loading="lazy"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-3xl">{th.emoji}</div>
-                  )}
-                </div>
-                <p className="font-arabic text-white/60 text-[11px] text-center mt-1.5 leading-snug">
-                  {t(`step2.theme_${th.id}`, { defaultValue: th.label })}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {/* No price here either — the colouring book's cost belongs on the
-              packages step, where the customer is actually choosing. */}
-          <div className="text-center mt-7">
-            <span className="font-arabic text-white/45 text-sm">
-              {t('stories_page.coloring_price_note', 'للكتاب — أو ضمن الباقة الشاملة')}
-            </span>
-          </div>
         </div>
 
         {/* Bottom CTA */}
