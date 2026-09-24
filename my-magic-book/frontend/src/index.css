@@ -40,24 +40,41 @@ html.lang-en body {
    gold on either ground. Gold is only darkened for light mode, where the bright
    #F5A623 fails contrast on white.                                            */
 :root {
+  /* NIGHT, WITH THE LANTERN ACTUALLY LIT.
+     The old ladder was measured in CIE L* at steps of 1.7 / 2.6 / 3.7 / 4.6 —
+     the two deepest were below the ~3 units the eye needs, so page, panel and
+     card blurred into one plane and only a gold border said a card was there.
+     Rebuilt deeper at the base to make headroom, then spaced 3.9 / 5.3 / 6.4 /
+     7.1, taking the usable depth from 12.6 L* to 22.8. Hue drifts a touch
+     warmer as it rises, because the light is above.                          */
   --c-fg:   232 234 246;   /* pale ink   */
-  --c-s900:  13  15  26;   /* page       */
-  --c-s800:  17  19  32;
-  --c-s700:  22  24  41;
-  --c-s600:  28  31  53;
-  --c-s500:  37  40  68;   /* raised     */
+  --c-s900:   7   9  15;   /* the room — real night, not washed charcoal */
+  --c-s800:  15  19  38;
+  --c-s700:  23  29  58;
+  --c-s600:  34  41  83;
+  --c-s500:  47  55 112;   /* raised, catching the most light */
 
-  --c-glass:      27  31  94;
-  --c-glass-a:    0.40;
+  --c-glass:      35  42  99;
+  --c-glass-a:    0.72;   /* was 0.40 — the card read 1.7 L* off the page */
   --c-input-a:    0.30;
   --c-input-focus-a: 0.50;
   --c-gold-ink:  245 166  35;
   --c-gold-text: 245 166  35;   /* on midnight the brand gold reads fine */
   --c-magic-text: 168 133 232;
   --c-on-bright:  13  15  26;
-  --sh-card: none;              /* dark mode separates with glow, not shadow */
+  /* The top-edge hairline is the detail that makes a dark panel look made
+     rather than filled: light catching the lip of a raised surface. Paired
+     with a deep cool shadow so the card sits in the room instead of on it. */
+  --sh-card: inset 0 1px 0 rgb(255 255 255 / 0.055),
+             0 2px 6px rgb(0 0 0 / 0.5),
+             0 18px 40px -16px rgb(0 0 0 / 0.65);
   --sh-lift: 0 20px 50px rgb(0 0 0 / 0.5);
   --g-shimmer: linear-gradient(90deg, #F5A623 0%, #fff8e1 30%, #F5A623 60%, #e6951a 100%);
+  /* Warm light pooling at the top of the page and falling off — the room is
+     lit from where the lantern is, instead of being an evenly black field.
+     Kept at a few percent: meant to be felt, not seen. */
+  --ambient: radial-gradient(1100px 560px at 50% -8%, rgb(245 166 35 / 0.07), transparent 68%),
+             radial-gradient(900px 700px at 12% 110%, rgb(108 63 197 / 0.10), transparent 70%);
   --c-shadow-a:   0.50;
   --page-fade:   #0D0F1A;
   --g-magic: linear-gradient(135deg, #0D0F1A 0%, #1B1F5E 50%, #6C3FC5 100%);
@@ -117,6 +134,8 @@ html.lang-en body {
   --sh-card: 0 1px 2px rgb(27 32 80 / 0.06), 0 8px 24px -8px rgb(27 32 80 / 0.14);
   --sh-lift: 0 2px 4px rgb(27 32 80 / 0.07), 0 18px 40px -12px rgb(27 32 80 / 0.22);
   --g-shimmer: linear-gradient(90deg, #8a5510 0%, #c9820f 28%, #9a5d0a 58%, #5b21b6 100%);
+  --ambient: radial-gradient(1100px 560px at 50% -8%, rgb(245 166 35 / 0.10), transparent 66%),
+             radial-gradient(900px 700px at 12% 110%, rgb(108 63 197 / 0.07), transparent 70%);
 }
 
 /* No flash of the wrong theme: the inline script in index.html stamps
@@ -133,6 +152,9 @@ html.lang-he body {
 body {
   font-family: 'Noto Kufi Arabic', sans-serif;
   background-color: rgb(var(--c-s900));
+  background-image: var(--ambient);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   color: rgb(var(--c-fg));
   overflow-x: hidden;
   line-height: 1.7;
