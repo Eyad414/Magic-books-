@@ -204,7 +204,7 @@ export default function Stories() {
 
                   {/* Starts on THIS story, not an empty wizard. */}
                   <button onClick={() => startWithTheme(card.themeId)} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-l from-gold-500 to-gold-600 text-dark-900 font-arabic font-bold text-sm hover:shadow-gold-glow transition-all">
-                    ✨ {t('stories_page.start_creating')}
+                    {t('stories_page.start_creating')}
                   </button>
                 </div>
               </div>
@@ -218,7 +218,7 @@ export default function Stories() {
           <h2 className="font-arabic font-bold text-white text-2xl mb-3">{t('stories_page.want_custom_story')}</h2>
           <p className="font-arabic text-white/50 mb-6">{t('stories_page.custom_story_desc')}</p>
           <button onClick={handleStartStory} className="inline-flex items-center gap-3 px-10 py-4 rounded-2xl bg-gradient-to-l from-gold-500 to-gold-600 text-dark-900 font-arabic font-black text-xl hover:shadow-gold-glow hover:-translate-y-1 transition-all duration-300">
-            ✨ {t('stories_page.start_creating')}
+            {t('stories_page.start_creating')}
           </button>
         </div>
       </div>

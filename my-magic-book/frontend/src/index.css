@@ -486,6 +486,28 @@ html.highlight-links a {
   .text-gold-500, .text-gold-400, .text-gold-300 { color: rgb(var(--c-gold-text)); }
   .text-magic-400, .text-magic-300 { color: rgb(var(--c-magic-text)); }
 
+  /* Faded gold. text-gold-500 was remapped but its /70…/90 siblings were not,
+     so 21 labels kept the BRIGHT gold on paper — the navbar's brand line
+     measured 1.53:1. They go solid rather than faded: the bronze only just
+     clears AA at full strength (4.55:1), so any alpha at all drops it below.
+     Hierarchy here is carried by size and weight instead. */
+  .text-gold-500\/90, .text-gold-500\/80, .text-gold-500\/75,
+  .text-gold-500\/70, .text-gold-400\/90, .text-gold-400\/85,
+  .text-gold-400\/70, .text-gold-300\/80, .text-gold-200\/90 {
+    color: rgb(var(--c-gold-text));
+  }
+
+  /* Status colours were all picked to glow on midnight and none of them were
+     remapped, so on paper they wash out: the WhatsApp chip measured 1.2:1 and
+     text-red-400 — which is every form error on the site, 14 uses — measured
+     2.36:1. A customer reading why their checkout failed should not have to
+     squint. Darkened to the 700/800 steps, which clear AA both on the page and
+     on a white card. */
+  .text-red-400, .text-red-300 { color: rgb(185 28 28); }
+  .text-emerald-300, .text-emerald-100, .text-green-400 { color: rgb(4 120 87); }
+  .text-amber-300 { color: rgb(146 64 14); }
+  .text-blue-400, .text-blue-300, .text-blue-200\/70 { color: rgb(29 78 216); }
+
   /* Ink that sits ON a bright fill — the label inside a gold button. dark-900
      is the PAGE in light mode, so left alone this turned every gold CTA's text
      pale-on-gold. It means "dark ink" here and must not flip. */

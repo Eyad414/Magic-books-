@@ -180,7 +180,7 @@ export default function Navbar() {
               onClick={handleCreateNewStory}
               className="w-full block px-4 py-3 rounded-xl bg-gold-500 text-dark-900 font-arabic font-bold text-center"
             >
-              ✨ {t('home.final_cta_btn')}
+              {t('home.final_cta_btn')}
             </button>
             {isAuthenticated ? (
               <>
