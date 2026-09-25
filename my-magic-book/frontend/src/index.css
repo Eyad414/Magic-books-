@@ -503,10 +503,53 @@ html.highlight-links a {
      2.36:1. A customer reading why their checkout failed should not have to
      squint. Darkened to the 700/800 steps, which clear AA both on the page and
      on a white card. */
-  .text-red-400, .text-red-300 { color: rgb(185 28 28); }
+  .text-red-500, .text-red-400, .text-red-300 { color: rgb(185 28 28); }
   .text-emerald-300, .text-emerald-100, .text-green-400 { color: rgb(4 120 87); }
   .text-amber-300 { color: rgb(146 64 14); }
   .text-blue-400, .text-blue-300, .text-blue-200\/70 { color: rgb(29 78 216); }
+  .text-emerald-200 { color: rgb(4 120 87); }
+  .text-amber-200, .text-amber-200\/70, .text-amber-100 { color: rgb(146 64 14); }
+  .text-red-200, .text-red-100\/80 { color: rgb(185 28 28); }
+  .text-magic-200, .text-magic-100 { color: rgb(var(--c-magic-text)); }
+
+  /* The same accents again at every opacity step. Each step is its own class,
+     so remapping text-emerald-300 left text-emerald-300/80 untouched; measured
+     on a white admin card these ran 1.05:1 to 1.92:1. They go solid for the
+     reason the gold did — these bronzes and greens only just clear AA at full
+     strength. clientPriceTable's sibling test keeps the list complete. */
+  .text-emerald-50, .text-emerald-400,
+  .text-emerald-300\/70, .text-emerald-300\/80, .text-emerald-300\/90 { color: rgb(4 120 87); }
+  .text-amber-400, .text-amber-400\/80,
+  .text-amber-300\/70, .text-amber-300\/80,
+  .text-amber-300\/85, .text-amber-300\/90 { color: rgb(146 64 14); }
+  .text-red-300\/70, .text-red-300\/80 { color: rgb(185 28 28); }
+  .text-purple-200, .text-purple-300 { color: rgb(var(--c-magic-text)); }
+  .text-fuchsia-200 { color: rgb(162 28 175); }
+
+  /* Identity chips — a tinted fill carrying a pale tint of the same hue on
+     top. Both halves were chosen for midnight, and on paper they collapse into
+     each other: the visitor's name in the admin log measured 1.07:1, a chip
+     that read as an empty box. The name is the whole point of that list, so in
+     light mode the chip stops being a tint and becomes a solid fill with white
+     on it, at 5.5:1 or better. The fill follows the BACKGROUND's hue, so a chip
+     keeps meaning what it meant. Matched on both classes, so the same tinted
+     background is left alone everywhere it is not carrying pale text. */
+  .bg-emerald-500\/10.text-emerald-100,
+  .bg-emerald-500\/10.text-amber-100,
+  .bg-emerald-500\/15.text-emerald-200,
+  .bg-emerald-500\/20.text-emerald-200,
+  .bg-emerald-500\/25.text-emerald-100 {
+    background-color: rgb(4 120 87); color: rgb(255 255 255);
+  }
+  .bg-magic-500\/20.text-magic-200 {
+    background-color: rgb(91 33 182); color: rgb(255 255 255);
+  }
+  .bg-amber-500\/10.text-amber-100,
+  .bg-amber-500\/10.text-amber-200,
+  .bg-amber-500\/10.text-emerald-100,
+  .bg-amber-500\/25.text-amber-200 {
+    background-color: rgb(146 64 14); color: rgb(255 255 255);
+  }
 
   /* Ink that sits ON a bright fill — the label inside a gold button. dark-900
      is the PAGE in light mode, so left alone this turned every gold CTA's text
