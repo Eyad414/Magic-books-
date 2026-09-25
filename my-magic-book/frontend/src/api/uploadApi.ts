@@ -5,6 +5,11 @@ export interface ChildPhotoUploadResult {
   gcsUri: string;
   objectPath: string;
   signedUrl: string;
+  /**
+   * A proxy URL that will actually load. The proxy no longer serves a child
+   * photo on the object path alone, so this carries the server's signature.
+   */
+  displayUrl?: string;
 }
 
 export const uploadApi = {

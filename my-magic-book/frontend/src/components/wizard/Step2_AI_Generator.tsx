@@ -89,8 +89,10 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
     setPhotoPreview(URL.createObjectURL(file));
     setPhotoUploading(true);
     try {
-      const { gcsUri } = await uploadApi.childPhoto(file);
-      setChildDetails({ childPhotoUrl: gcsUri });
+      const { gcsUri, displayUrl } = await uploadApi.childPhoto(file);
+      // The path is what the book is generated from; the signed URL is the only
+      // thing that renders it back to them.
+      setChildDetails({ childPhotoUrl: gcsUri, childPhotoDisplayUrl: displayUrl });
     } catch (err: any) {
       setPhotoPreview('');
       setPhotoError(err?.response?.data?.message || err?.message || t('step1.err_photo'));

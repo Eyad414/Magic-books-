@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { toSignedProxyUrl } from '../services/ImageSigning';
 import User from '../models/User';
 import Story from '../models/Story';
 import Order from '../models/Order';
@@ -107,7 +108,11 @@ export const getCustomerByEmail = async (req: Request, res: Response): Promise<v
 // @desc Get all stories from all users
 export const getAllStories = async (req: Request, res: Response): Promise<void> => {
   try {
-    const stories = await Story.find().sort({ createdAt: -1 }).populate('userId', 'name email');
+    const stories = await Story.find().sort({ createdAt: -1 }).populate('userId', 'name email').lean();
+    const apiBase = `${req.protocol}://${req.get('host')}/api`;
+    for (const story of stories as any[]) {
+      if (story.childPhotoUrl) story.childPhotoDisplayUrl = toSignedProxyUrl(story.childPhotoUrl, apiBase);
+    }
     res.json({ success: true, stories });
   } catch (error) {
     res.status(500).json({ success: false, message: 'فشل في جلب القصص' });
@@ -914,7 +919,17 @@ export const getAllOrders = async (req: Request, res: Response): Promise<void> =
     const orders = await Order.find()
       .sort({ createdAt: -1 })
       .populate('userId', 'name email')
-      .populate('storyId');
+      .populate('storyId')
+      .lean();
+    // The proxy will not serve a child photo on the path alone any more, so
+    // mint the signed URL here — the admin is entitled to it and this response
+    // already carries the path.
+    const apiBase = `${req.protocol}://${req.get('host')}/api`;
+    for (const order of orders as any[]) {
+      if (order.storyId?.childPhotoUrl) {
+        order.storyId.childPhotoDisplayUrl = toSignedProxyUrl(order.storyId.childPhotoUrl, apiBase);
+      }
+    }
     res.json({ success: true, orders });
   } catch (error) {
     res.status(500).json({ success: false, message: 'فشل في جلب الطلبات' });

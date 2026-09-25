@@ -52,3 +52,15 @@ export function toCardUrl(ref?: string, w: number = 480): string {
   if (!url || !url.includes('/uploads/image?path=')) return url;
   return `${url}&w=${w}`;
 }
+
+/**
+ * A size hint on an already-built proxy URL.
+ *
+ * Used for URLs the server signed for us: the signature covers the object path,
+ * so asking for a narrower copy does not invalidate it. Anything that is not a
+ * proxy URL is handed back untouched.
+ */
+export function withWidth(url: string, w: number = 480): string {
+  if (!url || !url.includes('/uploads/image?path=')) return url;
+  return url.includes('&w=') || url.includes('?w=') ? url : `${url}&w=${w}`;
+}

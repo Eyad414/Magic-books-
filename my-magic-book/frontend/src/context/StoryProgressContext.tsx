@@ -8,6 +8,8 @@ export interface ChildDetails {
   childAge: string;
   childGender: 'male' | 'female';
   childPhotoUrl?: string;
+  /** The signed URL that renders that photo; the raw path no longer loads. */
+  childPhotoDisplayUrl?: string;
 }
 
 export type StoryMode = 'template' | 'ai';

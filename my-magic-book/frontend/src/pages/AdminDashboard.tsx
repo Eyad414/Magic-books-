@@ -2324,7 +2324,7 @@ export default function AdminDashboard() {
                                 </h4>
                                 <div className="flex items-center gap-2 flex-wrap">
                                   {/* Who the book is actually for. */}
-                                  <ChildAvatar photo={order.storyId?.childPhotoUrl} name={order.storyId?.childName} />
+                                  <ChildAvatar photoUrl={order.storyId?.childPhotoDisplayUrl} name={order.storyId?.childName} />
                                   <span className="font-arabic text-gold-500 font-bold text-sm">{order.storyId?.childName || t('admin.no_name')}</span>
                                   <button
                                     type="button"

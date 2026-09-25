@@ -4,6 +4,8 @@ import path from 'path';
 import { randomUUID } from 'crypto';
 import { uploadBuffer, pdfFolderPath, getReadSignedUrl, streamObject } from '../services/StorageService';
 
+import { isProtectedObject, verifyObject, toSignedProxyUrl } from '../services/ImageSigning';
+
 const PDF_FOLDER = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
 
 // @route POST /api/uploads/child-photo
@@ -20,7 +22,10 @@ export const uploadChildPhoto = async (req: Request, res: Response): Promise<voi
     const objectPath = pdfFolderPath('child-photos', `${randomUUID()}${ext}`);
     const stored = await uploadBuffer(file.buffer, objectPath, file.mimetype);
 
-    res.json({ success: true, ...stored });
+    // The uploader is about to show this back to them, and the proxy will now
+    // refuse the bare path — so hand over a signed URL with it.
+    const apiBase = `${req.protocol}://${req.get('host')}/api`;
+    res.json({ success: true, ...stored, displayUrl: toSignedProxyUrl(objectPath, apiBase) });
   } catch (err: any) {
     console.error('uploadChildPhoto failed:', err);
     res.status(500).json({ success: false, message: err.message });
@@ -36,6 +41,15 @@ export const proxyImage = async (req: Request, res: Response): Promise<void> => 
     // Reject traversal and anything outside our app's folder.
     if (!objectPath.startsWith(`${PDF_FOLDER}/`) || objectPath.includes('..')) {
       res.status(400).json({ success: false, message: 'invalid path' });
+      return;
+    }
+
+    // Generated artwork stays open — it is every cover on the shop and an <img>
+    // carries no token. A photograph of somebody's child does not: knowing the
+    // path is not permission, so it needs a signature this server minted for
+    // someone entitled to see it. See ImageSigning.
+    if (isProtectedObject(objectPath) && !verifyObject(objectPath, req.query.exp, req.query.sig)) {
+      res.status(403).json({ success: false, message: 'forbidden' });
       return;
     }
     // A SAVE, not a view. The redirect below is fine for <img>, which needs no

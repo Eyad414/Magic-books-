@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { User } from 'lucide-react';
-import { toCardUrl, toDisplayUrl } from '../../api/mediaUrl';
+import { withWidth } from '../../api/mediaUrl';
 
 /**
  * The child's own photo, beside their name on an order.
@@ -13,14 +13,17 @@ import { toCardUrl, toDisplayUrl } from '../../api/mediaUrl';
  * Loaded through the card sizer, not raw: these are phone camera uploads of a
  * couple of megabytes, and an orders list holds twenty of them. Clicking opens
  * the full-size original, which is what you want when judging a likeness.
+ *
+ * `photoUrl` is the SIGNED url the API minted for this admin, not the stored
+ * object path — the proxy refuses a child photo without a signature.
  */
-export function ChildAvatar({ photo, name, size = 44 }: { photo?: string; name?: string; size?: number }) {
+export function ChildAvatar({ photoUrl, name, size = 44 }: { photoUrl?: string; name?: string; size?: number }) {
   const [failed, setFailed] = useState(false);
-  const src = toCardUrl(photo, 320);
+  const src = withWidth(photoUrl || '', 320);
 
   // No photo at all, or the object is gone from the bucket: say so quietly
   // rather than leaving a broken frame on the card.
-  if (!photo || failed) {
+  if (!photoUrl || failed) {
     return (
       <span
         className="inline-flex items-center justify-center rounded-full bg-white/10 border border-white/15 shrink-0"
@@ -34,7 +37,7 @@ export function ChildAvatar({ photo, name, size = 44 }: { photo?: string; name?:
 
   return (
     <a
-      href={toDisplayUrl(photo)}
+      href={photoUrl}
       target="_blank"
       rel="noreferrer"
       className="shrink-0 rounded-full ring-1 ring-white/15 hover:ring-gold-500/60 transition-all"

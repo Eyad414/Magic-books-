@@ -5,7 +5,6 @@ import { useAuth } from '../../context/AuthContext';
 import MagicButton from '../common/MagicButton';
 import { ChevronRight, CreditCard, Package, Tag, Plus, MapPin } from 'lucide-react';
 import { publicApi } from '../../api/publicApi';
-import { toDisplayUrl } from '../../api/mediaUrl';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -80,7 +79,8 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
   const heroName = localizeName(childDetails.childName || '', storyConfig?.language);
 
   // Child photo rendered as the cover thumbnail in the order summary.
-  const coverPhoto = toDisplayUrl(childDetails.childPhotoUrl);
+  // Signed by the server at upload time — the bare object path is refused now.
+  const coverPhoto = childDetails.childPhotoDisplayUrl || '';
 
   // ── Shipping form (from old step 4) ──────────────────────────────────
   const [shippingForm, setShippingForm] = useState({
