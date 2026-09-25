@@ -4,6 +4,7 @@ import { seriesBadge, seriesCounts } from '../utils/series';
 import { adminApi } from '../api/adminApi';
 import { publicApi } from '../api/publicApi';
 import { objectPathToUrl } from '../api/mediaUrl';
+import { ChildAvatar } from '../components/admin/ChildAvatar';
 import { useNavigate, Link } from 'react-router-dom';
 import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail, User, Phone, Sparkles, AlertCircle, Search, Upload, Ticket } from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
@@ -2322,6 +2323,8 @@ export default function AdminDashboard() {
                                   <BookOpen className="w-3.5 h-3.5 text-gold-500/80" /> {t('admin.story_details')}
                                 </h4>
                                 <div className="flex items-center gap-2 flex-wrap">
+                                  {/* Who the book is actually for. */}
+                                  <ChildAvatar photo={order.storyId?.childPhotoUrl} name={order.storyId?.childName} />
                                   <span className="font-arabic text-gold-500 font-bold text-sm">{order.storyId?.childName || t('admin.no_name')}</span>
                                   <button
                                     type="button"
