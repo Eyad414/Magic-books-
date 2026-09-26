@@ -2633,7 +2633,10 @@ export default function AdminDashboard() {
                                 { n: behaviour.visitors, l: t('admin.f_visit', 'زار') },
                                 { n: behaviour.funnel?.stories ?? 0, l: t('admin.f_stories', 'شاف القصص') },
                                 { n: behaviour.funnel?.create ?? 0, l: t('admin.f_create', 'بلّش قصة') },
+                                { n: behaviour.funnel?.step2 ?? 0, l: t('admin.f_step2', 'اختار القصة') },
+                                { n: behaviour.funnel?.step3 ?? 0, l: t('admin.f_step3', 'كتب عنوانه') },
                                 { n: behaviour.funnel?.checkout ?? 0, l: t('admin.f_checkout', 'وصل الدفع') },
+                                { n: behaviour.funnel?.paid ?? 0, l: t('admin.f_paid', 'دفع') },
                               ].map((st, i) => (
                                 <div key={i} className="flex-1 text-center p-1.5 rounded-lg bg-black/20">
                                   <div className="font-arabic font-black text-gold-400 text-sm" dir="ltr">{st.n}</div>

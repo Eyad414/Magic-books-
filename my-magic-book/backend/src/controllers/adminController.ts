@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { toSignedProxyUrl } from '../services/ImageSigning';
+import { funnelStagesFor } from '../services/VisitFunnel';
 import User from '../models/User';
 import Story from '../models/Story';
 import Order from '../models/Order';
@@ -2244,16 +2245,22 @@ export const listVisits = async (req: Request, res: Response): Promise<void> => 
     let totalViews = 0;
     // A step counts once per VISITOR, not once per page view — otherwise
     // someone refreshing the wizard looks like ten people reaching it.
-    const reached = { stories: 0, create: 0, checkout: 0 };
+    //
+    // `checkout` tested for a `step-3`/`step-4` path that nothing had ever
+    // emitted, so it read 0 no matter what happened — it would have read 0 on
+    // a day every visitor paid. The wizard now reports each step, and the last
+    // stage counts the page you only ever see after paying.
+    const reached = { stories: 0, create: 0, step2: 0, step3: 0, checkout: 0, paid: 0 };
     for (const v of inWindow as any[]) {
       const paths: string[] = v.paths || [];
       totalViews += v.views || 0;
       if ((v.views || 0) > 1) multiPage++;
       const seen = new Set(paths);
       for (const p of seen) pageCount[p] = (pageCount[p] || 0) + 1;
-      if ([...seen].some((p) => p.startsWith('/stories'))) reached.stories++;
-      if ([...seen].some((p) => p.startsWith('/create'))) reached.create++;
-      if ([...seen].some((p) => /checkout|step-?3|step-?4/i.test(p))) reached.checkout++;
+      const stage = funnelStagesFor(seen);
+      for (const k of Object.keys(reached) as (keyof typeof reached)[]) {
+        if (stage[k]) reached[k]++;
+      }
     }
     const topPages = Object.entries(pageCount)
       .sort((a, b) => b[1] - a[1])

@@ -10,7 +10,7 @@ import RequireAuth from './components/common/RequireAuth';
 
 import { useEffect, useRef, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
-import { publicApi } from './api/publicApi';
+import { recordVisit } from './api/recordVisit';
 import { useAuth } from './context/AuthContext';
 import BirthdayPrompt from './components/common/BirthdayPrompt';
 
@@ -90,24 +90,10 @@ export default function App() {
     if (lastPath.current === path) return;
     lastPath.current = path;
 
-    let visitorId = localStorage.getItem('mmb_visitor');
-    if (!visitorId) {
-      visitorId = (crypto.randomUUID?.() || String(Math.random()).slice(2)) as string;
-      localStorage.setItem('mmb_visitor', visitorId);
-    }
-    publicApi
-      // Where they came from (the site, never the page they were on), and who
-      // they are — but only when they are signed in on this browser. A visitor
-      // who has not told us who they are stays anonymous.
-      .trackVisit(visitorId, path, {
-        referrer: document.referrer,
-        userId: user?.id,
-        lang: i18n.language.split('-')[0],
-        // The page reports its own width rather than the server reading a user
-        // agent — same answer, far less about the person.
-        device: window.innerWidth < 768 ? 'mobile' : 'desktop',
-      })
-      .catch(() => { /* a lost page view is not worth retrying */ });
+    // Where they came from, and who they are only when signed in on this
+    // browser; an anonymous visitor stays anonymous. The wizard reports its own
+    // steps separately — see recordVisit.
+    recordVisit(path, { userId: user?.id, lang: i18n.language.split('-')[0] });
     // Waits for auth so a signed-in visit carries its account rather than
     // landing anonymously a moment before the session resolves.
   }, [isLoading, user?.id, location.pathname]);

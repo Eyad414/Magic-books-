@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react';
 import { useStoryProgress } from '../context/StoryProgressContext';
+import { recordVisit } from '../api/recordVisit';
 import { usePageMeta } from '../hooks/usePageMeta';
 import Step1_ChildDetails from '../components/wizard/Step1_ChildDetails';
 import Step2_AI_Generator from '../components/wizard/Step2_AI_Generator';
@@ -19,8 +21,31 @@ export default function CreateStory() {
   // Clamp: a saved step from an older wizard (or a future one) must never render
   // an out-of-range slot. Payment is now step 4, so 4 is valid again.
   const currentStep = Math.min(Math.max(progress.currentStep || 1, 1), TOTAL_STEPS);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   usePageMeta(t('meta.create_title'), t('meta.create_desc'));
+
+  /**
+   * Report which step they are on.
+   *
+   * All four steps live at /create, so the router only ever recorded the
+   * landing: the dashboard could say someone started a story and never where
+   * they stopped — which is the only part that tells you what to fix. The
+   * funnel on the server was already written to look for `step-3`/`step-4`
+   * paths; nothing had ever emitted one.
+   *
+   * An admin reviewing pages is not a customer in a funnel, so they are left
+   * out rather than counted as demand.
+   */
+  const lastTracked = useRef<number | null>(null);
+  useEffect(() => {
+    if (isAdmin) return;
+    if (lastTracked.current === currentStep) return;
+    lastTracked.current = currentStep;
+    recordVisit(`/create/step-${currentStep}`, {
+      userId: user?.id,
+      lang: i18n.language.split('-')[0],
+    });
+  }, [currentStep, isAdmin, user?.id, i18n.language]);
 
   const STEPS = [
     { number: 1, label: t('wizard.step1_label'), emoji: '👶' },

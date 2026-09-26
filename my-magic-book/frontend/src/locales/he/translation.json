@@ -1208,7 +1208,10 @@
     "saved_files_failed": "לא ניתן להוריד את הקבצים",
     "save_folder_disabled": "הכינו קבצים תחילה",
     "save_folder_needs_files": "אין עדיין קבצי הדפסה — לחצו «הכנת קבצים מחדש» תחילה (חינם)",
-    "transfer_save": "שמור פרטי העברה"
+    "transfer_save": "שמור פרטי העברה",
+    "f_step2": "בחר סיפור",
+    "f_step3": "מילא כתובת",
+    "f_paid": "שילם"
   },
   "title_page": {
     "presents": "מוגש ל",
