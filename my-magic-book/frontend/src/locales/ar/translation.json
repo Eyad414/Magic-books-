@@ -1219,7 +1219,14 @@
     "print_interior": "الداخل",
     "print_cover": "الغلاف",
     "print_open_tab": "فتح في تبويب جديد",
-    "print_preview_loading": "جاري تحميل الملف… (ملف الداخل كبير، قد يأخذ لحظات)"
+    "print_preview_loading": "جاري تحميل الملف… (ملف الداخل كبير، قد يأخذ لحظات)",
+    "preview_btn": "معاينة الكتاب",
+    "preview_title": "معاينة الكتاب قبل الإرسال",
+    "preview_nothing": "لا يوجد كتاب بعد — اضغط «بناء الكتاب للمراجعة» أولاً",
+    "preview_pages": "الصفحات",
+    "preview_page": "صفحة",
+    "preview_page_cover": "الغلاف",
+    "preview_open_full": "فتح الصورة بالحجم الكامل"
   },
   "title_page": {
     "presents": "يُقدّم لـ",

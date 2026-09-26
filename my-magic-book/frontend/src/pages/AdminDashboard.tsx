@@ -5,7 +5,7 @@ import { adminApi } from '../api/adminApi';
 import { publicApi } from '../api/publicApi';
 import { objectPathToUrl } from '../api/mediaUrl';
 import { ChildAvatar } from '../components/admin/ChildAvatar';
-import { PrintPreview } from '../components/admin/PrintPreview';
+import { OrderPreview } from '../components/admin/OrderPreview';
 import { useNavigate, Link } from 'react-router-dom';
 import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail, User, Phone, Sparkles, AlertCircle, Search, Upload, Ticket, FileText} from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
@@ -2403,18 +2403,22 @@ export default function AdminDashboard() {
                                 print them. Sits before the send button because
                                 that is the order you want to do it in. */}
                             {(() => {
+                              // Open as soon as there is anything to judge: the
+                              // artwork exists the moment a book is built, well
+                              // before any print file does.
                               const hasFiles = !!(order.printInteriorUrl || order.printCoverUrl);
+                              const hasArt = !!(order.storyId?.generatedImages?.length || order.storyId?.generatedCover);
                               return (
                                 <ActionButton
                                   variant="ghost"
                                   icon={FileText}
                                   onClick={() => setPreviewOrder(order)}
-                                  disabled={!hasFiles}
-                                  title={hasFiles
-                                    ? t('admin.print_preview_title', 'معاينة ملفات الطباعة')
-                                    : t('admin.save_folder_needs_files', 'لا توجد ملفات طباعة بعد — اضغط «إعادة تجهيز الملفات» أولاً (مجاني)')}
+                                  disabled={!hasFiles && !hasArt}
+                                  title={hasFiles || hasArt
+                                    ? t('admin.preview_title', 'معاينة الكتاب قبل الإرسال')
+                                    : t('admin.preview_nothing', 'لا يوجد كتاب بعد — اضغط «بناء الكتاب للمراجعة» أولاً')}
                                 >
-                                  {t('admin.print_preview_btn', 'معاينة الطباعة')}
+                                  {t('admin.preview_btn', 'معاينة الكتاب')}
                                 </ActionButton>
                               );
                             })()}
@@ -4827,9 +4831,13 @@ export default function AdminDashboard() {
       </div>
       
       {previewOrder && (
-        <PrintPreview
+        <OrderPreview
           interior={previewOrder.printInteriorUrl}
           cover={previewOrder.printCoverUrl}
+          pages={[
+            previewOrder.storyId?.generatedCover,
+            ...(previewOrder.storyId?.generatedImages || []),
+          ].filter(Boolean)}
           childName={previewOrder.storyId?.childName}
           onClose={() => setPreviewOrder(null)}
         />

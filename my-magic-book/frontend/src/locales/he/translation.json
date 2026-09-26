@@ -1219,7 +1219,14 @@
     "print_interior": "פנים",
     "print_cover": "כריכה",
     "print_open_tab": "פתח בלשונית חדשה",
-    "print_preview_loading": "טוען את הקובץ… (קובץ הפנים גדול, ייקח רגע)"
+    "print_preview_loading": "טוען את הקובץ… (קובץ הפנים גדול, ייקח רגע)",
+    "preview_btn": "תצוגת הספר",
+    "preview_title": "תצוגה מקדימה של הספר לפני השליחה",
+    "preview_nothing": "אין עדיין ספר — לחצו תחילה על «בניית הספר לבדיקה»",
+    "preview_pages": "עמודים",
+    "preview_page": "עמוד",
+    "preview_page_cover": "כריכה",
+    "preview_open_full": "פתח את התמונה בגודל מלא"
   },
   "title_page": {
     "presents": "מוגש ל",
