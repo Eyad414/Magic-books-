@@ -63,6 +63,11 @@ function arg(name: string, fallback?: string): string {
   // generatedImages actually say; the id is only the default.
   const dir = arg('folder', `magic-fanoose/generated/${storyId}`);
   const imagePaths = Array.from({ length: pages }, (_, i) => `${dir}/page-${String(i + 1).padStart(2, '0')}.png`);
+  // A build that was OOM-killed partway uploads the pages and never gets to the
+  // back portrait, so page-99 is simply absent. prepareLibraryPrintFiles falls
+  // back to the cover in exactly that case (`backPath || coverPath`); this makes
+  // the same fallback reachable here instead of failing on "No such object".
+  const backPath = arg('back', `${dir}/page-99.png`);
 
   console.log(`\n=== ${code} — ${childName} / ${theme} (${pages} images) ===`);
   const t0 = Date.now();
@@ -72,7 +77,7 @@ function arg(name: string, fallback?: string): string {
     childGender,
     language,
     coverPath: `${dir}/page-00.png`,
-    backPath: `${dir}/page-99.png`,
+    backPath,
     imagePaths,
     childPhotoPath: childPhotoPath || undefined,
   });
