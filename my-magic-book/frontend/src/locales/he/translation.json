@@ -1211,7 +1211,15 @@
     "transfer_save": "שמור פרטי העברה",
     "f_step2": "בחר סיפור",
     "f_step3": "מילא כתובת",
-    "f_paid": "שילם"
+    "f_paid": "שילם",
+    "print_preview_btn": "תצוגת הדפסה",
+    "print_preview_title": "תצוגה מקדימה של קבצי ההדפסה",
+    "print_preview_note": "אלה בדיוק הקבצים שנשלחים ל-BookPod. בדקו אותם לפני השליחה — ההדפסה אמיתית ובתשלום.",
+    "print_preview_missing": "אין עדיין קובץ לחלק הזה — לחצו תחילה על «הכנה מחדש של הקבצים» (חינם).",
+    "print_interior": "פנים",
+    "print_cover": "כריכה",
+    "print_open_tab": "פתח בלשונית חדשה",
+    "print_preview_loading": "טוען את הקובץ… (קובץ הפנים גדול, ייקח רגע)"
   },
   "title_page": {
     "presents": "מוגש ל",

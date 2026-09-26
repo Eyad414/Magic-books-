@@ -1211,7 +1211,15 @@
     "transfer_save": "Save transfer details",
     "f_step2": "Picked a story",
     "f_step3": "Entered address",
-    "f_paid": "Paid"
+    "f_paid": "Paid",
+    "print_preview_btn": "Preview print",
+    "print_preview_title": "Print file preview",
+    "print_preview_note": "These are the exact files sent to BookPod. Check them before sending — the print is real and paid for.",
+    "print_preview_missing": "No file for this part yet — press \"Re-prepare files\" first (free).",
+    "print_interior": "Interior",
+    "print_cover": "Cover",
+    "print_open_tab": "Open in a new tab",
+    "print_preview_loading": "Loading the file… (the interior is large, this takes a moment)"
   },
   "title_page": {
     "presents": "Presented to",
