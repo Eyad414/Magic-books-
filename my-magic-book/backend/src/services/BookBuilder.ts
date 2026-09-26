@@ -577,7 +577,12 @@ export async function reRenderPrintFilesForOrder(orderId: string): Promise<IOrde
   if (!story) throw new Error(`Story ${order.storyId} for order ${orderId} not found`);
   // Render the child's name in the book's language for print (e.g. "Baha" -> "بهاء").
   story.childName = localizeName(story.childName, (story as any).language || 'ar');
-  if (!story.generatedCover || !story.generatedPortrait || !(story.generatedImages || []).length) {
+  // The back portrait is NOT required. buildPrintFilesForStory already falls
+  // back to the cover when it is missing (`generatedPortrait || generatedCover`),
+  // and a build that is OOM-killed uploads every page but dies before writing
+  // page-99 — so demanding it here locked those orders out of a free rebuild
+  // over a field the builder itself treats as optional.
+  if (!story.generatedCover || !(story.generatedImages || []).length) {
     throw new Error('cannot re-render files: this order has no generated illustrations yet — build it first');
   }
 

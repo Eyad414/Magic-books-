@@ -31,11 +31,17 @@ export async function buildPrintFilesForStory(
   opts: PrintBuildOpts
 ): Promise<PrintUrls> {
   const front = story.generatedCover;
-  const back = story.generatedPortrait;
   const images = story.generatedImages || [];
-  if (!front || !back || images.length === 0) {
-    throw new Error('cannot build print files: story is missing generatedCover/Portrait/Images');
+  if (!front || images.length === 0) {
+    throw new Error('cannot build print files: story is missing generatedCover/Images');
   }
+  // The back portrait may legitimately be absent: a build that is OOM-killed
+  // uploads every page and dies before it writes page-99. Refusing over it left
+  // those orders unable to produce print files at all, over the one image the
+  // book can do without — prepareLibraryPrintFiles has always fallen back to
+  // the cover for exactly this, and the result is still a proper back panel
+  // because the layout draws its own and uses the image only as an inset.
+  const back = story.generatedPortrait || front;
 
   const files = opts.isColoring
     ? await buildColoringPrintFiles({
