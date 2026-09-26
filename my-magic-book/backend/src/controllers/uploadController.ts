@@ -24,8 +24,7 @@ export const uploadChildPhoto = async (req: Request, res: Response): Promise<voi
 
     // The uploader is about to show this back to them, and the proxy will now
     // refuse the bare path — so hand over a signed URL with it.
-    const apiBase = `${req.protocol}://${req.get('host')}/api`;
-    res.json({ success: true, ...stored, displayUrl: toSignedProxyUrl(objectPath, apiBase) });
+    res.json({ success: true, ...stored, displayUrl: toSignedProxyUrl(objectPath) });
   } catch (err: any) {
     console.error('uploadChildPhoto failed:', err);
     res.status(500).json({ success: false, message: err.message });

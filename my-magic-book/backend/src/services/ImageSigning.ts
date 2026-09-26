@@ -72,13 +72,28 @@ export function verifyObject(objectPath: string, exp: unknown, sig: unknown): bo
 }
 
 /**
+ * Where this deploy is reachable from a browser.
+ *
+ * Deliberately NOT req.protocol: behind Render's proxy Express reports "http"
+ * unless the app trusts the proxy, and an http:// image on an https:// page is
+ * mixed content, which the browser blocks outright. Same resolution order the
+ * print pipeline already uses.
+ */
+export function publicApiBase(): string {
+  return (
+    process.env.PUBLIC_API_URL ||
+    (process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}/api` : 'http://localhost:5001/api')
+  ).replace(/\/$/, '');
+}
+
+/**
  * A ready-to-use proxy URL for a stored reference, signed when it needs to be.
  *
  * Accepts whatever the database holds — `gs://bucket/path` or a bare object
  * path — and returns '' for nothing, so a caller can hand the result straight
  * to an <img>.
  */
-export function toSignedProxyUrl(ref: string | undefined | null, apiBase: string): string {
+export function toSignedProxyUrl(ref: string | undefined | null, apiBase: string = publicApiBase()): string {
   if (!ref) return '';
   let objectPath = String(ref);
   if (objectPath.startsWith('gs://')) {

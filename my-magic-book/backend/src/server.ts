@@ -43,6 +43,11 @@ const corsAllowlist = (process.env.CORS_ORIGINS || '')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
+// Render terminates TLS and forwards, so without this req.ip is the proxy for
+// every visitor — which would make the upload limiter throttle all customers
+// together — and req.protocol reads "http" on an https site. One hop.
+app.set('trust proxy', 1);
+
 app.use(cors({
   origin: corsAllowlist.length ? corsAllowlist : true,
   credentials: true,

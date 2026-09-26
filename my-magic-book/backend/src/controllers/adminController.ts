@@ -109,9 +109,8 @@ export const getCustomerByEmail = async (req: Request, res: Response): Promise<v
 export const getAllStories = async (req: Request, res: Response): Promise<void> => {
   try {
     const stories = await Story.find().sort({ createdAt: -1 }).populate('userId', 'name email').lean();
-    const apiBase = `${req.protocol}://${req.get('host')}/api`;
     for (const story of stories as any[]) {
-      if (story.childPhotoUrl) story.childPhotoDisplayUrl = toSignedProxyUrl(story.childPhotoUrl, apiBase);
+      if (story.childPhotoUrl) story.childPhotoDisplayUrl = toSignedProxyUrl(story.childPhotoUrl);
     }
     res.json({ success: true, stories });
   } catch (error) {
@@ -924,10 +923,9 @@ export const getAllOrders = async (req: Request, res: Response): Promise<void> =
     // The proxy will not serve a child photo on the path alone any more, so
     // mint the signed URL here — the admin is entitled to it and this response
     // already carries the path.
-    const apiBase = `${req.protocol}://${req.get('host')}/api`;
     for (const order of orders as any[]) {
       if (order.storyId?.childPhotoUrl) {
-        order.storyId.childPhotoDisplayUrl = toSignedProxyUrl(order.storyId.childPhotoUrl, apiBase);
+        order.storyId.childPhotoDisplayUrl = toSignedProxyUrl(order.storyId.childPhotoUrl);
       }
     }
     res.json({ success: true, orders });
