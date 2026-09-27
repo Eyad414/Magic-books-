@@ -25,6 +25,7 @@ import { eidFirst } from './story19_eid';
 import { bigBrother } from './story20_bigbrother';
 import { alphabetAbc } from './story21_alphabet';
 import { arabicLetters } from './story22_arabicletters';
+import { littleVet } from './story23_littlevet';
 import { firstGrade } from './story16_firstgrade';
 import { firstDaySchool } from './story15_firstday';
 import { happyKindergarten } from './story14_kindergarten';
@@ -61,6 +62,7 @@ export const STORIES: StoryDefinition[] = [
   worldAdventure,
   deepSea,
   littleChef,
+  littleVet,
   littleEngineer,
   futureHero,
   ramadanFirst,

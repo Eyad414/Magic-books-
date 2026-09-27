@@ -478,7 +478,9 @@
     "theme_alphabet_abc": "English Alphabet A-Z",
     "theme_alphabet_abc_desc": "26 letters, your child on every page",
     "theme_alphabet_ar": "Arabic Alphabet ا-ي",
-    "theme_alphabet_ar_desc": "28 letters by family, your child on every page"
+    "theme_alphabet_ar_desc": "28 letters by family, your child on every page",
+    "theme_little_vet": "The Little Vet",
+    "theme_little_vet_desc": "A day at the clinic: gentleness, patience, and animals healed by their own hands"
   },
   "step3": {
     "title": "Customize Your Book",
@@ -1898,6 +1900,33 @@
         "10": "ك (kaaf) — كِتَاب, an open book on [NAME]'s knees.\nل (laam) — لَيْمُونَة, a yellow lemon on the table.",
         "11": "م (meem) — مَوْزَة, a yellow banana in [NAME]'s hand.\nن (noon) — نَحْلَة, a little bee flying around the blossom.",
         "12": "ه (haa) — هِلَال, a thin silver crescent in the night sky.\nو (waw) — وَرْدَة, a red rose in the vase.\nي (yaa) — يَد, and [NAME]'s small hand waving goodnight."
+      }
+    },
+    "little_vet": {
+      "title": "[NAME] the Little Vet",
+      "tagline": "A day at the clinic that makes a gentle heart",
+      "moral": "Kindness to an animal is medicine before any medicine, and patience is half the cure.",
+      "conclusion": "Well done, [NAME]! You are the little vet every animal trusts. 🐾✨",
+      "questions": [
+        "Why did the hero calm the kitten before treating her paw?",
+        "Would you have cleaned the wound first, or calmed the kitten?",
+        "Which animal would you most like to care for?"
+      ],
+      "dedication": "To [NAME], who is gentle with every small creature — this story is for you.",
+      "pages": {
+        "1": "On Saturday morning [NAME] put on the little white coat and walked into the animal clinic. Today [NAME] is the assistant vet!",
+        "2": "[NAME] washed both hands with soap and water, then laid the clean instruments out on the tray. A good doctor always starts with clean hands.",
+        "3": "The first patient arrived: a small kitten called Mishmish, holding up one front paw and mewing softly. [NAME] looked at her kindly and said, \\\"Don't be afraid, I'm here.\\\"",
+        "4": "Hero! On the LEFT there is warm water and cotton wool to clean the paw, and on the RIGHT a soft blanket to calm Mishmish first. Which do you choose?",
+        "5": "[NAME] chose to calm Mishmish first — wrapped her in the soft blanket and stroked her head until she settled and began to purr.",
+        "6": "Very gently, [NAME] cleaned the little wound with a piece of cotton wool. Mishmish never moved, because she felt safe.",
+        "7": "[NAME] wound a small clean bandage around Mishmish's paw. \\\"All done! You'll be fine by tomorrow.\\\"",
+        "8": "In the cage a hungry yellow canary is waiting to be fed. Hero! Can you find the BLUE FEEDING SYRINGE on the table?",
+        "9": "A little brown puppy came in with a sore ear. [NAME] placed the stethoscope on his chest and listened: tuk… tuk… a steady heartbeat. \\\"You are perfectly healthy!\\\"",
+        "10": "Then came a small bird with a bent wing. [NAME] made a tiny splint from padded card and fixed it on with great care.",
+        "11": "[NAME] drew a smiling sun on the chart and gave every animal a gold star for being brave.",
+        "12": "The owners came to collect their animals. [NAME] handed Mishmish back with her bandaged paw, proud of the day's work.",
+        "13": "At the end of the day [NAME] hung the white coat on its hook. Mishmish slept close by. [NAME] learned that kindness to an animal is medicine before any medicine."
       }
     }
   },
