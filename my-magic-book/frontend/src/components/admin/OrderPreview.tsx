@@ -36,6 +36,47 @@ function viewUrl(stored?: string): string {
 
 type Tab = 'pages' | 'interior' | 'cover';
 
+/**
+ * One page in the grid.
+ *
+ * The sized copy is an optimisation — fourteen ~1.5MB PNGs is 20MB of
+ * dashboard otherwise — but it is not worth a broken tile. If it fails for any
+ * reason the full image takes its place, which is the thing we actually wanted
+ * to show. That is not hypothetical: a stale cached redirect to an expired
+ * storage signature broke every thumbnail here while the originals were fine,
+ * and browsers held that cache entry long after the server stopped sending it.
+ */
+function PageThumb({ path, label }: { path: string; label: string }) {
+  const full = toDisplayUrl(path);
+  // 640, not 480: a tile is ~235px so this is the right size on a retina
+  // screen, and it also steps around the @480 urls that browsers cached for a
+  // day pointing at a storage signature that expired after two hours.
+  const [src, setSrc] = useState(() => toCardUrl(path, 640));
+  return (
+    <a
+      href={full}
+      target="_blank"
+      rel="noreferrer"
+      className="group block rounded-lg overflow-hidden border border-white/10 hover:border-gold-500/50 transition-all"
+      title={label}
+    >
+      {/* contain, not cover: this grid exists to check the artwork, and
+          cropping the page defeats that. */}
+      <img
+        src={src}
+        alt={label}
+        loading="lazy"
+        decoding="async"
+        onError={() => { if (src !== full) setSrc(full); }}
+        className="w-full aspect-square object-contain bg-black/20"
+      />
+      <div className="px-2 py-1 font-arabic text-[10px] text-white/50 group-hover:text-gold-400 text-center">
+        {label}
+      </div>
+    </a>
+  );
+}
+
 export interface OrderPreviewProps {
   interior?: string;
   cover?: string;
@@ -152,23 +193,11 @@ export function OrderPreview({ interior, cover, pages = [], childName, initialTa
             <div className="h-full overflow-y-auto p-3">
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3" dir="rtl">
                 {pages.map((p, i) => (
-                  <a
+                  <PageThumb
                     key={p + i}
-                    href={toDisplayUrl(p)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="group rounded-lg overflow-hidden border border-white/10 hover:border-gold-500/50 transition-all"
-                    title={t('admin.preview_open_full', 'فتح الصورة بالحجم الكامل')}
-                  >
-                    {/* Card-sized copies: each page is a ~1.5MB PNG and there
-                        are fourteen of them. The full image is one click away. */}
-                    {/* contain, not cover: this grid exists to check the
-                        artwork, and cropping the page defeats that. */}
-                    <img src={toCardUrl(p, 480)} alt="" loading="lazy" decoding="async" className="w-full aspect-square object-contain bg-black/20" />
-                    <div className="px-2 py-1 font-arabic text-[10px] text-white/50 group-hover:text-gold-400 text-center">
-                      {i === 0 ? t('admin.preview_page_cover', 'الغلاف') : `${t('admin.preview_page', 'صفحة')} ${i}`}
-                    </div>
-                  </a>
+                    path={p}
+                    label={i === 0 ? t('admin.preview_page_cover', 'الغلاف') : `${t('admin.preview_page', 'صفحة')} ${i}`}
+                  />
                 ))}
               </div>
             </div>
