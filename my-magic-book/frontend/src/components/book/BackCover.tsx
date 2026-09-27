@@ -10,21 +10,74 @@ interface BackCoverProps {
 }
 
 // "More adventures" teasers — three other stories the child can get next.
+//
+// Keyed by the REAL theme id, so a teaser can only point at a story that
+// exists. The old list offered "superhero", which is not a theme and never was:
+// children were being shown a book nobody can order.
+//
+// MUST stay in step with BACK_TEASERS in backend PrintService.ts — the printed
+// back cover is built there, and a customer who reads online then opens the
+// parcel should find the same three titles.
 const ALL_TEASERS = [
-  { id: 'space',     emoji: '🚀', fallback: 'في الفضاء' },
-  { id: 'school',    emoji: '🏫', fallback: 'في المدرسة' },
-  { id: 'zoo',       emoji: '🦁', fallback: 'في حديقة الحيوانات' },
-  { id: 'ocean',     emoji: '🌊', fallback: 'في أعماق المحيط' },
-  { id: 'dinosaurs', emoji: '🦖', fallback: 'في عالم الديناصورات' },
-  { id: 'world',     emoji: '🌍', fallback: 'حول العالم' },
-  { id: 'superhero', emoji: '⚡', fallback: 'بطلاً خارقاً' },
+  { id: 'space',              emoji: '🚀', fallback: 'في الفضاء' },
+  { id: 'school_hero',        emoji: '🏫', fallback: 'في المدرسة' },
+  { id: 'zoo_adventure',      emoji: '🦁', fallback: 'في حديقة الحيوانات' },
+  { id: 'ocean_adventure',    emoji: '🌊', fallback: 'في أعماق المحيط' },
+  { id: 'deep_sea',           emoji: '🐋', fallback: 'في أعماق البحر' },
+  { id: 'dinosaur_adventure', emoji: '🦕', fallback: 'مع الديناصورات' },
+  { id: 'world_adventure',    emoji: '🌍', fallback: 'حول العالم' },
+  { id: 'pirate_adventure',   emoji: '🏴', fallback: 'مع القراصنة والكنز' },
+  { id: 'magic_book',         emoji: '📖', fallback: 'في رحلة الكتاب السحري' },
+  { id: 'little_chef',        emoji: '🍳', fallback: 'في المطبخ' },
+  { id: 'little_engineer',    emoji: '🛠️', fallback: 'في عالم البناء' },
+  { id: 'castle_guardian',    emoji: '🏰', fallback: 'في القلعة التاريخية' },
+  { id: 'toy_city',           emoji: '🤖', fallback: 'في مدينة الألعاب' },
+  { id: 'future_hero',        emoji: '💼', fallback: 'في عالم المهن' },
+  { id: 'first_grade',        emoji: '✏️', fallback: 'في الصف الأول' },
+  { id: 'happy_kindergarten', emoji: '🧸', fallback: 'في الروضة' },
+  { id: 'big_brother',        emoji: '👶', fallback: 'مع المولود الجديد' },
+  { id: 'ramadan_first',      emoji: '🌙', fallback: 'في أول رمضان' },
+  { id: 'eid_first',          emoji: '🎁', fallback: 'في أول عيد' },
+  { id: 'jerusalem_tale',     emoji: '🕌', fallback: 'في القدس' },
+  { id: 'little_vet',         emoji: '🐾', fallback: 'في عيادة الحيوانات' },
 ];
-// Map the current story to the teaser id to drop, so we never recommend the same theme.
-const EXCLUDE: Record<string, string> = { zoo_adventure: 'zoo', space: 'space', school_hero: 'school', ocean_adventure: 'ocean', dinosaur_adventure: 'dinosaurs' };
+
+/** Colouring and photoreal variants share their parent's teaser. */
+const baseTheme = (t?: string) => String(t || '').replace(/_(coloring|real|photoreal)$/, '');
+
+/**
+ * Deterministic PRNG — the same one PrintService uses, seeded the same way.
+ *
+ * Stable, not merely random: reshuffling on every render would mean a reload
+ * silently changed which stories the book advertises, and the printed cover
+ * would disagree with the screen.
+ */
+function teaserRng(seedText: string): () => number {
+  let h = 2166136261;
+  for (let i = 0; i < seedText.length; i++) { h ^= seedText.charCodeAt(i); h = Math.imul(h, 16777619); }
+  let a = h >>> 0;
+  return () => {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function pickTeasers(currentStoryId: string, childName: string) {
+  const base = baseTheme(currentStoryId);
+  const pool = ALL_TEASERS.filter((t) => t.id !== base);
+  const rand = teaserRng(`${childName}|${base}`);
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, 3);
+}
 
 export default function BackCover({ childName, childPhoto, currentStoryId }: BackCoverProps) {
   const { t, i18n } = useTranslation();
-  const teasers = ALL_TEASERS.filter((tz) => tz.id !== (EXCLUDE[currentStoryId || ''] || '')).slice(0, 3);
+  const teasers = pickTeasers(currentStoryId || '', childName);
 
   return (
     <section className="book-page back-cover" aria-label={t('storybook.back_cover_aria', 'الغلاف الخلفي')} dir={i18n.dir()}>

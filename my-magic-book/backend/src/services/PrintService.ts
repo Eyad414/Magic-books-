@@ -59,23 +59,75 @@ function lanternDataUri(): string {
   return _lanternUri;
 }
 
-// "More adventures" teasers shown on the back cover (Arabic print). We drop the
-// teaser that matches the book's own theme so we never recommend the same story.
-const BACK_TEASERS = [
-  { id: 'space',  emoji: '🚀', ar: 'في الفضاء' },
-  { id: 'school', emoji: '🏫', ar: 'في المدرسة' },
-  { id: 'zoo',    emoji: '🦁', ar: 'في حديقة الحيوانات' },
-  { id: 'ocean',  emoji: '🌊', ar: 'في أعماق المحيط' },
-  { id: 'world',  emoji: '🌍', ar: 'حول العالم' },
+// "More adventures" teasers on the back cover.
+//
+// Keyed by the REAL theme id, so a teaser can only ever point at a story that
+// exists — the old list offered "superhero", which is not a theme and never
+// was, so some children were being sold a book that cannot be ordered.
+export const BACK_TEASERS = [
+  { theme: 'space',              emoji: '🚀',  ar: 'في الفضاء' },
+  { theme: 'school_hero',        emoji: '🏫',  ar: 'في المدرسة' },
+  { theme: 'zoo_adventure',      emoji: '🦁',  ar: 'في حديقة الحيوانات' },
+  { theme: 'ocean_adventure',    emoji: '🌊',  ar: 'في أعماق المحيط' },
+  { theme: 'deep_sea',           emoji: '🐋',  ar: 'في أعماق البحر' },
+  { theme: 'dinosaur_adventure', emoji: '🦕',  ar: 'مع الديناصورات' },
+  { theme: 'world_adventure',    emoji: '🌍',  ar: 'حول العالم' },
+  { theme: 'pirate_adventure',   emoji: '🏴',  ar: 'مع القراصنة والكنز' },
+  { theme: 'magic_book',         emoji: '📖',  ar: 'في رحلة الكتاب السحري' },
+  { theme: 'little_chef',        emoji: '🍳',  ar: 'في المطبخ' },
+  { theme: 'little_engineer',    emoji: '🛠️',  ar: 'في عالم البناء' },
+  { theme: 'castle_guardian',    emoji: '🏰',  ar: 'في القلعة التاريخية' },
+  { theme: 'toy_city',           emoji: '🤖',  ar: 'في مدينة الألعاب' },
+  { theme: 'future_hero',        emoji: '💼',  ar: 'في عالم المهن' },
+  { theme: 'first_grade',        emoji: '✏️',  ar: 'في الصف الأول' },
+  { theme: 'happy_kindergarten', emoji: '🧸',  ar: 'في الروضة' },
+  { theme: 'big_brother',        emoji: '👶',  ar: 'مع المولود الجديد' },
+  { theme: 'ramadan_first',      emoji: '🌙',  ar: 'في أول رمضان' },
+  { theme: 'eid_first',          emoji: '🎁',  ar: 'في أول عيد' },
+  { theme: 'jerusalem_tale',     emoji: '🕌',  ar: 'في القدس' },
+  { theme: 'little_vet',         emoji: '🐾',  ar: 'في عيادة الحيوانات' },
 ];
-const THEME_TEASER_EXCLUDE: Record<string, string> = {
-  zoo_adventure: 'zoo', zoo_coloring: 'zoo',
-  space: 'space', space_real: 'space', space_coloring: 'space',
-  school_coloring: 'school',
-};
-function pickTeasers(theme?: string) {
-  const drop = THEME_TEASER_EXCLUDE[theme || ''] || '';
-  return BACK_TEASERS.filter((t) => t.id !== drop).slice(0, 3);
+
+/** Colouring and photoreal variants share their parent's teaser. */
+function baseTheme(theme?: string): string {
+  return String(theme || '').replace(/_(coloring|real|photoreal)$/, '');
+}
+
+/**
+ * Deterministic PRNG so a given book always advertises the SAME three stories.
+ *
+ * It has to be stable, not merely random: the printed back cover is built here
+ * and the on-screen one in the browser, and a customer who reads the book
+ * online and then opens the parcel should not find three different titles. The
+ * seed is the child's name and the theme, which both sides have. Shuffling on
+ * every render would also mean a reload silently changed the book.
+ *
+ * The frontend's BackCover.tsx carries this same function and the same pool —
+ * keep them in step.
+ */
+export function teaserRng(seedText: string): () => number {
+  let h = 2166136261;
+  for (let i = 0; i < seedText.length; i++) { h ^= seedText.charCodeAt(i); h = Math.imul(h, 16777619); }
+  let a = h >>> 0;
+  return () => {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Three other stories, drawn at random from the whole catalogue but fixed per book. */
+export function pickTeasers(theme?: string, childName = '') {
+  const base = baseTheme(theme);
+  const pool = BACK_TEASERS.filter((t) => t.theme !== base);
+  const rand = teaserRng(`${childName}|${base}`);
+  // Fisher–Yates with the seeded generator
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, 3);
 }
 
 // ─── Print pipeline ──────────────────────────────────────────────────────────
@@ -625,7 +677,7 @@ function wraparoundDoc(a: WraparoundDocArgs): string {
   // on-screen back cover). Coloring keeps the simple full-bleed image + greeting.
   let backPanel: string;
   if (a.kind === 'story') {
-    const teasers = pickTeasers(a.theme).map((tz) => `
+    const teasers = pickTeasers(a.theme, a.childName).map((tz) => `
       <div class="bc-card">
         <div class="bc-thumb">${logo ? `<img class="bc-thumb-logo" src="${logo}" alt="" />` : ''}<span class="bc-emoji">${tz.emoji}</span></div>
         <div class="bc-card-title">${a.childName} ${tz.ar}</div>
