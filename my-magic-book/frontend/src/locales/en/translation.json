@@ -481,7 +481,7 @@
     "theme_alphabet_ar_desc": "28 letters by family, your child on every page",
     "theme_little_vet": "The Little Vet",
     "theme_little_vet_desc": "A day at the clinic: gentleness, patience, and animals healed by their own hands",
-    "theme_jerusalem_tale": "A Tale from Jerusalem",
+    "theme_jerusalem_tale": "A Tale in Jerusalem",
     "theme_jerusalem_tale_desc": "A day in the Old City with Teita: the market, the stone, the ka'ak and the embroidery"
   },
   "step3": {
@@ -1932,7 +1932,7 @@
       }
     },
     "jerusalem_tale": {
-      "title": "[NAME] and a Tale from Jerusalem",
+      "title": "[NAME] and a Tale in Jerusalem",
       "tagline": "A day in the Old City with Teita",
       "moral": "The city speaks to whoever listens, and a story is inherited the way stone is.",
       "conclusion": "Well done, [NAME]! You carried the city's story in your hand and in your heart. 🕌✨",

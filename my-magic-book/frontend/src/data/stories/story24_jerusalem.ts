@@ -1,6 +1,6 @@
 import type { StoryDefinition } from './types';
 
-// ─── A Tale from Jerusalem (حكاية من القدس) ──────────────────────────────────
+// ─── A Tale in Jerusalem (حكاية في القدس) ───────────────────────────────────
 // The child walks the Old City with تيتا. Written with the child alone or with
 // hands-only tradesmen in every frame and the crowd kept distant and out of
 // focus — a busy market is exactly where a pinned outfit collapses. Every sign
@@ -26,7 +26,7 @@ const AR_PAGES: string[] = [
 export const jerusalemTale: StoryDefinition = {
   id: 'jerusalem_tale',
   order: 24,
-  titleAr: 'حِكَايَةُ [NAME] مِنَ الْقُدْسِ',
+  titleAr: 'حِكَايَةُ [NAME] فِي الْقُدْسِ',
   taglineAr: 'يَوْمٌ فِي الْبَلْدَةِ الْقَدِيمَةِ مَعَ تِيتَا',
   moralAr: 'الْمَدِينَةُ تُحَدِّثُ مَنْ يُصْغِي إِلَيْهَا، وَالْحِكَايَةُ تُورَثُ كَمَا يُورَثُ الْحَجَرُ.',
   questionsAr: [
