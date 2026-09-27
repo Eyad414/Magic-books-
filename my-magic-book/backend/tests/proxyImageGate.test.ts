@@ -9,6 +9,8 @@ import { describe, it, expect, beforeAll, vi } from 'vitest';
  */
 
 vi.mock('../src/services/StorageService', () => ({
+  // the proxy derives its cache window from this, so the mock must carry it
+  READ_URL_TTL_MS: 2 * 60 * 60 * 1000,
   getFileBuffer: vi.fn(),
   uploadBuffer: vi.fn(),
   objectExists: vi.fn(),

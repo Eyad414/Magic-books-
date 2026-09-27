@@ -5,6 +5,21 @@ import { randomUUID } from 'crypto';
 import { uploadBuffer, pdfFolderPath, getReadSignedUrl, streamObject } from '../services/StorageService';
 
 import { isProtectedObject, verifyObject, toSignedProxyUrl } from '../services/ImageSigning';
+import { READ_URL_TTL_MS } from '../services/StorageService';
+
+/**
+ * How long a browser may cache a redirect to a derivative.
+ *
+ * A cached redirect is only as good as the signed url inside it, so this must
+ * stay comfortably under READ_URL_TTL_MS. It was a flat 86400 against a 7200
+ * second signature: for twenty-two of every twenty-four hours the browser
+ * replayed a redirect to a link that had already expired, and the image came
+ * back broken — the images themselves were fine the whole time.
+ *
+ * Half the signature's life means a cached hit always has at least half of it
+ * left when it is used.
+ */
+export const DERIVATIVE_MAX_AGE_S = Math.floor(READ_URL_TTL_MS / 1000 / 2);
 
 const PDF_FOLDER = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
 
@@ -92,10 +107,11 @@ export const proxyImage = async (req: Request, res: Response): Promise<void> => 
     // A derivative is immutable — its path carries the width, and regenerated
     // artwork lands on a fresh path — so it can be cached properly instead of
     // re-fetching the redirect every 30 seconds like the mutable original.
-    res.setHeader(
-      'Cache-Control',
-      servePath === objectPath ? 'private, max-age=30, must-revalidate' : 'private, max-age=86400'
-    );
+    // But see DERIVATIVE_MAX_AGE_S: it was cached for a DAY while the signed
+    // url inside it lived two hours, so every thumbnail in the admin broke a
+    // couple of hours after it was first looked at.
+    res.setHeader('Cache-Control',
+      servePath === objectPath ? 'private, max-age=30, must-revalidate' : `private, max-age=${DERIVATIVE_MAX_AGE_S}`);
     res.redirect(302, url);
   } catch (err: any) {
     console.error('proxyImage failed:', err);

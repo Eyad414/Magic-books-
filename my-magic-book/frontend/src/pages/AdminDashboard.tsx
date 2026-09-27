@@ -5,6 +5,7 @@ import { adminApi } from '../api/adminApi';
 import { publicApi } from '../api/publicApi';
 import { objectPathToUrl } from '../api/mediaUrl';
 import { ChildAvatar } from '../components/admin/ChildAvatar';
+import { createPortal } from 'react-dom';
 import { OrderPreview } from '../components/admin/OrderPreview';
 import { useNavigate, Link } from 'react-router-dom';
 import { Images, ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail, User, Phone, Sparkles, AlertCircle, Search, Upload, Ticket, FileText} from 'lucide-react';
@@ -4858,7 +4859,7 @@ export default function AdminDashboard() {
       )}
 
       {/* Story Editor Modal */}
-      {editingStory !== null && settings?.themes[editingStory] && (
+      {editingStory !== null && settings?.themes[editingStory] && createPortal((
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-dark-900/90 backdrop-blur-sm" onClick={() => setEditingStory(null)} />
           <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto glass-card p-8 border-gold-500/30 animate-scale-in">
@@ -4996,7 +4997,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-      )}
+      ), document.body)}
 
       {/* Customer profile modal — opened by clicking a message. */}
       {customer && (

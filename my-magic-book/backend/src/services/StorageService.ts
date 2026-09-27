@@ -37,11 +37,20 @@ async function makeSignedUrl(objectPath: string): Promise<string> {
  * BROWSER fetch the bytes directly from GCS, so the backend never needs outbound
  * access to Google Storage — which is geo-blocked from some hosting regions.
  */
+/**
+ * How long a signed read URL stays valid.
+ *
+ * Exported because anything that CACHES one of these urls has to cache it for
+ * less time than this — a cached redirect is only as good as the link inside
+ * it. See proxyImage.
+ */
+export const READ_URL_TTL_MS = 2 * 60 * 60 * 1000;
+
 export async function getReadSignedUrl(objectPath: string): Promise<string> {
   const [url] = await bucket.file(objectPath).getSignedUrl({
     version: 'v4',
     action: 'read',
-    expires: Date.now() + 2 * 60 * 60 * 1000, // 2 hours
+    expires: Date.now() + READ_URL_TTL_MS,
   });
   return url;
 }
