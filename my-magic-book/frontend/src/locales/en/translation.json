@@ -480,7 +480,9 @@
     "theme_alphabet_ar": "Arabic Alphabet ا-ي",
     "theme_alphabet_ar_desc": "28 letters by family, your child on every page",
     "theme_little_vet": "The Little Vet",
-    "theme_little_vet_desc": "A day at the clinic: gentleness, patience, and animals healed by their own hands"
+    "theme_little_vet_desc": "A day at the clinic: gentleness, patience, and animals healed by their own hands",
+    "theme_jerusalem_tale": "A Tale from Jerusalem",
+    "theme_jerusalem_tale_desc": "A day in the Old City with Teita: the market, the stone, the ka'ak and the embroidery"
   },
   "step3": {
     "title": "Customize Your Book",
@@ -1927,6 +1929,33 @@
         "11": "[NAME] drew a smiling sun on the chart and gave every animal a gold star for being brave.",
         "12": "The owners came to collect their animals. [NAME] handed Mishmish back with her bandaged paw, proud of the day's work.",
         "13": "At the end of the day [NAME] hung the white coat on its hook. Mishmish slept close by. [NAME] learned that kindness to an animal is medicine before any medicine."
+      }
+    },
+    "jerusalem_tale": {
+      "title": "[NAME] and a Tale from Jerusalem",
+      "tagline": "A day in the Old City with Teita",
+      "moral": "The city speaks to whoever listens, and a story is inherited the way stone is.",
+      "conclusion": "Well done, [NAME]! You carried the city's story in your hand and in your heart. 🕌✨",
+      "questions": [
+        "What did Teita say about the stone?",
+        "Would you have gone to the bakery or the coppersmiths' lane?",
+        "Which story would you keep in your pouch?"
+      ],
+      "dedication": "To [NAME], who listens to the stone and to people — this story is for you.",
+      "pages": {
+        "1": "On a golden morning, Teita took [NAME] by the hand and they stepped through an old stone gateway into the Old City of Jerusalem.",
+        "2": "The stone underfoot was worn smooth by centuries of footsteps. \"Every stone here keeps a story,\" said Teita.",
+        "3": "In the spice market the colours spilled everywhere: golden saffron, deep red sumac, green za'atar. [NAME] breathed in deeply and smiled.",
+        "4": "Hero! On the LEFT is the bakery with its rings of sesame ka'ak, and on the RIGHT the coppersmiths' lane. Which way do you choose?",
+        "5": "[NAME] chose the bakery first. The long ring of ka'ak came out warm, covered in golden sesame.",
+        "6": "[NAME] sat with Teita on worn stone steps, sharing the ka'ak, the za'atar and the laughter.",
+        "7": "A cat watches quietly from the wall. Hero! Can you see the BRASS LANTERN hanging right beside you?",
+        "8": "In the coppersmiths' lane, two skilled hands hammered a copper plate until it shone like the sun. Tak… tak… tak…",
+        "9": "Then they stopped before a black thobe embroidered with deep red thread. \"Every stitch here tells of a village,\" said Teita.",
+        "10": "In a tiny courtyard stood a lemon tree and white jasmine climbing the stone. [NAME] sat a moment and listened to the quiet.",
+        "11": "[NAME] and Teita climbed a narrow stair to the rooftop. Below them the domes and roofs stretched out in golden light.",
+        "12": "Teita drew out a small pouch embroidered in red: \"This is for you, [NAME] — to keep today's stories in.\"",
+        "13": "In the evening [NAME] walked out through the stone gateway, the pouch held tight. [NAME] learned that the city speaks to whoever listens to it."
       }
     }
   },
