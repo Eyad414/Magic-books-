@@ -33,22 +33,24 @@ function viewUrl(stored?: string): string {
   }
 }
 
+type Tab = 'pages' | 'interior' | 'cover';
+
 export interface OrderPreviewProps {
   interior?: string;
   cover?: string;
   /** The generated artwork: the cover image first, then each page. */
   pages?: string[];
   childName?: string;
+  /** Which tab to land on — the two buttons open the same modal, one each. */
+  initialTab?: Tab;
   onClose: () => void;
 }
 
-type Tab = 'pages' | 'interior' | 'cover';
-
-export function OrderPreview({ interior, cover, pages = [], childName, onClose }: OrderPreviewProps) {
+export function OrderPreview({ interior, cover, pages = [], childName, initialTab, onClose }: OrderPreviewProps) {
   const { t } = useTranslation();
-  // Start wherever there is something to look at: straight after a build the
-  // artwork exists and the PDFs do not.
-  const [tab, setTab] = useState<Tab>(pages.length ? 'pages' : 'interior');
+  // Whichever button was pressed, falling back to whatever exists: straight
+  // after a build the artwork exists and the PDFs do not.
+  const [tab, setTab] = useState<Tab>(initialTab || (pages.length ? 'pages' : 'interior'));
   // A print interior runs to about 17MB, which is several seconds of nothing
   // on a blank frame — long enough to read as broken and get clicked again.
   const [loading, setLoading] = useState(true);

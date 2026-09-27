@@ -7,7 +7,7 @@ import { objectPathToUrl } from '../api/mediaUrl';
 import { ChildAvatar } from '../components/admin/ChildAvatar';
 import { OrderPreview } from '../components/admin/OrderPreview';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail, User, Phone, Sparkles, AlertCircle, Search, Upload, Ticket, FileText} from 'lucide-react';
+import { Images, ShieldAlert, Users, Settings, BookOpen, UserPlus, Eye, Package, Clock, CheckCircle, Trash2, Download, RefreshCw, Mail, User, Phone, Sparkles, AlertCircle, Search, Upload, Ticket, FileText} from 'lucide-react';
 import MagicButton from '../components/common/MagicButton';
 import Modal from '../components/common/Modal';
 import ActionButton from '../components/common/ActionButton';
@@ -306,7 +306,7 @@ export default function AdminDashboard() {
 
   // The order whose print files are open for review, if any. Looking at what
   // is about to be printed should not require downloading it first.
-  const [previewOrder, setPreviewOrder] = useState<any>(null);
+  const [previewOrder, setPreviewOrder] = useState<{ order: any; tab: 'pages' | 'interior' } | null>(null);
 
   // Which theme id is currently generating AI preview photos (for the spinner).
   const [generatingThemeId, setGeneratingThemeId] = useState<string | null>(null);
@@ -2403,24 +2403,37 @@ export default function AdminDashboard() {
                                 print them. Sits before the send button because
                                 that is the order you want to do it in. */}
                             {(() => {
-                              // Open as soon as there is anything to judge: the
-                              // artwork exists the moment a book is built, well
-                              // before any print file does.
+                              // Two separate doors into the same review, because
+                              // they answer different questions and become
+                              // available at different times: the artwork exists
+                              // the moment a book is built, the PDFs only once
+                              // the files are prepared.
                               const hasFiles = !!(order.printInteriorUrl || order.printCoverUrl);
                               const hasArt = !!(order.storyId?.generatedImages?.length || order.storyId?.generatedCover);
-                              return (
+                              return (<>
                                 <ActionButton
                                   variant="ghost"
-                                  icon={FileText}
-                                  onClick={() => setPreviewOrder(order)}
-                                  disabled={!hasFiles && !hasArt}
-                                  title={hasFiles || hasArt
+                                  icon={Images}
+                                  onClick={() => setPreviewOrder({ order, tab: 'pages' })}
+                                  disabled={!hasArt}
+                                  title={hasArt
                                     ? t('admin.preview_title', 'معاينة الكتاب قبل الإرسال')
                                     : t('admin.preview_nothing', 'لا يوجد كتاب بعد — اضغط «بناء الكتاب للمراجعة» أولاً')}
                                 >
                                   {t('admin.preview_btn', 'معاينة الكتاب')}
                                 </ActionButton>
-                              );
+                                <ActionButton
+                                  variant="ghost"
+                                  icon={FileText}
+                                  onClick={() => setPreviewOrder({ order, tab: 'interior' })}
+                                  disabled={!hasFiles}
+                                  title={hasFiles
+                                    ? t('admin.print_preview_title', 'معاينة ملفات الطباعة')
+                                    : t('admin.save_folder_needs_files', 'لا توجد ملفات طباعة بعد — اضغط «إعادة تجهيز الملفات» أولاً (مجاني)')}
+                                >
+                                  {t('admin.print_preview_btn', 'معاينة الطباعة')}
+                                </ActionButton>
+                              </>);
                             })()}
                             <ActionButton
                               variant="magic"
@@ -4832,13 +4845,14 @@ export default function AdminDashboard() {
       
       {previewOrder && (
         <OrderPreview
-          interior={previewOrder.printInteriorUrl}
-          cover={previewOrder.printCoverUrl}
+          interior={previewOrder.order.printInteriorUrl}
+          cover={previewOrder.order.printCoverUrl}
           pages={[
-            previewOrder.storyId?.generatedCover,
-            ...(previewOrder.storyId?.generatedImages || []),
+            previewOrder.order.storyId?.generatedCover,
+            ...(previewOrder.order.storyId?.generatedImages || []),
           ].filter(Boolean)}
-          childName={previewOrder.storyId?.childName}
+          childName={previewOrder.order.storyId?.childName}
+          initialTab={previewOrder.tab}
           onClose={() => setPreviewOrder(null)}
         />
       )}
