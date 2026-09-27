@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, ExternalLink, FileText, BookOpen, Images } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { objectPathToUrl, toCardUrl, toDisplayUrl } from '../../api/mediaUrl';
@@ -58,38 +59,51 @@ export function OrderPreview({ interior, cover, pages = [], childName, initialTa
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    // The dashboard keeps scrolling behind an open sheet otherwise, which is
+    // disorienting when you come back out of it.
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
   }, [onClose]);
 
   const src = tab === 'pages' ? '' : viewUrl(tab === 'interior' ? interior : cover);
   useEffect(() => { setLoading(true); }, [src]);
   const has = { pages: pages.length > 0, interior: !!interior, cover: !!cover };
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-dark-900/90 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-5xl h-[90vh] flex flex-col glass-card p-4 border-gold-500/30 animate-scale-in">
+  // Rendered into <body>, not where it sits in the tree. The dashboard is full
+  // of .glass-card, and backdrop-filter makes an element a containing block for
+  // position:fixed descendants — so the sheet was being sized and positioned
+  // against a panel instead of the screen, which is why the navbar stayed lit
+  // above it and the backdrop never covered the page.
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5">
+      <div className="absolute inset-0 bg-dark-900/92 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative flex flex-col w-full h-full max-w-[1400px] glass-card p-3 sm:p-4 border-gold-500/30 animate-scale-in">
 
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <h2 className="font-arabic font-black text-white text-lg">
+        {/* One compact row: the title, the warning and the close button. Three
+            stacked blocks were eating the height the book needed. */}
+        <div className="flex items-center justify-between gap-3 mb-2.5">
+          <h2 className="font-arabic font-black text-white text-base sm:text-lg shrink-0">
             {t('admin.preview_title', 'معاينة الكتاب قبل الإرسال')}
             {childName && <span className="text-white/45 font-bold text-sm"> — {childName}</span>}
           </h2>
+          <span className="hidden md:block flex-1 truncate font-arabic text-amber-300 text-[11px] text-center px-3 py-1 rounded-lg bg-gold-500/10 border border-gold-500/20">
+            ⚠️ {t('admin.print_preview_note', 'هذه نفس الملفات التي تُرسل إلى BookPod للطباعة. راجعها قبل الإرسال — الطباعة حقيقية ومدفوعة.')}
+          </span>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-colors shrink-0"
             aria-label={t('common.close', 'إغلاق')}
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <p className="font-arabic text-white/50 text-xs mb-3 bg-gold-500/10 border border-gold-500/20 rounded-xl px-3 py-2">
-          ⚠️ {t('admin.print_preview_note', 'هذه نفس الملفات التي تُرسل إلى BookPod للطباعة. راجعها قبل الإرسال — الطباعة حقيقية ومدفوعة.')}
-        </p>
-
-        <div className="flex items-center gap-2 mb-3" dir="rtl">
+        <div className="flex items-center gap-2 mb-2.5 flex-wrap" dir="rtl">
           <button
             type="button"
             onClick={() => setTab('pages')}
@@ -184,6 +198,7 @@ export function OrderPreview({ interior, cover, pages = [], childName, initialTa
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
