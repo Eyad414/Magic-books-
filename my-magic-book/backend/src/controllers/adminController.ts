@@ -1398,6 +1398,14 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
     // photoreal/coloring endpoints already accepted an override; this one
     // didn't, which is the only reason it was hard to change.
     const referencePhoto: string = req.body?.referencePhoto || PREVIEW_REFERENCE_PHOTO;
+    // …and the same was true of the child's SEX, except there was no override
+    // at all: this endpoint hardcoded 'male' for the pages, the portrait AND
+    // the cover. It built every showcase book, so the demo generator could not
+    // produce a girl — which is why 24 of 25 showcase books star a boy, and why
+    // a customer told the owner the whole site is for boys. Not a choice anyone
+    // made: a literal impossibility. Defaults to male, so every existing demo
+    // regenerates exactly as before.
+    const childGender: 'male' | 'female' = req.body?.childGender === 'female' ? 'female' : 'male';
 
     // Pull the text from the theme's pages (text entries only).
     const textPages: string[] = (theme.pages || [])
@@ -1444,14 +1452,14 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
       // Falls back to the old text-derived prompt for themes with no template.
       const pageScene = sceneTplPages?.pageScenes?.[i];
       const prompt = pageScene
-        ? buildScenePrompt('page', pageScene, childName, 'male', {
+        ? buildScenePrompt('page', pageScene, childName, childGender, {
             medal: (sceneTplPages.medalPages || []).includes(i + 1),
           })
         : buildIllustrationPrompt({
             pageText: textPages[i] || textPages[textPages.length - 1] || `${childName} ${theme.label}`,
             childName,
             childAge: '5',
-            childGender: 'male',
+            childGender,
             theme: themeId,
             language: 'ar',
             pageNumber: i + 1,
@@ -1479,7 +1487,7 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
     try {
       if (coverOnly || pagesOnly || singlePage) throw new Error('__skip_portrait__');
       const portraitFinal = sceneTplPages?.portraitScene
-        ? buildScenePrompt('portrait', sceneTplPages.portraitScene, childName, 'male')
+        ? buildScenePrompt('portrait', sceneTplPages.portraitScene, childName, childGender)
         : portraitPrompt;
       const portrait = await generateIllustration(portraitFinal, referencePhoto, {
         storyId: `theme_${themeId}`,
@@ -1505,8 +1513,8 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
     const baseThemeId = themeId.replace(/_(real|photoreal|cartoon|pr|hd)$/, '');
     const sceneTpl: any = (SCENE_TEMPLATES as any)[themeId] || (SCENE_TEMPLATES as any)[baseThemeId];
     const coverPrompt = sceneTpl?.coverScene
-      ? buildScenePrompt('cover', sceneTpl.coverScene, childName, 'male')
-      : buildCoverPrompt({ childName, childGender: 'male', theme: themeId });
+      ? buildScenePrompt('cover', sceneTpl.coverScene, childName, childGender)
+      : buildCoverPrompt({ childName, childGender, theme: themeId });
     try {
       if (pagesOnly || singlePage || portraitOnly) throw new Error('__skip_cover__');
       const cover = await generateIllustration(coverPrompt, referencePhoto, {
