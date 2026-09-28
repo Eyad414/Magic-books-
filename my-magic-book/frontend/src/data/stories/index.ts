@@ -27,6 +27,9 @@ import { alphabetAbc } from './story21_alphabet';
 import { arabicLetters } from './story22_arabicletters';
 import { littleVet } from './story23_littlevet';
 import { jerusalemTale } from './story24_jerusalem';
+import { dabke } from './story25_dabke';
+import { jaffaDay } from './story26_jaffa';
+import { oudLesson } from './story27_oud';
 import { firstGrade } from './story16_firstgrade';
 import { firstDaySchool } from './story15_firstday';
 import { happyKindergarten } from './story14_kindergarten';
@@ -65,6 +68,9 @@ export const STORIES: StoryDefinition[] = [
   littleChef,
   littleVet,
   jerusalemTale,
+  dabke,
+  jaffaDay,
+  oudLesson,
   littleEngineer,
   futureHero,
   ramadanFirst,

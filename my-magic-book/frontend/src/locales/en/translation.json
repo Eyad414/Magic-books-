@@ -482,7 +482,13 @@
     "theme_little_vet": "The Little Vet",
     "theme_little_vet_desc": "A day at the clinic: gentleness, patience, and animals healed by their own hands",
     "theme_jerusalem_tale": "A Tale in Jerusalem",
-    "theme_jerusalem_tale_desc": "A day in the Old City with Teita: the market, the stone, the ka'ak and the embroidery"
+    "theme_jerusalem_tale_desc": "A day in the Old City with Teita: the market, the stone, the ka'ak and the embroidery",
+    "theme_dabke": "The Dabke",
+    "theme_dabke_desc": "Step by step until the line moves as one — a wedding, a drum, a handkerchief",
+    "theme_jaffa_day": "A Day in Jaffa",
+    "theme_jaffa_day_desc": "Dawn at the harbour with Grandfather: a net, some patience and an orange",
+    "theme_oud_lesson": "The Oud Lesson",
+    "theme_oud_lesson_desc": "A string, a rhythm and fingers learning patience until the tune arrives"
   },
   "step3": {
     "title": "Customize Your Book",
@@ -1970,6 +1976,87 @@
         "11": "[NAME] and Teita climbed a narrow stair to the rooftop. Below them the domes and roofs stretched out in golden light.",
         "12": "Teita drew out a small pouch embroidered in red: \"This is for you, [NAME] — to keep today's stories in.\"",
         "13": "In the evening [NAME] walked out through the stone gateway, the pouch held tight. [NAME] learned that the city speaks to whoever listens to it."
+      }
+    },
+    "dabke": {
+      "title": "[NAME] and the Dabke",
+      "tagline": "One step makes a whole line",
+      "moral": "Dabke is one line, never a single dancer.",
+      "conclusion": "Well done, [NAME]! You led the line with a white handkerchief. 💃✨",
+      "questions": [
+        "Why did the hero start at the end of the line?",
+        "What did they do after they tripped?",
+        "What would you like to learn together with other people?"
+      ],
+      "dedication": "To [NAME], who gets up after every stumble.",
+      "pages": {
+        "1": "From far off [NAME] heard a drum: dum… tak… dum… and ran towards the village square.",
+        "2": "In the square a line of dancers moved like one wave. [NAME] stood at the edge, longing to join.",
+        "3": "The dabke teacher crouched and held out a hand: \"Come — the line is not complete without you.\"",
+        "4": "Hero! On the LEFT is the END of the line, where it is easier to learn. On the RIGHT is the MIDDLE, where the rhythm is strongest. Where will you stand?",
+        "5": "[NAME] chose the end of the line, took a dancer's hand and watched the feet in front.",
+        "6": "One… two… three… and a stamp! [NAME] had learned the first step.",
+        "7": "The line rested a moment. Hero! Can you see the RED DRUM sitting right beside you?",
+        "8": "On the next try [NAME] tripped and sat down on the stone… then laughed, and got straight back up.",
+        "9": "That evening [NAME] practised alone in the courtyard until the step came without thinking.",
+        "10": "The wedding day came. Lights were strung above the square and the whole place filled with joy.",
+        "11": "[NAME] joined the line — and this time the feet knew the way on their own.",
+        "12": "Then the teacher handed over the white handkerchief: \"Lead the line, [NAME]!\" And up it went.",
+        "13": "Late that night [NAME] sat on the wall, tired and proud, and learned that dabke is one line — never a single dancer."
+      }
+    },
+    "jaffa_day": {
+      "title": "[NAME] and a Day in Jaffa",
+      "tagline": "Dawn at the harbour, and patience rewarded",
+      "moral": "The sea gives to whoever is patient with it.",
+      "conclusion": "Well done, [NAME]! You came back from the sea with a story. ⛵✨",
+      "questions": [
+        "Why did Grandfather say fishing is half patience?",
+        "Would you have chosen the net or the line?",
+        "What would you like to learn from your grandfather?"
+      ],
+      "dedication": "To [NAME], who loves the sea and the waiting.",
+      "pages": {
+        "1": "Before sunrise [NAME] stood on the quay of the old harbour of Jaffa. The boats rocked on pink water.",
+        "2": "[NAME] carried one end of the net and Grandfather the other, and they climbed into the little boat.",
+        "3": "The boat pulled away. The stone town grew small behind them, and the air was salty and cold.",
+        "4": "Hero! On the LEFT is the big net, on the RIGHT the thin fishing line. Which will you start with?",
+        "5": "[NAME] chose the net. Arms wide, [NAME] swung it out over the water just as Grandfather had shown.",
+        "6": "Then came the waiting. The sea lay still and gulls turned overhead. \"Fishing is half patience,\" said Grandfather.",
+        "7": "There is a lot of gear on deck. Hero! Can you find the ORANGE FLOAT beside you?",
+        "8": "[NAME] hauled the net in with Grandfather — and silver fish flashed in the mesh like stars!",
+        "9": "They came back to the quay with the crates full. [NAME] stood proud of the morning's work.",
+        "10": "On the quay stood a crate of Jaffa oranges. [NAME] took one, shining like a small sun.",
+        "11": "[NAME] sat on the sea wall and ate the orange. It was sweet, and the sea breathed below.",
+        "12": "Then Grandfather taught a sailor's knot: over… under… and pull. It worked on the third try.",
+        "13": "At sunset [NAME] walked home with a shell in hand, having learned that the sea gives to whoever is patient with it."
+      }
+    },
+    "oud_lesson": {
+      "title": "[NAME] and the Oud Lesson",
+      "tagline": "Sore fingers… and a tune is born",
+      "moral": "Beautiful things take time, and that time is never wasted.",
+      "conclusion": "Well done, [NAME]! You played your first whole tune. 🎵✨",
+      "questions": [
+        "What did the teacher say when the hero's fingers hurt?",
+        "Would you have started with the rhythm or the strings?",
+        "What have you practised until you got good at it?"
+      ],
+      "dedication": "To [NAME], who does not give up after one try.",
+      "pages": {
+        "1": "In the alley [NAME] heard a warm sound coming from a small shop, and stopped to listen. It was an oud.",
+        "2": "Inside, ouds hung along the wall as if waiting. \"Come in,\" said the teacher.",
+        "3": "[NAME] sat on the little stool and the teacher laid the oud across both knees. It was big… and beautiful.",
+        "4": "Hero! On the LEFT the plectrum and the strings, on the RIGHT the rhythm with an open palm. Which will you start with?",
+        "5": "[NAME] chose the rhythm first. Dum… tak… dum… and the wood began to answer back.",
+        "6": "Then came the string. [NAME] touched one — and the note rang out and filled the room!",
+        "7": "[NAME] rested a moment. Hero! Can you find the small PLECTRUM on the rug?",
+        "8": "After a while the fingertips hurt. [NAME] lowered the oud and said, \"I can't do it.\"",
+        "9": "The teacher smiled: \"Every player began with fingers that hurt. The fingers grow strong — the patience stays.\"",
+        "10": "At home [NAME] practised every evening, while the family listened from behind the door and said nothing.",
+        "11": "And one day the notes came out joined together for the first time. [NAME] had played a whole tune!",
+        "12": "At the little concert [NAME] played for the family. When the string fell silent, the clapping rose.",
+        "13": "[NAME] laid the oud gently back in its case, having learned that beautiful things take time — and that time is never wasted."
       }
     }
   },
