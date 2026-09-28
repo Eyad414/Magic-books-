@@ -2677,22 +2677,75 @@ export default function AdminDashboard() {
                               ))}
                             </div>
 
-                            <div className="flex items-center gap-1.5 mb-2" dir="rtl">
-                              {[
+                            {/* A funnel exists to answer one question: where
+                                do people leave? Seven equal tiles showed the
+                                counts and hid the answer — 19 → 6 → 3 is three
+                                numbers, but "68% left at the stories page" is a
+                                decision. Each stage is drawn to scale, and the
+                                worst drop is called out by name. */}
+                            {(() => {
+                              const f = behaviour.funnel || {};
+                              const stages = [
                                 { n: behaviour.visitors, l: t('admin.f_visit', 'زار') },
-                                { n: behaviour.funnel?.stories ?? 0, l: t('admin.f_stories', 'شاف القصص') },
-                                { n: behaviour.funnel?.create ?? 0, l: t('admin.f_create', 'بلّش قصة') },
-                                { n: behaviour.funnel?.step2 ?? 0, l: t('admin.f_step2', 'اختار القصة') },
-                                { n: behaviour.funnel?.step3 ?? 0, l: t('admin.f_step3', 'كتب عنوانه') },
-                                { n: behaviour.funnel?.checkout ?? 0, l: t('admin.f_checkout', 'وصل الدفع') },
-                                { n: behaviour.funnel?.paid ?? 0, l: t('admin.f_paid', 'دفع') },
-                              ].map((st, i) => (
-                                <div key={i} className="flex-1 text-center p-1.5 rounded-lg bg-black/20">
-                                  <div className="font-arabic font-black text-gold-400 text-sm" dir="ltr">{st.n}</div>
-                                  <div className="font-arabic text-white/45 text-[10px] leading-tight">{st.l}</div>
+                                { n: f.stories ?? 0, l: t('admin.f_stories', 'شاف القصص') },
+                                { n: f.create ?? 0, l: t('admin.f_create', 'بلّش قصة') },
+                                { n: f.step2 ?? 0, l: t('admin.f_step2', 'اختار القصة') },
+                                { n: f.step3 ?? 0, l: t('admin.f_step3', 'كتب عنوانه') },
+                                { n: f.checkout ?? 0, l: t('admin.f_checkout', 'وصل الدفع') },
+                                { n: f.paid ?? 0, l: t('admin.f_paid', 'دفع') },
+                              ];
+                              const top = stages[0].n || 0;
+                              // Where the most PEOPLE are lost, not the worst
+                              // percentage. By share the final step always wins
+                              // while nobody pays — 1 of 1 is −100% and tells
+                              // you nothing. Losing 13 of 19 at the stories page
+                              // is the thing worth fixing.
+                              let worst = -1, worstLost = 0;
+                              for (let i = 1; i < stages.length; i++) {
+                                const lost = stages[i - 1].n - stages[i].n;
+                                if (lost > worstLost) { worstLost = lost; worst = i; }
+                              }
+                              return (
+                                <div className="mb-2 space-y-0.5" dir="rtl">
+                                  {stages.map((st, i) => {
+                                    const share = top > 0 ? (st.n / top) * 100 : 0;
+                                    const before = i > 0 ? stages[i - 1].n : 0;
+                                    const lost = i > 0 ? before - st.n : 0;
+                                    const lostPct = before > 0 ? Math.round((lost / before) * 100) : 0;
+                                    return (
+                                      <div key={i}>
+                                        {i > 0 && lost > 0 && (
+                                          <div className={`flex items-center gap-1 pr-[92px] py-0.5 font-arabic text-[10px] ${
+                                            i === worst ? 'text-red-300 font-bold' : 'text-white/25'}`}>
+                                            <span dir="ltr">↓ −{lostPct}%</span>
+                                            {i === worst && (
+                                              <span>{t('admin.f_worst', '← أكبر تسرّب')}</span>
+                                            )}
+                                          </div>
+                                        )}
+                                        <div className="flex items-center gap-2">
+                                          <span className="w-[88px] shrink-0 font-arabic text-white/55 text-[11px] text-left">{st.l}</span>
+                                          <div className="flex-1 h-5 rounded-md bg-black/25 overflow-hidden relative">
+                                            <div
+                                              className={`h-full rounded-md transition-all ${
+                                                i === stages.length - 1 && st.n > 0 ? 'bg-emerald-500/70'
+                                                : st.n === 0 ? 'bg-white/10' : 'bg-gold-500/60'}`}
+                                              style={{ width: `${Math.max(share, st.n > 0 ? 6 : 0)}%` }}
+                                            />
+                                            <span className="absolute inset-y-0 right-2 flex items-center font-arabic font-black text-white text-[11px]" dir="ltr">
+                                              {st.n}
+                                            </span>
+                                          </div>
+                                          <span className="w-9 shrink-0 font-arabic text-white/35 text-[10px] text-right" dir="ltr">
+                                            {top > 0 ? Math.round(share) : 0}%
+                                          </span>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
-                              ))}
-                            </div>
+                              );
+                            })()}
 
                             {behaviour.topPages?.length > 0 && (
                               <div className="flex flex-wrap gap-1">

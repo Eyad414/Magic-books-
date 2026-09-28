@@ -1253,7 +1253,8 @@
     "coupon_spent": "נוצל",
     "coupon_kind": "סוג ההנחה",
     "coupon_value_label": "אחוז %",
-    "coupon_uses_label": "מספר שימושים"
+    "coupon_uses_label": "מספר שימושים",
+    "f_worst": "← הנשירה הגדולה"
   },
   "title_page": {
     "presents": "מוגש ל",

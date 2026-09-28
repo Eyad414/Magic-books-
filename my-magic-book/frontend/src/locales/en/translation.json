@@ -1253,7 +1253,8 @@
     "coupon_spent": "Used up",
     "coupon_kind": "Discount type",
     "coupon_value_label": "Percent %",
-    "coupon_uses_label": "Uses allowed"
+    "coupon_uses_label": "Uses allowed",
+    "f_worst": "← biggest drop"
   },
   "title_page": {
     "presents": "Presented to",

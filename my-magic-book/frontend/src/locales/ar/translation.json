@@ -1253,7 +1253,8 @@
     "coupon_spent": "انتهى",
     "coupon_kind": "نوع الخصم",
     "coupon_value_label": "النسبة ٪",
-    "coupon_uses_label": "عدد الاستخدامات"
+    "coupon_uses_label": "عدد الاستخدامات",
+    "f_worst": "← أكبر تسرّب"
   },
   "title_page": {
     "presents": "يُقدّم لـ",
