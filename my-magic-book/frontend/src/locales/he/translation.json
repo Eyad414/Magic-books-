@@ -1254,7 +1254,11 @@
     "coupon_kind": "סוג ההנחה",
     "coupon_value_label": "אחוז %",
     "coupon_uses_label": "מספר שימושים",
-    "f_worst": "← הנשירה הגדולה"
+    "f_worst": "← הנשירה הגדולה",
+    "jobs_stat_total": "משלוחים",
+    "jobs_stat_ready": "מוכן למסירה",
+    "jobs_stat_unpaid": "ממתין לתשלום",
+    "jobs_stat_cancelled": "מבוטלים"
   },
   "title_page": {
     "presents": "מוגש ל",

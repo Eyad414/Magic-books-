@@ -1254,7 +1254,11 @@
     "coupon_kind": "Discount type",
     "coupon_value_label": "Percent %",
     "coupon_uses_label": "Uses allowed",
-    "f_worst": "← biggest drop"
+    "f_worst": "← biggest drop",
+    "jobs_stat_total": "sends",
+    "jobs_stat_ready": "ready for delivery",
+    "jobs_stat_unpaid": "awaiting payment",
+    "jobs_stat_cancelled": "cancelled"
   },
   "title_page": {
     "presents": "Presented to",

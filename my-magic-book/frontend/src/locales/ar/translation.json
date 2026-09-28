@@ -1254,7 +1254,11 @@
     "coupon_kind": "نوع الخصم",
     "coupon_value_label": "النسبة ٪",
     "coupon_uses_label": "عدد الاستخدامات",
-    "f_worst": "← أكبر تسرّب"
+    "f_worst": "← أكبر تسرّب",
+    "jobs_stat_total": "إرسالية",
+    "jobs_stat_ready": "جاهز للتسليم",
+    "jobs_stat_unpaid": "بانتظار الدفع",
+    "jobs_stat_cancelled": "ملغاة"
   },
   "title_page": {
     "presents": "يُقدّم لـ",

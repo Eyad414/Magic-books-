@@ -4669,79 +4669,105 @@ export default function AdminDashboard() {
                         </div>
                       )}
 
-                      <div className="space-y-1">
-                        {printJobs
-                          .filter((j: any) => !(hideCancelledJobs && j.bookpodStatus === 'CANCELLED'))
-                          .slice(0, showAllJobs ? undefined : 8)
-                          .map((j: any) => (
-                          <div key={j._id} className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-arabic text-white/60">
-                            <span className="text-white/35" dir="ltr">{new Date(j.sentAt || j.createdAt).toLocaleDateString()}</span>
-                            <span className="text-white/85 truncate max-w-[45%]">{j.title}</span>
-                            {j.bookpodJobId && (
-                              <span className="px-1.5 py-0.5 rounded bg-magic-500/20 text-magic-200" dir="ltr">#{j.bookpodJobId}</span>
-                            )}
-                            {j.quantity > 1 && <span className="text-white/40">× {j.quantity}</span>}
-                            {/* Every job so far died unpaid, so the payment is
-                                the action this row is actually for — but only
-                                where paying is possible at all. BookPod refuses
-                                a cancelled order (409, "cannot be paid in its
-                                current state"), so offering the button there
-                                asks the owner to type card details for nothing.
-                                A cancelled job needs re-sending, not paying. */}
-                            {j.bookpodJobId && !j.paymentReference
-                              && j.bookpodStatus !== 'PAID'
-                              && j.bookpodStatus !== 'CANCELLED' && (
-                              <button
-                                type="button"
-                                onClick={() => { setPayJob(j); setPayStuck(null); }}
-                                className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 hover:bg-emerald-500/30 text-[10px] font-arabic"
-                              >
-                                💳 {t('admin.pay_btn', 'ادفع')}
-                              </button>
-                            )}
-                            {j.paymentReference && (
-                              <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-200 text-[10px]" dir="ltr" title={t('admin.pay_ref', 'رقم الفاتورة')}>
-                                ✓ {j.paymentReference}
-                              </span>
-                            )}
-                            {j.coverSource && (
-                              <span className="text-white/40">
-                                {j.coverSource === 'page-1'
-                                  ? t('admin.sent_cover_page1', 'الغلاف: الصفحة ١')
-                                  : t('admin.sent_cover_own', 'الغلاف: ملف منفصل')}
-                              </span>
-                            )}
-                            {/* BookPod's own word on the job, so a cancelled
-                                send is never mistaken for one in progress. */}
-                            {/* A send that never reached BookPod is the one
-                                worth seeing first, not hiding. */}
-                            {j.failed && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-300" title={j.error || ''}>
-                                {t('admin.sent_failed', 'لم يصل — فشل الإرسال')}
-                              </span>
-                            )}
-                            {j.bookpodStatus && (
-                              <span
-                                className={`text-[10px] px-1.5 py-0.5 rounded ${
-                                  j.bookpodStatus === 'CANCELLED'
-                                    ? 'bg-red-500/15 text-red-300/80'
-                                    : j.bookpodStatus === 'READY_FOR_DELIVERY'
-                                      ? 'bg-emerald-500/15 text-emerald-300/80'
-                                      : 'bg-white/10 text-white/45'
-                                }`}
-                                dir="ltr"
-                                title={
-                                  j.bookpodStatus === 'CANCELLED'
-                                    ? t('admin.cancelled_hint', 'طلب ملغى عند BookPod — لا يقبل الدفع. أعد إرساله لتحصل على رقم طلب جديد.')
-                                    : ''
-                                }
-                              >
-                                {String(j.bookpodStatus).replace(/_/g, ' ').toLowerCase()}
-                              </span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
+                      {/* A summary first, then one card per send. The flat
+                          text rows made a cancelled test look identical to the
+                          one job that actually reached the printer. */}
+                      {(() => {
+                        const shown = printJobs.filter((j: any) => !(hideCancelledJobs && j.bookpodStatus === 'CANCELLED'));
+                        const list = showAllJobs ? shown : shown.slice(0, 8);
+                        const n = (f: (j: any) => boolean) => printJobs.filter(f).length;
+                        return (
+                          <>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3" dir="rtl">
+                              {[
+                                { v: printJobs.length, l: t('admin.jobs_stat_total', 'إرسالية'), tone: 'text-white' },
+                                { v: n((j) => j.bookpodStatus === 'READY_FOR_DELIVERY'), l: t('admin.jobs_stat_ready', 'جاهز للتسليم'), tone: 'text-emerald-300' },
+                                { v: n((j) => !!j.bookpodJobId && !j.paymentReference && j.bookpodStatus !== 'PAID' && j.bookpodStatus !== 'CANCELLED'), l: t('admin.jobs_stat_unpaid', 'بانتظار الدفع'), tone: 'text-amber-300' },
+                                { v: n((j) => j.bookpodStatus === 'CANCELLED'), l: t('admin.jobs_stat_cancelled', 'ملغاة'), tone: 'text-white/40' },
+                              ].map((x, i) => (
+                                <div key={i} className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-center">
+                                  <div className={`font-arabic font-black text-lg ${x.tone}`} dir="ltr">{x.v}</div>
+                                  <div className="font-arabic text-white/40 text-[10px]">{x.l}</div>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="space-y-1.5">
+                              {list.map((j: any) => {
+                                const cancelled = j.bookpodStatus === 'CANCELLED';
+                                const ready = j.bookpodStatus === 'READY_FOR_DELIVERY';
+                                const payable = j.bookpodJobId && !j.paymentReference && j.bookpodStatus !== 'PAID' && !cancelled;
+                                return (
+                                  <div
+                                    key={j._id}
+                                    className={`relative overflow-hidden rounded-xl border ps-3 pe-2.5 py-2 ${
+                                      j.failed ? 'bg-red-500/[0.07] border-red-500/35'
+                                      : cancelled ? 'bg-white/[0.03] border-white/10 opacity-60'
+                                      : ready ? 'bg-emerald-500/[0.06] border-emerald-500/25'
+                                      : 'bg-white/5 border-white/12'}`}
+                                  >
+                                    {/* a colour rail, so the state reads before any text does */}
+                                    <span className={`absolute inset-y-0 end-0 w-1 ${
+                                      j.failed ? 'bg-red-400' : cancelled ? 'bg-white/15' : ready ? 'bg-emerald-400' : 'bg-amber-400/70'}`} />
+
+                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                      <span className="font-arabic text-white/90 text-xs font-bold truncate max-w-[55%]">{j.title}</span>
+                                      {j.bookpodJobId && (
+                                        <span className="px-1.5 py-0.5 rounded bg-magic-500/20 text-magic-200 text-[10px]" dir="ltr">#{j.bookpodJobId}</span>
+                                      )}
+                                      {j.quantity > 1 && <span className="font-arabic text-white/40 text-[10px]">× {j.quantity}</span>}
+                                      <span className="font-arabic text-white/30 text-[10px] ms-auto" dir="ltr">
+                                        {new Date(j.sentAt || j.createdAt).toLocaleDateString()}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+                                      {j.failed && (
+                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 font-arabic" title={j.error || ''}>
+                                          {t('admin.sent_failed', 'لم يصل — فشل الإرسال')}
+                                        </span>
+                                      )}
+                                      {j.bookpodStatus && (
+                                        <span
+                                          className={`text-[10px] px-1.5 py-0.5 rounded font-arabic ${
+                                            cancelled ? 'bg-red-500/15 text-red-300/80'
+                                            : ready ? 'bg-emerald-500/15 text-emerald-300/80'
+                                            : 'bg-amber-500/15 text-amber-200/80'}`}
+                                          dir="ltr"
+                                          title={cancelled ? t('admin.cancelled_hint', 'طلب ملغى عند BookPod — لا يقبل الدفع. أعد إرساله لتحصل على رقم طلب جديد.') : ''}
+                                        >
+                                          {String(j.bookpodStatus).replace(/_/g, ' ').toLowerCase()}
+                                        </span>
+                                      )}
+                                      {j.paymentReference && (
+                                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-200 text-[10px]" dir="ltr" title={t('admin.pay_ref', 'رقم الفاتورة')}>
+                                          ✓ {j.paymentReference}
+                                        </span>
+                                      )}
+                                      {j.coverSource && (
+                                        <span className="font-arabic text-white/35 text-[10px]">
+                                          {j.coverSource === 'page-1'
+                                            ? t('admin.sent_cover_page1', 'الغلاف: الصفحة ١')
+                                            : t('admin.sent_cover_own', 'الغلاف: ملف منفصل')}
+                                        </span>
+                                      )}
+                                      {payable && (
+                                        <button
+                                          type="button"
+                                          onClick={() => { setPayJob(j); setPayStuck(null); }}
+                                          className="ms-auto px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 hover:bg-emerald-500/30 text-[10px] font-arabic font-bold"
+                                        >
+                                          💳 {t('admin.pay_btn', 'ادفع')}
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
