@@ -508,7 +508,8 @@ html.highlight-links a {
   .text-amber-300 { color: rgb(146 64 14); }
   .text-blue-400, .text-blue-300, .text-blue-200\/70 { color: rgb(29 78 216); }
   .text-emerald-200 { color: rgb(4 120 87); }
-  .text-amber-200, .text-amber-200\/70, .text-amber-200\/80, .text-amber-100 { color: rgb(146 64 14); }
+  .text-amber-200, .text-amber-200\/70, .text-amber-200\/80, .text-amber-200\/90,
+  .text-amber-100 { color: rgb(146 64 14); }
   .text-red-200, .text-red-100\/80 { color: rgb(185 28 28); }
   .text-magic-200, .text-magic-100 { color: rgb(var(--c-magic-text)); }
 

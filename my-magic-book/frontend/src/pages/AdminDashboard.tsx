@@ -2793,42 +2793,93 @@ export default function AdminDashboard() {
                           {t('admin.visits_count', '{{n}} زيارة', { n: visits.length })}
                           {visits.length >= 200 && ` · ${t('admin.visits_capped', 'أول ٢٠٠')}`}
                         </p>
-                        <div className="space-y-1.5 max-h-[26rem] overflow-y-auto pe-1">
-                          {visits.map((v: any, i: number) => (
-                            <div key={i} className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] font-arabic text-white/55">
-                              {/* The day, then the time. Over a range the time
-                                  alone says nothing about which visit this was. */}
-                              <span className="text-white/45 font-bold" dir="ltr">{v.day}</span>
-                              <span className="text-white/35" dir="ltr">
-                                {new Date(v.lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
-                              {v.who ? (
-                                <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-200">
-                                  {v.who.name || v.who.email}
-                                </span>
-                              ) : (
-                                <span className="px-1.5 py-0.5 rounded bg-white/10 text-white/50">
-                                  {t('admin.visits_anon', 'زائر بدون حساب')}
-                                </span>
-                              )}
-                              <span className="text-white/40">{t('admin.visits_from', 'من')}: {v.source}</span>
-                              {v.device && <span className="text-white/40">{v.device === 'mobile' ? '📱' : '💻'}</span>}
-                              {v.lang && <span className="text-white/35 uppercase" dir="ltr">{v.lang}</span>}
-                              {v.returning && (
-                                <span className="px-1.5 py-0.5 rounded bg-magic-500/20 text-magic-200">
-                                  {t('admin.visits_returning', 'رجع مرة ثانية')}
-                                </span>
-                              )}
-                              <span className="text-white/40">
-                                {t('admin.visits_pages', '{{n}} صفحة', { n: v.views })}
-                              </span>
-                              {v.paths?.length > 0 && (
-                                <span className="text-white/30 truncate max-w-[45%]" dir="ltr" title={v.paths.join(' → ')}>
-                                  {v.paths.slice(-3).join(' → ')}
-                                </span>
-                              )}
-                            </div>
-                          ))}
+                        <div className="space-y-1.5 max-h-[30rem] overflow-y-auto pe-1">
+                          {visits.map((v: any, i: number) => {
+                            // How far this one actually got. The trail was the
+                            // most useful thing on the row and was truncated to
+                            // three greyed-out entries at the end of a line —
+                            // so a visitor who reached the payment step looked
+                            // exactly like one who loaded the home page and left.
+                            const paths: string[] = v.paths || [];
+                            const hit = (re: RegExp) => paths.some((p) => re.test(p));
+                            const depth =
+                              hit(/\/order\/success/) ? 6
+                              : hit(/checkout|step-?4/i) ? 5
+                              : hit(/step-?3/i) ? 4
+                              : hit(/step-?2/i) ? 3
+                              : paths.some((p) => p.startsWith('/create')) ? 2
+                              : paths.some((p) => p.startsWith('/stories')) ? 1
+                              : 0;
+                            const STEP = [
+                              { l: t('admin.f_visit', 'زار'), c: 'bg-white/10 text-white/45', rail: 'bg-white/10' },
+                              { l: t('admin.f_stories', 'شاف القصص'), c: 'bg-white/10 text-white/55', rail: 'bg-white/20' },
+                              { l: t('admin.f_create', 'بلّش قصة'), c: 'bg-gold-500/20 text-gold-300', rail: 'bg-gold-500/60' },
+                              { l: t('admin.f_step2', 'اختار القصة'), c: 'bg-gold-500/20 text-gold-300', rail: 'bg-gold-500/70' },
+                              { l: t('admin.f_step3', 'كتب عنوانه'), c: 'bg-amber-500/20 text-amber-200', rail: 'bg-amber-400' },
+                              { l: t('admin.f_checkout', 'وصل الدفع'), c: 'bg-amber-500/25 text-amber-100', rail: 'bg-amber-300' },
+                              { l: t('admin.f_paid', 'دفع'), c: 'bg-emerald-500/25 text-emerald-200', rail: 'bg-emerald-400' },
+                            ][depth];
+                            const notable = depth >= 2;
+                            return (
+                              <div
+                                key={i}
+                                className={`relative overflow-hidden rounded-xl border ps-2.5 pe-2 py-2 ${
+                                  notable ? 'bg-white/[0.06] border-white/15' : 'bg-white/[0.02] border-white/8'}`}
+                              >
+                                {/* the rail says how far they got before any text does */}
+                                <span className={`absolute inset-y-0 end-0 w-1 ${STEP.rail}`} />
+
+                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-arabic">
+                                  <span className={`px-1.5 py-0.5 rounded font-bold ${STEP.c}`}>{STEP.l}</span>
+                                  {v.who ? (
+                                    <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-200">
+                                      {v.who.name || v.who.email}
+                                    </span>
+                                  ) : (
+                                    <span className="px-1.5 py-0.5 rounded bg-white/10 text-white/50">
+                                      {t('admin.visits_anon', 'زائر بدون حساب')}
+                                    </span>
+                                  )}
+                                  {v.returning && (
+                                    <span className="px-1.5 py-0.5 rounded bg-magic-500/20 text-magic-200">
+                                      {t('admin.visits_returning', 'رجع مرة ثانية')}
+                                    </span>
+                                  )}
+                                  <span className="text-white/30 ms-auto" dir="ltr">
+                                    {v.day} · {new Date(v.lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-[10px] font-arabic text-white/35">
+                                  <span>{t('admin.visits_from', 'من')}: {v.source}</span>
+                                  {v.device && <span>{v.device === 'mobile' ? '📱' : '💻'}</span>}
+                                  {v.lang && <span className="uppercase" dir="ltr">{v.lang}</span>}
+                                  <span>{t('admin.visits_pages', '{{n}} صفحة', { n: v.views })}</span>
+                                </div>
+
+                                {/* The whole journey, as chips, in the order it
+                                    happened — not the last three squeezed into
+                                    the end of a sentence. */}
+                                {paths.length > 0 && (
+                                  <div className="flex flex-wrap items-center gap-1 mt-1.5" dir="ltr">
+                                    {paths.map((pth: string, k: number) => (
+                                      <span key={k} className="flex items-center gap-1">
+                                        {k > 0 && <span className="text-white/20 text-[9px]">›</span>}
+                                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-mono ${
+                                          /step-?[34]|checkout|order\/success/i.test(pth)
+                                            ? 'bg-amber-500/15 text-amber-200/90'
+                                            : pth.startsWith('/create')
+                                              ? 'bg-gold-500/12 text-gold-300/80'
+                                              : 'bg-white/5 text-white/40'}`}>
+                                          {pth}
+                                        </span>
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                   </div>
