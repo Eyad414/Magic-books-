@@ -1236,7 +1236,11 @@
     "preview_pages": "الصفحات",
     "preview_page": "صفحة",
     "preview_page_cover": "الغلاف",
-    "preview_open_full": "فتح الصورة بالحجم الكامل"
+    "preview_open_full": "فتح الصورة بالحجم الكامل",
+    "sent_show_cancelled": "أظهر الملغاة ({{n}})",
+    "sent_hide_cancelled": "أخفِ الملغاة ({{n}})",
+    "sent_show_all": "اعرض الكل ({{n}})",
+    "sent_show_less": "اعرض أقل"
   },
   "title_page": {
     "presents": "يُقدّم لـ",

@@ -862,7 +862,9 @@ export default function AdminDashboard() {
       // Ask the printer first: a stored status is only true for as long as
       // nobody at BookPod touches the job.
       await adminApi.refreshPrintJobs().catch(() => { /* stale is better than nothing */ });
-      const res = await adminApi.getPrintJobs(30);
+      // The whole log, not the first page of it: the list below can now show
+      // everything, and 200 is the endpoint's own ceiling.
+      const res = await adminApi.getPrintJobs(200);
       if (res.success) setPrintJobs(res.jobs);
     } catch { /* the log is informational; a failure here changes nothing */ }
   };
@@ -1527,6 +1529,11 @@ export default function AdminDashboard() {
   // PDFs kept no record at all, so when the boxes arrive there was nothing to
   // match them against — and when a send looked wrong, nothing to audit.
   const [printJobs, setPrintJobs] = useState<any[] | null>(null);
+  // The log is mostly cancelled test sends — sixteen of them — which buried the
+  // real ones. Hidden by default, one click away, and nothing is deleted:
+  // this is the only record of what was ever sent to a printer.
+  const [hideCancelledJobs, setHideCancelledJobs] = useState(true);
+  const [showAllJobs, setShowAllJobs] = useState(false);
   // The real counts, shown beside each field so an override is always made
   // with the true number in view.
   const [liveStats, setLiveStats] = useState<any | null>(null);
@@ -4404,9 +4411,40 @@ export default function AdminDashboard() {
                       nothing, so a print run left no trace anywhere. */}
                   {printJobs && printJobs.length > 0 && (
                     <div className="mt-4 pt-3 border-t border-white/10">
-                      <p className="font-arabic text-white/70 text-[11px] font-bold mb-1.5">
-                        📦 {t('admin.sent_log_title', 'آخر ما أُرسل للطباعة')}
-                      </p>
+                      {(() => {
+                        const cancelled = printJobs.filter((j: any) => j.bookpodStatus === 'CANCELLED').length;
+                        const shown = printJobs.filter((j: any) => !(hideCancelledJobs && j.bookpodStatus === 'CANCELLED'));
+                        return (
+                          <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                            <p className="font-arabic text-white/70 text-[11px] font-bold">
+                              📦 {t('admin.sent_log_title', 'آخر ما أُرسل للطباعة')}
+                              <span className="text-white/35"> — {shown.length}</span>
+                            </p>
+                            {cancelled > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => setHideCancelledJobs((v) => !v)}
+                                className="px-2 py-0.5 rounded-lg border border-white/15 text-white/60 hover:text-white hover:border-white/30 text-[10px] font-arabic transition-colors"
+                              >
+                                {hideCancelledJobs
+                                  ? t('admin.sent_show_cancelled', 'أظهر الملغاة ({{n}})', { n: cancelled })
+                                  : t('admin.sent_hide_cancelled', 'أخفِ الملغاة ({{n}})', { n: cancelled })}
+                              </button>
+                            )}
+                            {shown.length > 8 && (
+                              <button
+                                type="button"
+                                onClick={() => setShowAllJobs((v) => !v)}
+                                className="px-2 py-0.5 rounded-lg border border-white/15 text-white/60 hover:text-white hover:border-white/30 text-[10px] font-arabic transition-colors"
+                              >
+                                {showAllJobs
+                                  ? t('admin.sent_show_less', 'اعرض أقل')
+                                  : t('admin.sent_show_all', 'اعرض الكل ({{n}})', { n: shown.length })}
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })()}
                       {/* Paying one print run. Only ever opened from a job
                           that BookPod has not been paid for. */}
                       {payJob && (
@@ -4493,7 +4531,10 @@ export default function AdminDashboard() {
                       )}
 
                       <div className="space-y-1">
-                        {printJobs.slice(0, 8).map((j: any) => (
+                        {printJobs
+                          .filter((j: any) => !(hideCancelledJobs && j.bookpodStatus === 'CANCELLED'))
+                          .slice(0, showAllJobs ? undefined : 8)
+                          .map((j: any) => (
                           <div key={j._id} className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-arabic text-white/60">
                             <span className="text-white/35" dir="ltr">{new Date(j.sentAt || j.createdAt).toLocaleDateString()}</span>
                             <span className="text-white/85 truncate max-w-[45%]">{j.title}</span>

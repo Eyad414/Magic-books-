@@ -1236,7 +1236,11 @@
     "preview_pages": "Pages",
     "preview_page": "Page",
     "preview_page_cover": "Cover",
-    "preview_open_full": "Open the image full size"
+    "preview_open_full": "Open the image full size",
+    "sent_show_cancelled": "Show cancelled ({{n}})",
+    "sent_hide_cancelled": "Hide cancelled ({{n}})",
+    "sent_show_all": "Show all ({{n}})",
+    "sent_show_less": "Show fewer"
   },
   "title_page": {
     "presents": "Presented to",
