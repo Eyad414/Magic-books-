@@ -1240,7 +1240,20 @@
     "sent_show_cancelled": "Show cancelled ({{n}})",
     "sent_hide_cancelled": "Hide cancelled ({{n}})",
     "sent_show_all": "Show all ({{n}})",
-    "sent_show_less": "Show fewer"
+    "sent_show_less": "Show fewer",
+    "coupons_stat_total": "codes",
+    "coupons_stat_live": "live now",
+    "coupons_stat_spent": "used up",
+    "coupons_stat_risky": "free, no limit",
+    "coupons_risky_warn": "You have a free code with no usage limit. Every use is a real book at a real cost — put a number in \"uses\".",
+    "coupons_empty": "No discount codes yet",
+    "coupons_empty_hint": "Add one and it works at checkout straight away.",
+    "coupon_on": "Active",
+    "coupon_off": "Paused",
+    "coupon_spent": "Used up",
+    "coupon_kind": "Discount type",
+    "coupon_value_label": "Percent %",
+    "coupon_uses_label": "Uses allowed"
   },
   "title_page": {
     "presents": "Presented to",

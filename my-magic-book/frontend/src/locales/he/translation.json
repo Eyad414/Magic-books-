@@ -1240,7 +1240,20 @@
     "sent_show_cancelled": "הצג מבוטלות ({{n}})",
     "sent_hide_cancelled": "הסתר מבוטלות ({{n}})",
     "sent_show_all": "הצג הכל ({{n}})",
-    "sent_show_less": "הצג פחות"
+    "sent_show_less": "הצג פחות",
+    "coupons_stat_total": "קודים",
+    "coupons_stat_live": "פעילים",
+    "coupons_stat_spent": "נוצלו",
+    "coupons_stat_risky": "חינם ללא הגבלה",
+    "coupons_risky_warn": "יש לך קוד חינם ללא הגבלת שימושים. כל שימוש הוא ספר אמיתי בעלות אמיתית — הזינו מספר בשדה «שימושים».",
+    "coupons_empty": "אין עדיין קודי הנחה",
+    "coupons_empty_hint": "הוסיפו קוד והוא יעבוד בקופה מיד.",
+    "coupon_on": "פעיל",
+    "coupon_off": "מושהה",
+    "coupon_spent": "נוצל",
+    "coupon_kind": "סוג ההנחה",
+    "coupon_value_label": "אחוז %",
+    "coupon_uses_label": "מספר שימושים"
   },
   "title_page": {
     "presents": "מוגש ל",

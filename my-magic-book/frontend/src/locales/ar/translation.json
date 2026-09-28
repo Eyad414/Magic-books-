@@ -1240,7 +1240,20 @@
     "sent_show_cancelled": "أظهر الملغاة ({{n}})",
     "sent_hide_cancelled": "أخفِ الملغاة ({{n}})",
     "sent_show_all": "اعرض الكل ({{n}})",
-    "sent_show_less": "اعرض أقل"
+    "sent_show_less": "اعرض أقل",
+    "coupons_stat_total": "كود",
+    "coupons_stat_live": "فعّال الآن",
+    "coupons_stat_spent": "انتهى",
+    "coupons_stat_risky": "مجاني بلا حد",
+    "coupons_risky_warn": "لديك كود مجاني بلا حدّ للاستخدام. كل استخدام كتاب حقيقي بتكلفة حقيقية — ضع رقماً في خانة «عدد الاستخدامات».",
+    "coupons_empty": "لا يوجد أي كود خصم بعد",
+    "coupons_empty_hint": "أضف كوداً ليعمل مباشرةً في صفحة الدفع.",
+    "coupon_on": "فعّال",
+    "coupon_off": "موقوف",
+    "coupon_spent": "انتهى",
+    "coupon_kind": "نوع الخصم",
+    "coupon_value_label": "النسبة ٪",
+    "coupon_uses_label": "عدد الاستخدامات"
   },
   "title_page": {
     "presents": "يُقدّم لـ",
