@@ -3,6 +3,7 @@ import { usePageMeta } from '../hooks/usePageMeta';
 import HeroSection from '../components/home/HeroSection';
 import WorkFlow from '../components/home/WorkFlow';
 import BestSellers from '../components/home/BestSellers';
+import WhatYouGet from '../components/home/WhatYouGet';
 
 
 function ScrollIndicator() {
@@ -23,6 +24,10 @@ export default function Home() {
       <HeroSection />
       
       <WorkFlow />
+
+      {/* What arrives and what it costs — the page said neither, and a parent
+          had to reach step three of the wizard to find a price. */}
+      <WhatYouGet />
       <ScrollIndicator />
       
       <BestSellers />
