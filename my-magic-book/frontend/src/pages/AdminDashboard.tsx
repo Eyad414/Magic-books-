@@ -278,6 +278,96 @@ function BatchPrintPanel({
   );
 }
 
+/**
+ * Where an order has actually got to, and the one thing to do next.
+ *
+ * An order card offers up to nine buttons of equal weight — view, build,
+ * preview, preview print, send to BookPod, send digital, re-render, confirm
+ * payment, save files — and nothing on the card said which of them was the
+ * right one right now. You had to already know the pipeline to use the screen,
+ * and the expensive button (BookPod costs real money) sits in the middle of
+ * the row looking exactly like the free ones.
+ *
+ * This reads the stage off fields the card already has and says it out loud.
+ * It is deliberately display-only: it changes no button, no handler and no
+ * disabled rule, so nothing here can send anything anywhere.
+ */
+function orderStage(o: any): number {
+  if (o.bookpodJobId) return 4;                                       // at the printer
+  if (o.printInteriorUrl || o.printCoverUrl) return 3;                // print files ready
+  if (o.illustrationsStatus === 'ready') return 2;                    // artwork done
+  if (o.paymentStatus === 'paid') return 1;                           // paid, nothing made yet
+  return 0;                                                            // money still open
+}
+
+function OrderStageRail({ order, t }: { order: any; t: any }) {
+  const step = orderStage(order);
+  const steps = [
+    t('admin.stage_paid', 'مدفوع'),
+    t('admin.stage_art', 'الرسوم جاهزة'),
+    t('admin.stage_files', 'ملفات الطباعة'),
+    t('admin.stage_sent', 'في المطبعة'),
+  ];
+
+  // Names the button to press, using its own label, so the hint and the
+  // control can't drift apart in the owner's head.
+  const NEXT: Record<number, string | null> = {
+    0: order.paymentMethod === 'cash'
+      ? t('admin.stage_next_cash', 'بانتظار الدفع عند التسليم')
+      : t('admin.stage_next_pay', 'اضغط «تأكيد الدفع»'),
+    1: t('admin.stage_next_build', 'اضغط «بناء الكتاب للمراجعة»'),
+    2: t('admin.stage_next_files', 'اضغط «إعادة تجهيز الملفات» (مجاني)'),
+    3: t('admin.stage_next_send', 'راجع الطباعة، ثم «إرسال إلى BookPod»'),
+    4: null,
+  };
+  const next = NEXT[step];
+
+  return (
+    <div className="mb-3 p-2.5 rounded-2xl bg-dark-900/40 border border-white/5">
+      <div className="flex items-center gap-1">
+        {steps.map((label, i) => {
+          // `step` is how many stages are COMPLETE, so index `step` is the
+          // one still outstanding — the dot worth pointing at. Writing this as
+          // step === i + 1 put the marker on an already-finished stage, where
+          // `done` won the ternary and the amber never showed at all.
+          const done = step > i;
+          const here = step === i;
+          return (
+            <div key={label} className="flex-1 min-w-0">
+              <div className="flex items-center gap-1">
+                <span
+                  className={`shrink-0 w-2 h-2 rounded-full transition-colors ${
+                    done ? 'bg-emerald-400' : here ? 'bg-amber-400 animate-pulse' : 'bg-white/15'
+                  }`}
+                />
+                {i < steps.length - 1 && (
+                  <span className={`h-px flex-1 ${done ? 'bg-emerald-400/40' : 'bg-white/10'}`} />
+                )}
+              </div>
+              <p
+                className={`font-arabic text-[9px] mt-1 truncate ${
+                  done ? 'text-emerald-300' : here ? 'text-amber-300 font-bold' : 'text-white/25'
+                }`}
+              >
+                {label}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+      {next ? (
+        <p className="font-arabic text-white/55 text-[11px] mt-1.5 pt-1.5 border-t border-white/5">
+          <span className="text-amber-300 font-bold">{t('admin.stage_next', 'الخطوة التالية')}:</span> {next}
+        </p>
+      ) : (
+        <p className="font-arabic text-emerald-300 text-[11px] mt-1.5 pt-1.5 border-t border-white/5 font-bold">
+          {t('admin.stage_done', 'أُرسل إلى المطبعة — لا شيء مطلوب منك')}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const { t, i18n } = useTranslation();
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -2458,6 +2548,8 @@ export default function AdminDashboard() {
                               </div>
                             </div>
                           )}
+
+                          <OrderStageRail order={order} t={t} />
 
                           {/* Actions — grouped under a labelled divider (wraps on narrow screens) */}
                           <div className="pt-2.5 border-t border-white/5">
