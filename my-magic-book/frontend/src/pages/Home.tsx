@@ -43,7 +43,9 @@ export default function Home() {
       <BestSellers />
       <HomeFaq />
       <ScrollIndicator />
-      <div className="max-w-3xl mx-auto px-4 mt-8 mb-16 flex justify-center">
+      {/* No mb here: the footer already carries mt-20 for every page, and this
+          block's own bottom margin stacked on top of it. */}
+      <div className="max-w-3xl mx-auto px-4 mt-8 flex justify-center">
         <div className="glass-card glass-card-hover p-10 text-center w-full relative overflow-hidden border border-gold-500/20">
           <div className="absolute top-0 right-0 w-32 h-32 bg-gold-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-red-500/10 rounded-full blur-3xl -ml-10 -mb-10"></div>

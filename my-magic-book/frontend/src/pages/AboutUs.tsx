@@ -1,9 +1,7 @@
 import { Star, BookOpen, Heart, Award, Globe, Zap, Languages } from 'lucide-react';
 import { usePageMeta } from '../hooks/usePageMeta';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { useStoryProgress } from '../context/StoryProgressContext';
 import { useSiteStats } from '../hooks/useSiteStats';
 
 
@@ -67,18 +65,10 @@ function FAQ() {
 export default function AboutUs() {
   const { t } = useTranslation();
   usePageMeta(t('meta.about_title'), t('meta.about_desc'));
-  const { resetProgress } = useStoryProgress();
-  const navigate = useNavigate();
   // Counted from the database, exactly like the Home hero. This page used to
   // read settings.homeStats — figures typed by hand — and so claimed "+300
   // stories" and "+150 families" on the page after the hero said 39 and 12.
   const stats = useSiteStats();
-  
-  const handleStartStory = (e: React.MouseEvent) => {
-    e.preventDefault();
-    resetProgress();
-    navigate('/create');
-  };
 
   const team = [
     { name: 'Eyad Abu Taha', 
@@ -278,21 +268,8 @@ export default function AboutUs() {
 
       <FAQ />
 
-      <ScrollIndicator />
-
-      {/* CTA */}
-      <section className="px-4 sm:px-6 lg:px-8 text-center">
-        <div className="max-w-xl mx-auto glass-card p-10">
-          <h2 className="font-arabic font-bold text-white text-2xl mb-4">{t('about.cta_title')}</h2>
-          <p className="font-arabic text-white/50 mb-6">{t('about.cta_desc')}</p>
-          <button 
-            onClick={handleStartStory}
-            className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-l from-gold-500 to-gold-600 text-dark-900 font-arabic font-black text-lg transition-all hover:shadow-gold-glow hover:-translate-y-1"
-          >
-            {t('about.cta_btn')}
-          </button>
-        </div>
-      </section>
+      {/* The «هل أنت مستعد؟» card sat here. Removed on the owner's request —
+          the header already carries «ابدأ قصتك» on every page. */}
 
       {/* Moved to the end. This asked for an Instagram follow third on the
           page, above the mission and the founder — the smallest commitment

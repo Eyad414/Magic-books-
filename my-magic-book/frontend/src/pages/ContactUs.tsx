@@ -27,7 +27,10 @@ export default function ContactUs() {
   };
 
   return (
-    <div className="min-h-screen pt-24 pb-16 px-4 sm:px-6 lg:px-8">
+    // No pb: the footer carries mt-20 for every page, and the wrapper's own
+    // bottom padding stacked on top of it — 144px of empty space under the last
+    // card. Matches /about at 80px now.
+    <div className="min-h-screen pt-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-14">
           <h1 className="font-arabic font-black text-white mb-4">
