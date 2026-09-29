@@ -167,6 +167,20 @@ export default function AboutUs() {
               </span>
             ))}
           </div>
+
+          {/* A light way back to the wizard, inside the card rather than as a
+              block of its own. Taking the «هل أنت مستعد؟» panel out left this
+              page ending on three links to Instagram and nowhere to start a
+              book — the header button covers it, but the last thing on the page
+              should not only point away from the shop. */}
+          <div className="mt-6 pt-5 border-t border-white/10">
+            <Link
+              to="/create"
+              className="inline-flex items-center gap-2 min-h-[44px] px-5 rounded-2xl bg-white/5 border border-gold-500/30 text-gold-500 font-arabic font-bold text-sm hover:bg-gold-500/10 hover:border-gold-500/50 transition-all"
+            >
+              ✨ {t('about.follow_cta', 'أو ابدأ قصة طفلك الآن')}
+            </Link>
+          </div>
         </div>
       </section>
       

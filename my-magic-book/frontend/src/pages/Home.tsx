@@ -5,7 +5,6 @@ import HeroSection from '../components/home/HeroSection';
 import WorkFlow from '../components/home/WorkFlow';
 import BestSellers from '../components/home/BestSellers';
 import WhatYouGet from '../components/home/WhatYouGet';
-import NameMagic from '../components/home/NameMagic';
 import HomeFaq from '../components/home/HomeFaq';
 
 
@@ -30,9 +29,7 @@ export default function Home() {
     <div>
       <HeroSection />
       
-      {/* The claim "your child's name in every page" was three screens away
-          from any evidence of it. This is the evidence, and it comes first. */}
-      <NameMagic />
+      {/* The live name teaser sat here — removed on the owner's request. */}
       <WorkFlow />
 
       {/* What arrives and what it costs — the page said neither, and a parent
