@@ -136,60 +136,46 @@ export default function AboutUs() {
           <p className="font-arabic text-white/60 text-xl leading-relaxed mb-8">
             {t('about.hero_desc')}
           </p>
-          <div className="flex items-center justify-center gap-1 mb-8">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star key={i} className="w-6 h-6 text-gold-500 fill-gold-500" />
+          {/* Five gold stars and "rated 5/5 by over 100 families" used to sit
+              here, in all three languages. The shop has had four real customer
+              purchases. It was the most explicit of three invented review
+              claims on this site — a specific score from a specific number of
+              families, stated as fact, and the only one written into the
+              locale files rather than a component.
+
+              What replaces it is three things that are true, and that a parent
+              weighing up a 130 ₪ book from a shop they have never heard of
+              actually wants to know. */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
+            {[
+              { icon: '🏛️', text: t('about.trust_place', 'يُصنع في القدس') },
+              { icon: '🌍', text: t('about.trust_langs', 'عربي · English · עברית') },
+              { icon: '👀', text: t('about.trust_preview', 'تشوف القصة كاملة قبل ما تدفع') },
+            ].map((b) => (
+              <span
+                key={b.text}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white/5 border border-white/10 font-arabic text-white/65 text-xs"
+              >
+                <span aria-hidden>{b.icon}</span>
+                {b.text}
+              </span>
             ))}
-            <span className="font-arabic text-white/60 mx-2 text-sm">{t('about.rating_text')}</span>
           </div>
         </div>
       </section>
       
       <ScrollIndicator />
 
-      {/* Stats */}
+      {/* Why the shop exists, before who runs it — the founder section read
+          as an introduction to a stranger without that. */}
+      {/* Mission */}
       <section className="px-4 sm:px-6 lg:px-8 mb-20">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-5">
-          {[
-            { value: stats.storiesCreated, label: t('hero.stats_stories_created'), emoji: '📖' },
-            { value: stats.happyFamilies, label: t('hero.stats_happy_families'), emoji: '👨‍👩‍👧‍👦' },
-            { value: stats.readyStories, label: t('about.stats_themes'), emoji: '🌟' },
-            { value: stats.languages, label: t('about.stats_languages'), emoji: '🌍' },
-          ].map((stat) => (
-            <div key={stat.label} className="glass-card p-6 text-center">
-              <div className="text-3xl mb-2">{stat.emoji}</div>
-              <div className="font-arabic font-black text-gold-500 text-3xl">{stat.value}</div>
-              <div className="font-arabic text-white/50 text-sm mt-1">{stat.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <ScrollIndicator />
-
-      {/* Follow us */}
-      <section className="px-4 sm:px-6 lg:px-8 mb-20">
-        <div className="max-w-3xl mx-auto glass-card p-8 sm:p-10 text-center">
-          <h2 className="font-arabic font-bold text-white text-2xl mb-3">{t('about.follow_title')}</h2>
-          <p className="font-arabic text-white/50 mb-7">{t('about.follow_desc')}</p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            {socials.map((s) => (
-              <a
-                key={s.label}
-                href={s.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={s.label}
-                className="group flex items-center gap-3 px-5 py-3 rounded-2xl bg-white/5 border border-white/10 text-white/70 hover:text-gold-500 hover:border-gold-500/40 hover:-translate-y-0.5 transition-all"
-              >
-                <span className="text-white/50 group-hover:text-gold-500 transition-colors">{s.icon}</span>
-                <span className="text-start leading-tight">
-                  <span className="block font-arabic font-bold text-sm">{s.label}</span>
-                  <span className="block text-xs text-white/40" dir="ltr">{s.handle}</span>
-                </span>
-              </a>
-            ))}
-          </div>
+        <div className="max-w-3xl mx-auto glass-card p-10 text-center">
+          <BookOpen className="w-12 h-12 text-gold-500 mx-auto mb-4" />
+          <h2 className="font-arabic font-bold text-white text-2xl mb-4">{t('about.mission_title')}</h2>
+          <p className="font-arabic text-white/60 text-lg leading-relaxed">
+            {t('about.mission_desc')}
+          </p>
         </div>
       </section>
 
@@ -230,19 +216,6 @@ export default function AboutUs() {
 
       <ScrollIndicator />
 
-      {/* Mission */}
-      <section className="px-4 sm:px-6 lg:px-8 mb-20">
-        <div className="max-w-3xl mx-auto glass-card p-10 text-center">
-          <BookOpen className="w-12 h-12 text-gold-500 mx-auto mb-4" />
-          <h2 className="font-arabic font-bold text-white text-2xl mb-4">{t('about.mission_title')}</h2>
-          <p className="font-arabic text-white/60 text-lg leading-relaxed">
-            {t('about.mission_desc')}
-          </p>
-        </div>
-      </section>
-
-      <ScrollIndicator />
-
       {/* Values */}
       <section className="px-4 sm:px-6 lg:px-8 mb-20">
         <div className="max-w-5xl mx-auto">
@@ -267,6 +240,26 @@ export default function AboutUs() {
       
       <ScrollIndicator />
       
+      {/* Stats */}
+      <section className="px-4 sm:px-6 lg:px-8 mb-20">
+        <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-5">
+          {[
+            { value: stats.storiesCreated, label: t('hero.stats_stories_created'), emoji: '📖' },
+            { value: stats.happyFamilies, label: t('hero.stats_happy_families'), emoji: '👨‍👩‍👧‍👦' },
+            { value: stats.readyStories, label: t('about.stats_themes'), emoji: '🌟' },
+            { value: stats.languages, label: t('about.stats_languages'), emoji: '🌍' },
+          ].map((stat) => (
+            <div key={stat.label} className="glass-card p-6 text-center">
+              <div className="text-3xl mb-2">{stat.emoji}</div>
+              <div className="font-arabic font-black text-gold-500 text-3xl">{stat.value}</div>
+              <div className="font-arabic text-white/50 text-sm mt-1">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <ScrollIndicator />
+
       <FAQ />
 
       <ScrollIndicator />
@@ -284,7 +277,37 @@ export default function AboutUs() {
           </button>
         </div>
       </section>
+
+      {/* Moved to the end. This asked for an Instagram follow third on the
+          page, above the mission and the founder — the smallest commitment
+          on the page, requested before anything had earned it. */}
+      {/* Follow us */}
+      <section className="px-4 sm:px-6 lg:px-8 mb-20">
+        <div className="max-w-3xl mx-auto glass-card p-8 sm:p-10 text-center">
+          <h2 className="font-arabic font-bold text-white text-2xl mb-3">{t('about.follow_title')}</h2>
+          <p className="font-arabic text-white/50 mb-7">{t('about.follow_desc')}</p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {socials.map((s) => (
+              <a
+                key={s.label}
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={s.label}
+                className="group flex items-center gap-3 px-5 py-3 rounded-2xl bg-white/5 border border-white/10 text-white/70 hover:text-gold-500 hover:border-gold-500/40 hover:-translate-y-0.5 transition-all"
+              >
+                <span className="text-white/50 group-hover:text-gold-500 transition-colors">{s.icon}</span>
+                <span className="text-start leading-tight">
+                  <span className="block font-arabic font-bold text-sm">{s.label}</span>
+                  <span className="block text-xs text-white/40" dir="ltr">{s.handle}</span>
+                </span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <ScrollIndicator />
     </div>
   );
 }
-
