@@ -138,7 +138,10 @@ export default function AboutUs() {
   ];
 
   return (
-    <div className="min-h-screen pt-24 pb-16">
+    // No pb here: the footer already carries mt-20 for every page, so the
+    // wrapper's own bottom padding was stacked on top of it and the last card
+    // sat 144px clear of the footer. The gap is the footer's spacing alone now.
+    <div className="min-h-screen pt-24">
       {/* Hero */}
       <section className="px-4 sm:px-6 lg:px-8 mb-20">
         <div className="max-w-4xl mx-auto text-center">
