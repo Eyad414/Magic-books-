@@ -393,6 +393,9 @@ export default function AdminDashboard() {
 
   // Story Editor — separate draft state so we never corrupt settings while editing
   const [editingStory, setEditingStory] = useState<number | null>(null);
+  // Finding one story in twenty-seven, and seeing which are not live yet.
+  const [storySearch, setStorySearch] = useState('');
+  const [storyFilter, setStoryFilter] = useState<'all' | 'ready' | 'draft'>('all');
   const [draftPages, setDraftPages] = useState<{ text: string; imageSrc: string }[]>([]);
 
   // The order whose print files are open for review, if any. Looking at what
@@ -4474,9 +4477,67 @@ export default function AdminDashboard() {
                     {t('admin.preview_as_help', 'يغيّر الاسم والصياغة في أزرار المعاينة (ع / EN / עב)')}
                   </span>
                 </div>
+                {/* Which stories are actually earning, and which are sitting
+                    finished in a drawer.
+
+                    Five of twenty-seven are drafts right now — including three
+                    written this month — and the only way to know that was to
+                    scroll the whole list reading a small toggle on each row. A
+                    story that is finished but not ticked is invisible to every
+                    customer, which is an expensive thing to discover by
+                    accident. */}
+                {(() => {
+                  const storyThemes = settings.themes.filter((th: any) => !th.isColoring);
+                  const readyCount = storyThemes.filter((th: any) => th.ready).length;
+                  const draftCount = storyThemes.length - readyCount;
+                  const chips: { id: 'all' | 'ready' | 'draft'; label: string; n: number }[] = [
+                    { id: 'all', label: t('admin.story_f_all', 'الكل'), n: storyThemes.length },
+                    { id: 'ready', label: t('admin.story_f_ready', 'جاهزة'), n: readyCount },
+                    { id: 'draft', label: t('admin.story_f_draft', 'مسودة — مخفية عن العملاء'), n: draftCount },
+                  ];
+                  return (
+                    <div className="mb-4 flex flex-wrap items-center gap-2">
+                      {chips.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          aria-pressed={storyFilter === c.id}
+                          onClick={() => setStoryFilter(c.id)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-arabic text-xs font-bold border transition-all ${
+                            storyFilter === c.id
+                              ? 'bg-gold-500/20 border-gold-500/50 text-gold-300'
+                              : 'bg-white/5 border-white/10 text-white/55 hover:border-white/25'
+                          } ${c.id === 'draft' && c.n > 0 && storyFilter !== c.id ? '!border-amber-500/40 !text-amber-300' : ''}`}
+                        >
+                          {c.label}
+                          <span className="opacity-60" dir="ltr">{c.n}</span>
+                        </button>
+                      ))}
+                      <input
+                        type="text"
+                        value={storySearch}
+                        onChange={(e) => setStorySearch(e.target.value)}
+                        placeholder={t('admin.story_search_ph', 'ابحث عن قصة…')}
+                        className="magic-input !py-1.5 text-sm flex-1 min-w-[160px] max-w-[260px]"
+                      />
+                    </div>
+                  );
+                })()}
+
                 <div className="space-y-4">
-                  {settings.themes.map((theme: any, index: number) => theme.isColoring ? null : (
-                    <div key={theme.id} className="px-3 py-2 bg-white/5 rounded-xl border border-white/10 flex flex-wrap items-center gap-1.5">
+                  {settings.themes.map((theme: any, index: number) => {
+                    if (theme.isColoring) return null;
+                    if (storyFilter === 'ready' && !theme.ready) return null;
+                    if (storyFilter === 'draft' && theme.ready) return null;
+                    const q = storySearch.trim().toLowerCase();
+                    if (q && !`${theme.label || ''} ${theme.id || ''}`.toLowerCase().includes(q)) return null;
+                    return (
+                    <div
+                      key={theme.id}
+                      className={`px-3 py-2 bg-white/5 rounded-xl border flex flex-wrap items-center gap-1.5 border-e-2 ${
+                        theme.ready ? 'border-white/10 border-e-transparent' : 'border-white/10 border-e-amber-500/60'
+                      }`}
+                    >
                       {/* Name sits inline with the actions — one compact row per story */}
                       <input
                         type="text"
@@ -4624,7 +4685,8 @@ export default function AdminDashboard() {
                         </span>
                       )}
                     </div>
-                  ))}
+                    );
+                  })}
                   <button onClick={() => {
                      setSettings({
                        ...settings,
