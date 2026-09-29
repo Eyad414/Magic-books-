@@ -293,9 +293,14 @@ export default function AboutUs() {
 
       {/* Moved to the end. This asked for an Instagram follow third on the
           page, above the mission and the founder — the smallest commitment
-          on the page, requested before anything had earned it. */}
+          on the page, requested before anything had earned it.
+
+          No mb-20 on this one: that margin is the gap BETWEEN sections, and
+          there is no section after it. Left on, it stacked with the wrapper's
+          own pb-16 and the footer's mt-20 and left a 224px band of empty black
+          under the last card — 80px more than every other page. */}
       {/* Follow us */}
-      <section className="px-4 sm:px-6 lg:px-8 mb-20">
+      <section className="px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto glass-card p-8 sm:p-10 text-center">
           <h2 className="font-arabic font-bold text-white text-2xl mb-3">{t('about.follow_title')}</h2>
           <p className="font-arabic text-white/50 mb-7">{t('about.follow_desc')}</p>
