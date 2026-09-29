@@ -16,7 +16,7 @@ import StatusBadge from '../components/common/StatusBadge';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { findStory } from '../data/stories';
-import { SHOWCASE_CARDS, demoOnHomePage, demoOnStoriesPage, HOME_TAGS, type DemoVisibility, type HomeTag } from '../data/showcaseCards';
+import { SHOWCASE_CARDS, demoOnHomePage, demoOnStoriesPage, isPrivateCard, HOME_TAGS, type DemoVisibility, type HomeTag } from '../data/showcaseCards';
 import { localizeName } from '../utils/translit';
 import { formatMoney } from '../utils/money';
 
@@ -1975,6 +1975,11 @@ export default function AdminDashboard() {
         // flag. Books made from a real child's photo stay hidden until ticked.
         showcase: demoOnHomePage(c, vis),
         showcaseStories: demoOnStoriesPage(c, vis),
+        // Drawn from a real child whose family has not agreed yet. Without this
+        // on the row, a book waiting on permission looks exactly like one the
+        // owner simply chose not to feature — so the reason it is off the site
+        // is invisible, and the obvious fix is to tick it.
+        needsPermission: isPrivateCard(c),
         homeTag: vis[c.key]?.tag || '',
         isColoring,
         viewHref: isColoring
@@ -5225,6 +5230,29 @@ export default function AdminDashboard() {
                     have to read every card's toggles to find out. Each panel is
                     also a filter: click it to narrow the grid to just that
                     surface, click again to go back to everything. */}
+                {/* Books held back for consent, said out loud.
+                    Their toggles read "off" like any unfeatured book, so the
+                    reason they are off the site does not show anywhere — and
+                    the whole point is that this one is not the owner's call
+                    alone. */}
+                {(() => {
+                  const waiting = allBooks.filter((b: any) => b.needsPermission && !b.showcase && !b.showcaseStories);
+                  if (waiting.length === 0) return null;
+                  return (
+                    <div className="mb-4 p-3 rounded-2xl bg-amber-500/[0.07] border border-amber-500/30">
+                      <p className="font-arabic font-black text-amber-300 text-sm mb-1">
+                        🔒 {t('admin.needs_consent_title', '{{n}} كتاب بانتظار إذن العائلة', { n: waiting.length })}
+                      </p>
+                      <p className="font-arabic text-white/55 text-[11px] leading-relaxed">
+                        {t('admin.needs_consent_desc', 'مرسومة من صورة طفل حقيقي، فهي مخفية عن الموقع كله حتى توافق عائلته. أزرار الإظهار تعمل — لكن القرار ليس تقنياً.')}
+                      </p>
+                      <p className="font-arabic text-amber-200/70 text-[11px] mt-1.5">
+                        {waiting.map((b: any) => `${b.childName} — ${b.themeLabel}`).join(' · ')}
+                      </p>
+                    </div>
+                  );
+                })()}
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                   {([
                     { id: 'home' as const, icon: '🏠', title: t('admin.live_home', 'على الصفحة الرئيسية'),
@@ -5385,6 +5413,13 @@ export default function AdminDashboard() {
                             )}
                           </div>
                         </div>
+
+                        {/* Why this one is off the site, on the card itself. */}
+                        {b.needsPermission && !b.showcase && !b.showcaseStories && (
+                          <p className="font-arabic text-amber-300 text-[11px] font-bold mb-1.5">
+                            🔒 {t('admin.card_needs_consent', 'بانتظار إذن العائلة')}
+                          </p>
+                        )}
 
                         {/* Publish toggles — every book with somewhere to save
                             the flag gets both. Green = live on that surface. */}
