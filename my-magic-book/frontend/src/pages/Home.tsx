@@ -1,7 +1,6 @@
-import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 import { useTranslation, Trans } from 'react-i18next';
 import { usePageMeta } from '../hooks/usePageMeta';
+import { useHashScroll } from '../hooks/useHashScroll';
 import HeroSection from '../components/home/HeroSection';
 import WorkFlow from '../components/home/WorkFlow';
 import BestSellers from '../components/home/BestSellers';
@@ -24,26 +23,8 @@ export default function Home() {
   const { t } = useTranslation();
   usePageMeta(t('meta.home_title'));
 
-  /**
-   * Make /#faq actually land on the FAQ.
-   *
-   * The browser tries the anchor the moment the document arrives, which on a
-   * single-page app is before React has rendered anything — so the element does
-   * not exist yet, the jump silently does nothing, and the visitor lands at the
-   * top of the home page wondering what the link was for. The About page links
-   * here, so that link was one render away from being decorative.
-   */
-  const { hash } = useLocation();
-  useEffect(() => {
-    if (!hash) return;
-    const id = hash.slice(1);
-    // One frame after paint: the section is mounted by then, and this runs on
-    // every hash change so a second click on the same link still works.
-    const raf = requestAnimationFrame(() => {
-      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-    return () => cancelAnimationFrame(raf);
-  }, [hash]);
+  // /#faq is linked from the About page.
+  useHashScroll();
 
   return (
     <div>

@@ -11,6 +11,7 @@ import { toDisplayUrl, toCardUrl } from '../../api/mediaUrl';
 import { orderThemesForChild } from '../../utils/themeOrder';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { localizeName } from '../../utils/translit';
 import { usePackages } from '../../hooks/usePackages';
 import { getThemeLabel, getThemeDesc } from '../../utils/themeLabel';
@@ -634,6 +635,28 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
           </div>
         )}
         {photoError && <p className="text-red-400 text-xs font-arabic mt-2">{photoError}</p>}
+
+        {/* What happens to the photograph, where the parent is deciding whether
+            to hand one over.
+            This is the largest thing the shop asks for — a picture of someone's
+            child — and the screen said only "upload it here, it becomes a
+            cartoon". The answers exist: the privacy policy says child data is
+            used for nothing but making the book, and child-photos/ is a
+            protected prefix that will not serve without a signed URL, so it is
+            enforced rather than promised. None of it was said at the moment it
+            matters. */}
+        <div className="mt-3 p-3 rounded-2xl bg-white/[0.04] border border-white/10">
+          <p className="font-arabic text-white/60 text-[11px] leading-relaxed">
+            🔒 {t('step2.photo_privacy', 'الصورة تُستخدم لرسم كتاب طفلك فقط. ما بتظهر على الموقع، وما منشاركها مع حدا.')}
+          </p>
+          <Link
+            to="/policy#privacy"
+            target="_blank"
+            className="inline-block mt-1 font-arabic text-gold-500 text-[11px] font-bold hover:underline"
+          >
+            {t('step2.photo_privacy_link', 'سياسة الخصوصية')} ←
+          </Link>
+        </div>
       </div>
 
       {/* Let the customer see their OWN child on the chosen cover before paying.

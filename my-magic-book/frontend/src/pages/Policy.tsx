@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { usePageMeta } from '../hooks/usePageMeta';
+import { useHashScroll } from '../hooks/useHashScroll';
 import { Lock, Eye, Shield, FileText, CreditCard } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -23,6 +24,8 @@ const Section = ({ id, icon: Icon, title, children }: any) => (
 export default function Policy() {
   const { t } = useTranslation();
   usePageMeta(t('meta.policy_title'));
+  // The wizard links straight to #privacy from the photo upload.
+  useHashScroll();
 
   return (
     <div className="min-h-screen pt-24 pb-16 px-4 sm:px-6 lg:px-8">
