@@ -46,6 +46,20 @@ export interface ITheme {
   generatedPortrait?: string;
   /** Cached Nano-Banana full-scene front-cover image (GCS object path). */
   generatedCover?: string;
+  /**
+   * Which gender the DEMO artwork shows — not what the customer's book will be.
+   *
+   * The wizard asks for the child's gender in step 1 and then showed the same
+   * eight covers to everyone. Twenty-one of the twenty-five demos were drawn
+   * from a boy's photograph, so a parent who had just said "بنت" was looking
+   * at eight boys, and the four books with a girl on the cover sat behind a
+   * "show 17 more" fold. That is the catalogue complaint again, one screen
+   * further in.
+   *
+   * Unset means unknown, and unknown is not sorted either way — an empty field
+   * must not quietly mean "boy", which is the mistake that caused all of this.
+   */
+  demoGender?: 'male' | 'female';
   /** Style-B: cached one-time PHOTOREALISTIC template scenes (face gets swapped onto these). */
   photorealTemplates?: string[];
   photorealCover?: string;
@@ -195,6 +209,9 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
         generatedImages: { type: [String], default: undefined },
         generatedPortrait: { type: String, default: undefined },
         generatedCover: { type: String, default: undefined },
+        // No default: an unset demoGender means "we have not said", and the
+        // wizard leaves those in their existing order rather than assuming.
+        demoGender: { type: String, enum: ['male', 'female'], default: undefined },
         photorealTemplates: { type: [String], default: undefined },
         photorealCover: { type: String, default: undefined },
         photorealPortrait: { type: String, default: undefined },

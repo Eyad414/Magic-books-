@@ -8,6 +8,7 @@ import FlipbookPreview from './FlipbookPreview';
 import { storyApi } from '../../api/storyApi';
 import { publicApi } from '../../api/publicApi';
 import { toDisplayUrl, toCardUrl } from '../../api/mediaUrl';
+import { orderThemesForChild } from '../../utils/themeOrder';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { localizeName } from '../../utils/translit';
@@ -56,6 +57,8 @@ interface ApiTheme {
    *  "ready story" mode for themes without a hardcoded STORY_TEMPLATES entry. */
   pages?: any[];
   ready?: boolean;
+  /** Which gender the sample cover shows. Unset = unknown, never assumed. */
+  demoGender?: 'male' | 'female';
   series?: string;
   seriesName?: string;
   seriesPart?: number;
@@ -205,7 +208,11 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
 
   // Local State: Controls whether all themes are visible or just the initial set
   const [showAllThemes, setShowAllThemes] = useState(false);
-  const visibleThemes = showAllThemes ? THEMES : THEMES.slice(0, INITIAL_THEME_COUNT);
+  // Books whose sample cover matches the child come first. The rule — and in
+  // particular what an UNSET demoGender must do — lives in themeOrder.ts so it
+  // can be tested; see the note there about why unset is not "boy".
+  const orderedThemes = orderThemesForChild(THEMES, progress.childDetails.childGender);
+  const visibleThemes = showAllThemes ? orderedThemes : orderedThemes.slice(0, INITIAL_THEME_COUNT);
 
   // Function: Creates the story in the database and triggers the AI text generation via backend API
   const generateStory = async () => {

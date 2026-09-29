@@ -4702,6 +4702,38 @@ export default function AdminDashboard() {
                           : t('admin.draft_short', 'مسودة')}
                       </label>
 
+                      {/* Which gender the demo cover shows.
+                          The wizard sorts its grid by this, so a parent who
+                          says "بنت" sees the books with a girl on the cover
+                          first. Left blank it stays unknown and nothing is
+                          assumed — blank must never quietly mean boy. */}
+                      <div className="flex items-center gap-0.5 px-1 py-0.5 rounded-lg bg-dark-800 border border-white/10" title={t('admin.demo_gender_help', 'جنس الطفل في صورة الغلاف التجريبي — يرتّب القائمة للعميل')}>
+                        {([
+                          { v: 'male' as const, icon: '👦' },
+                          { v: 'female' as const, icon: '👧' },
+                        ]).map((o) => {
+                          const on = theme.demoGender === o.v;
+                          return (
+                            <button
+                              key={o.v}
+                              type="button"
+                              aria-pressed={on}
+                              onClick={() => {
+                                const newThemes = [...settings.themes];
+                                // Clicking the active one clears it back to unknown.
+                                newThemes[index] = { ...newThemes[index], demoGender: on ? undefined : o.v };
+                                setSettings({ ...settings, themes: newThemes });
+                              }}
+                              className={`px-1.5 py-0.5 rounded text-xs transition-colors ${
+                                on ? 'bg-gold-500/25 ring-1 ring-gold-500/50' : 'opacity-35 hover:opacity-80'
+                              }`}
+                            >
+                              {o.icon}
+                            </button>
+                          );
+                        })}
+                      </div>
+
                       {/* View the book in each language */}
                       <div className="flex items-center gap-0.5 px-1 py-0.5 rounded-lg bg-dark-800 border border-white/10">
                         <Eye className="w-3.5 h-3.5 text-gold-500 shrink-0" />
