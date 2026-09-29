@@ -4,7 +4,10 @@ import { Lock, Eye, Shield, FileText, CreditCard } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const Section = ({ id, icon: Icon, title, children }: any) => (
-  <section id={id} className="mb-10">
+  // scroll-mt clears the fixed header: without it an anchor jump lands with the
+  // section's own title hidden behind the navbar, which reads as the wrong
+  // section having opened.
+  <section id={id} className="mb-10 scroll-mt-28">
     <div className="flex items-center gap-3 mb-4">
       <div className="w-10 h-10 rounded-xl bg-gold-500/20 flex items-center justify-center flex-shrink-0">
         <Icon className="w-5 h-5 text-gold-500" />
@@ -30,6 +33,30 @@ export default function Policy() {
           </h1>
           <p className="font-arabic text-white/50">{t('policy.last_updated')}</p>
         </div>
+
+        {/* Jump to the section you came for.
+            Six policies and 2,600px of legal text with no way through it but
+            scrolling — and the people who open this page are not browsing, they
+            arrived with one question: can I cancel, how do I pay, what happens
+            to my child's photo. */}
+        <nav aria-label={t('policy.nav_label', 'أقسام الصفحة')} className="flex flex-wrap justify-center gap-1.5 mb-10">
+          {[
+            { id: 'privacy', label: t('policy.privacy_title') },
+            { id: 'terms', label: t('policy.terms_title') },
+            { id: 'refund', label: t('policy.refund_title') },
+            { id: 'shipping', label: t('policy.shipping_title') },
+            { id: 'payment', label: t('policy.payment_title') },
+            { id: 'data-deletion', label: t('policy.data_deletion_title') },
+          ].map((s) => (
+            <a
+              key={s.id}
+              href={`#${s.id}`}
+              className="inline-flex items-center min-h-[38px] px-3 rounded-xl bg-white/5 border border-white/10 font-arabic text-white/60 text-xs hover:border-gold-500/40 hover:text-gold-500 transition-colors"
+            >
+              {s.label}
+            </a>
+          ))}
+        </nav>
 
         <Section id="privacy" icon={Lock} title={t('policy.privacy_title')}>
           <p>{t('policy.privacy_content_1')}</p>
