@@ -2106,40 +2106,115 @@ export default function AdminDashboard() {
 
   if (isLoading || !settings) return <div className="min-h-screen pt-24 text-center text-white/50">{t('admin.loading')}</div>;
 
+  /**
+   * The sidebar as something you can read, instead of nine identical buttons.
+   *
+   * Every tab looked the same, so the only way to find out whether anything
+   * needed doing was to click all nine and look. The counts below all come from
+   * data already fetched at mount, so they cost nothing extra — and `attention`
+   * is the one number that actually means "go and do something": an order the
+   * customer has PAID for that has not been sent to BookPod yet.
+   *
+   * Deliberately not shown: an unread-messages badge. ContactMessage has an
+   * isRead flag, but nothing in the app ever sets it, so the badge would show
+   * the total forever and never go down. A number that never changes is worse
+   * than no number.
+   */
+  const awaitingPrint = orders.filter((o: any) => o.paymentStatus === 'paid' && !o.bookpodJobId).length;
+
+  const NAV_GROUPS: { title: string; items: { id: string; label: string; icon: any; count?: number; attention?: number }[] }[] = [
+    {
+      title: t('admin.nav_group_work', 'الشغل اليومي'),
+      items: [
+        { id: 'orders', label: t('admin.tab_orders'), icon: Package, count: orders.length, attention: awaitingPrint },
+        { id: 'messages', label: t('admin.tab_messages', 'الرسائل'), icon: Mail, count: messages.length },
+        { id: 'customers', label: t('admin.tab_customers', 'العملاء'), icon: Users },
+      ],
+    },
+    {
+      title: t('admin.nav_group_content', 'المحتوى'),
+      items: [
+        { id: 'showcase', label: t('admin.tab_showcase', 'الكتب الجاهزة'), icon: BookOpen, count: SHOWCASE_CARDS.length },
+        { id: 'stories', label: t('admin.tab_stories'), icon: BookOpen, count: (settings.themes || []).length },
+        { id: 'coupons', label: t('admin.tab_coupons', 'أكواد الخصم'), icon: Ticket, count: (settings.coupons || []).length },
+      ],
+    },
+    {
+      title: t('admin.nav_group_admin', 'الأرقام والإعدادات'),
+      items: [
+        { id: 'visitors', label: t('admin.tab_visitors', 'الزوار'), icon: Eye },
+        { id: 'pricing', label: t('admin.tab_pricing'), icon: Settings },
+        { id: 'team', label: t('admin.tab_team'), icon: Users, count: team.length },
+      ],
+    },
+  ];
+
+
   return (
     <div className="min-h-screen pt-24 pb-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-8">
         
         {/* Sidebar */}
         <div className="w-full md:w-64 flex-shrink-0">
-          <div className="glass-card p-4 sticky top-24 border-red-500/20">
+          <div className="glass-card p-3 sm:p-4 md:sticky md:top-24 border-red-500/20">
             <h2 className="font-arabic font-bold text-red-400 mb-4 px-2 flex items-center gap-2">
               <ShieldAlert className="w-5 h-5" /> {t('admin.panel_title')}
+              {awaitingPrint > 0 && (
+                <span className="mr-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-500/20 border border-amber-500/30">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  <span className="font-arabic font-black text-amber-300 text-[11px]" dir="ltr">{awaitingPrint}</span>
+                </span>
+              )}
             </h2>
-            <div className="flex flex-col gap-2">
-              {[
-                { id: 'orders', label: t('admin.tab_orders'), icon: Package },
-                { id: 'messages', label: t('admin.tab_messages', 'الرسائل'), icon: Mail },
-                { id: 'customers', label: t('admin.tab_customers', 'العملاء'), icon: Users },
-                { id: 'visitors', label: t('admin.tab_visitors', 'الزوار'), icon: Eye },
-                { id: 'showcase', label: t('admin.tab_showcase', 'الكتب الجاهزة'), icon: BookOpen },
-                { id: 'stories', label: t('admin.tab_stories'), icon: BookOpen },
-                { id: 'pricing', label: t('admin.tab_pricing'), icon: Settings },
-                { id: 'coupons', label: t('admin.tab_coupons', 'أكواد الخصم'), icon: Ticket },
-                { id: 'team', label: t('admin.tab_team'), icon: Users },
-              ].map((tItem) => (
-                <button
-                  key={tItem.id}
-                  onClick={() => setTab(tItem.id as any)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-arabic font-medium text-sm transition-all ${
-                    tab === tItem.id
-                      ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                      : 'text-white/60 hover:bg-white/5 hover:text-white'
-                  }`}
-                >
-                  <tItem.icon className="w-4 h-4" />
-                  {tItem.label}
-                </button>
+
+            {/* Nine flat buttons became three named groups. On a phone the
+                whole stack used to push the actual content a screen and a half
+                down, so there it scrolls sideways instead. */}
+            <div className="flex md:block gap-4 overflow-x-auto md:overflow-visible scrollbar-none pb-1 md:pb-0 -mx-1 px-1">
+              {NAV_GROUPS.map((group) => (
+                <div key={group.title} className="md:mb-4 shrink-0 md:shrink">
+                  <p className="hidden md:block font-arabic text-white/30 text-[10px] font-bold tracking-wider px-2 mb-1.5 uppercase">
+                    {group.title}
+                  </p>
+                  <div className="flex md:flex-col gap-1.5">
+                    {group.items.map((item) => {
+                      const on = tab === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => setTab(item.id as any)}
+                          className={`group relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl font-arabic font-medium text-sm whitespace-nowrap transition-all duration-300 ${
+                            on
+                              ? 'bg-gradient-to-l from-red-500/25 to-red-500/5 text-red-300 border border-red-500/30 shadow-lg shadow-red-500/5'
+                              : 'text-white/55 border border-transparent hover:bg-white/5 hover:text-white'
+                          }`}
+                        >
+                          <span
+                            className={`shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                              on ? 'bg-red-500/25' : 'bg-white/5 group-hover:bg-white/10'
+                            }`}
+                          >
+                            <item.icon className="w-3.5 h-3.5" />
+                          </span>
+                          {item.label}
+
+                          {/* A paid order that has not gone to print yet is the
+                              only thing here worth interrupting the owner for. */}
+                          {!!item.attention && (
+                            <span className="shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-amber-500 text-dark-900 font-black text-[10px] flex items-center justify-center" dir="ltr">
+                              {item.attention}
+                            </span>
+                          )}
+                          {item.count !== undefined && !item.attention && (
+                            <span className={`hidden md:block mr-auto text-[11px] font-bold ${on ? 'text-red-300/70' : 'text-white/25'}`} dir="ltr">
+                              {item.count}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               ))}
             </div>
           </div>
