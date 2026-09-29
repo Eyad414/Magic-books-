@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { usePageMeta } from '../hooks/usePageMeta';
-import { Star, BookOpen, Eye, X, Heart } from 'lucide-react';
+import { BookOpen, Eye, X, Heart } from 'lucide-react';
 import FlipbookPreview, { buildThemePreview } from '../components/wizard/FlipbookPreview';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -105,6 +105,47 @@ export default function Stories() {
     toast.success(isFav ? t('stories_page.remove_from_favorites') : t('stories_page.add_to_favorites'));
   };
 
+  /**
+   * Boys / girls filter.
+   *
+   * A customer told the owner "every story on your site is for boys". They were
+   * very nearly right — the demo generator was hardcoded male, so 24 of 25
+   * showcase books were boys. That is fixed and the girl books exist now, but a
+   * parent scrolling a grid of twenty-five covers still has no way to ask the
+   * question that customer asked. So they can ask it here.
+   *
+   * Gender comes from the card's name via detectGender, the same helper the book
+   * text uses to conjugate Arabic, so the filter agrees with the pages.
+   */
+  const [audience, setAudience] = useState<'all' | 'girls' | 'boys'>('all');
+
+  const publicCards = useMemo(() => CARDS.filter(isVisible), [vis]);
+  const counts = useMemo(() => {
+    let girls = 0;
+    for (const c of publicCards) if (detectGender(c.name) === 'female') girls++;
+    return { all: publicCards.length, girls, boys: publicCards.length - girls };
+  }, [publicCards]);
+  const shownCards = useMemo(
+    () =>
+      audience === 'all'
+        ? publicCards
+        : publicCards.filter((c) => (detectGender(c.name) === 'female') === (audience === 'girls')),
+    [publicCards, audience],
+  );
+
+  const AUDIENCES: { id: 'all' | 'girls' | 'boys'; label: string; emoji: string }[] = [
+    { id: 'all', label: t('stories_page.filter_all', 'كل القصص'), emoji: '✨' },
+    { id: 'girls', label: t('stories_page.filter_girls', 'للبنات'), emoji: '🎀' },
+    { id: 'boys', label: t('stories_page.filter_boys', 'للأولاد'), emoji: '🚀' },
+  ];
+
+  /** Owner-set badge from the dashboard — a real flag, not an invented score. */
+  const TAG_LABEL: Record<string, string> = {
+    new: t('stories_page.tag_new', 'جديدة'),
+    bestseller: t('stories_page.tag_bestseller', 'الأكثر طلباً'),
+    featured: t('stories_page.tag_featured', 'مميّزة'),
+  };
+
   const handleStartStory = (e: React.MouseEvent) => {
     e.preventDefault();
     resetProgress();
@@ -149,68 +190,133 @@ export default function Stories() {
     <div className="min-h-screen pt-24 pb-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-14">
+        <div className="text-center mb-8">
           <h1 className="font-arabic font-black text-white mb-4">
             {t('stories_page.title')} <span className="shimmer-text">{t('stories_page.title_shimmer')}</span>
           </h1>
           <p className="font-arabic text-white/50 text-lg">{t('stories_page.description')}</p>
         </div>
 
-        {/* Stories Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Books made from a real child's own photo stay in the admin dash and
-              off the public site. Add a name here when a new demo uses a real
-              family photo rather than a stock/demo face. */}
-          {CARDS.filter(isVisible).map((card, idx) => {
-            const cover = cardCoverFor(card);
-            const rating = [5.0, 4.9, 4.8][idx % 3];
-            const isFav = favorites.includes(card.key);
+        {/* Audience filter — the question a real customer asked out loud. */}
+        <div className={`flex-wrap items-center justify-center gap-2 mb-10 ${counts.girls > 0 && counts.boys > 0 ? 'flex' : 'hidden'}`}>
+          {/* A filter that leads to an empty grid is worse than no filter: it
+              advertises the gap instead of hiding it. Chips appear only once
+              they have something to show, so «للبنات» surfaces by itself the
+              moment the girl books get showcase cards. */}
+          {AUDIENCES.filter((a) => a.id === 'all' || counts[a.id] > 0).map((a) => {
+            const on = audience === a.id;
             return (
-              <div key={card.key} className="glass-card glass-card-hover overflow-hidden group flex flex-col">
-                {/* Cover — the real generated front cover */}
-                <div className="h-44 relative overflow-hidden bg-dark-800">
-                  {cover && <img src={cover} alt={nameL(card)} loading="lazy" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />}
-                  <div className="absolute inset-0 bg-gradient-to-t from-dark-900/50 to-transparent pointer-events-none" />
-                  <div className="absolute top-3 right-3 flex items-center gap-1 bg-gold-500 px-2 py-1 rounded-lg">
-                    <Star className="w-3 h-3 text-dark-900 fill-dark-900" />
-                    <span className="font-arabic font-bold text-dark-900 text-xs">{rating}</span>
-                  </div>
-                  <button
-                    onClick={() => toggleFavorite(card.key)}
-                    aria-label={t('stories_page.add_to_favorites')}
-                    className={`absolute top-3 left-3 w-11 h-11 rounded-full flex items-center justify-center transition-all ${isFav ? 'bg-red-500 text-white shadow-lg scale-110' : 'bg-black/25 text-white/70 hover:bg-black/45 hover:text-white'}`}
-                  >
-                    <Heart className={`w-5 h-5 ${isFav ? 'fill-current' : ''}`} />
-                  </button>
-                </div>
-
-                <div className="p-5 flex flex-col flex-1">
-                  <h3 className="font-arabic font-bold text-white text-lg mb-1">{titleFor(card)}</h3>
-                  <p className="font-arabic text-gold-500 text-xs mb-3">
-                    {t('stories_page.theme')} {themeLabelFor(card)}
-                  </p>
-
-                  {/* View row — opens the locked teaser (first ~30%), not the whole book */}
-                  <div className="flex flex-wrap items-center justify-between p-3 rounded-xl bg-dark-700 border border-white/10 mb-4 gap-2 mt-auto">
-                    <button onClick={() => setSelected(card)} className="flex items-center gap-1 pr-3 py-2 -my-1 min-h-[44px] group cursor-pointer">
-                      <Eye className="w-3.5 h-3.5 text-gold-500 group-hover:scale-125 transition-transform" />
-                      <span className="font-arabic text-gold-500 text-xs border-b border-transparent group-hover:border-gold-500 transition-colors">{t('stories_page.read_full')}</span>
-                    </button>
-                    <div className="flex items-center gap-1">
-                      <BookOpen className="w-3.5 h-3.5 text-white/60" />
-                      <span className="font-arabic text-white/60 text-xs font-bold">{t('stories_page.order_to_complete')}</span>
-                    </div>
-                  </div>
-
-                  {/* Starts on THIS story, not an empty wizard. */}
-                  <button onClick={() => startWithTheme(card.themeId)} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-l from-gold-500 to-gold-600 text-dark-900 font-arabic font-bold text-sm hover:shadow-gold-glow transition-all">
-                    {t('stories_page.start_creating')}
-                  </button>
-                </div>
-              </div>
+              <button
+                key={a.id}
+                onClick={() => setAudience(a.id)}
+                aria-pressed={on}
+                className={`inline-flex items-center gap-2 min-h-[44px] px-4 rounded-2xl font-arabic font-bold text-sm border transition-all duration-300 ${
+                  on
+                    ? 'bg-magic-gradient text-dark-900 border-transparent shadow-lg shadow-gold-500/20 scale-[1.03]'
+                    : 'bg-white/5 text-white/65 border-white/10 hover:border-gold-500/30 hover:text-white'
+                }`}
+              >
+                <span aria-hidden>{a.emoji}</span>
+                {a.label}
+                <span className={`text-[11px] font-black ${on ? 'text-dark-900/60' : 'text-white/35'}`} dir="ltr">
+                  {counts[a.id]}
+                </span>
+              </button>
             );
           })}
         </div>
+
+        {/* Stories grid.
+            Books made from a real child's own photo stay off the public site
+            until the owner ticks them — see ShowcaseCard.private. */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {shownCards.map((card) => {
+            const cover = cardCoverFor(card);
+            const isFav = favorites.includes(card.key);
+            const tag = vis[card.key]?.tag;
+            return (
+              <article
+                key={card.key}
+                className="group relative flex flex-col rounded-3xl overflow-hidden bg-dark-800 border border-white/10 hover:border-gold-500/40 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-gold-500/10 transition-all duration-500"
+              >
+                {/* A book cover is portrait. This was a 176px letterbox that
+                    cropped the top and bottom off every illustration — the
+                    artwork is the product, so it gets the room. */}
+                <button
+                  onClick={() => setSelected(card)}
+                  aria-label={`${t('stories_page.read_full')} — ${titleFor(card)}`}
+                  className="relative block w-full aspect-[3/4] overflow-hidden bg-dark-700 text-right"
+                >
+                  {cover && (
+                    <img
+                      src={cover}
+                      alt={titleFor(card)}
+                      loading="lazy"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.06]"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-dark-900/30 to-transparent pointer-events-none" />
+
+                  {/* Title sits on the art instead of in a separate slab. */}
+                  <div className="absolute bottom-0 inset-x-0 p-3 sm:p-4 pointer-events-none">
+                    <h3 className="font-arabic font-black text-white text-sm sm:text-base leading-snug line-clamp-2 drop-shadow-lg">
+                      {titleFor(card)}
+                    </h3>
+                    <p className="font-arabic text-gold-500 text-[10px] sm:text-[11px] mt-1 font-bold">
+                      {themeLabelFor(card)}
+                    </p>
+                  </div>
+
+                  {/* Read affordance, revealed on hover / always legible on touch. */}
+                  <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                    <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-dark-900/85 border border-gold-500/40">
+                      <Eye className="w-4 h-4 text-gold-500" />
+                      <span className="font-arabic font-bold text-white text-xs">{t('stories_page.read_full')}</span>
+                    </span>
+                  </span>
+
+                  {/* The badge the owner actually set. There used to be a star
+                      rating here — 5.0, 4.9, 4.8 picked by array index, the
+                      same three scores repeating down the grid. Invented
+                      reviews are not ours to show. */}
+                  {tag && (
+                    <span className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-gold-500 font-arabic font-black text-dark-900 text-[10px] shadow-lg">
+                      {TAG_LABEL[tag] || tag}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => toggleFavorite(card.key)}
+                  aria-label={t('stories_page.add_to_favorites')}
+                  className={`absolute top-2.5 left-2.5 w-11 h-11 rounded-full flex items-center justify-center transition-all ${
+                    isFav ? 'bg-red-500 text-white shadow-lg scale-110' : 'bg-dark-900/45 text-white/70 hover:bg-dark-900/70 hover:text-white'
+                  }`}
+                >
+                  <Heart className={`w-5 h-5 ${isFav ? 'fill-current' : ''}`} />
+                </button>
+
+                {/* Starts on THIS story, not an empty wizard. */}
+                <div className="p-3 sm:p-4 mt-auto">
+                  <button
+                    onClick={() => startWithTheme(card.themeId)}
+                    className="w-full inline-flex items-center justify-center gap-2 min-h-[44px] rounded-2xl bg-gradient-to-l from-gold-500 to-gold-600 text-dark-900 font-arabic font-black text-xs sm:text-sm hover:shadow-gold-glow transition-all"
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    {t('stories_page.start_creating')}
+                  </button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+
+        {shownCards.length === 0 && (
+          <p className="font-arabic text-white/45 text-center py-14">
+            {t('stories_page.filter_empty', 'ما في قصص بهذا التصنيف بعد — جرب «كل القصص».')}
+          </p>
+        )}
 
         {/* Bottom CTA */}
         <div className="text-center mt-14 glass-card p-10">
