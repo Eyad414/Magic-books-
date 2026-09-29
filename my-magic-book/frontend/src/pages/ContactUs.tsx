@@ -42,10 +42,35 @@ export default function ContactUs() {
           {/* Contact Info */}
           <div className="space-y-5">
             <h2 className="font-arabic font-bold text-white text-xl">{t('contact.info_title')}</h2>
+            {/* WhatsApp first and as a real button.
+                The copy beside this now says WhatsApp is the fastest way to
+                reach us, which was true before and is the channel this market
+                actually uses — but it sat third in a list of three identical
+                grey cards, below an email address, styled exactly like the
+                information it was competing with. If it is the answer, it
+                should look like one. */}
+            <a
+              href="https://wa.me/972585502072"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/35 hover:bg-emerald-500/25 hover:border-emerald-500/50 transition-all group"
+            >
+              <span className="w-11 h-11 rounded-xl bg-emerald-500/25 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <MessageCircle className="w-5 h-5 text-emerald-300" />
+              </span>
+              <span className="min-w-0">
+                <span className="block font-arabic font-black text-emerald-200 text-sm">
+                  {t('contact.whatsapp_cta', 'راسلنا على واتساب')}
+                </span>
+                <span className="block font-arabic text-emerald-300/70 text-[11px]">
+                  {t('contact.whatsapp_cta_hint', 'أسرع طريقة — بنرد هنا أول شي')}
+                </span>
+              </span>
+            </a>
+
             {[
               { icon: Mail, label: t('contact.info_email'), value: 'hello@magicfanoos.com', href: 'mailto:hello@magicfanoos.com', ltr: true },
               { icon: Phone, label: t('contact.info_phone'), value: '+972 58 550 2072', href: 'tel:+972585502072', ltr: true },
-              { icon: MessageCircle, label: t('contact.info_whatsapp'), value: t('contact.whatsapp_value'), href: 'https://wa.me/972585502072' },
             ].map((item) => (
               <div key={item.label} className="glass-card p-4 flex items-start gap-4">
                 <div className="w-10 h-10 rounded-xl bg-gold-500/20 flex items-center justify-center flex-shrink-0">
