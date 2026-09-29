@@ -2,6 +2,7 @@ import { Star, BookOpen, Heart, Award, Globe, Zap, Languages } from 'lucide-reac
 import { usePageMeta } from '../hooks/usePageMeta';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { useStoryProgress } from '../context/StoryProgressContext';
 import { useSiteStats } from '../hooks/useSiteStats';
 
@@ -19,11 +20,12 @@ function ScrollIndicator() {
 // FAQ section
 function FAQ() {
   const { t } = useTranslation();
+  // Six questions used to sit here, four of which the home page now answers:
+  // how it works, how long it takes, what ages, and seeing it before buying.
+  // Asking a visitor to read the same answers twice is not thoroughness, it is
+  // just a longer page — so this keeps the two that belong to a page about the
+  // shop rather than the purchase, and points at the rest.
   const faqs = [
-    { q: t('about.faqs.1_q'), a: t('about.faqs.1_a') },
-    { q: t('about.faqs.2_q'), a: t('about.faqs.2_a') },
-    { q: t('about.faqs.3_q'), a: t('about.faqs.3_a') },
-    { q: t('about.faqs.4_q'), a: t('about.faqs.4_a') },
     { q: t('about.faqs.5_q'), a: t('about.faqs.5_a') },
     { q: t('about.faqs.6_q'), a: t('about.faqs.6_a') },
   ];
@@ -46,6 +48,17 @@ function FAQ() {
             </div>
           ))}
         </div>
+
+        {/* The questions that moved to the home page are still answered, just
+            not twice. */}
+        <p className="text-center mt-6">
+          <Link
+            to="/#faq"
+            className="inline-flex items-center gap-1.5 font-arabic text-gold-500 text-sm font-bold hover:underline"
+          >
+            {t('about.faq_more', 'باقي الأسئلة — الأسعار، الصور، الدفع والتوصيل')} ←
+          </Link>
+        </p>
       </div>
     </section>
   );
@@ -307,7 +320,8 @@ export default function AboutUs() {
         </div>
       </section>
 
-      <ScrollIndicator />
+      {/* The page used to end on a "discover more" arrow pointing down at
+          the footer. There was nothing below it to discover. */}
     </div>
   );
 }

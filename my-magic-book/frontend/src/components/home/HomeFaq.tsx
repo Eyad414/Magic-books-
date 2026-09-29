@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown } from 'lucide-react';
 
@@ -20,7 +21,7 @@ export default function HomeFaq() {
   const { t } = useTranslation();
   const [open, setOpen] = useState<number | null>(0);
 
-  const QA = [
+  const QA: { q: string; a: string; href?: string; hrefLabel?: string }[] = [
     {
       q: t('home.faq_q_preview', 'أشوف القصة قبل ما أدفع؟'),
       a: t('home.faq_a_preview', 'نعم. تختار القصة وترفع صورة طفلك، وتشوف الغلاف والصفحات كاملة قبل أي دفع. إذا ما أعجبتك، ما تدفع.'),
@@ -45,10 +46,27 @@ export default function HomeFaq() {
       q: t('home.faq_q_time', 'قدّيش بيوخذ وقت؟'),
       a: t('home.faq_a_time', 'من خمسة إلى ثمانية أيام حتى يوصل الكتاب المطبوع. النسخة الرقمية تكون جاهزة بعد ما نبني الكتاب.'),
     },
+    {
+      // Straight from the refund policy, not written fresh here: a 24-hour
+      // cancellation before production starts, and a free replacement for
+      // damage or our own mistake. I left this question out when I built the
+      // FAQ because I believed the shop had no refund policy — it has had one
+      // all along on /policy, and it is better than the site was letting on.
+      // Kept deliberately narrow so it cannot promise more than that page does.
+      q: t('home.faq_q_refund', 'وإذا صار خطأ، أو ما وصل الكتاب منيح؟'),
+      a: t(
+        'home.faq_a_refund',
+        'إذا وصل الكتاب تالفاً أو كان في خطأ من طرفنا، منستبدله مجاناً. وبتقدر تلغي الطلب وتسترد كامل المبلغ خلال ٢٤ ساعة ما دام الإنتاج ما بلّش — بعد ما تبدأ الطباعة ما بنقدر نلغي، لأن الكتاب مطبوع خصيصاً لطفلك.',
+      ),
+      href: '/policy#refund',
+      hrefLabel: t('home.faq_refund_link', 'اقرأ سياسة الاسترداد كاملة'),
+    },
   ];
 
   return (
-    <section className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
+    // id + scroll-mt: the About page links here, and without the offset the
+    // heading lands behind the fixed header.
+    <section id="faq" className="max-w-3xl mx-auto px-4 sm:px-6 py-10 scroll-mt-24">
       <div className="text-center mb-6">
         <h2 className="font-arabic font-black text-white text-2xl sm:text-3xl">
           {t('home.faq_title', 'أسئلة قبل ما تبدأ')}
@@ -87,9 +105,17 @@ export default function HomeFaq() {
                   isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
                 }`}
               >
-                <p className="overflow-hidden font-arabic text-white/60 text-[13px] leading-relaxed px-4 pb-4">
-                  {item.a}
-                </p>
+                <div className="overflow-hidden px-4 pb-4">
+                  <p className="font-arabic text-white/60 text-[13px] leading-relaxed">{item.a}</p>
+                  {item.href && (
+                    <Link
+                      to={item.href}
+                      className="inline-flex items-center gap-1 mt-2 font-arabic text-gold-500 text-[12px] font-bold hover:underline"
+                    >
+                      {item.hrefLabel} ←
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
           );
