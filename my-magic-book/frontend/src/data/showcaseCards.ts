@@ -114,4 +114,14 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   { key: 'baha-ramadan',    themeId: 'ramadan_first',      name: 'Baha',  emoji: '🌙' },
   { key: 'baha-eid',        themeId: 'eid_first',          name: 'Baha',  emoji: '🎁' },
   { key: 'baha-bigbrother', themeId: 'big_brother',        name: 'Baha',  emoji: '👶' },
+  // The girl books, written after a customer said every story on the site was
+  // for boys. All four were drawn from Lora's own photograph, so all four are
+  // `private: true` — the name alone would already gate them through
+  // PRIVATE_DEMO_CHILDREN, but the flag is what survives a rename, and it is
+  // her face on the cover either way. They sit in the dashboard waiting for a
+  // tick, and reach /stories only when her family has agreed.
+  { key: 'lora-dabke',      themeId: 'dabke',              name: 'Lora',  private: true, emoji: '🥁' },
+  { key: 'lora-jaffa',      themeId: 'jaffa_day',          name: 'Lora',  private: true, emoji: '⛵' },
+  { key: 'lora-oud',        themeId: 'oud_lesson',         name: 'Lora',  private: true, emoji: '🎶' },
+  { key: 'lora-jerusalem',  themeId: 'jerusalem_tale',     name: 'Lora',  private: true, emoji: '🏮' },
 ];
