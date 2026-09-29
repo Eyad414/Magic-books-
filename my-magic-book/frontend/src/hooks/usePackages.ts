@@ -79,7 +79,7 @@ export function usePackages(): UsePackages {
   const lang = i18n.language;
   const packages = useMemo<ShopPackage[]>(() => {
     const live: any[] | null = liveSettings?.bookPackages ?? null;
-    return CATALOGUE
+    const rows = CATALOGUE
       .map((entry) => {
         const label = t(entry.key, entry.fallbackLabel);
         const desc = t(`${entry.key}_desc`);
@@ -108,6 +108,32 @@ export function usePackages(): UsePackages {
         };
       })
       .filter((p) => !p.hidden);
+
+    /**
+     * What باقة Pro would cost bought piece by piece.
+     *
+     * Pro is 170 ₪ and its own description says "all versions (colour +
+     * colouring + digital)" — which separately come to 230 ₪. Nothing on the
+     * wizard said so, and Pro has never once been bought by a real customer
+     * while the three parts have. A bundle whose saving is invisible is just
+     * the most expensive button on the screen.
+     *
+     * Derived rather than typed into the database, so it stays true when the
+     * owner changes any of the three prices. Only shown when every part has a
+     * real price and the sum genuinely beats Pro — never an invented "was".
+     */
+    const pro = rows.find((p) => p.id === 'pro');
+    if (pro && pro.price !== null && !pro.originalPrice) {
+      const parts = ['color', 'coloring', 'ebook']
+        .map((id) => rows.find((p) => p.id === id))
+        .filter((p): p is NonNullable<typeof p> => !!p && p.price !== null);
+      if (parts.length === 3) {
+        const separately = parts.reduce((sum, p) => sum + (p.price as number), 0);
+        if (separately > pro.price) pro.originalPrice = separately;
+      }
+    }
+
+    return rows;
   }, [liveSettings, t, lang]);
 
   const pricesReady = packages.length > 0 && packages.every((p) => typeof p.price === 'number');

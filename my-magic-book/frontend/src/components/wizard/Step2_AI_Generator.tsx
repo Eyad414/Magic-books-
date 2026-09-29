@@ -736,7 +736,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
             ? t('step2.pay_hint_transfer', 'الدفع نقداً عند الاستلام، أو تحويل عبر Bit من أي مكان.')
             : t('step2.pay_hint_cash', 'الدفع نقداً عند الاستلام.')}
         </p>
-        <div className="flex gap-2 w-full">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 w-full">
           {packages.map((pkg) => {
             const isSoon = (pkg as any).soon;   // e.g. audio — not available yet
             return (
@@ -746,7 +746,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
               id={`pkg-${pkg.id}`}
               disabled={isSoon}
               onClick={() => { if (!isSoon) setBookPackage(pkg.id); }}
-              className={`relative flex-1 flex flex-col items-center justify-center p-2 h-28 rounded-2xl border-2 transition-all text-center group ${isSoon
+              className={`relative flex flex-col items-center justify-start p-2.5 pt-3 min-h-[8.5rem] rounded-2xl border-2 transition-all text-center group ${isSoon
                   ? 'border-white/10 bg-dark-700/30 opacity-50 cursor-not-allowed'
                   : bookPackage === pkg.id
                   ? 'border-gold-500 bg-gold-500/10 shadow-gold-glow'
@@ -773,6 +773,25 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
               ) : (
                 <span className="font-arabic text-gold-500 font-bold text-xs">{pkg.price} ₪</span>
               )}
+              {/* What is actually in the box. Every package has carried a
+                  description since the dashboard was built and no customer has
+                  ever seen one — so "باقة Pro الشاملة" was a name and a price
+                  and nothing else, which is a hard thing to choose. */}
+              {!isSoon && pkg.desc && (
+                <span className="font-arabic text-white/45 text-[10px] leading-snug mt-1 line-clamp-2">
+                  {pkg.desc}
+                </span>
+              )}
+
+              {/* The saving, where the decision is made. Pro costs 170 ₪ and
+                  its three parts come to 230 ₪; the struck-through price says
+                  so, this says how much. */}
+              {!isSoon && pkg.originalPrice && pkg.price !== null && (
+                <span className="mt-auto inline-block px-1.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/35 font-arabic font-black text-emerald-300 text-[9px]">
+                  {t('step2.pkg_saving', 'وفّر {{n}} ₪', { n: pkg.originalPrice - pkg.price })}
+                </span>
+              )}
+
               {isSoon && (
                 <div className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full bg-white/15 text-white/80 text-[10px] font-bold font-arabic">
                   {t('step3.coming_soon', 'قريباً')}

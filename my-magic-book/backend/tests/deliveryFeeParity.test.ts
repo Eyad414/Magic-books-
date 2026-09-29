@@ -67,3 +67,30 @@ describe('seeded coupons are worth something', () => {
     }
   });
 });
+
+/**
+ * The bundle's saving, derived rather than typed.
+ *
+ * باقة Pro is 170 ₪ and its own description says "all versions (colour +
+ * colouring + digital)" — 230 ₪ bought separately. The wizard never said so,
+ * and Pro has not once been bought by a real customer while its three parts
+ * have. usePackages now derives the comparison, so it stays true when any of
+ * the three prices changes and cannot become an invented "was".
+ */
+describe('Pro bundle saving', () => {
+  it('is the real sum of its parts, not a number someone typed', async () => {
+    const src = await import('fs').then((fs) =>
+      fs.readFileSync(
+        require('path').resolve(__dirname, '../../frontend/src/hooks/usePackages.ts'),
+        'utf8',
+      ),
+    );
+    // Derived from the live rows...
+    expect(src).toMatch(/\['color', 'coloring', 'ebook'\]/);
+    // ...and only when it genuinely beats Pro, so it can never advertise a
+    // discount off a lower number.
+    expect(src).toMatch(/if \(separately > pro\.price\)/);
+    // ...and only when all three parts have a real price.
+    expect(src).toMatch(/parts\.length === 3/);
+  });
+});
