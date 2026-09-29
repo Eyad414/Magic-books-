@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Star, TrendingUp, Eye, X } from 'lucide-react';
+import { TrendingUp, Eye, X, Sparkles, Globe } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { publicApi } from '../../api/publicApi';
@@ -46,10 +46,10 @@ export default function BestSellers() {
   // was slow/unreliable — kids' photos appeared missing). The preview modal still
   // uses the full-res cover.
   const bestSellers = [
-    { id: 1, themeId: 'zoo_adventure', name: 'Baha', emoji: '🦁', rating: 4.9, reviews: 128, tag: t('bestsellers.tag_best_seller'), colors: ['#33691e', '#558b2f'], localCover: '/showcase/baha.webp' },
-    { id: 2, themeId: 'space', name: 'Liam', emoji: '🚀', rating: 4.8, reviews: 94, tag: t('bestsellers.tag_new'), colors: ['#1a237e', '#311b92'], coverPath: 'magic-fanoose/generated/6a43cbf500c3ecaed9218b3c/page-00.png', localCover: '/showcase/liam.webp' },
-    { id: 3, themeId: 'school_coloring', name: 'Yosef', emoji: '🎒', rating: 5.0, reviews: 76, tag: t('bestsellers.tag_featured'), colors: ['#4a148c', '#6a1b9a'], localCover: '/showcase/yosef.webp' },
-    { id: 4, themeId: 'space_coloring', name: 'Hamza', emoji: '🎨', rating: 4.7, reviews: 61, tag: '', colors: ['#006064', '#00838f'], localCover: '/showcase/hamza.webp' },
+    { id: 1, themeId: 'zoo_adventure', name: 'Baha', emoji: '🦁', tag: t('bestsellers.tag_best_seller'), colors: ['#33691e', '#558b2f'], localCover: '/showcase/baha.webp' },
+    { id: 2, themeId: 'space', name: 'Liam', emoji: '🚀', tag: t('bestsellers.tag_new'), colors: ['#1a237e', '#311b92'], coverPath: 'magic-fanoose/generated/6a43cbf500c3ecaed9218b3c/page-00.png', localCover: '/showcase/liam.webp' },
+    { id: 3, themeId: 'school_coloring', name: 'Yosef', emoji: '🎒', tag: t('bestsellers.tag_featured'), colors: ['#4a148c', '#6a1b9a'], localCover: '/showcase/yosef.webp' },
+    { id: 4, themeId: 'space_coloring', name: 'Hamza', emoji: '🎨', tag: '', colors: ['#006064', '#00838f'], localCover: '/showcase/hamza.webp' },
   ];
 
   // Once the owner publishes real books from the dashboard they take over the
@@ -239,12 +239,25 @@ export default function BestSellers() {
                   {themeLabel && <p className="font-arabic text-gold-500 text-xs mb-2">{themeLabel}</p>}
                   {desc && <p className="font-arabic text-white/50 text-xs mb-3 leading-relaxed line-clamp-2">{desc}</p>}
 
-                  <div className="flex items-center justify-start">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 text-gold-500 fill-gold-500" />
-                      <span className="text-gold-500 font-bold text-sm">{book.rating}</span>
-                      <span className="text-white/30 text-xs">({book.reviews})</span>
-                    </div>
+                  {/* This was a star score and a review count — 4.9 (128),
+                      4.8 (94), 5.0 (76), 4.7 (61). All four were literals in
+                      the array below, and because every card spreads that array
+                      by index, real published books inherited them too: 359
+                      reviews claimed on a shop with four real purchases.
+                      Invented reviews are not ours to show, and a parent who
+                      believes them and then finds out is the customer we lose
+                      permanently.
+
+                      What is here instead is true of every book we make. */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="inline-flex items-center gap-1 font-arabic text-white/55 text-xs">
+                      <Sparkles className="w-3.5 h-3.5 text-gold-500" />
+                      {t('bestsellers.fact_pages', '١٣ لوحة مرسومة')}
+                    </span>
+                    <span className="inline-flex items-center gap-1 font-arabic text-white/55 text-xs">
+                      <Globe className="w-3.5 h-3.5 text-gold-500" />
+                      {t('bestsellers.fact_langs', 'ثلاث لغات')}
+                    </span>
                   </div>
 
                   <Link
