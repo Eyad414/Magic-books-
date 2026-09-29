@@ -15,7 +15,12 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
   const [form, setForm] = useState({
     childName: progress.childDetails.childName || '',
     childAge: progress.childDetails.childAge || '3-5',
-    childGender: progress.childDetails.childGender || 'male' as 'male' | 'female',
+    // No default. Gender decides every pronoun and verb ending across thirteen
+    // pages of Arabic, and it used to arrive pre-set to male — so a parent who
+    // simply did not notice the field got a boy's book for their daughter, and
+    // the mistake only became visible once the book was printed. An extra tap
+    // is cheaper than that.
+    childGender: progress.childDetails.childGender || ('' as 'male' | 'female' | ''),
     childPhotoUrl: progress.childDetails.childPhotoUrl || '',
   });
 
@@ -27,6 +32,7 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
     const errs: Record<string, string> = {};
     if (!form.childName.trim()) errs.childName = t('step1.err_child_name');
     if (!form.childAge) errs.childAge = t('step1.err_child_age');
+    if (!form.childGender) errs.childGender = t('step1.err_child_gender', 'اختر ولد أو بنت — القصة كلها تتغيّر حسب الاختيار');
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -40,7 +46,7 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
    */
   const handleNext = () => {
     if (!validate()) return;
-    setChildDetails(form);
+    setChildDetails(form as typeof form & { childGender: 'male' | 'female' });
     onNext();
   };
 
@@ -50,6 +56,26 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
         <div className="text-5xl mb-3">👶</div>
         <h2 className="font-arabic font-bold text-white text-xl mb-1">{t('step1.title')}</h2>
         <p className="font-arabic text-white/50 text-sm">{t('step1.desc')}</p>
+
+        {/* What they are agreeing to by typing a name.
+            This screen asked for a child's name and said nothing about what
+            came after it, or that looking costs nothing. Of the four people
+            who opened the wizard since step tracking began, none went past
+            this screen — too few to call it proof, but the page was silent
+            either way. */}
+        <div className="mt-3 inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 py-2 rounded-2xl bg-white/5 border border-white/10">
+          <span className="font-arabic text-white/60 text-[11px]">
+            {t('step1.reassure_steps', '٣ خطوات بعد هذه')}
+          </span>
+          <span className="text-white/15">·</span>
+          <span className="font-arabic text-white/60 text-[11px]">
+            {t('step1.reassure_preview', 'تشوف القصة كاملة قبل ما تدفع')}
+          </span>
+          <span className="text-white/15">·</span>
+          <span className="font-arabic text-gold-500 text-[11px] font-bold">
+            {t('step1.reassure_free', 'المعاينة مجانية')}
+          </span>
+        </div>
       </div>
 
       {/* Name: Input field to capture the hero's name which will be used by AI in the story */}
@@ -123,6 +149,7 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
             </button>
           ))}
         </div>
+        {errors.childGender && <p className="text-red-400 text-xs font-arabic mt-2">{errors.childGender}</p>}
       </div>
 
       {/* Preview */}

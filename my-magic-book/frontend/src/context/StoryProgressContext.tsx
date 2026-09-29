@@ -70,7 +70,11 @@ interface StoryProgressContextType {
 
 const defaultProgress: StoryProgress = {
   currentStep: 1,
-  childDetails: { childAge: '3-5', childGender: 'male' },
+  // childGender is deliberately absent. Seeding it to 'male' meant the wizard
+  // arrived with a boy already chosen, and a parent who never looked at the
+  // field got a boy's book for their daughter — the whole story is conjugated
+  // from this one value. Step 1 now refuses to advance until it is picked.
+  childDetails: { childAge: '3-5' },
   storyConfig: { theme: 'adventure', language: 'ar' },
   bookCustomization: { coverColor: '#1B1F5E', bookPackage: 'color', quantity: 1, extraBooks: [] },
   // Never shown or chosen in checkout: every order ships from Jerusalem,
