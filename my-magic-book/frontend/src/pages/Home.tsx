@@ -4,6 +4,8 @@ import HeroSection from '../components/home/HeroSection';
 import WorkFlow from '../components/home/WorkFlow';
 import BestSellers from '../components/home/BestSellers';
 import WhatYouGet from '../components/home/WhatYouGet';
+import NameMagic from '../components/home/NameMagic';
+import HomeFaq from '../components/home/HomeFaq';
 
 
 function ScrollIndicator() {
@@ -23,6 +25,9 @@ export default function Home() {
     <div>
       <HeroSection />
       
+      {/* The claim "your child's name in every page" was three screens away
+          from any evidence of it. This is the evidence, and it comes first. */}
+      <NameMagic />
       <WorkFlow />
 
       {/* What arrives and what it costs — the page said neither, and a parent
@@ -31,6 +36,7 @@ export default function Home() {
       <ScrollIndicator />
       
       <BestSellers />
+      <HomeFaq />
       <ScrollIndicator />
       <div className="max-w-3xl mx-auto px-4 mt-8 mb-16 flex justify-center">
         <div className="glass-card glass-card-hover p-10 text-center w-full relative overflow-hidden border border-gold-500/20">

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { TrendingUp, Eye, X, Sparkles, Globe } from 'lucide-react';
+import { TrendingUp, Eye, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { publicApi } from '../../api/publicApi';
@@ -238,27 +238,6 @@ export default function BestSellers() {
                   </h3>
                   {themeLabel && <p className="font-arabic text-gold-500 text-xs mb-2">{themeLabel}</p>}
                   {desc && <p className="font-arabic text-white/50 text-xs mb-3 leading-relaxed line-clamp-2">{desc}</p>}
-
-                  {/* This was a star score and a review count — 4.9 (128),
-                      4.8 (94), 5.0 (76), 4.7 (61). All four were literals in
-                      the array below, and because every card spreads that array
-                      by index, real published books inherited them too: 359
-                      reviews claimed on a shop with four real purchases.
-                      Invented reviews are not ours to show, and a parent who
-                      believes them and then finds out is the customer we lose
-                      permanently.
-
-                      What is here instead is true of every book we make. */}
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <span className="inline-flex items-center gap-1 font-arabic text-white/55 text-xs">
-                      <Sparkles className="w-3.5 h-3.5 text-gold-500" />
-                      {t('bestsellers.fact_pages', '١٣ لوحة مرسومة')}
-                    </span>
-                    <span className="inline-flex items-center gap-1 font-arabic text-white/55 text-xs">
-                      <Globe className="w-3.5 h-3.5 text-gold-500" />
-                      {t('bestsellers.fact_langs', 'ثلاث لغات')}
-                    </span>
-                  </div>
 
                   <Link
                     to="/create"
