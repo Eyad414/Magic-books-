@@ -13,6 +13,7 @@ import Modal from '../components/common/Modal';
 import StatusBadge from '../components/common/StatusBadge';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { toCardUrl } from '../api/mediaUrl';
 import { localizeName } from '../utils/translit';
 import { SHOWCASE_CARDS } from '../data/showcaseCards';
 import { loadFavorites } from '../utils/favorites';
@@ -295,9 +296,42 @@ export default function Dashboard() {
                           >
                             <X className="w-4 h-4" />
                           </button>
-                          <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">📚</div>
+                          {/* The child's own cover, not a clipart book.
+                              getMyStories keeps generatedCover in the response
+                              specifically so this card can show it — the
+                              comment in that controller says so — and this
+                              rendered 📚 for every book anyway. Six of these
+                              stories have real artwork of a real child on file.
+                              Drafts have none, so they keep the emoji, and a
+                              cover that fails to load falls back to it. */}
+                          {story.generatedCover ? (
+                            <div className="w-full aspect-[3/4] max-h-40 mb-3 rounded-xl overflow-hidden bg-dark-800">
+                              <img
+                                src={toCardUrl(story.generatedCover, 320)}
+                                alt=""
+                                loading="lazy"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                onError={(e) => {
+                                  const img = e.currentTarget as HTMLImageElement;
+                                  img.style.display = 'none';
+                                  (img.parentElement as HTMLElement).innerHTML =
+                                    '<div class="w-full h-full flex items-center justify-center text-4xl">📚</div>';
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">📚</div>
+                          )}
                           <h3 className="font-arabic font-bold text-white text-lg mb-1">{story.childName}</h3>
-                          <p className="font-arabic text-white/40 text-xs mb-3">{story.theme} • {new Date(story.createdAt).toLocaleDateString()}</p>
+                          {/* story.theme is a raw id — pirate_adventure,
+                              school_hero — and it was printed to the customer
+                              exactly like that, in English snake_case, on an
+                              Arabic page. The same file already localises it
+                              correctly further down. */}
+                          <p className="font-arabic text-white/40 text-xs mb-3">
+                            {t(`step2.theme_${story.theme}`, { defaultValue: story.theme }) as string}
+                            {' • '}{new Date(story.createdAt).toLocaleDateString()}
+                          </p>
                           {/* What this package unlocks (Pro = all). */}
                           <div className="flex flex-wrap gap-1.5 mb-3">
                             {(PACKAGE_INCLUDES[story.bookPackage || 'color'] || ['story']).map((inc) => {
