@@ -138,6 +138,10 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
             seriesPart: dbTheme.seriesPart,
             generatedCover: dbTheme.generatedCover,
             generatedImages: dbTheme.generatedImages,
+            // This mapping names every field it keeps, so a field added to the
+            // model and to the admin still arrives here as undefined until it
+            // is listed — which is how the demoGender sort shipped as a no-op.
+            demoGender: dbTheme.demoGender,
           };
         });
         setThemes(fromApi);
