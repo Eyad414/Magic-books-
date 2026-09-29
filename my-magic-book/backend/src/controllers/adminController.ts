@@ -948,7 +948,10 @@ export const getAllOrders = async (req: Request, res: Response): Promise<void> =
   try {
     const orders = await Order.find()
       .sort({ createdAt: -1 })
-      .populate('userId', 'name email')
+      // `role` so the dashboard can tell a customer's order from one of our own
+      // test orders. Without it the pricing tab reports 1,170 ₪ of sales when
+      // 895 ₪ of that is the owner buying from himself.
+      .populate('userId', 'name email role')
       .populate('storyId')
       .lean();
     // The proxy will not serve a child photo on the path alone any more, so

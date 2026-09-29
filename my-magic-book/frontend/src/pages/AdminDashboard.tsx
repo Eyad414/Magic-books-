@@ -2237,6 +2237,33 @@ export default function AdminDashboard() {
   const unhandledMessages = messages.filter((m: any) => !m.isRead).length;
 
   /**
+   * What each package has actually earned.
+   *
+   * This tab let the owner set four prices and never once said which of them
+   * anyone buys. قصة ملونة is 84% of the money; دفتر تلوين has been on sale at
+   * 60 ₪, visible to every customer, and has never been bought — and the only
+   * way to know that was to read the orders tab and count by hand.
+   *
+   * Admin accounts are excluded for the same reason as the customers tab: the
+   * owner's own test orders are 895 ₪ of the 1,170 ₪ total, and a package that
+   * looks like a hit because we bought it ourselves is worse than no number.
+   */
+  const packageSales = (() => {
+    const byPkg: Record<string, { n: number; revenue: number }> = {};
+    for (const o of orders) {
+      if (o.paymentStatus !== 'paid') continue;
+      if ((o.userId as any)?.role === 'admin') continue;
+      const id = (o.storyId as any)?.bookPackage;
+      if (!id) continue;
+      byPkg[id] = byPkg[id] || { n: 0, revenue: 0 };
+      byPkg[id].n += 1;
+      byPkg[id].revenue += o.totalPrice || 0;
+    }
+    return byPkg;
+  })();
+  const packageRevenueTotal = Object.values(packageSales).reduce((a, b) => a + b.revenue, 0);
+
+  /**
    * Customers, and what they are actually worth.
    *
    * This tab counted accounts, visits and page views and never once mentioned
@@ -3649,12 +3676,51 @@ export default function AdminDashboard() {
               </div>
             ) : tab === 'pricing' ? (
               <div>
-                <h2 className="font-arabic font-bold text-xl text-white mb-6">{t('admin.pricing_title')}</h2>
+                <h2 className="font-arabic font-bold text-xl text-white mb-1">{t('admin.pricing_title')}</h2>
+                <p className="font-arabic text-white/35 text-[11px] mb-4">
+                  {t('admin.pricing_sales_note', 'المبيعات تحت كل باقة من الطلبات المدفوعة، بدون حسابات المدراء.')}
+                </p>
                 <div className="space-y-2">
                   {settings.bookPackages.map((pkg: any, index: number) => (
                     /* One compact row per package — name, price, description and
                        the visibility pill inline, matching Stories & Themes. */
-                    <div key={pkg.id} className="px-3 py-2 bg-white/5 rounded-xl border border-white/10 flex flex-wrap items-center gap-1.5">
+                    <div key={pkg.id} className="px-3 py-2 bg-white/5 rounded-xl border border-white/10">
+                      {/* What this package has actually done, above the form
+                          that sets its price — the two belong together. */}
+                      {(() => {
+                        const sold = packageSales[pkg.id];
+                        const share = sold && packageRevenueTotal
+                          ? Math.round((sold.revenue / packageRevenueTotal) * 100)
+                          : 0;
+                        return (
+                          <div className="flex flex-wrap items-center gap-2 mb-2 pb-2 border-b border-white/5">
+                            <span className="font-arabic font-black text-white text-sm">{pkg.label || pkg.id}</span>
+                            {sold ? (
+                              <>
+                                <span className="font-arabic text-emerald-300 text-xs font-bold" dir="ltr">
+                                  {sold.revenue}₪
+                                </span>
+                                <span className="font-arabic text-white/40 text-[11px]">
+                                  {t('admin.pkg_sold', '{{n}} مبيعات', { n: sold.n })}
+                                </span>
+                                {/* A bar, because "84%" and "7%" do not feel
+                                    different until you can see them. */}
+                                <span className="h-1.5 flex-1 min-w-[60px] max-w-[160px] rounded-full bg-white/10 overflow-hidden">
+                                  <span className="block h-full bg-emerald-400/70" style={{ width: `${share}%` }} />
+                                </span>
+                                <span className="font-arabic text-white/30 text-[10px]" dir="ltr">{share}%</span>
+                              </>
+                            ) : (
+                              <span className="font-arabic text-amber-300 text-[11px] font-bold">
+                                {pkg.hidden
+                                  ? t('admin.pkg_never_sold_hidden', 'لم تُبَع — وهي مخفية')
+                                  : t('admin.pkg_never_sold', 'معروضة للعملاء ولم تُبَع ولا مرة')}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
+                      <div className="flex flex-wrap items-center gap-1.5">
                       <input
                         type="text"
                         className="magic-input flex-1 min-w-[130px] sm:max-w-[190px] !py-1.5 text-sm"
@@ -3751,6 +3817,7 @@ export default function AdminDashboard() {
                         />
                         {pkg.hidden ? t('admin.pkg_hidden_short', 'مخفية') : t('admin.pkg_visible_short', 'ظاهرة')}
                       </label>
+                      </div>
                     </div>
                   ))}
 
