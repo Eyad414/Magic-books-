@@ -3637,8 +3637,28 @@ export default function AdminDashboard() {
               </div>
             ) : tab === 'team' ? (
               <div>
-                <h2 className="font-arabic font-bold text-xl text-white mb-6">{t('admin.team_title')}</h2>
-                
+                <h2 className="font-arabic font-bold text-xl text-white mb-1">{t('admin.team_title')}</h2>
+
+                {/* What "admin" actually means, before you grant it.
+                    This is the most consequential button in the panel — it hands
+                    over every customer's name, email, phone and address, the
+                    prices, and the button that spends real money at the printer
+                    — and the form said only "they will become an admin". */}
+                <div className="mb-5 p-3 rounded-2xl bg-red-500/[0.07] border border-red-500/25">
+                  <p className="font-arabic font-black text-red-300 text-sm mb-1.5">
+                    ⚠️ {t('admin.team_grants_title', 'المشرف يحصل على كل شيء')}
+                  </p>
+                  <ul className="font-arabic text-white/60 text-[11px] leading-relaxed space-y-0.5 list-disc ps-4">
+                    <li>{t('admin.team_grant_customers', 'أسماء العملاء وبريدهم وهواتفهم وعناوينهم، وصور أطفالهم')}</li>
+                    <li>{t('admin.team_grant_money', 'إرسال الكتب إلى المطبعة — وهذا يصرف مالاً حقيقياً')}</li>
+                    <li>{t('admin.team_grant_prices', 'تغيير الأسعار والباقات وأكواد الخصم')}</li>
+                    <li>{t('admin.team_grant_remove', 'إزالة أي مشرف آخر — بما فيهم أنت')}</li>
+                  </ul>
+                  <p className="font-arabic text-white/35 text-[10px] mt-1.5">
+                    {t('admin.team_grants_note', 'لا توجد صلاحيات جزئية بعد: إما مشرف كامل أو عميل عادي.')}
+                  </p>
+                </div>
+
                 <div className="bg-dark-700/50 p-5 rounded-2xl border border-white/5 mb-8">
                   <h3 className="font-arabic text-gold-500 font-bold mb-4 flex items-center gap-2">
                     <UserPlus className="w-4 h-4" /> {t('admin.add_new_admin')}
@@ -3656,13 +3676,42 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="space-y-3">
-                  {team.map((admin) => (
-                    <div key={admin._id} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
-                      <div>
-                        <div className="font-arabic text-white font-bold">{admin.name}</div>
-                        <div className="font-sans text-white/50 text-xs">{admin.email}</div>
+                  {team.map((admin) => {
+                    // An account nobody has used in a month still holds every
+                    // permission listed above. Worth seeing next to the name.
+                    const seen = admin.lastSeenAt || admin.lastLoginAt;
+                    const daysIdle = seen
+                      ? Math.floor((Date.now() - new Date(seen).getTime()) / 86400000)
+                      : null;
+                    const dormant = daysIdle !== null && daysIdle >= 14;
+                    const isYou = String(admin._id) === String((user as any)?.id);
+                    return (
+                    <div key={admin._id} className={`flex items-center justify-between p-4 bg-white/5 rounded-xl border ${dormant ? 'border-amber-500/30' : 'border-white/10'}`}>
+                      <div className="min-w-0">
+                        <div className="font-arabic text-white font-bold flex items-center gap-2 flex-wrap">
+                          {admin.name}
+                          {isYou && (
+                            <span className="px-1.5 py-0.5 rounded bg-white/10 text-white/60 text-[10px] font-arabic">
+                              {t('admin.team_you', 'أنت')}
+                            </span>
+                          )}
+                          {/* How they get in — a Google account is only as safe
+                              as that Google account. */}
+                          <span className="px-1.5 py-0.5 rounded bg-white/5 text-white/40 text-[10px] font-arabic">
+                            {admin.googleId ? t('admin.team_via_google', 'دخول Google') : t('admin.team_via_password', 'كلمة سر')}
+                          </span>
+                        </div>
+                        <div className="font-sans text-white/50 text-xs" dir="ltr">{admin.email}</div>
+                        <div className={`font-arabic text-[11px] mt-0.5 ${dormant ? 'text-amber-300' : 'text-white/35'}`}>
+                          {daysIdle === null
+                            ? t('admin.team_never_seen', 'لم يدخل بعد')
+                            : daysIdle === 0
+                              ? t('admin.team_today', 'نشط اليوم')
+                              : t('admin.team_idle', 'آخر نشاط قبل {{n}} يوم', { n: daysIdle })}
+                          {dormant && ` — ${t('admin.team_dormant', 'حساب خامل ويملك كل الصلاحيات')}`}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 shrink-0">
                         <div className="px-3 py-1 bg-red-500/20 text-red-400 text-xs font-bold rounded-lg">{t('admin.admin_role')}</div>
                         {String(admin._id) !== String((user as any)?.id) && (
                           <button
@@ -3676,7 +3725,8 @@ export default function AdminDashboard() {
                         )}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ) : tab === 'pricing' ? (
