@@ -95,7 +95,9 @@ export default function Stories() {
     // save them — send them to log in rather than pretending it worked.
     if (!user?.id) {
       toast(t('stories_page.login_to_favorite', 'سجّل الدخول لحفظ قصصك المفضلة ❤️'));
-      navigate('/login');
+      // Back to the grid they were browsing, not the dashboard — they were in
+      // the middle of liking a story, not trying to administer an account.
+      navigate('/login', { state: { from: '/stories' } });
       return;
     }
     const isFav = favorites.includes(key);

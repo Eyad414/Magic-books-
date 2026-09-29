@@ -74,7 +74,10 @@ export default function Dashboard() {
   }, [tab]);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) navigate('/login');
+    // Send them back here afterwards. Landing on the dashboard's own login
+    // redirect and then being dropped at the dashboard's default tab is fine;
+    // being dropped somewhere else is not.
+    if (!isLoading && !isAuthenticated) navigate('/login', { state: { from: '/dashboard' } });
   }, [isLoading, isAuthenticated]);
 
   useEffect(() => {

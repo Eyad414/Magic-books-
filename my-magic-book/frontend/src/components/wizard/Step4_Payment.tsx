@@ -99,8 +99,13 @@ export default function Step4_Payment({ onPrev }: Props) {
       return;
     }
     if (!isAuthenticated) {
+      // Carry where they were, exactly as step 3 does. Without the state this
+      // dropped the customer on /dashboard after signing in — at the payment
+      // screen, with the address filled in and the book chosen, which is the
+      // single worst place on the site to lose someone. Step 3 was given this
+      // and step 4 was not.
       toast.error(t('step5.err_login'));
-      navigate('/login');
+      navigate('/login', { state: { from: '/create', reason: 'create' } });
       return;
     }
     // Step 3 already validated and saved the address; if it is somehow missing,

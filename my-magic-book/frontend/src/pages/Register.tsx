@@ -62,6 +62,26 @@ export default function Register() {
             <p className="font-arabic text-white/50 text-sm">{t('auth.register_desc')}</p>
           </div>
 
+          {/* Why an account at all.
+              The wizard sends people here at step 3, mid-purchase, having
+              already typed their child's name and chosen a story — and this
+              page asked for a password without once saying what it was for.
+              Every reason below is something the account actually does today:
+              the story is saved against it, the book is read at /book/:id from
+              it, and the order is tracked in «طلباتي». */}
+          <ul className="mb-6 space-y-1.5">
+            {[
+              { icon: '💾', text: t('auth.why_save', 'قصتك محفوظة — ما بتضيع إذا سكّرت الصفحة') },
+              { icon: '📖', text: t('auth.why_read', 'بتقرأ كتاب طفلك من حسابك وقت ما بدك') },
+              { icon: '📦', text: t('auth.why_track', 'بتتابع طلبك من أول ما تدفع لحد ما يوصل') },
+            ].map((r) => (
+              <li key={r.text} className="flex items-start gap-2 font-arabic text-white/55 text-[12px]">
+                <span aria-hidden>{r.icon}</span>
+                {r.text}
+              </li>
+            ))}
+          </ul>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block font-arabic text-white/70 text-sm mb-2">{t('auth.full_name')}</label>
@@ -115,6 +135,19 @@ export default function Register() {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              {/* The rule, before it is broken rather than after. The form has
+                  always required six characters and only ever said so in a red
+                  toast once the whole form had been filled in and submitted. */}
+              <p className={`font-arabic text-[11px] mt-1.5 ${
+                form.password.length === 0 ? 'text-white/35'
+                  : form.password.length < 6 ? 'text-amber-300' : 'text-emerald-300'
+              }`}>
+                {form.password.length === 0
+                  ? t('auth.password_rule', '٦ أحرف على الأقل')
+                  : form.password.length < 6
+                    ? t('auth.password_rule_short', 'باقي {{n}} أحرف', { n: 6 - form.password.length })
+                    : t('auth.password_rule_ok', 'كلمة المرور مناسبة ✓')}
+              </p>
             </div>
             <div>
               <label className="block font-arabic text-white/70 text-sm mb-2">{t('auth.confirm_password')}</label>
@@ -130,6 +163,14 @@ export default function Register() {
                   required
                 />
               </div>
+              {/* Same reason: a mismatch was only reported after submitting,
+                  by which point both boxes are full and neither is wrong to
+                  look at. */}
+              {form.confirmPassword.length > 0 && form.password !== form.confirmPassword && (
+                <p className="font-arabic text-amber-300 text-[11px] mt-1.5">
+                  {t('auth.passwords_not_match')}
+                </p>
+              )}
             </div>
 
             <MagicButton
