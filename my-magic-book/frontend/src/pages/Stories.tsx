@@ -12,6 +12,7 @@ import { detectGender, applyGenderTokens } from '../utils/gender';
 import { SHOWCASE_CARDS as CARDS, demoOnStoriesPage, type DemoVisibility, type ShowcaseCard as Card } from '../data/showcaseCards';
 import { loadFavorites, saveFavorites } from '../utils/favorites';
 import { useAuth } from '../context/AuthContext';
+import { usePackages } from '../hooks/usePackages';
 import toast from 'react-hot-toast';
 
 // Some themes reuse another theme's scripted story text (e.g. the realistic
@@ -52,6 +53,11 @@ export default function Stories() {
   }, []);
   const isVisible = (c: Card) => demoOnStoriesPage(c, vis);
 
+
+  // The printed book's live price, for the header. Same hook the wizard and
+  // checkout use — there is no second price list to drift.
+  const { packages, pricesReady } = usePackages();
+  const printedPkg = packages.find((p) => p.id === 'color');
 
   const ft = useMemo(() => i18n.getFixedT(i18n.language), [i18n.language]);
   const nameL = (card: Card) => localizeName(card.name, i18n.language);
@@ -197,6 +203,31 @@ export default function Stories() {
             {t('stories_page.title')} <span className="shimmer-text">{t('stories_page.title_shimmer')}</span>
           </h1>
           <p className="font-arabic text-white/50 text-lg">{t('stories_page.description')}</p>
+
+          {/* What one of these costs, on the page where they are browsed.
+              Fourteen books and no price anywhere — a visitor had to start the
+              wizard to find out, which is a lot to ask of someone still
+              deciding whether to care. Priced through usePackages, the same
+              source checkout reads, so it cannot quote a number the server
+              will not honour. */}
+          <div className="mt-3 inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 py-2 rounded-2xl bg-white/5 border border-white/10">
+            {pricesReady && printedPkg?.price != null ? (
+              <span className="font-arabic text-white/70 text-xs">
+                {t('stories_page.price_from', 'الكتاب المطبوع')}{' '}
+                <strong className="text-gold-500 font-black" dir="ltr">{printedPkg.price} ₪</strong>
+              </span>
+            ) : (
+              <span className="inline-block h-3 w-20 rounded bg-white/15 animate-pulse" />
+            )}
+            <span className="text-white/15">·</span>
+            <span className="font-arabic text-white/60 text-xs">
+              {t('stories_page.price_delivery', 'شامل التوصيل')}
+            </span>
+            <span className="text-white/15">·</span>
+            <span className="font-arabic text-gold-500 text-xs font-bold">
+              {t('stories_page.price_preview', 'المعاينة مجانية')}
+            </span>
+          </div>
         </div>
 
         {/* Audience filter — the question a real customer asked out loud. */}
@@ -271,7 +302,13 @@ export default function Stories() {
                   </div>
 
                   {/* Read affordance, revealed on hover / always legible on touch. */}
-                  <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                  {/* Visible wherever there is no hover.
+                      This was opacity-0 until :hover, which on a phone means
+                      never — so the free preview, the best reason a stranger
+                      has to trust this shop, was invisible on the device most
+                      of the traffic arrives on. Pointer devices keep the
+                      reveal; touch devices just get it. */}
+                  <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none [@media(hover:none)]:hidden">
                     <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-dark-900/85 border border-gold-500/40">
                       <Eye className="w-4 h-4 text-gold-500" />
                       <span className="font-arabic font-bold text-white text-xs">{t('stories_page.read_full')}</span>
@@ -300,7 +337,19 @@ export default function Stories() {
                 </button>
 
                 {/* Starts on THIS story, not an empty wizard. */}
-                <div className="p-3 sm:p-4 mt-auto">
+                <div className="p-3 sm:p-4 mt-auto space-y-1.5">
+                  {/* Touch devices only. The hover pill above never appears on
+                      a phone, and there is nowhere to float it on a 215px cover
+                      whose bottom 84px is already the title — so the free
+                      preview, the strongest reason a stranger has to trust this
+                      shop, gets a line of its own instead of fighting the art. */}
+                  <button
+                    onClick={() => setSelected(card)}
+                    className="hidden [@media(hover:none)]:flex w-full items-center justify-center gap-1.5 min-h-[40px] rounded-2xl bg-white/5 border border-white/10 text-white/70 font-arabic font-bold text-[11px]"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-gold-500" />
+                    {t('stories_page.read_full')}
+                  </button>
                   <button
                     onClick={() => startWithTheme(card.themeId)}
                     className="w-full inline-flex items-center justify-center gap-2 min-h-[44px] rounded-2xl bg-gradient-to-l from-gold-500 to-gold-600 text-dark-900 font-arabic font-black text-xs sm:text-sm hover:shadow-gold-glow transition-all"
