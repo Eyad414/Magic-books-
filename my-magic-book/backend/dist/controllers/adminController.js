@@ -36,12 +36,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteImportedFiles = exports.listImportedFiles = exports.getPrintReadiness = exports.listPrintJobs = exports.refreshPrintJobStatuses = exports.listCustomers = exports.checkCoupon = exports.listVisits = exports.trackVisit = exports.sendReadyThemeBook = exports.uploadImportedCover = exports.designImportedCover = exports.submitImportedBook = exports.importBookPdf = exports.generatePhotorealPreview = exports.generateColoringPreview = exports.generatePreviewIllustrations = exports.printBookSubmit = exports.printBook = exports.checkPayments = exports.submitOrderColoring = exports.reRenderOrderColoring = exports.reRenderOrderFiles = exports.getOrderBuildStatus = exports.buildOrderBook = exports.confirmOrderPayment = exports.getAllOrders = exports.updateSettings = exports.getPublicSettings = exports.getSettings = exports.getTeam = exports.removeAdmin = exports.addAdmin = exports.deleteStory = exports.updateStory = exports.getAllStories = exports.getCustomerByEmail = exports.deleteMessage = exports.listMessages = void 0;
+exports.sendOrderDigital = exports.trimStoryBorders = exports.grantBirthdayCoupons = exports.sendBookToCustomer = exports.deleteImportedFiles = exports.listImportedFiles = exports.getPrintReadiness = exports.listPrintJobs = exports.refreshPrintJobStatuses = exports.listCustomers = exports.checkCoupon = exports.listVisits = exports.trackVisit = exports.sendReadyThemeBook = exports.uploadImportedCover = exports.designImportedCover = exports.submitImportedBook = exports.importBookPdf = exports.generatePhotorealPreview = exports.generateColoringPreview = exports.generatePreviewIllustrations = exports.printBookSubmit = exports.printBook = exports.checkPayments = exports.submitOrderColoring = exports.reRenderOrderColoring = exports.attachOrderPrintFiles = exports.bulkPrintOrders = exports.bulkPrintBooks = exports.prepareBooksPrint = exports.booksPrintReadiness = exports.reRenderOrderFiles = exports.getOrderBuildStatus = exports.buildOrderBook = exports.confirmOrderPayment = exports.getAllOrders = exports.updateSettings = exports.getPublicSettings = exports.getLiveStats = exports.getSettings = exports.getTeam = exports.removeAdmin = exports.addAdmin = exports.deleteStory = exports.updateStory = exports.getAllStories = exports.getCustomerByEmail = exports.deleteMessage = exports.setMessageRead = exports.listMessages = void 0;
+exports.payPrintJob = void 0;
+const ImageSigning_1 = require("../services/ImageSigning");
+const VisitFunnel_1 = require("../services/VisitFunnel");
 const User_1 = __importDefault(require("../models/User"));
 const Story_1 = __importDefault(require("../models/Story"));
 const Order_1 = __importDefault(require("../models/Order"));
 const SiteSettings_1 = __importStar(require("../models/SiteSettings"));
 const ContactMessage_1 = __importDefault(require("../models/ContactMessage"));
+const CustomerMessage_1 = __importDefault(require("../models/CustomerMessage"));
+const mailer_1 = require("../utils/mailer");
 const PaymentPoller_1 = require("../services/PaymentPoller");
 const BookBuilder_1 = require("../services/BookBuilder");
 const ImageGenerator_1 = require("../services/ImageGenerator");
@@ -58,6 +63,10 @@ const Pricing_1 = require("../services/Pricing");
 const PrintService_1 = require("../services/PrintService");
 const StorageService_1 = require("../services/StorageService");
 const BookPodService_1 = require("../services/BookPodService");
+const TrimBorders_1 = require("../services/TrimBorders");
+const BirthdayCoupon_1 = require("../services/BirthdayCoupon");
+const authMiddleware_1 = require("../utils/authMiddleware");
+const StorageService_2 = require("../services/StorageService");
 // The kid photo (already in the bucket) used as the reference face for ADMIN
 // PREVIEW generation only. Real customer orders use the customer's own photo.
 const PREVIEW_REFERENCE_PHOTO = process.env.PREVIEW_REFERENCE_PHOTO ||
@@ -81,6 +90,33 @@ const listMessages = async (_req, res) => {
     }
 };
 exports.listMessages = listMessages;
+// @route PATCH /api/admin/messages/:id/read
+// @desc  Mark a contact-form message handled, or put it back in the pile.
+//
+// ContactMessage has carried an isRead flag since it was written and nothing
+// ever set it. So every message in the inbox looked identical forever: one you
+// answered a month ago sat there looking exactly as urgent as one that arrived
+// while you were reading. There was also no honest way to badge the tab — a
+// count of "unread" that never went down is worse than no count.
+//
+// Deliberately a toggle rather than a one-way "mark read": the owner marks
+// these by hand, and a mis-tap that cannot be undone would push them to stop
+// using the flag at all.
+const setMessageRead = async (req, res) => {
+    try {
+        const isRead = req.body?.isRead !== false; // default true; explicit false un-reads
+        const msg = await ContactMessage_1.default.findByIdAndUpdate(req.params.id, { isRead }, { new: true }).lean();
+        if (!msg) {
+            res.status(404).json({ success: false, message: 'Message not found' });
+            return;
+        }
+        res.json({ success: true, message: msg });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+exports.setMessageRead = setMessageRead;
 // @route DELETE /api/admin/messages/:id
 // @desc Remove a contact message from the inbox
 const deleteMessage = async (req, res) => {
@@ -137,7 +173,11 @@ exports.getCustomerByEmail = getCustomerByEmail;
 // @desc Get all stories from all users
 const getAllStories = async (req, res) => {
     try {
-        const stories = await Story_1.default.find().sort({ createdAt: -1 }).populate('userId', 'name email');
+        const stories = await Story_1.default.find().sort({ createdAt: -1 }).populate('userId', 'name email').lean();
+        for (const story of stories) {
+            if (story.childPhotoUrl)
+                story.childPhotoDisplayUrl = (0, ImageSigning_1.toSignedProxyUrl)(story.childPhotoUrl);
+        }
         res.json({ success: true, stories });
     }
     catch (error) {
@@ -741,6 +781,65 @@ exports.getSettings = getSettings;
 // @route GET /api/public/settings
 // @desc  Customer-facing settings: hides unready themes so half-finished stories
 //        never appear in the wizard.
+/**
+ * Live counts for the numbers under the hero.
+ *
+ * These were fixed strings — "+300", "+150" — and a parent reading them is
+ * being told a fact. They are counted from the database now, so the page can
+ * only ever claim what actually happened.
+ *
+ * Books counts the ones with artwork, not started drafts; families counts
+ * distinct accounts with a settled order, so one buyer with three books is one
+ * family. Ready stories is what a customer can actually pick today.
+ */
+const getLiveStats = async (_req, res) => {
+    try {
+        const [stories, settings] = await Promise.all([
+            Story_1.default.find({}).select('childName').lean(),
+            SiteSettings_1.default.findOne().lean(),
+        ]);
+        // Counted as broadly as is still TRUE. "Stories created" is every story a
+        // parent has started, not only the ones already drawn — they were created.
+        // "Children" is distinct named children across those stories, which is a
+        // bigger and more honest number than counting paying accounts: a family
+        // with two children is two children.
+        const books = stories.length;
+        const children = new Set(stories.map((s) => String(s.childName || '').trim()).filter(Boolean)).size;
+        // Colouring themes are the SAME story drawn as line art, not another story
+        // to choose from — counting zoo_adventure and zoo_coloring separately told
+        // a visitor there were 23 stories when the shop offers 20.
+        const ready = (settings?.themes || []).filter((t) => t.isPublic !== false && !String(t.id || '').includes('coloring')).length;
+        // Every story is written in Arabic, Hebrew and English — a fact, unlike the
+        // five-star rating this replaces, which had no reviews behind it at all.
+        const languages = 3;
+        // The owner can publish a different figure from the dashboard — offline
+        // sales, a fair, a school order: things the database never saw. An EMPTY
+        // field means "use the real count", so the truth is what happens by
+        // default and a published figure is always a deliberate act, never a
+        // leftover. `counted` always carries the real numbers so the dashboard can
+        // show the owner what is actually true beside whatever is on the site.
+        const overrides = settings?.homeStats || {};
+        const pick = (key, real) => {
+            const v = String(overrides[key] ?? '').trim();
+            return v === '' ? real : v;
+        };
+        res.json({
+            success: true,
+            stats: {
+                books: pick('storiesCreated', books),
+                children: pick('happyFamilies', children),
+                ready: pick('readyStories', ready),
+                languages: pick('rating', languages),
+            },
+            counted: { books, children, ready, languages },
+        });
+    }
+    catch (err) {
+        // The page has its own fallback; a failed count must never blank the hero.
+        res.json({ success: false, stats: null });
+    }
+};
+exports.getLiveStats = getLiveStats;
 const getPublicSettings = async (_req, res) => {
     try {
         const settings = await SiteSettings_1.default.findOne();
@@ -753,6 +852,24 @@ const getPublicSettings = async (_req, res) => {
             themes: settings.themes.filter((t) => t.ready === true),
             demoCards: settings.demoCards || {},
             homeStats: settings.homeStats || SiteSettings_1.DEFAULT_HOME_STATS,
+            // Whether the option EXISTS is public; where the money goes is not.
+            //
+            // This endpoint is unauthenticated and the home page, the stories page
+            // and useSiteFlags all call it, so returning the details here published
+            // the owner's personal Bit number and account name to every visitor on
+            // every page — a different number from the business one in the footer,
+            // and one he never chose to put on the internet. The details now come
+            // from GET /api/orders/transfer-details, behind `protect`, at the point
+            // a signed-in customer is actually paying.
+            //
+            // Still gated on the details existing: an enabled-but-empty option would
+            // take a real payment and tell the customer nothing about where to send
+            // it.
+            transferPayment: (() => {
+                const tp = settings.transferPayment || {};
+                const hasDetails = !!(String(tp.bitPhone || '').trim() || String(tp.bankAccount || '').trim());
+                return { enabled: !!(tp.enabled && hasDetails) };
+            })(),
             allowSkipPhoto: !!settings.allowSkipPhoto,
             aiModeEnabled: !!settings.aiModeEnabled,
             // Whether the wizard should offer card payment at all. True only once a
@@ -772,7 +889,7 @@ exports.getPublicSettings = getPublicSettings;
 // @route PUT /api/admin/settings
 const updateSettings = async (req, res) => {
     try {
-        const { bookPackages, themes, homeStats, allowSkipPhoto, aiModeEnabled, demoCards } = req.body;
+        const { bookPackages, themes, homeStats, allowSkipPhoto, aiModeEnabled, demoCards, coupons, transferPayment } = req.body;
         let settings = await SiteSettings_1.default.findOne();
         if (!settings) {
             settings = new SiteSettings_1.default({ bookPackages, themes, homeStats, allowSkipPhoto, aiModeEnabled, demoCards });
@@ -791,6 +908,50 @@ const updateSettings = async (req, res) => {
             if (themes) {
                 settings.themes = themes;
                 settings.markModified('themes');
+            }
+            if (Array.isArray(coupons)) {
+                // Sanitised here rather than trusted from the browser: the value feeds
+                // straight into what a customer is charged, and a coupon saved as 500
+                // or with a blank code would be discovered at checkout by a real buyer.
+                const seen = new Set();
+                // usedCount is the SERVER's number. Taking it from the request would
+                // let an ordinary save — the dashboard sends the whole list — quietly
+                // reset a limited code back to unused. It only moves when an order
+                // claims it, or when the owner deliberately resets that row.
+                const existing = new Map((settings.coupons || []).map((c) => [String(c.code).toUpperCase(), c]));
+                settings.coupons = coupons
+                    .map((c) => {
+                    const code = String(c?.code || '').trim().toUpperCase();
+                    const prior = existing.get(code);
+                    return {
+                        code,
+                        type: c?.type === 'freeDelivery' ? 'freeDelivery' : 'percent',
+                        value: Math.min(100, Math.max(0, Math.round(Number(c?.value) || 0))),
+                        active: c?.active !== false,
+                        maxUses: Math.max(0, Math.round(Number(c?.maxUses) || 0)),
+                        usedCount: c?.resetUses ? 0 : (prior ? Number(prior.usedCount) || 0 : 0),
+                    };
+                })
+                    .filter((c) => {
+                    if (!c.code || seen.has(c.code))
+                        return false;
+                    seen.add(c.code);
+                    return true;
+                });
+                settings.markModified('coupons');
+            }
+            if (transferPayment && typeof transferPayment === 'object') {
+                const tp = transferPayment;
+                settings.transferPayment = {
+                    enabled: !!tp.enabled,
+                    bitPhone: String(tp.bitPhone || '').trim(),
+                    bankName: String(tp.bankName || '').trim(),
+                    bankBranch: String(tp.bankBranch || '').trim(),
+                    bankAccount: String(tp.bankAccount || '').trim(),
+                    accountHolder: String(tp.accountHolder || '').trim(),
+                    note: String(tp.note || '').trim(),
+                };
+                settings.markModified('transferPayment');
             }
             if (homeStats) {
                 settings.homeStats = homeStats;
@@ -817,7 +978,16 @@ const getAllOrders = async (req, res) => {
         const orders = await Order_1.default.find()
             .sort({ createdAt: -1 })
             .populate('userId', 'name email')
-            .populate('storyId');
+            .populate('storyId')
+            .lean();
+        // The proxy will not serve a child photo on the path alone any more, so
+        // mint the signed URL here — the admin is entitled to it and this response
+        // already carries the path.
+        for (const order of orders) {
+            if (order.storyId?.childPhotoUrl) {
+                order.storyId.childPhotoDisplayUrl = (0, ImageSigning_1.toSignedProxyUrl)(order.storyId.childPhotoUrl);
+            }
+        }
         res.json({ success: true, orders });
     }
     catch (error) {
@@ -979,6 +1149,142 @@ const reRenderOrderFiles = async (req, res) => {
     }
 };
 exports.reRenderOrderFiles = reRenderOrderFiles;
+// @route POST /api/admin/books/print-readiness  — which library books can be sent
+const booksPrintReadiness = async (req, res) => {
+    try {
+        const { printKeys } = req.body || {};
+        if (!Array.isArray(printKeys)) {
+            res.status(400).json({ success: false, message: 'printKeys required' });
+            return;
+        }
+        const ready = await (0, BookBuilder_1.booksPrintReady)(printKeys.map(String));
+        res.json({ success: true, ready });
+    }
+    catch (err) {
+        console.error('booksPrintReadiness failed:', err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+exports.booksPrintReadiness = booksPrintReadiness;
+// @route POST /api/admin/books/prepare-print
+// Build print PDFs for library books that lack them, so a whole batch can then
+// go out at once. Free (no AI generation) — but heavy, hence the memory guard.
+const prepareBooksPrint = async (req, res) => {
+    try {
+        const { books } = req.body || {};
+        if (!Array.isArray(books) || books.length === 0) {
+            res.status(400).json({ success: false, message: 'اختر كتاباً واحداً على الأقل' });
+            return;
+        }
+        // No blanket refusal: a colouring book is line art at PRINT_PX and builds in
+        // ~70MB, well inside what this box has — it was only the full-colour story
+        // build that could not finish. Each book is checked as it is built, and a
+        // story that cannot run is reported against that book.
+        const result = await (0, BookBuilder_1.prepareLibraryPrintFiles)(books);
+        res.json({ success: true, ...result });
+    }
+    catch (err) {
+        console.error('prepareBooksPrint failed:', err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+exports.prepareBooksPrint = prepareBooksPrint;
+// @route POST /api/admin/books/bulk-print
+// Send several ready-library books to BookPod as ONE print order. Billable.
+const bulkPrintBooks = async (req, res) => {
+    try {
+        const { books, shipping } = req.body || {};
+        if (!Array.isArray(books) || books.length === 0) {
+            res.status(400).json({ success: false, message: 'اختر كتاباً واحداً على الأقل' });
+            return;
+        }
+        if (!shipping || !shipping.name || !shipping.phone) {
+            res.status(400).json({ success: false, message: 'الاسم ورقم الهاتف مطلوبان للشحن' });
+            return;
+        }
+        if (shipping.method !== 'pickup' && (!shipping.city || !shipping.street)) {
+            res.status(400).json({ success: false, message: 'المدينة والشارع مطلوبان للتوصيل' });
+            return;
+        }
+        const result = await (0, BookBuilder_1.submitStoriesToBookPodTogether)(books, shipping);
+        res.json({ success: true, ...result });
+    }
+    catch (err) {
+        console.error('bulkPrintBooks failed:', err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+exports.bulkPrintBooks = bulkPrintBooks;
+// @route POST /api/admin/orders/bulk-print
+// Send several finished orders to BookPod as ONE print order (one delivery).
+// Real money and a real print run — the dashboard confirms before calling this.
+const bulkPrintOrders = async (req, res) => {
+    try {
+        const { orderIds, shipping } = req.body || {};
+        if (!Array.isArray(orderIds) || orderIds.length === 0) {
+            res.status(400).json({ success: false, message: 'اختر طلباً واحداً على الأقل' });
+            return;
+        }
+        if (!shipping || !shipping.name || !shipping.phone) {
+            res.status(400).json({ success: false, message: 'الاسم ورقم الهاتف مطلوبان للشحن' });
+            return;
+        }
+        if (shipping.method !== 'pickup' && (!shipping.city || !shipping.street)) {
+            res.status(400).json({ success: false, message: 'المدينة والشارع مطلوبان للتوصيل' });
+            return;
+        }
+        const result = await (0, BookBuilder_1.submitOrdersToBookPodTogether)(orderIds.map(String), shipping);
+        res.json({ success: true, ...result });
+    }
+    catch (err) {
+        console.error('bulkPrintOrders failed:', err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+exports.bulkPrintOrders = bulkPrintOrders;
+// @route POST /api/admin/orders/:id/attach-print-files
+// Point an order at print PDFs that already exist in the bucket.
+//
+// The 512MB box gets OOM-killed building a print PDF (the Vertex upscaler 404s,
+// so every illustration falls back to a local 2400px enlarge). When that
+// happens the same code is run on a workstation and the PDFs are uploaded to
+// the paths an order rebuild would have used — this route is how the order then
+// finds them, so «حفظ الملفات» and the BookPod submit work as normal.
+const attachOrderPrintFiles = async (req, res) => {
+    try {
+        const order = await Order_1.default.findById(req.params.id);
+        if (!order) {
+            res.status(404).json({ success: false, message: 'order not found' });
+            return;
+        }
+        const { coverPath, interiorPath, interiorPages } = req.body || {};
+        const folder = process.env.GCS_PDF_FOLDER || 'magic-fanoose';
+        const ok = (p) => typeof p === 'string' && p.startsWith(`${folder}/print/`) && p.endsWith('.pdf') && !p.includes('..');
+        if (!ok(coverPath) || !ok(interiorPath)) {
+            res.status(400).json({ success: false, message: 'coverPath/interiorPath must be print PDFs in the bucket' });
+            return;
+        }
+        // Never let an order point at a file that is not there — that is how a book
+        // reaches the printer with a missing interior.
+        for (const p of [coverPath, interiorPath]) {
+            if (!(await (0, StorageService_1.objectExists)(p))) {
+                res.status(404).json({ success: false, message: `not in the bucket: ${p}` });
+                return;
+            }
+        }
+        order.printCoverUrl = (0, PrintService_1.publicProxyUrl)(coverPath);
+        order.printInteriorUrl = (0, PrintService_1.publicProxyUrl)(interiorPath);
+        if (Number(interiorPages) > 0)
+            order.printInteriorPages = Number(interiorPages);
+        await order.save();
+        res.json({ success: true, order });
+    }
+    catch (err) {
+        console.error('attachOrderPrintFiles failed:', err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+exports.attachOrderPrintFiles = attachOrderPrintFiles;
 // @route POST /api/admin/orders/:id/coloring/rerender  — Pro: rebuild coloring print files (free)
 const reRenderOrderColoring = async (req, res) => {
     try {
@@ -1162,6 +1468,14 @@ const generatePreviewIllustrations = async (req, res) => {
         // photoreal/coloring endpoints already accepted an override; this one
         // didn't, which is the only reason it was hard to change.
         const referencePhoto = req.body?.referencePhoto || PREVIEW_REFERENCE_PHOTO;
+        // …and the same was true of the child's SEX, except there was no override
+        // at all: this endpoint hardcoded 'male' for the pages, the portrait AND
+        // the cover. It built every showcase book, so the demo generator could not
+        // produce a girl — which is why 24 of 25 showcase books star a boy, and why
+        // a customer told the owner the whole site is for boys. Not a choice anyone
+        // made: a literal impossibility. Defaults to male, so every existing demo
+        // regenerates exactly as before.
+        const childGender = req.body?.childGender === 'female' ? 'female' : 'male';
         // Pull the text from the theme's pages (text entries only).
         const textPages = (theme.pages || [])
             .filter((p) => p && (p.text || typeof p === 'string'))
@@ -1205,14 +1519,14 @@ const generatePreviewIllustrations = async (req, res) => {
             // Falls back to the old text-derived prompt for themes with no template.
             const pageScene = sceneTplPages?.pageScenes?.[i];
             const prompt = pageScene
-                ? (0, sceneTemplates_1.buildScenePrompt)('page', pageScene, childName, 'male', {
+                ? (0, sceneTemplates_1.buildScenePrompt)('page', pageScene, childName, childGender, {
                     medal: (sceneTplPages.medalPages || []).includes(i + 1),
                 })
                 : (0, promptBuilder_1.buildIllustrationPrompt)({
                     pageText: textPages[i] || textPages[textPages.length - 1] || `${childName} ${theme.label}`,
                     childName,
                     childAge: '5',
-                    childGender: 'male',
+                    childGender,
                     theme: themeId,
                     language: 'ar',
                     pageNumber: i + 1,
@@ -1240,7 +1554,7 @@ const generatePreviewIllustrations = async (req, res) => {
             if (coverOnly || pagesOnly || singlePage)
                 throw new Error('__skip_portrait__');
             const portraitFinal = sceneTplPages?.portraitScene
-                ? (0, sceneTemplates_1.buildScenePrompt)('portrait', sceneTplPages.portraitScene, childName, 'male')
+                ? (0, sceneTemplates_1.buildScenePrompt)('portrait', sceneTplPages.portraitScene, childName, childGender)
                 : portraitPrompt;
             const portrait = await (0, ImageGenerator_1.generateIllustration)(portraitFinal, referencePhoto, {
                 storyId: `theme_${themeId}`,
@@ -1267,8 +1581,8 @@ const generatePreviewIllustrations = async (req, res) => {
         const baseThemeId = themeId.replace(/_(real|photoreal|cartoon|pr|hd)$/, '');
         const sceneTpl = sceneTemplates_1.SCENE_TEMPLATES[themeId] || sceneTemplates_1.SCENE_TEMPLATES[baseThemeId];
         const coverPrompt = sceneTpl?.coverScene
-            ? (0, sceneTemplates_1.buildScenePrompt)('cover', sceneTpl.coverScene, childName, 'male')
-            : (0, promptBuilder_1.buildCoverPrompt)({ childName, childGender: 'male', theme: themeId });
+            ? (0, sceneTemplates_1.buildScenePrompt)('cover', sceneTpl.coverScene, childName, childGender)
+            : (0, promptBuilder_1.buildCoverPrompt)({ childName, childGender, theme: themeId });
         try {
             if (pagesOnly || singlePage || portraitOnly)
                 throw new Error('__skip_cover__');
@@ -1575,6 +1889,11 @@ const submitImportedBook = async (req, res) => {
             return;
         }
         const { coverPath, interiorPath, title, quantity, widthMm, heightMm, name, phone, email, isColoring } = req.body || {};
+        // Print choices for this submission. Anything unrecognised is dropped
+        // rather than passed on, so BookPod never sees a value it refuses.
+        const printColor = req.body?.printColor === 'bw' ? 'bw' : req.body?.printColor === 'color' ? 'color' : undefined;
+        const sheetType = req.body?.sheetType === 'white110' ? 'white110' : req.body?.sheetType === 'chromo170' ? 'chromo170' : undefined;
+        const lamination = ['none', 'flat', 'matt'].includes(String(req.body?.lamination)) ? req.body.lamination : undefined;
         if (!coverPath || !interiorPath) {
             res.status(400).json({ success: false, message: 'ينقص ملف الغلاف أو الداخل — أعد استيراد الكتاب أولاً.' });
             return;
@@ -1590,6 +1909,7 @@ const submitImportedBook = async (req, res) => {
             externalId: `import_${Date.now()}`,
             title: String(title || 'Imported book').slice(0, 120),
             isColoring: !!isColoring,
+            printColor, sheetType, lamination,
             // Imported books are the owner's own files; Arabic is the common case
             // here and is what their existing catalogue uses.
             readingDirection: 'right',
@@ -1674,12 +1994,25 @@ const designImportedCover = async (req, res) => {
         res.json({
             success: true,
             ...result,
+            // Which way round the flat sheet reads, so the dashboard can label the
+            // panels rather than leaving the owner to guess which end is the front.
+            rtl: rtl !== false,
             previewUrl: (0, PrintService_1.publicProxyUrl)(result.previewPath || result.artPath),
         });
     }
     catch (err) {
-        console.error('[designImportedCover]', err?.message || err);
-        res.status(500).json({ success: false, message: err?.message || 'تعذّر تصميم الغلاف.' });
+        const msg = String(err?.message || err);
+        console.error('[designImportedCover]', msg);
+        // "no image" means the model declined to draw it — a refusal, not a broken
+        // server, and the owner can do something about it. A bare 500 told them
+        // nothing and looked like the site was down.
+        const refused = /no image after|finishReason|blocked|safety/i.test(msg);
+        res.status(refused ? 502 : 500).json({
+            success: false,
+            message: refused
+                ? 'الذكاء الاصطناعي رفض يرسم غلاف لهذا الموضوع. جرّب توصيف مختلف بخانة «موضوع الكتاب»، أو ارفع صورة غلاف جاهزة.'
+                : msg || 'تعذّر تصميم الغلاف.',
+        });
     }
 };
 exports.designImportedCover = designImportedCover;
@@ -1749,7 +2082,11 @@ const uploadImportedCover = async (req, res) => {
             interiorPages: pages,
             rtl: rtl !== 'false' && rtl !== false,
         });
-        res.json({ success: true, ...result, source: 'upload-image', previewUrl: (0, PrintService_1.publicProxyUrl)(result.previewPath || artPath) });
+        res.json({
+            success: true, ...result, source: 'upload-image',
+            rtl: rtl !== 'false' && rtl !== false,
+            previewUrl: (0, PrintService_1.publicProxyUrl)(result.previewPath || artPath),
+        });
     }
     catch (err) {
         console.error('[uploadImportedCover]', err?.message || err);
@@ -1768,6 +2105,11 @@ exports.uploadImportedCover = uploadImportedCover;
 const sendReadyThemeBook = async (req, res) => {
     const theme = String(req.body?.theme || '').trim();
     const childName = String(req.body?.childName || '').trim();
+    // Print choices, when the owner made them. Anything unrecognised falls back
+    // to the default for that kind of book rather than being passed to BookPod.
+    const printColor = req.body?.printColor === 'bw' ? 'bw' : req.body?.printColor === 'color' ? 'color' : undefined;
+    const sheetType = req.body?.sheetType === 'white110' ? 'white110' : req.body?.sheetType === 'chromo170' ? 'chromo170' : undefined;
+    const lamination = ['none', 'flat', 'matt'].includes(String(req.body?.lamination)) ? req.body.lamination : undefined;
     const adminEmail = String(req.user?.email || '');
     try {
         const ship = req.body?.shipping || {};
@@ -1801,6 +2143,7 @@ const sendReadyThemeBook = async (req, res) => {
             childName,
             childGender: req.body?.childGender === 'female' ? 'female' : 'male',
             language: String(req.body?.language || 'ar'),
+            printColor, sheetType, lamination,
             coverPath: art.coverPath,
             backPath: art.backPath,
             imagePaths: art.imagePaths,
@@ -1903,9 +2246,17 @@ exports.trackVisit = trackVisit;
  */
 const listVisits = async (req, res) => {
     try {
-        const days = Math.min(Math.max(Number(req.query.days) || 1, 1), 30);
-        const from = new Date(Date.now() - (days - 1) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-        const rows = await Visit_1.default.find({ day: { $gte: from } })
+        const days = Math.min(Math.max(Number(req.query.days) || 1, 1), 90);
+        // An explicit range wins over "last N days" — the dashboard lets the owner
+        // pick two dates, and "how many came on the day I posted the reel" is not a
+        // question a rolling window can answer.
+        const isDay = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || ''));
+        const from = isDay(req.query.from)
+            ? String(req.query.from)
+            : new Date(Date.now() - (days - 1) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        const to = isDay(req.query.to) ? String(req.query.to) : null;
+        const range = to ? { $gte: from, $lte: to } : { $gte: from };
+        const rows = await Visit_1.default.find({ day: range })
             .sort({ updatedAt: -1 })
             .limit(200)
             .populate('userId', 'name email')
@@ -1918,9 +2269,50 @@ const listVisits = async (req, res) => {
             { $group: { _id: '$day', visitors: { $sum: 1 }, views: { $sum: '$views' } } },
             { $sort: { _id: 1 } },
         ]);
+        // What the visitors in this window actually did. Answering "how many came"
+        // was never the hard part — "what did they look at, and where did they
+        // stop" is, and it is the difference between a number and a decision.
+        const inWindow = await Visit_1.default.find({ day: range }).select('paths views day').lean();
+        const pageCount = {};
+        let multiPage = 0;
+        let totalViews = 0;
+        // A step counts once per VISITOR, not once per page view — otherwise
+        // someone refreshing the wizard looks like ten people reaching it.
+        //
+        // `checkout` tested for a `step-3`/`step-4` path that nothing had ever
+        // emitted, so it read 0 no matter what happened — it would have read 0 on
+        // a day every visitor paid. The wizard now reports each step, and the last
+        // stage counts the page you only ever see after paying.
+        const reached = { stories: 0, create: 0, step2: 0, step3: 0, checkout: 0, paid: 0 };
+        for (const v of inWindow) {
+            const paths = v.paths || [];
+            totalViews += v.views || 0;
+            if ((v.views || 0) > 1)
+                multiPage++;
+            const seen = new Set(paths);
+            for (const p of seen)
+                pageCount[p] = (pageCount[p] || 0) + 1;
+            const stage = (0, VisitFunnel_1.funnelStagesFor)(seen);
+            for (const k of Object.keys(reached)) {
+                if (stage[k])
+                    reached[k]++;
+            }
+        }
+        const topPages = Object.entries(pageCount)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 8)
+            .map(([path, visitors]) => ({ path, visitors }));
         res.json({
             success: true,
             week: week.map((d) => ({ day: d._id, visitors: d.visitors, views: d.views })),
+            behaviour: {
+                visitors: inWindow.length,
+                views: totalViews,
+                multiPage,
+                pagesPerVisitor: inWindow.length ? Number((totalViews / inWindow.length).toFixed(1)) : 0,
+                topPages,
+                funnel: reached,
+            },
             visits: rows.map((v) => ({
                 day: v.day,
                 views: v.views,
@@ -1949,12 +2341,28 @@ exports.listVisits = listVisits;
  */
 const checkCoupon = async (req, res) => {
     try {
-        const coupon = await (0, Pricing_1.resolveCoupon)(String(req.body?.code || ''));
+        const typed = String(req.body?.code || '');
+        // Their own birthday code is theirs alone, so it is looked up against the
+        // signed-in account. A guest simply does not have one.
+        const coupon = (await (0, Pricing_1.resolveCoupon)(typed))
+            || (await (0, BirthdayCoupon_1.resolveBirthdayCoupon)(typed, (0, authMiddleware_1.optionalUserId)(req) || undefined));
         if (!coupon) {
-            res.json({ success: false, message: 'الكود غير صالح أو منتهي.' });
+            // Say which it is. "Invalid" for a code the customer was given by hand,
+            // and which worked yesterday, sends them to the contact form.
+            const wanted = String(req.body?.code || '').trim().toUpperCase();
+            const settings = await SiteSettings_1.default.findOne().lean();
+            const raw = (settings?.coupons || []).find((c) => String(c.code).toUpperCase() === wanted);
+            const usedUp = raw && Number(raw.maxUses) > 0 && (Number(raw.usedCount) || 0) >= Number(raw.maxUses);
+            res.json({
+                success: false,
+                message: usedUp ? 'انتهى عدد مرات استخدام هذا الكود.' : 'الكود غير صالح أو منتهي.',
+            });
             return;
         }
-        res.json({ success: true, code: coupon.code, type: coupon.type, value: coupon.value });
+        const left = Number(coupon.maxUses) > 0
+            ? Math.max(0, Number(coupon.maxUses) - (Number(coupon.usedCount) || 0))
+            : null;
+        res.json({ success: true, code: coupon.code, type: coupon.type, value: coupon.value, usesLeft: left, onlyPackage: coupon.onlyPackage || null });
     }
     catch (err) {
         console.error('[checkCoupon]', err?.message || err);
@@ -2209,4 +2617,302 @@ const deleteImportedFiles = async (req, res) => {
     }
 };
 exports.deleteImportedFiles = deleteImportedFiles;
+/**
+ * POST /api/admin/books/send-to-customer
+ *
+ * Puts a book the owner made into a customer's own account, where it appears
+ * beside anything they bought and opens like their own book.
+ *
+ * The artwork is REFERENCED, never copied: the same GCS object paths are
+ * written onto a new Story owned by the customer. Copying the files would
+ * double the storage for every gift and leave two sets to keep in step; moving
+ * the original would take the book out of الكتب الجاهزة.
+ *
+ * It carries no price and no order, because nobody bought it.
+ */
+const sendBookToCustomer = async (req, res) => {
+    try {
+        const { userId, childName, childGender, theme, language, cover, images, back, coloringCover, coloringImages, coloringBackCover, note, } = req.body || {};
+        const customer = await User_1.default.findById(userId).select('_id name email').lean();
+        if (!customer) {
+            res.status(404).json({ success: false, message: 'العميل غير موجود' });
+            return;
+        }
+        const pages = Array.isArray(images) ? images.filter(Boolean) : [];
+        const colPages = Array.isArray(coloringImages) ? coloringImages.filter(Boolean) : [];
+        // A book with no artwork would land in their account as blank pages.
+        if (!cover && !pages.length && !coloringCover && !colPages.length) {
+            res.status(400).json({ success: false, message: 'لا توجد صور لهذا الكتاب' });
+            return;
+        }
+        const story = await Story_1.default.create({
+            userId: customer._id,
+            childName: childName || 'الطفل',
+            // Required on every story, and a book card has no age to offer — it was
+            // never asked for one. The reader does not use it; the model does.
+            childAge: req.body?.childAge || '3-5',
+            childGender: childGender === 'female' ? 'female' : 'male',
+            theme: theme || 'custom',
+            language: language || 'ar',
+            status: 'ready',
+            generatedCover: cover || undefined,
+            generatedImages: pages.length ? pages : undefined,
+            generatedPortrait: back || undefined,
+            coloringCover: coloringCover || undefined,
+            coloringImages: colPages.length ? colPages : undefined,
+            coloringBackCover: coloringBackCover || undefined,
+            sentByAdmin: true,
+            sentAt: new Date(),
+            sentNote: (note || '').trim() || undefined,
+            // Never sold: a gift must not show up as money owed or money taken.
+            basePrice: 0,
+            totalPrice: 0,
+        });
+        // A book that appears in someone's account with no word about it is a
+        // surprise they may never notice. The note becomes a real message in their
+        // conversation — so it shows in الرسائل, carries the unread badge, and can
+        // be replied to — and it is tied to the book it is about.
+        const admin = req.user;
+        const text = String(note || '').trim() || 'بعتنالك كتاب جديد على حسابك 🎁 افتحه من «قصصي».';
+        await CustomerMessage_1.default.create({
+            userId: customer._id,
+            body: text,
+            fromAdmin: true,
+            adminId: admin?._id,
+            adminName: admin?.name,
+            storyId: story._id,
+        });
+        const mail = customer.email
+            ? await (0, mailer_1.sendCustomerMessageEmail)({ to: customer.email, name: customer.name, preview: text })
+            : { sent: false, reason: 'no-email' };
+        res.json({
+            success: true,
+            storyId: String(story._id),
+            customer: { id: String(customer._id), name: customer.name, email: customer.email },
+            messaged: true,
+            emailed: mail.sent,
+            emailReason: mail.sent ? undefined : mail.reason,
+        });
+    }
+    catch (err) {
+        console.error('[sendBookToCustomer]', err);
+        res.status(500).json({ success: false, message: err.message || 'فشل الإرسال' });
+    }
+};
+exports.sendBookToCustomer = sendBookToCustomer;
+/**
+ * POST /api/admin/birthday-coupons/grant
+ *
+ * Hand the yearly gift out now, to every account that does not already have an
+ * unspent one. The automatic grant waits for a real anniversary — no account
+ * is a year old yet — so this exists for the owner who wants to start now.
+ *
+ * dryRun by default: this gives away books.
+ */
+const grantBirthdayCoupons = async (req, res) => {
+    try {
+        const dryRun = req.body?.dryRun !== false;
+        const users = await User_1.default.find({ role: { $ne: 'admin' } }).select('_id name email birthdayCoupon').lean();
+        const eligible = users.filter((u) => !(u.birthdayCoupon?.code && !u.birthdayCoupon?.usedAt));
+        if (dryRun) {
+            res.json({
+                success: true,
+                dryRun: true,
+                accounts: users.length,
+                wouldGrant: eligible.length,
+                who: eligible.map((u) => u.name || u.email),
+            });
+            return;
+        }
+        const granted = [];
+        for (const u of eligible) {
+            const r = await (0, BirthdayCoupon_1.grantNow)(String(u._id));
+            if (r)
+                granted.push({ name: u.name || u.email, code: r.code });
+        }
+        console.log(`[birthday] owner granted ${granted.length} coupons`);
+        res.json({ success: true, dryRun: false, granted: granted.length, results: granted });
+    }
+    catch (err) {
+        console.error('[grantBirthdayCoupons]', err?.message || err);
+        res.status(500).json({ success: false, message: err.message || 'تعذّر' });
+    }
+};
+exports.grantBirthdayCoupons = grantBirthdayCoupons;
+/**
+ * POST /api/admin/stories/:id/trim-borders
+ *
+ * Take the white frame off a story's pages. Some generated pages come back
+ * with the drawing padded — most often a bar down the left and right — and no
+ * layout can hide it: the page is square, the image is square, and the white
+ * is inside the picture.
+ *
+ * `dryRun` reports what would be cut without touching anything, because this
+ * overwrites artwork the customer may already have seen. Every page that IS
+ * rewritten keeps its original alongside as <name>.orig.png.
+ */
+const trimStoryBorders = async (req, res) => {
+    try {
+        const story = await Story_1.default.findById(req.params.id).lean();
+        if (!story) {
+            res.status(404).json({ success: false, message: 'القصة غير موجودة' });
+            return;
+        }
+        const strip = (u) => String(u || '').replace(/^gs:\/\/[^/]+\//, '');
+        const paths = [
+            ...(story.generatedImages || []),
+            ...(req.body?.includeCover ? [story.generatedCover] : []),
+        ].map(strip).filter((p) => p.endsWith('.png'));
+        if (!paths.length) {
+            res.status(409).json({ success: false, message: 'لا توجد صور PNG في هذه القصة.' });
+            return;
+        }
+        const dryRun = req.body?.dryRun !== false;
+        const results = [];
+        for (const path of paths) {
+            try {
+                if (dryRun) {
+                    const buf = await (0, StorageService_2.getFileBuffer)(path);
+                    const m = await (0, TrimBorders_1.measureWhiteFrame)(buf);
+                    results.push({
+                        path,
+                        wouldTrim: Math.max(m.l, m.r, m.t, m.b) >= 4,
+                        margins: { left: m.l, right: m.r, top: m.t, bottom: m.b },
+                    });
+                }
+                else {
+                    results.push(await (0, TrimBorders_1.trimStoredImage)(path));
+                }
+            }
+            catch (e) {
+                results.push({ path, error: e?.message || String(e) });
+            }
+        }
+        res.json({
+            success: true,
+            dryRun,
+            pages: results.length,
+            changed: results.filter((r) => r.trimmed || r.wouldTrim).length,
+            results,
+        });
+    }
+    catch (err) {
+        console.error('[trimStoryBorders]', err?.message || err);
+        res.status(500).json({ success: false, message: err.message || 'تعذّر المعالجة' });
+    }
+};
+exports.trimStoryBorders = trimStoryBorders;
+/**
+ * POST /api/admin/orders/:id/send-digital
+ *
+ * Hand a finished order to its customer as a book they READ in their account —
+ * the other half of "the book is done", next to sending it to the printer.
+ *
+ * Deliberately NOT a file. The story already belongs to this customer, so
+ * nothing is copied and no PDF is attached or linked: they open it from
+ * «قصصي». Whether they may also download the PDF is decided by the package
+ * they bought, in the customer route, and is not affected by this button.
+ *
+ * The message is tied to the story so it appears in their conversation with
+ * the book card attached, and it carries the unread badge like any other.
+ */
+const sendOrderDigital = async (req, res) => {
+    try {
+        const order = await Order_1.default.findById(req.params.id).populate('storyId', 'childName userId');
+        if (!order) {
+            res.status(404).json({ success: false, message: 'الطلب غير موجود' });
+            return;
+        }
+        if (order.illustrationsStatus !== 'ready') {
+            res.status(409).json({ success: false, message: 'الكتاب لسه ما خلص. ابنيه أولاً.' });
+            return;
+        }
+        const customer = await User_1.default.findById(order.userId).select('_id name email').lean();
+        if (!customer) {
+            res.status(404).json({ success: false, message: 'صاحب الطلب غير موجود' });
+            return;
+        }
+        const admin = req.user;
+        const child = String(order.storyId?.childName || '').trim();
+        const text = String(req.body?.note || '').trim()
+            || `كتاب ${child || 'طفلك'} أصبح جاهزاً 🎉 افتحه من «قصصي» في حسابك واقرأه متى شئت.`;
+        const mail = customer.email
+            ? await (0, mailer_1.sendCustomerMessageEmail)({ to: customer.email, name: customer.name, preview: text })
+            : { sent: false, reason: 'no-email' };
+        await CustomerMessage_1.default.create({
+            userId: customer._id,
+            body: text,
+            fromAdmin: true,
+            adminId: admin?._id,
+            adminName: admin?.name,
+            storyId: order.storyId?._id || order.storyId,
+            emailed: mail.sent,
+            emailReason: mail.sent ? undefined : mail.reason,
+        });
+        order.digitalSentAt = new Date();
+        await order.save();
+        res.json({
+            success: true,
+            sentAt: order.digitalSentAt,
+            customer: { name: customer.name, email: customer.email },
+            emailed: mail.sent,
+            emailReason: mail.sent ? undefined : mail.reason,
+        });
+    }
+    catch (err) {
+        console.error('[sendOrderDigital]', err?.message || err);
+        res.status(500).json({ success: false, message: err.message || 'فشل الإرسال' });
+    }
+};
+exports.sendOrderDigital = sendOrderDigital;
+/**
+ * POST /api/admin/print-jobs/:orderNo/pay
+ *
+ * Pays one BookPod print job with a card. ADMIN ONLY, deliberately: the card
+ * number passes through this request, which puts us in PCI-DSS scope, so it
+ * stays a tool the owner uses to settle their own print runs and is never
+ * exposed to customers.
+ *
+ * Nothing about the card is logged, echoed or stored — only BookPod's
+ * paymentReference, which is the reconciliation key.
+ */
+const payPrintJob = async (req, res) => {
+    const orderNo = String(req.params.orderNo || '').trim();
+    try {
+        const { cardNumber, expiryMonth, expiryYear, cvv, citizenId } = req.body || {};
+        if (!orderNo || !cardNumber || !expiryMonth || !expiryYear || !cvv) {
+            res.status(400).json({ success: false, message: 'أدخل رقم البطاقة وتاريخ الانتهاء والـ CVV.' });
+            return;
+        }
+        const r = await (0, BookPodService_1.payOrderWithCard)(orderNo, { cardNumber, expiryMonth, expiryYear, cvv, citizenId });
+        if (r.ok) {
+            // Keep the receipt against the job so a later question about this print
+            // run can be answered without asking BookPod.
+            await PrintJob_1.default.updateOne({ bookpodJobId: orderNo }, { $set: { bookpodStatus: 'PAID', paymentReference: r.paymentReference, paidAt: new Date() } }).catch(() => { });
+            console.log(`[payPrintJob] order ${orderNo} paid · ref ${r.paymentReference}`);
+            res.json({
+                success: true,
+                paymentReference: r.paymentReference,
+                invoiceUrl: r.invoiceUrl,
+                amount: r.amount,
+            });
+            return;
+        }
+        // Never log the body — it carries the card. Only the outcome.
+        console.warn(`[payPrintJob] order ${orderNo} failed (${r.status}): ${r.error}`);
+        res.status(r.status && r.status >= 400 ? r.status : 502).json({
+            success: false,
+            message: r.error,
+            retryable: r.retryable,
+            // The dashboard must say this out loud: on these, trying again with
+            // another card can charge the first one twice.
+            reconcile: r.reconcile,
+        });
+    }
+    catch (err) {
+        console.error('[payPrintJob]', err?.message || err);
+        res.status(500).json({ success: false, message: 'تعذّر تنفيذ الدفع.', retryable: false, reconcile: true });
+    }
+};
+exports.payPrintJob = payPrintJob;
 //# sourceMappingURL=adminController.js.map

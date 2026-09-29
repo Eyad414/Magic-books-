@@ -1478,6 +1478,25 @@ export default function AdminDashboard() {
     }
   };
 
+  /**
+   * Mark a contact-form message handled (or put it back).
+   *
+   * Optimistic: the list is the owner's own working surface and a round-trip
+   * of lag on a tick makes it feel broken. On failure it goes back exactly as
+   * it was and says so, rather than leaving a tick the server never accepted.
+   */
+  const toggleMessageRead = async (id: string, next: boolean) => {
+    const before = messages;
+    setMessages((prev) => prev.map((m: any) => (m._id === id ? { ...m, isRead: next } : m)));
+    try {
+      const res = await adminApi.setMessageRead(id, next);
+      if (!res?.success) throw new Error();
+    } catch {
+      setMessages(before);
+      toast.error(t('admin.msg_mark_fail', 'ما زبطت — جرّب كمان مرة'));
+    }
+  };
+
   const handleDeleteMessage = async (id: string) => {
     if (!window.confirm(t('admin.confirm_delete_message', 'حذف هذه الرسالة؟'))) return;
     try {
@@ -2205,19 +2224,21 @@ export default function AdminDashboard() {
    * is the one number that actually means "go and do something": an order the
    * customer has PAID for that has not been sent to BookPod yet.
    *
-   * Deliberately not shown: an unread-messages badge. ContactMessage has an
-   * isRead flag, but nothing in the app ever sets it, so the badge would show
-   * the total forever and never go down. A number that never changes is worse
-   * than no number.
+   * The message badge was left out of the first version of this sidebar
+   * because ContactMessage's isRead flag was written by the model and set by
+   * nobody — the count would have shown the total forever and never gone down.
+   * The inbox can mark a message handled now, so the number can fall to zero
+   * and has earned its place here.
    */
   const awaitingPrint = orders.filter((o: any) => o.paymentStatus === 'paid' && !o.bookpodJobId).length;
+  const unhandledMessages = messages.filter((m: any) => !m.isRead).length;
 
   const NAV_GROUPS: { title: string; items: { id: string; label: string; icon: any; count?: number; attention?: number }[] }[] = [
     {
       title: t('admin.nav_group_work', 'الشغل اليومي'),
       items: [
         { id: 'orders', label: t('admin.tab_orders'), icon: Package, count: orders.length, attention: awaitingPrint },
-        { id: 'messages', label: t('admin.tab_messages', 'الرسائل'), icon: Mail, count: messages.length },
+        { id: 'messages', label: t('admin.tab_messages', 'الرسائل'), icon: Mail, count: messages.length, attention: unhandledMessages },
         { id: 'customers', label: t('admin.tab_customers', 'العملاء'), icon: Users },
       ],
     },
@@ -3460,7 +3481,16 @@ export default function AdminDashboard() {
 
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-arabic font-bold text-white text-lg">✉️ {t('admin.contact_form_title', 'رسائل نموذج التواصل')}</h3>
-                  <span className="font-arabic text-white/50 text-sm">{messages.length}</span>
+                  {/* The number that matters is how many still need you, not
+                      how many have ever arrived. */}
+                  <div className="flex items-center gap-2">
+                    {unhandledMessages > 0 && (
+                      <span className="px-2 py-0.5 rounded-full bg-amber-500 text-dark-900 text-[11px] font-black font-arabic">
+                        {t('admin.msgs_unhandled', '{{n}} بانتظار الرد', { n: unhandledMessages })}
+                      </span>
+                    )}
+                    <span className="font-arabic text-white/40 text-sm" dir="ltr">{messages.length}</span>
+                  </div>
                 </div>
                 {messages.length === 0 ? (
                   <p className="font-arabic text-white/50 text-sm py-10 text-center">{t('admin.no_messages', 'لا توجد رسائل بعد')}</p>
@@ -3470,7 +3500,11 @@ export default function AdminDashboard() {
                       <div
                         key={m._id}
                         onClick={() => openCustomer(m.email)}
-                        className="bg-dark-700/50 border border-white/10 rounded-2xl p-4 cursor-pointer hover:border-gold-500/40 hover:bg-dark-700 transition-all"
+                        className={`rounded-2xl p-4 cursor-pointer border transition-all ${
+                          m.isRead
+                            ? 'bg-dark-700/20 border-white/5 opacity-60 hover:opacity-100'
+                            : 'bg-dark-700/50 border-amber-500/25 hover:border-gold-500/40 hover:bg-dark-700'
+                        }`}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
@@ -3487,6 +3521,26 @@ export default function AdminDashboard() {
                             <span className="hidden sm:flex items-center gap-1 text-gold-500/80 text-xs font-arabic">
                               <Eye className="w-3.5 h-3.5" /> {t('admin.view_account', 'عرض الحساب')}
                             </span>
+                            {/* Makes isRead mean something. Until this existed
+                                the flag was written by the model and read by
+                                nobody, so a message you answered last month
+                                looked exactly as urgent as one from an hour
+                                ago. A toggle, not a one-way switch — a mis-tap
+                                you cannot undo makes people stop ticking. */}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); toggleMessageRead(m._id, !m.isRead); }}
+                              title={m.isRead
+                                ? t('admin.msg_mark_unread', 'رجّعها لقائمة الانتظار')
+                                : t('admin.msg_mark_read', 'علّمها: تم الرد')}
+                              className={`flex items-center gap-1 px-2 py-1 rounded-lg border font-arabic text-[11px] font-bold transition-colors ${
+                                m.isRead
+                                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+                                  : 'bg-white/5 border-white/15 text-white/50 hover:border-emerald-500/40 hover:text-emerald-300'
+                              }`}
+                            >
+                              <CheckCircle className="w-3.5 h-3.5" />
+                              {m.isRead ? t('admin.msg_handled', 'تم الرد') : t('admin.msg_mark', 'علّمها')}
+                            </button>
                             <button onClick={(e) => { e.stopPropagation(); handleDeleteMessage(m._id); }} aria-label={t('admin.delete', 'حذف')} className="text-white/40 hover:text-red-400">
                               <Trash2 className="w-4 h-4" />
                             </button>

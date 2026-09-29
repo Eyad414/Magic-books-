@@ -55,6 +55,36 @@ export const listMessages = async (_req: Request, res: Response): Promise<void> 
   }
 };
 
+// @route PATCH /api/admin/messages/:id/read
+// @desc  Mark a contact-form message handled, or put it back in the pile.
+//
+// ContactMessage has carried an isRead flag since it was written and nothing
+// ever set it. So every message in the inbox looked identical forever: one you
+// answered a month ago sat there looking exactly as urgent as one that arrived
+// while you were reading. There was also no honest way to badge the tab — a
+// count of "unread" that never went down is worse than no count.
+//
+// Deliberately a toggle rather than a one-way "mark read": the owner marks
+// these by hand, and a mis-tap that cannot be undone would push them to stop
+// using the flag at all.
+export const setMessageRead = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const isRead = req.body?.isRead !== false; // default true; explicit false un-reads
+    const msg = await ContactMessage.findByIdAndUpdate(
+      req.params.id,
+      { isRead },
+      { new: true },
+    ).lean();
+    if (!msg) {
+      res.status(404).json({ success: false, message: 'Message not found' });
+      return;
+    }
+    res.json({ success: true, message: msg });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 // @route DELETE /api/admin/messages/:id
 // @desc Remove a contact message from the inbox
 export const deleteMessage = async (req: Request, res: Response): Promise<void> => {

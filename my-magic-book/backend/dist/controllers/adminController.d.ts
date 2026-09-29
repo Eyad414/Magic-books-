@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 export declare const listMessages: (_req: Request, res: Response) => Promise<void>;
+export declare const setMessageRead: (req: Request, res: Response) => Promise<void>;
 export declare const deleteMessage: (req: Request, res: Response) => Promise<void>;
 export declare const getCustomerByEmail: (req: Request, res: Response) => Promise<void>;
 export declare const getAllStories: (req: Request, res: Response) => Promise<void>;
@@ -9,6 +10,18 @@ export declare const addAdmin: (req: Request, res: Response) => Promise<void>;
 export declare const removeAdmin: (req: Request, res: Response) => Promise<void>;
 export declare const getTeam: (req: Request, res: Response) => Promise<void>;
 export declare const getSettings: (req: Request, res: Response) => Promise<void>;
+/**
+ * Live counts for the numbers under the hero.
+ *
+ * These were fixed strings — "+300", "+150" — and a parent reading them is
+ * being told a fact. They are counted from the database now, so the page can
+ * only ever claim what actually happened.
+ *
+ * Books counts the ones with artwork, not started drafts; families counts
+ * distinct accounts with a settled order, so one buyer with three books is one
+ * family. Ready stories is what a customer can actually pick today.
+ */
+export declare const getLiveStats: (_req: Request, res: Response) => Promise<void>;
 export declare const getPublicSettings: (_req: Request, res: Response) => Promise<void>;
 export declare const updateSettings: (req: Request, res: Response) => Promise<void>;
 export declare const getAllOrders: (req: Request, res: Response) => Promise<void>;
@@ -32,6 +45,11 @@ export declare const confirmOrderPayment: (req: Request, res: Response) => Promi
 export declare const buildOrderBook: (req: Request, res: Response) => Promise<void>;
 export declare const getOrderBuildStatus: (req: Request, res: Response) => Promise<void>;
 export declare const reRenderOrderFiles: (req: Request, res: Response) => Promise<void>;
+export declare const booksPrintReadiness: (req: Request, res: Response) => Promise<void>;
+export declare const prepareBooksPrint: (req: Request, res: Response) => Promise<void>;
+export declare const bulkPrintBooks: (req: Request, res: Response) => Promise<void>;
+export declare const bulkPrintOrders: (req: Request, res: Response) => Promise<void>;
+export declare const attachOrderPrintFiles: (req: Request, res: Response) => Promise<void>;
 export declare const reRenderOrderColoring: (req: Request, res: Response) => Promise<void>;
 export declare const submitOrderColoring: (req: Request, res: Response) => Promise<void>;
 export declare const checkPayments: (_req: Request, res: Response) => Promise<void>;
@@ -147,4 +165,68 @@ export declare const listPrintJobs: (req: Request, res: Response) => Promise<voi
 export declare const getPrintReadiness: (_req: Request, res: Response) => Promise<void>;
 export declare const listImportedFiles: (_req: Request, res: Response) => Promise<void>;
 export declare const deleteImportedFiles: (req: Request, res: Response) => Promise<void>;
+/**
+ * POST /api/admin/books/send-to-customer
+ *
+ * Puts a book the owner made into a customer's own account, where it appears
+ * beside anything they bought and opens like their own book.
+ *
+ * The artwork is REFERENCED, never copied: the same GCS object paths are
+ * written onto a new Story owned by the customer. Copying the files would
+ * double the storage for every gift and leave two sets to keep in step; moving
+ * the original would take the book out of الكتب الجاهزة.
+ *
+ * It carries no price and no order, because nobody bought it.
+ */
+export declare const sendBookToCustomer: (req: Request, res: Response) => Promise<void>;
+/**
+ * POST /api/admin/birthday-coupons/grant
+ *
+ * Hand the yearly gift out now, to every account that does not already have an
+ * unspent one. The automatic grant waits for a real anniversary — no account
+ * is a year old yet — so this exists for the owner who wants to start now.
+ *
+ * dryRun by default: this gives away books.
+ */
+export declare const grantBirthdayCoupons: (req: Request, res: Response) => Promise<void>;
+/**
+ * POST /api/admin/stories/:id/trim-borders
+ *
+ * Take the white frame off a story's pages. Some generated pages come back
+ * with the drawing padded — most often a bar down the left and right — and no
+ * layout can hide it: the page is square, the image is square, and the white
+ * is inside the picture.
+ *
+ * `dryRun` reports what would be cut without touching anything, because this
+ * overwrites artwork the customer may already have seen. Every page that IS
+ * rewritten keeps its original alongside as <name>.orig.png.
+ */
+export declare const trimStoryBorders: (req: Request, res: Response) => Promise<void>;
+/**
+ * POST /api/admin/orders/:id/send-digital
+ *
+ * Hand a finished order to its customer as a book they READ in their account —
+ * the other half of "the book is done", next to sending it to the printer.
+ *
+ * Deliberately NOT a file. The story already belongs to this customer, so
+ * nothing is copied and no PDF is attached or linked: they open it from
+ * «قصصي». Whether they may also download the PDF is decided by the package
+ * they bought, in the customer route, and is not affected by this button.
+ *
+ * The message is tied to the story so it appears in their conversation with
+ * the book card attached, and it carries the unread badge like any other.
+ */
+export declare const sendOrderDigital: (req: Request, res: Response) => Promise<void>;
+/**
+ * POST /api/admin/print-jobs/:orderNo/pay
+ *
+ * Pays one BookPod print job with a card. ADMIN ONLY, deliberately: the card
+ * number passes through this request, which puts us in PCI-DSS scope, so it
+ * stays a tool the owner uses to settle their own print runs and is never
+ * exposed to customers.
+ *
+ * Nothing about the card is logged, echoed or stored — only BookPod's
+ * paymentReference, which is the reconciliation key.
+ */
+export declare const payPrintJob: (req: Request, res: Response) => Promise<void>;
 //# sourceMappingURL=adminController.d.ts.map

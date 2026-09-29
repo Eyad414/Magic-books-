@@ -182,6 +182,10 @@ export const adminApi = {
     const response = await axiosInstance.get('/admin/messages');
     return response.data;
   },
+  setMessageRead: async (id: string, isRead: boolean) => {
+    const response = await axiosInstance.patch(`/admin/messages/${id}/read`, { isRead });
+    return response.data;
+  },
   deleteMessage: async (id: string) => {
     const response = await axiosInstance.delete(`/admin/messages/${id}`);
     return response.data;

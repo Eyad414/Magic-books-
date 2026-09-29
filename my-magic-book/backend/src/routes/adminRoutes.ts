@@ -13,7 +13,7 @@ import { getAllStories, updateStory, deleteStory, addAdmin, removeAdmin, getTeam
   refreshPrintJobStatuses,
   sendReadyThemeBook,
   listImportedFiles,
-  deleteImportedFiles, listMessages, deleteMessage, getCustomerByEmail, checkPayments } from '../controllers/adminController';
+  deleteImportedFiles, listMessages, deleteMessage, setMessageRead, getCustomerByEmail, checkPayments } from '../controllers/adminController';
 import { protect, adminOnly } from '../utils/authMiddleware';
 
 import { sendMessageToCustomer, getCustomerThread, messageCounts, listConversations, markThreadRead } from '../controllers/customerMessageController';
@@ -48,6 +48,7 @@ router.get('/team', getTeam);
 router.delete('/team/:id', removeAdmin);
 
 router.get('/messages', listMessages);
+router.patch('/messages/:id/read', setMessageRead);
 router.delete('/messages/:id', deleteMessage);
 router.get('/customer', getCustomerByEmail);
 
