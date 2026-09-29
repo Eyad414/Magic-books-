@@ -3,11 +3,11 @@ import { useStoryProgress } from '../../context/StoryProgressContext';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import MagicButton from '../common/MagicButton';
-import { Sparkles, ChevronLeft, ChevronRight, Globe, ChevronDown, ChevronUp, Loader2, BookOpen } from 'lucide-react';
+import { Sparkles, ChevronLeft, ChevronRight, Globe, ChevronDown, ChevronUp, Loader2, BookOpen, Check } from 'lucide-react';
 import FlipbookPreview from './FlipbookPreview';
 import { storyApi } from '../../api/storyApi';
 import { publicApi } from '../../api/publicApi';
-import { toDisplayUrl } from '../../api/mediaUrl';
+import { toDisplayUrl, toCardUrl } from '../../api/mediaUrl';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { localizeName } from '../../utils/translit';
@@ -485,23 +485,54 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
           </div>
         ) : (
         <>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {visibleThemes.map((theme) => (
-            <button
-              key={theme.id}
-              id={`theme-${theme.id}`}
-              type="button"
-              onClick={() => setForm({ ...form, theme: theme.id })}
-              className={`flex flex-col items-center gap-1 p-3 rounded-xl border transition-all text-center ${form.theme === theme.id
-                  ? 'border-gold-500 bg-gold-500/10'
-                  : 'border-white/10 hover:border-white/30'
+        {/* Twenty-five illustrated books, shown as illustrations.
+            This grid was a list of words — the customer picked "مغامرة في
+            الفضاء" from text while the cover that sells it sat unused in the
+            same payload every theme already carries. The /stories page shows
+            the artwork; the screen where the choice is actually made showed
+            none of it. */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3">
+          {visibleThemes.map((theme) => {
+            const on = form.theme === theme.id;
+            const cover = toCardUrl(theme.generatedCover || '', 320);
+            return (
+              <button
+                key={theme.id}
+                id={`theme-${theme.id}`}
+                type="button"
+                aria-pressed={on}
+                onClick={() => setForm({ ...form, theme: theme.id })}
+                className={`group relative rounded-2xl overflow-hidden border-2 transition-all duration-300 text-start ${
+                  on
+                    ? 'border-gold-500 shadow-lg shadow-gold-500/20 scale-[1.02]'
+                    : 'border-white/10 hover:border-white/35'
                 }`}
-            >
-              <span className={`font-arabic font-bold text-xs ${form.theme === theme.id ? 'text-gold-500' : 'text-white/70'}`}>
-                {getThemeLabel(theme, t, i18n.language)} {theme.emoji}
-              </span>
-            </button>
-          ))}
+              >
+                <div className="relative aspect-[3/4] bg-dark-800 overflow-hidden">
+                  {cover && (
+                    <img
+                      src={cover}
+                      alt=""
+                      loading="lazy"
+                      className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${on ? '' : 'opacity-85 group-hover:opacity-100'}`}
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-dark-900/25 to-transparent pointer-events-none" />
+                  <div className="absolute bottom-0 inset-x-0 p-2">
+                    <span className={`font-arabic font-bold text-[11px] leading-tight line-clamp-2 drop-shadow ${on ? 'text-gold-500' : 'text-white'}`}>
+                      {getThemeLabel(theme, t, i18n.language)} {theme.emoji}
+                    </span>
+                  </div>
+                  {on && (
+                    <span className="absolute top-2 end-2 w-6 h-6 rounded-full bg-gold-500 flex items-center justify-center shadow-lg">
+                      <Check className="w-4 h-4 text-dark-900" />
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
         </div>
         {THEMES.length > INITIAL_THEME_COUNT && (
           <button
