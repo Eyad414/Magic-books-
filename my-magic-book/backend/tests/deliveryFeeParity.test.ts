@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { DELIVERY_FEE_ILS as SERVER_FEE, priceOrder } from '../src/services/Pricing';
+import { DEFAULT_COUPONS } from '../src/models/SiteSettings';
 import { DELIVERY_FEE_ILS as CLIENT_FEE } from '../../frontend/src/config/delivery';
 
 /**
@@ -34,5 +35,35 @@ describe('delivery fee', () => {
     });
     expect(p.total).toBe(130);
     expect(p.deliveryFee).toBe(0);
+  });
+});
+
+
+/**
+ * A code that says "applied" and takes nothing off.
+ *
+ * FANOOS was seeded as type freeDelivery. The moment delivery went free that
+ * coupon became worth zero — it still validated, still showed the customer a
+ * green "code accepted", and still deducted 0 ₪. That is worse than a rejected
+ * code, because the customer believes they got a discount.
+ *
+ * So while the fee is zero, no shipped default may be a freeDelivery code.
+ * (The live coupon list lives in the database and is the owner's to edit; this
+ * only guards what a fresh install starts with.)
+ */
+describe('seeded coupons are worth something', () => {
+  it('ships no freeDelivery code while delivery is already free', () => {
+    const dead = DEFAULT_COUPONS.filter((c) => c.active && c.type === 'freeDelivery');
+    expect(
+      SERVER_FEE > 0 ? [] : dead.map((c) => c.code),
+      'these codes waive a fee of 0 — they would apply, say "accepted", and discount nothing',
+    ).toEqual([]);
+  });
+
+  it('every active default actually reduces the total', () => {
+    for (const c of DEFAULT_COUPONS.filter((x) => x.active)) {
+      const p = priceOrder({ basePrice: 130, bookPackage: 'color', deliveryMethod: 'delivery', coupon: c as any });
+      expect(p.total, `${c.code} takes nothing off a 130 ILS book`).toBeLessThan(130);
+    }
   });
 });

@@ -133,7 +133,11 @@ export interface ICoupon {
 export const DEFAULT_COUPONS: ICoupon[] = [
   { code: 'MAGIC20', type: 'percent', value: 20, active: true },
   { code: 'MAGIC50', type: 'percent', value: 50, active: true },
-  { code: 'FANOOS', type: 'freeDelivery', value: 0, active: true },
+  // Was a freeDelivery code. Delivery is free for everyone now
+  // (DELIVERY_FEE_ILS = 0), so a code that waives it is worth nothing — it
+  // would have applied, said "code accepted", and taken 0 ₪ off. 20% keeps it
+  // close to what free delivery used to save (30 ₪ on a 130 ₪ book).
+  { code: 'FANOOS', type: 'percent', value: 20, active: true },
 ];
 
 /**
