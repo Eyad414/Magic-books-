@@ -26,7 +26,9 @@ import { uploadApi } from '../../api/uploadApi';
 // Props Interface: Defines navigation callbacks passed from the parent wizard container
 interface Props { onNext: () => void; onPrev: () => void; }
 
-const INITIAL_THEME_COUNT = 8;
+// Twelve, not eight: the tiles are a third of their old size, so the same
+// space now holds more of the shop without the grid feeling like a wall.
+const INITIAL_THEME_COUNT = 12;
 
 // Live preview in Step 2 — hidden per request. Flip to true to bring it back.
 const SHOW_LIVE_PREVIEW = false;
@@ -502,7 +504,7 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
             same payload every theme already carries. The /stories page shows
             the artwork; the screen where the choice is actually made showed
             none of it. */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
           {visibleThemes.map((theme) => {
             const on = form.theme === theme.id;
             const cover = toCardUrl(theme.generatedCover || '', 320);
@@ -513,9 +515,9 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
                 type="button"
                 aria-pressed={on}
                 onClick={() => setForm({ ...form, theme: theme.id })}
-                className={`group relative rounded-2xl overflow-hidden border-2 transition-all duration-300 text-start ${
+                className={`group relative rounded-xl overflow-hidden border transition-all duration-300 text-start ${
                   on
-                    ? 'border-gold-500 shadow-lg shadow-gold-500/20 scale-[1.02]'
+                    ? 'border-gold-500 ring-1 ring-gold-500/50 shadow-md shadow-gold-500/15'
                     : 'border-white/10 hover:border-white/35'
                 }`}
               >
@@ -530,14 +532,14 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
                     />
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-dark-900/25 to-transparent pointer-events-none" />
-                  <div className="absolute bottom-0 inset-x-0 p-2">
-                    <span className={`font-arabic font-bold text-[11px] leading-tight line-clamp-2 drop-shadow ${on ? 'text-gold-500' : 'text-white'}`}>
-                      {getThemeLabel(theme, t, i18n.language)} {theme.emoji}
+                  <div className="absolute bottom-0 inset-x-0 px-1.5 pb-1.5 pt-4 bg-gradient-to-t from-dark-900 to-transparent">
+                    <span className={`block font-arabic font-bold text-[10px] leading-tight line-clamp-2 drop-shadow ${on ? 'text-gold-500' : 'text-white/90'}`}>
+                      {getThemeLabel(theme, t, i18n.language)}
                     </span>
                   </div>
                   {on && (
-                    <span className="absolute top-2 end-2 w-6 h-6 rounded-full bg-gold-500 flex items-center justify-center shadow-lg">
-                      <Check className="w-4 h-4 text-dark-900" />
+                    <span className="absolute top-1 end-1 w-5 h-5 rounded-full bg-gold-500 flex items-center justify-center shadow">
+                      <Check className="w-3 h-3 text-dark-900" />
                     </span>
                   )}
                 </div>

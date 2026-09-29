@@ -1,6 +1,15 @@
 import SiteSettings, { DEFAULT_COUPONS, type ICoupon } from '../models/SiteSettings';
 
-export const DELIVERY_FEE_ILS = 30;
+/**
+ * Delivery costs the customer nothing. Owner's decision, 2026-09-29: the book's
+ * price is the whole price.
+ *
+ * Kept as a named constant rather than deleted, because the rest of this file
+ * is built around a fee existing — the free-delivery coupon, the pickup waiver
+ * and the 100%-off rule all still read it, and they keep working unchanged at
+ * zero. Putting a number back here is all it takes to charge again.
+ */
+export const DELIVERY_FEE_ILS = 0;
 /** Packages that are files, not parcels. */
 const DIGITAL = new Set(['ebook', 'audio']);
 
@@ -108,7 +117,7 @@ export function priceOrder(opts: {
   // "100% off" has to mean free. Charging delivery on top of a coupon that
   // says the order costs nothing is the kind of surprise that loses the
   // customer at the last screen — and a giveaway is not a giveaway if the
-  // winner is asked for 30 ₪ at the door.
+  // winner is asked for a delivery fee at the door.
   const fullyFree = percent >= 100;
   const noParcel = DIGITAL.has(String(bookPackage)) || deliveryMethod === 'pickup';
   const deliveryWaived = noParcel || fullyFree || usable?.type === 'freeDelivery';

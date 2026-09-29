@@ -1,3 +1,4 @@
+import { DELIVERY_FEE_ILS } from '../../config/delivery';
 import { useState } from 'react';
 import { usePackages } from '../../hooks/usePackages';
 import { useStoryProgress } from '../../context/StoryProgressContext';
@@ -188,11 +189,11 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
   const couponLive = couponApplied && couponFitsPackage;
   const discountedBase = couponLive ? Math.round(basePrice * (1 - discount / 100)) : basePrice;
   const couponFreeDelivery = couponLive && couponType === 'freeDelivery';
-  // A 100% coupon is a giveaway; asking the winner for 30 ₪ delivery at the
+  // A 100% coupon is a giveaway; asking the winner for a delivery fee at the
   // door is not one. Matches priceOrder on the server.
   const couponFullyFree = couponLive && couponType === 'percent' && discount >= 100;
   const freeDelivery = isDigital || isPickup || couponFreeDelivery || couponFullyFree;
-  const deliveryFee = freeDelivery ? 0 : 30;
+  const deliveryFee = freeDelivery ? 0 : DELIVERY_FEE_ILS;
   const totalPrice = discountedBase + deliveryFee;
 
   const validateShipping = () => {
@@ -572,10 +573,14 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
             {couponApplied && couponType === 'percent' && (
               <Row label={`${t('step5.discount', 'خصم')} ${discount}%`} value={`- ${basePrice - discountedBase} ₪`} />
             )}
-            {couponFreeDelivery && (
-              <Row label={t('step3.coupon_free_delivery_row', 'كود التوصيل المجاني')} value={`- 30 ₪`} />
+            {/* Only worth a line when it actually takes money off. The value
+                here was the literal string "- 30 ₪", so with delivery now free
+                a free-delivery code would have claimed a 30 ₪ saving off a fee
+                nobody is charged — a discount the customer never received. */}
+            {couponFreeDelivery && DELIVERY_FEE_ILS > 0 && (
+              <Row label={t('step3.coupon_free_delivery_row', 'كود التوصيل المجاني')} value={`- ${DELIVERY_FEE_ILS} ₪`} />
             )}
-            <Row label={t('step5.delivery_fee')} value={deliveryFee === 0 ? `${t('step3.free_delivery', 'مجاني')} 🎉` : `${deliveryFee} ₪`} />
+            <Row label={t('step5.delivery_fee')} value={deliveryFee === 0 ? `${t('step3.free_delivery_plain', 'مجاني')} 🎉` : `${deliveryFee} ₪`} />
             <div className="mt-2 flex items-center justify-between rounded-2xl bg-gradient-to-l from-gold-500/25 to-gold-500/10 border border-gold-500/50 px-4 py-3.5 shadow-lg shadow-gold-500/10">
               <span className="font-arabic font-black text-white text-lg">{t('step5.total')}</span>
               {pricesReady ? (

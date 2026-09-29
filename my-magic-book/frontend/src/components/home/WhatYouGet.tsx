@@ -74,7 +74,7 @@ export default function WhatYouGet() {
             )}
           </div>
           <p className="font-arabic text-white/45 text-[11px] mb-4">
-            {t('home.wyg_delivery_note', 'التوصيل ٣٠ ₪ · مجاناً عند الاستلام من المطبعة')}
+            {t('home.wyg_delivery_note_v2', 'شامل التوصيل — لا رسوم إضافية')}
           </p>
 
           {digital && (

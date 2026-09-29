@@ -1,3 +1,4 @@
+import { DELIVERY_FEE_ILS } from '../config/delivery';
 import { usePackages } from './usePackages';
 
 /**
@@ -59,7 +60,7 @@ export function useCheckoutTotals(opts: {
   // disagree the customer is quoted one number and charged another.
   const fullyFree = couponLive && opts.couponType !== 'freeDelivery' && percent >= 100;
   const couponFreeDelivery = couponLive && opts.couponType === 'freeDelivery';
-  const deliveryFee = isDigital || opts.isPickup || fullyFree || couponFreeDelivery ? 0 : 30;
+  const deliveryFee = isDigital || opts.isPickup || fullyFree || couponFreeDelivery ? 0 : DELIVERY_FEE_ILS;
 
   return {
     packages, selectedPkg, pkgUnavailable, isDigital,

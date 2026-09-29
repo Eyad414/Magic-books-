@@ -5,16 +5,24 @@ const percent = (value: number) => ({ code: 'X', type: 'percent' as const, value
 const freeDelivery = { code: 'FANOOS', type: 'freeDelivery' as const, value: 0, active: true };
 
 describe('priceOrder', () => {
-  it('charges the package price plus delivery when no code is used', () => {
+  it('charges the package price and nothing else when no code is used', () => {
     const p = priceOrder({ basePrice: 130, bookPackage: 'color', deliveryMethod: 'delivery', coupon: null });
-    expect(p).toMatchObject({ discount: 0, deliveryFee: DELIVERY_FEE_ILS, total: 160 });
+    expect(p).toMatchObject({ discount: 0, deliveryFee: DELIVERY_FEE_ILS, total: 130 + DELIVERY_FEE_ILS });
+  });
+
+  it('adds nothing for delivery — the book price is the whole price', () => {
+    // Owner's decision, 2026-09-29. Pinned as its own case because the fee is
+    // duplicated in the frontend to quote with, and a quote that disagrees with
+    // the charge is the bug this whole module exists to prevent.
+    expect(DELIVERY_FEE_ILS).toBe(0);
+    expect(priceOrder({ basePrice: 130, bookPackage: 'color', deliveryMethod: 'delivery', coupon: null }).total).toBe(130);
   });
 
   it('takes the percentage off the book, not off the delivery', () => {
     const p = priceOrder({ basePrice: 130, bookPackage: 'color', deliveryMethod: 'delivery', coupon: percent(50) });
     expect(p.discount).toBe(65);
     expect(p.deliveryFee).toBe(DELIVERY_FEE_ILS);
-    expect(p.total).toBe(95);
+    expect(p.total).toBe(65 + DELIVERY_FEE_ILS);
   });
 
   it('waives delivery for the free-delivery code and leaves the book alone', () => {
