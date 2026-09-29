@@ -2233,6 +2233,42 @@ export default function AdminDashboard() {
   const awaitingPrint = orders.filter((o: any) => o.paymentStatus === 'paid' && !o.bookpodJobId).length;
   const unhandledMessages = messages.filter((m: any) => !m.isRead).length;
 
+  /**
+   * Customers, and what they are actually worth.
+   *
+   * This tab counted accounts, visits and page views and never once mentioned
+   * money — the number a shop actually runs on was the one thing missing.
+   *
+   * The admin accounts are excluded on purpose. Summing every row gives 1,170 ₪
+   * today, but 895 ₪ of that is the owner's own test orders: a headline that
+   * flatters the business by four times is worse than no headline. What is left
+   * is what people who are not us have paid.
+   */
+  const realCustomers = (customers?.customers || []).filter((c: any) => c.role !== 'admin');
+  const payingCustomers = realCustomers.filter((c: any) => (c.paidOrders || 0) > 0).length;
+  const customerRevenue = realCustomers.reduce((sum: number, c: any) => sum + (c.totalSpent || 0), 0);
+
+  /**
+   * Buyers first and biggest first, then everyone else by how recently they
+   * joined — and the admin accounts last, whatever they have "spent".
+   *
+   * Newest-first alone put an account that signed up and never came back above
+   * a customer on their third book. But ranking purely by spend was no better:
+   * it floated the two admin accounts to the top on the strength of test
+   * orders this very screen refuses to count as income. Money that does not
+   * count as revenue does not earn a place above real customers either.
+   */
+  const rankedCustomers = [...(customers?.customers || [])].sort((a: any, b: any) => {
+    const adminA = a.role === 'admin';
+    const adminB = b.role === 'admin';
+    if (adminA !== adminB) return adminA ? 1 : -1;
+    const pa = (a.paidOrders || 0) > 0;
+    const pb = (b.paidOrders || 0) > 0;
+    if (pa !== pb) return pa ? -1 : 1;
+    if (pa && pb) return (b.totalSpent || 0) - (a.totalSpent || 0);
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
   const NAV_GROUPS: { title: string; items: { id: string; label: string; icon: any; count?: number; attention?: number }[] }[] = [
     {
       title: t('admin.nav_group_work', 'الشغل اليومي'),
@@ -3098,7 +3134,7 @@ export default function AdminDashboard() {
                 ) : (
                   <>
                     {/* The four numbers worth knowing before reading any row. */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 mb-4">
                       {[
                         { v: customers.summary.online, l: t('admin.cust_online', 'متصل الآن'), live: true },
                         // Everyone who opened the site, account or not — the
@@ -3106,9 +3142,12 @@ export default function AdminDashboard() {
                         { v: customers.summary.visitorsToday ?? 0, l: t('admin.cust_visitors_today', 'زائر اليوم') },
                         { v: customers.summary.visitorsLast7 ?? 0, l: t('admin.cust_visitors_7', 'زائر هذا الأسبوع') },
                         { v: customers.summary.total, l: t('admin.cust_total', 'حساب') },
-                      ].map((k) => (
-                        <div key={k.l} className={`glass-card p-3 text-center ${k.live && k.v > 0 ? 'border-emerald-400/40' : ''}`}>
-                          <div className={`font-arabic font-black text-2xl ${k.live && k.v > 0 ? 'text-emerald-400' : 'text-gold-500'}`} dir="ltr">{k.v}</div>
+                        // The two that were missing: who paid, and how much.
+                        { v: payingCustomers, l: t('admin.cust_paying', 'زبون دفع'), money: true },
+                        { v: `${customerRevenue}₪`, l: t('admin.cust_revenue', 'دخل من العملاء'), money: true },
+                      ].map((k: any) => (
+                        <div key={k.l} className={`glass-card p-3 text-center ${k.live && k.v > 0 ? 'border-emerald-400/40' : k.money ? 'border-gold-500/25' : ''}`}>
+                          <div className={`font-arabic font-black ${k.money ? 'text-xl' : 'text-2xl'} ${k.live && k.v > 0 ? 'text-emerald-400' : 'text-gold-500'}`} dir="ltr">{k.v}</div>
                           <div className="font-arabic text-white/45 text-[11px] mt-0.5 flex items-center justify-center gap-1">
                             {k.live && k.v > 0 && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
                             {k.l}
@@ -3116,6 +3155,10 @@ export default function AdminDashboard() {
                         </div>
                       ))}
                     </div>
+
+                    <p className="font-arabic text-white/30 text-[10px] mb-2">
+                      {t('admin.cust_revenue_note', 'الدخل لا يحسب حسابات المدراء — طلباتك التجريبية غير محسوبة.')}
+                    </p>
 
                     <p className="font-arabic text-white/45 text-[11px] mb-3">
                       {t('admin.cust_secondline', '{{views}} فتحة صفحة اليوم · {{logins}} دخلوا اليوم · {{buyers}} دفعوا فعلاً', {
@@ -3130,8 +3173,13 @@ export default function AdminDashboard() {
                         they are. */}
 
                     <div className="space-y-2">
-                      {customers.customers.map((c: any) => (
-                        <div key={c._id} className="glass-card p-3">
+                      {rankedCustomers.map((c: any) => (
+                        <div
+                          key={c._id}
+                          className={`glass-card p-3 border-e-2 ${
+                            (c.paidOrders || 0) > 0 && c.role !== 'admin' ? 'border-e-gold-500/50' : 'border-e-transparent'
+                          }`}
+                        >
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
