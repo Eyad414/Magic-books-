@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { usePageMeta } from '../hooks/usePageMeta';
-import { BookOpen, Eye, X, Heart } from 'lucide-react';
+import { Eye, X, Heart } from 'lucide-react';
 import FlipbookPreview, { buildThemePreview } from '../components/wizard/FlipbookPreview';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -263,9 +263,15 @@ export default function Stories() {
         </div>
 
         {/* Stories grid.
+
+            Three 302px cards per row, each 484px tall: a library of fourteen
+            books arrived as barely one row of covers and 2,500px of scrolling.
+            Four and five columns turn the same artwork into a shelf you can
+            take in at a glance, and every card lost ~120px of height with it.
+
             Books made from a real child's own photo stay off the public site
             until the owner ticks them — see ShowcaseCard.private. */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {shownCards.map((card) => {
             const cover = cardCoverFor(card);
             const isFav = favorites.includes(card.key);
@@ -273,7 +279,7 @@ export default function Stories() {
             return (
               <article
                 key={card.key}
-                className="group relative flex flex-col rounded-3xl overflow-hidden bg-dark-800 border border-white/10 hover:border-gold-500/40 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-gold-500/10 transition-all duration-500"
+                className="group relative flex flex-col rounded-2xl overflow-hidden bg-dark-800 border border-white/10 hover:border-gold-500/40 hover:-translate-y-1 hover:shadow-xl hover:shadow-gold-500/10 transition-all duration-500"
               >
                 {/* A book cover is portrait. This was a 176px letterbox that
                     cropped the top and bottom off every illustration — the
@@ -294,71 +300,84 @@ export default function Stories() {
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-dark-900/30 to-transparent pointer-events-none" />
 
+                  {/* A bound edge. Smaller covers lose the presence a big one
+                      had, so the card earns it back by reading as a BOOK and
+                      not a photograph: the dark spine, and the hairline where
+                      the boards meet the pages. Logical `start`, so the
+                      binding sits on the side the language opens from. */}
+                  <span className="pointer-events-none absolute inset-y-0 start-0 w-[6px] bg-dark-900/45" />
+                  <span className="pointer-events-none absolute inset-y-0 start-[6px] w-px bg-white/15" />
+
                   {/* Title sits on the art instead of in a separate slab. */}
-                  <div className="absolute bottom-0 inset-x-0 p-3 sm:p-4 pointer-events-none">
-                    <h3 className="font-arabic font-black text-white text-sm sm:text-base leading-snug line-clamp-2 drop-shadow-lg">
+                  <div className="absolute bottom-0 inset-x-0 p-2.5 sm:p-3 pointer-events-none">
+                    <h3 className="font-arabic font-black text-white text-xs sm:text-sm leading-snug line-clamp-2 drop-shadow-lg">
                       {titleFor(card)}
                     </h3>
-                    <p className="font-arabic text-gold-500 text-[10px] sm:text-[11px] mt-1 font-bold">
+                    <p className="font-arabic text-gold-500 text-[9px] sm:text-[10px] mt-0.5 font-bold line-clamp-1">
                       {themeLabelFor(card)}
                     </p>
                   </div>
 
-                  {/* Read affordance, revealed on hover / always legible on touch. */}
-                  {/* Visible wherever there is no hover.
-                      This was opacity-0 until :hover, which on a phone means
-                      never — so the free preview, the best reason a stranger
-                      has to trust this shop, was invisible on the device most
-                      of the traffic arrives on. Pointer devices keep the
-                      reveal; touch devices just get it. */}
+                  {/* Read affordance, revealed on hover. A phone has no hover,
+                      so it gets the same action as a button in the footer —
+                      the free preview is the best reason a stranger has to
+                      trust this shop and it cannot be hover-only. */}
                   <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none [@media(hover:none)]:hidden">
-                    <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-dark-900/85 border border-gold-500/40">
-                      <Eye className="w-4 h-4 text-gold-500" />
-                      <span className="font-arabic font-bold text-white text-xs">{t('stories_page.read_full')}</span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-dark-900/85 border border-gold-500/40">
+                      <Eye className="w-3.5 h-3.5 text-gold-500" />
+                      <span className="font-arabic font-bold text-white text-[11px]">{t('stories_page.read_full')}</span>
                     </span>
                   </span>
 
                   {/* The badge the owner actually set. There used to be a star
                       rating here — 5.0, 4.9, 4.8 picked by array index, the
                       same three scores repeating down the grid. Invented
-                      reviews are not ours to show. */}
+                      reviews are not ours to show. Offset past the spine. */}
                   {tag && (
-                    <span className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-gold-500 font-arabic font-black text-dark-900 text-[10px] shadow-lg">
+                    <span className="absolute top-2 start-3 px-2 py-0.5 rounded-md bg-gold-500 font-arabic font-black text-dark-900 text-[9px] shadow-lg">
                       {TAG_LABEL[tag] || tag}
                     </span>
                   )}
                 </button>
 
-                <button
-                  onClick={() => toggleFavorite(card.key)}
-                  aria-label={t('stories_page.add_to_favorites')}
-                  className={`absolute top-2.5 left-2.5 w-11 h-11 rounded-full flex items-center justify-center transition-all ${
-                    isFav ? 'bg-red-500 text-white shadow-lg scale-110' : 'bg-dark-900/45 text-white/70 hover:bg-dark-900/70 hover:text-white'
-                  }`}
-                >
-                  <Heart className={`w-5 h-5 ${isFav ? 'fill-current' : ''}`} />
-                </button>
-
-                {/* Starts on THIS story, not an empty wizard. */}
-                <div className="p-3 sm:p-4 mt-auto space-y-1.5">
-                  {/* Touch devices only. The hover pill above never appears on
-                      a phone, and there is nowhere to float it on a 215px cover
-                      whose bottom 84px is already the title — so the free
-                      preview, the strongest reason a stranger has to trust this
-                      shop, gets a line of its own instead of fighting the art. */}
+                {/* One row where there were two stacked buttons and a heart
+                    floating over the artwork — together most of the height
+                    that made this grid feel like a slideshow. The heart came
+                    off the cover at the same time: at this size it was sitting
+                    on a child's face. The icon buttons are 36px of paint with
+                    a 44px hit area (the padded pseudo-element), so nothing got
+                    harder to tap. On a narrow card the CTA wraps to its own
+                    line by itself — no breakpoint needed. */}
+                <div className="p-2 sm:p-2.5 mt-auto flex flex-wrap items-center gap-2">
                   <button
-                    onClick={() => setSelected(card)}
-                    className="hidden [@media(hover:none)]:flex w-full items-center justify-center gap-1.5 min-h-[40px] rounded-2xl bg-white/5 border border-white/10 text-white/70 font-arabic font-bold text-[11px]"
+                    onClick={() => toggleFavorite(card.key)}
+                    aria-label={t('stories_page.add_to_favorites')}
+                    aria-pressed={isFav}
+                    className={`relative w-9 h-9 shrink-0 rounded-xl flex items-center justify-center transition-all before:absolute before:-inset-1 before:content-[''] ${
+                      isFav
+                        ? 'bg-red-500 text-white shadow-lg'
+                        : 'bg-white/5 border border-white/10 text-white/60 hover:text-white hover:border-white/25'
+                    }`}
                   >
-                    <Eye className="w-3.5 h-3.5 text-gold-500" />
-                    {t('stories_page.read_full')}
+                    <Heart className={`w-4 h-4 ${isFav ? 'fill-current' : ''}`} />
                   </button>
                   <button
-                    onClick={() => startWithTheme(card.themeId)}
-                    className="w-full inline-flex items-center justify-center gap-2 min-h-[44px] rounded-2xl bg-gradient-to-l from-gold-500 to-gold-600 text-dark-900 font-arabic font-black text-xs sm:text-sm hover:shadow-gold-glow transition-all"
+                    onClick={() => setSelected(card)}
+                    aria-label={t('stories_page.read_full')}
+                    title={t('stories_page.read_full')}
+                    className="relative w-9 h-9 shrink-0 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 text-gold-500 hover:border-gold-500/40 transition-all before:absolute before:-inset-1 before:content-['']"
                   >
-                    <BookOpen className="w-4 h-4" />
-                    {t('stories_page.start_creating')}
+                    <Eye className="w-4 h-4" />
+                  </button>
+                  {/* Starts on THIS story, not an empty wizard. */}
+                  <button
+                    onClick={() => startWithTheme(card.themeId)}
+                    className="grow basis-0 min-w-[7rem] inline-flex items-center justify-center gap-1.5 min-h-[38px] px-2 rounded-xl bg-gradient-to-l from-gold-500 to-gold-600 text-dark-900 font-arabic font-black text-[11px] sm:text-xs hover:shadow-gold-glow transition-all"
+                  >
+                    {/* No icon: the label needed those 20px. At 227px the
+                        button is the affordance — it is the only gold thing
+                        on the card. */}
+                    <span className="truncate">{t('stories_page.card_cta', 'اصنعها لطفلك')}</span>
                   </button>
                 </div>
               </article>
