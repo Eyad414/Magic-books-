@@ -66,8 +66,21 @@ export default function WhatYouGet() {
           <div className="flex items-end gap-2 mb-1">
             {pricesReady && printed?.price != null ? (
               <>
+                {/* The old price, when there is genuinely one. usePackages only
+                    passes originalPrice through when it is higher than the live
+                    price, so this cannot show a saving that is not real. */}
+                {printed.originalPrice ? (
+                  <span className="font-arabic text-white/35 text-xl line-through mb-1" dir="ltr">
+                    {printed.originalPrice} ₪
+                  </span>
+                ) : null}
                 <span className="font-arabic font-black text-gold-500 text-4xl leading-none" dir="ltr">{printed.price}</span>
                 <span className="font-arabic text-gold-500/80 text-lg mb-0.5">₪</span>
+                {printed.originalPrice ? (
+                  <span className="mb-1 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/35 font-arabic font-black text-emerald-300 text-[10px]">
+                    {t('home.wyg_saving', 'وفّر {{n}} ₪', { n: printed.originalPrice - printed.price })}
+                  </span>
+                ) : null}
               </>
             ) : (
               <span className="inline-block h-9 w-24 rounded-lg bg-gold-500/20 animate-pulse" />

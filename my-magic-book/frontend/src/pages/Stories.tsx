@@ -214,6 +214,9 @@ export default function Stories() {
             {pricesReady && printedPkg?.price != null ? (
               <span className="font-arabic text-white/70 text-xs">
                 {t('stories_page.price_from', 'الكتاب المطبوع')}{' '}
+                {printedPkg.originalPrice ? (
+                  <span className="text-white/35 line-through me-1" dir="ltr">{printedPkg.originalPrice} ₪</span>
+                ) : null}
                 <strong className="text-gold-500 font-black" dir="ltr">{printedPkg.price} ₪</strong>
               </span>
             ) : (

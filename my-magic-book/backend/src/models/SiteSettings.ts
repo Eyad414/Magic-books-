@@ -4,6 +4,16 @@ export interface IBookPackage {
   id: string;
   label: string;
   price: number;
+  /**
+   * The price before a sale, shown struck through beside the live one.
+   *
+   * The frontend has read this for a long time — usePackages only surfaces it
+   * when it is genuinely higher than `price`, so it cannot advertise a discount
+   * off a lower number — but it was never in this schema, so mongoose dropped
+   * it on every save and the "was" price could not be set at all. Setting a
+   * sale price in the dashboard looked like it worked and silently did nothing.
+   */
+  originalPrice?: number;
   emoji: string;
   desc: string;
   /** Admin toggle: when true the package is hidden from customers (Step 2 & 3). */
@@ -190,6 +200,8 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
         titles: { ar: String, en: String, he: String },
         descriptions: { ar: String, en: String, he: String },
         price: { type: Number, required: true },
+        // Absent unless there is a real sale on. See IBookPackage.originalPrice.
+        originalPrice: { type: Number, default: undefined },
         emoji: { type: String, required: true },
         desc: { type: String, required: true },
         hidden: { type: Boolean, default: false },

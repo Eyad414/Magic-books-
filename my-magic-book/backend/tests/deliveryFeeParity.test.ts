@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import fs from 'fs';
+import path from 'path';
 import { DELIVERY_FEE_ILS as SERVER_FEE, priceOrder } from '../src/services/Pricing';
 import { DEFAULT_COUPONS } from '../src/models/SiteSettings';
 import { DELIVERY_FEE_ILS as CLIENT_FEE } from '../../frontend/src/config/delivery';
@@ -92,5 +94,36 @@ describe('Pro bundle saving', () => {
     expect(src).toMatch(/if \(separately > pro\.price\)/);
     // ...and only when all three parts have a real price.
     expect(src).toMatch(/parts\.length === 3/);
+  });
+});
+
+/**
+ * A struck-through price must be a real one.
+ *
+ * `originalPrice` renders as a "was" price beside the live one, on the home
+ * page, the stories header, step 2 and checkout. It is the easiest thing on the
+ * site to turn into a lie — an inflated number nobody was ever charged — so
+ * usePackages only passes it through when it is genuinely higher than the price
+ * being charged, and drops it otherwise.
+ *
+ * It also has to exist in the schema to survive a save. It did not: the
+ * frontend read it for a long time while SiteSettings had no such field, so
+ * mongoose dropped it on every write and setting a sale price in the dashboard
+ * looked like it worked and silently did nothing.
+ */
+describe('sale prices', () => {
+  const model = fs.readFileSync(path.resolve(__dirname, '../src/models/SiteSettings.ts'), 'utf8');
+  const hook = fs.readFileSync(
+    path.resolve(__dirname, '../../frontend/src/hooks/usePackages.ts'),
+    'utf8',
+  );
+
+  it('the schema can actually store a was-price', () => {
+    expect(model, 'without this mongoose drops it and the sale never saves')
+      .toMatch(/originalPrice:\s*\{\s*type:\s*Number/);
+  });
+
+  it('a was-price is only shown when it beats the live price', () => {
+    expect(hook).toMatch(/was\s*&&\s*price\s*!==\s*null\s*&&\s*was\s*>\s*price/);
   });
 });
