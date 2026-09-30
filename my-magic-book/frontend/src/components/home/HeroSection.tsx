@@ -3,6 +3,7 @@ import { Sparkles, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useStoryProgress } from '../../context/StoryProgressContext';
 import { useSiteStats } from '../../hooks/useSiteStats';
+import HeroBookDeck from './HeroBookDeck';
 /** The shop's own number, the way it is written on the marketing posts. */
 const WHATSAPP = '972585502072';
 
@@ -122,18 +123,17 @@ export default function HeroSection() {
                     boxShadow: '0 0 60px rgba(108,63,197,0.5), 0 0 30px rgba(245,166,35,0.2)',
                   }}
                 >
-                  {/* A REAL cover, not a mockup. This was a purple rectangle
+                  {/* REAL covers, not a mockup. This was a purple rectangle
                       with grey bars standing in for text: someone arriving from
                       a reel full of real children's books saw an abstract shape
                       and left — every Instagram visitor so far opened this page
-                      and no other. Local webp so it paints immediately rather
-                      than waiting on the image proxy. */}
-                  <img
-                    src="/showcase/baha.webp"
-                    alt={t('hero.custom_story')}
-                    className="w-full h-full object-cover"
-                    fetchPriority="high"
-                  />
+                      and no other.
+                      It then spent months as ONE cover, the zoo book, for a
+                      shop with twenty-five stories. The deck keeps that file as
+                      its opening frame — local, so it still paints without
+                      waiting on the image proxy — and rotates the live covers in
+                      behind it. */}
+                  <HeroBookDeck />
                 </div>
                 {/* Floating sparkles */}
                 {[
