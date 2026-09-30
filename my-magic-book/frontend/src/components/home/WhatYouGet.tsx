@@ -22,13 +22,17 @@ export default function WhatYouGet() {
   const printed = packages.find((p) => p.id === 'color');
   const digital = packages.find((p) => p.id === 'ebook');
 
+  // The text lives in the locale files, not here. It used to be passed as an
+  // Arabic default beside a TEMPLATE-LITERAL key — t(`home.${k}`, d) — and a
+  // dynamic key cannot be checked against the bundles, so these six lines went
+  // on rendering in Arabic on the English home page with nothing to catch it.
   const items = [
-    { icon: Camera, k: 'wyg_photo', d: 'صورة طفلك تتحوّل إلى شخصية كرتونية في كل صفحة' },
-    { icon: BookOpen, k: 'wyg_pages', d: '١٣ لوحة مرسومة خصيصاً لقصته، مطبوعة بغلاف مقوّى' },
-    { icon: Sparkles, k: 'wyg_name', d: 'اسم طفلك داخل النص نفسه — هو البطل، لا القارئ فقط' },
-    { icon: Globe, k: 'wyg_langs', d: 'بالعربية أو الإنجليزية أو العبرية' },
-    { icon: Truck, k: 'wyg_delivery', d: 'يصل إلى باب بيتك خلال ٥ إلى ٨ أيام' },
-    { icon: Heart, k: 'wyg_preview', d: 'تعاين القصة والغلاف مجاناً قبل أن تدفع' },
+    { icon: Camera, k: 'wyg_photo' },
+    { icon: BookOpen, k: 'wyg_pages' },
+    { icon: Sparkles, k: 'wyg_name' },
+    { icon: Globe, k: 'wyg_langs' },
+    { icon: Truck, k: 'wyg_delivery' },
+    { icon: Heart, k: 'wyg_preview' },
   ];
 
   return (
@@ -45,7 +49,7 @@ export default function WhatYouGet() {
       <div className="grid gap-4 lg:grid-cols-5">
         {/* What is in the parcel */}
         <ul className="lg:col-span-3 grid sm:grid-cols-2 gap-2.5">
-          {items.map(({ icon: Icon, k, d }) => (
+          {items.map(({ icon: Icon, k }) => (
             <li
               key={k}
               className="flex items-start gap-3 p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-gold-500/30 transition-colors"
@@ -53,7 +57,7 @@ export default function WhatYouGet() {
               <span className="shrink-0 w-9 h-9 rounded-xl bg-gold-500/15 border border-gold-500/25 flex items-center justify-center">
                 <Icon className="w-4 h-4 text-gold-500" />
               </span>
-              <span className="font-arabic text-white/75 text-sm leading-relaxed">{t(`home.${k}`, d)}</span>
+              <span className="font-arabic text-white/75 text-sm leading-relaxed">{t(`home.${k}`)}</span>
             </li>
           ))}
         </ul>

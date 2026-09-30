@@ -5,16 +5,18 @@
 
 import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 
 export default function RequireAuth({ children }: { children: ReactNode }) {
+  const { t } = useTranslation();
   const { user, isLoading } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-14 h-14 rounded-full border-4 border-gold-500/30 border-t-gold-500 animate-spin" aria-label="جارٍ التحقق…" />
+        <div className="w-14 h-14 rounded-full border-4 border-gold-500/30 border-t-gold-500 animate-spin" aria-label={t('common.checking')} />
       </div>
     );
   }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { User } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { withWidth } from '../../api/mediaUrl';
 
 /**
@@ -18,6 +19,7 @@ import { withWidth } from '../../api/mediaUrl';
  * object path — the proxy refuses a child photo without a signature.
  */
 export function ChildAvatar({ photoUrl, name, size = 44 }: { photoUrl?: string; name?: string; size?: number }) {
+  const { t } = useTranslation();
   const [failed, setFailed] = useState(false);
   const src = withWidth(photoUrl || '', 320);
 
@@ -28,7 +30,7 @@ export function ChildAvatar({ photoUrl, name, size = 44 }: { photoUrl?: string; 
       <span
         className="inline-flex items-center justify-center rounded-full bg-white/10 border border-white/15 shrink-0"
         style={{ width: size, height: size }}
-        title={failed ? 'تعذّر تحميل صورة الطفل' : 'لا توجد صورة للطفل في هذا الطلب'}
+        title={failed ? t('admin.child_photo_failed') : t('admin.child_photo_none')}
       >
         <User className="w-4 h-4 text-white/35" />
       </span>
@@ -41,7 +43,7 @@ export function ChildAvatar({ photoUrl, name, size = 44 }: { photoUrl?: string; 
       target="_blank"
       rel="noreferrer"
       className="shrink-0 rounded-full ring-1 ring-white/15 hover:ring-gold-500/60 transition-all"
-      title="اضغط لفتح الصورة بالحجم الكامل"
+      title={t('admin.child_photo_open')}
     >
       <img
         src={src}

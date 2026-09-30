@@ -24,7 +24,7 @@ export default function FrontCover({ childName, storyTitle, coverImage, childPho
   const heroImage = childPhoto || coverImage || fallbackPhoto;
 
   return (
-    <section className="book-page book-page--cover" aria-label="الغلاف الأمامي">
+    <section className="book-page book-page--cover" aria-label={t('coloring.front_cover')}>
 
       {/* ── Full-bleed hero image ── */}
       <img

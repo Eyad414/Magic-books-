@@ -1055,7 +1055,7 @@ export default function AdminDashboard() {
 
   const handleGeneratePhotoreal = async (themeId: string) => {
     setGeneratingThemeId(themeId);
-    const toastId = toast.loading('📸 توليد قوالب واقعية + تبديل الوجه... (قد يستغرق عدة دقائق)');
+    const toastId = toast.loading(t('admin.gen_photoreal_toast'));
     try {
       const res = await adminApi.generateThemePhotoreal(themeId);
       if (res.success) {
@@ -1115,7 +1115,7 @@ export default function AdminDashboard() {
 
   const handleGenerateTheme = async (themeId: string, force = false) => {
     setGeneratingThemeId(themeId);
-    const toastId = toast.loading('🎨 جاري توليد الصور بالذكاء الاصطناعي... (قد يستغرق دقيقتين)');
+    const toastId = toast.loading(t('admin.gen_images_toast'));
     try {
       const res = await adminApi.generateThemeIllustrations(themeId, { force });
       if (res.success) {
@@ -5639,14 +5639,14 @@ export default function AdminDashboard() {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <h2 className="font-arabic font-black text-white text-2xl">
-                تعديل قصة: {settings.themes[editingStory].label} {settings.themes[editingStory].emoji}
+                {t('admin.ed_title')}: {settings.themes[editingStory].label} {settings.themes[editingStory].emoji}
               </h2>
-              <span className="text-white/40 text-sm font-arabic">{draftPages.length} صفحات</span>
+              <span className="text-white/40 text-sm font-arabic">{t('admin.ed_pages_count', { n: draftPages.length })}</span>
             </div>
 
             <p className="font-arabic text-white/50 text-sm mb-6 bg-gold-500/10 border border-gold-500/20 rounded-xl px-4 py-3">
-              💡 استخدم <code className="text-gold-400 font-mono">{'{{name}}'}</code> في النص وسيُستبدل باسم الطفل تلقائياً.
-              {draftPages.length === 0 && <span className="block mt-1 text-white/40">إذا حفظت بصفحات فارغة، سيعرض الكتاب القصة الافتراضية الأصلية (الـ 32 صفحة).</span>}
+              {t('admin.ed_hint_before')} <code className="text-gold-400 font-mono">{'{{name}}'}</code> {t('admin.ed_hint_after')}
+              {draftPages.length === 0 && <span className="block mt-1 text-white/40">{t('admin.ed_hint_empty')}</span>}
             </p>
 
             {/* Pages List */}
@@ -5654,19 +5654,19 @@ export default function AdminDashboard() {
               {draftPages.map((page, pIndex) => (
                 <div key={pIndex} className="p-5 bg-white/5 rounded-2xl border border-white/10">
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-arabic font-bold text-gold-500">صفحة {pIndex + 1}</h4>
+                    <h4 className="font-arabic font-bold text-gold-500">{t('admin.ed_page_n', { n: pIndex + 1 })}</h4>
                     <button 
                       onClick={() => {
                         setDraftPages(prev => prev.filter((_, i) => i !== pIndex));
                       }}
                       className="text-red-400 text-xs hover:text-red-300 transition-colors px-2 py-1 rounded hover:bg-red-500/10"
                     >
-                      🗑 حذف الصفحة
+                      {t('admin.ed_delete_page')}
                     </button>
                   </div>
 
                   {/* Text */}
-                  <label className="block font-arabic text-white/60 text-xs mb-1">نص القصة</label>
+                  <label className="block font-arabic text-white/60 text-xs mb-1">{t('admin.ed_text_label')}</label>
                   <textarea
                     className="magic-input w-full min-h-[110px] mb-3 font-arabic leading-relaxed"
                     value={page.text}
@@ -5675,11 +5675,11 @@ export default function AdminDashboard() {
                       updated[pIndex] = { ...updated[pIndex], text: e.target.value };
                       setDraftPages(updated);
                     }}
-                    placeholder={`نص الصفحة ${pIndex + 1} — استخدم {{name}} لاسم الطفل`}
+                    placeholder={t('admin.ed_text_ph', { n: pIndex + 1, token: '{{name}}' })}
                   />
 
                   {/* Image URL */}
-                  <label className="block font-arabic text-white/60 text-xs mb-1">رابط الصورة</label>
+                  <label className="block font-arabic text-white/60 text-xs mb-1">{t('admin.ed_image_label')}</label>
                   <input
                     type="text"
                     className="magic-input w-full font-mono text-sm"
@@ -5695,7 +5695,7 @@ export default function AdminDashboard() {
                   {page.imageSrc && (
                     <img
                       src={page.imageSrc}
-                      alt={`صفحة ${pIndex + 1}`}
+                      alt={t('admin.ed_page_n', { n: pIndex + 1 })}
                       className="mt-3 w-full max-h-48 object-cover rounded-xl opacity-80"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
@@ -5705,7 +5705,7 @@ export default function AdminDashboard() {
 
               {draftPages.length === 0 && (
                 <div className="text-center py-12 text-white/30 font-arabic">
-                  لا توجد صفحات بعد. اضغط "إضافة صفحة" لتبدأ أو "استعادة القصة الافتراضية" بالأسفل.
+                  {t('admin.ed_empty')}
                 </div>
               )}
             </div>
@@ -5714,24 +5714,24 @@ export default function AdminDashboard() {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-4 border-t border-white/5">
               <button
                 onClick={() => {
-                  if (window.confirm("هل أنت متأكد من مسح وتفريغ كافة الصفحات؟ لن يتم مسح ملفات الكود، بل ستعود القصة للوضع الافتراضي عند الحفظ.")) {
+                  if (window.confirm(t('admin.ed_clear_confirm'))) {
                     setDraftPages([]);
                   }
                 }}
                 className="text-red-400 hover:text-red-300 text-sm font-arabic transition-colors flex items-center gap-1"
               >
-                🗑 مسح كافة الصفحات وتفريغها
+                {t('admin.ed_clear')}
               </button>
               <button
                 onClick={() => {
-                  if (window.confirm("هل تريد استيراد جميع الصفحات الافتراضية للقصة الأصلية من الكود؟ سيؤدي ذلك لاستبدال تعديلاتك الحالية.")) {
+                  if (window.confirm(t('admin.ed_import_confirm'))) {
                     const defaults = loadDefaultPages(settings.themes[editingStory].id);
                     setDraftPages(defaults);
                   }
                 }}
                 className="text-gold-500 hover:text-gold-400 text-sm font-arabic transition-colors flex items-center gap-1"
               >
-                🔄 استيراد صفحات القصة الافتراضية (32 صفحة)
+                {t('admin.ed_import')}
               </button>
             </div>
 
@@ -5743,13 +5743,13 @@ export default function AdminDashboard() {
                 }}
                 className="flex-1 py-3 rounded-xl bg-white/5 text-white font-arabic hover:bg-white/10 transition-colors border border-white/10"
               >
-                + إضافة صفحة جديدة
+                {t('admin.ed_add')}
               </button>
               <button
                 onClick={() => setEditingStory(null)}
                 className="px-6 py-3 rounded-xl bg-white/5 text-white/50 font-arabic hover:bg-white/10 transition-colors"
               >
-                إلغاء
+                {t('common.cancel')}
               </button>
               <button
                 onClick={() => {
@@ -5764,7 +5764,7 @@ export default function AdminDashboard() {
                 }}
                 className="flex-1 py-3 rounded-xl bg-gold-500 text-dark-900 font-bold font-arabic hover:bg-gold-400 transition-colors"
               >
-                💾 حفظ الكل
+                {t('admin.ed_save')}
               </button>
             </div>
           </div>

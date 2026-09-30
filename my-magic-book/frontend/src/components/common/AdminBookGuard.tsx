@@ -7,6 +7,7 @@
 
 import type { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 
 const ADMIN_EMAIL = 'eyadat720@gmail.com';
@@ -16,6 +17,7 @@ interface AdminBookGuardProps {
 }
 
 export default function AdminBookGuard({ children }: AdminBookGuardProps) {
+  const { t } = useTranslation();
   const { user, isLoading } = useAuth();
 
   // While auth is being restored from localStorage, show nothing (avoid flash)
@@ -25,9 +27,9 @@ export default function AdminBookGuard({ children }: AdminBookGuardProps) {
         <div className="flex flex-col items-center gap-4">
           <div
             className="w-14 h-14 rounded-full border-4 border-gold-500/30 border-t-gold-500 animate-spin"
-            aria-label="جارٍ التحقق من الصلاحيات..."
+            aria-label={t('admin.checking_permissions')}
           />
-          <p className="font-arabic text-white/50 text-sm">جارٍ التحقق…</p>
+          <p className="font-arabic text-white/50 text-sm">{t('common.checking')}</p>
         </div>
       </div>
     );

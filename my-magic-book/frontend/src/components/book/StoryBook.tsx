@@ -105,7 +105,7 @@ export default function StoryBook({
   // Generate (or refresh) the Nano-Banana preview illustrations for this theme.
   const handleGenerate = async (force = false) => {
     setIsGenerating(true);
-    const toastId = toast.loading('🎨 جاري توليد الصور بالذكاء الاصطناعي... (قد يستغرق دقيقتين)');
+    const toastId = toast.loading(t('admin.gen_images_toast'));
     try {
       const res = await adminApi.generateThemeIllustrations(storyId, { force, childName });
       if (res.success) {
@@ -392,7 +392,7 @@ export default function StoryBook({
                 : `🎨 ${t('storybook.generate_ai', 'توليد صور الذكاء الاصطناعي')}`}
             </button>
             {generatedImages.length > 0 && !isGenerating && (
-              <button onClick={() => handleGenerate(true)} className="sb-regen-btn" title="إعادة التوليد">
+              <button onClick={() => handleGenerate(true)} className="sb-regen-btn" title={t('storybook.regenerate')}>
                 ♻️ {t('storybook.regenerate', 'إعادة التوليد')}
               </button>
             )}
@@ -403,7 +403,7 @@ export default function StoryBook({
             onClick={handleDownload}
             className="sb-print-btn"
             disabled={isDownloading}
-            aria-label="تحميل ملف الطباعة PDF"
+            aria-label={t('storybook.download_pdf')}
           >
             {isDownloading
               ? `⏳ ${t('storybook.preparing_short', 'جاري التجهيز...')}`
@@ -437,7 +437,7 @@ export default function StoryBook({
             className="sb-regen-btn"
             style={{ width: '100%' }}
             disabled={isSubmitting}
-            aria-label="إرسال إلى BookPod للطباعة"
+            aria-label={t('storybook.send_bookpod')}
           >
             📤 {t('storybook.send_bookpod', 'إرسال إلى BookPod للطباعة')}
           </button>

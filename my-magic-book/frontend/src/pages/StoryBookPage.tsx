@@ -106,7 +106,7 @@ export default function StoryBookPage() {
             if (found.generatedPortrait) setGeneratedPortrait(found.generatedPortrait);
             if (found.generatedCover) setGeneratedCover(found.generatedCover);
           } else {
-            toast.error('لم يتم العثور على القصة في قاعدة البيانات');
+            toast.error(t('book.not_found'));
           }
         }
       }
@@ -125,7 +125,7 @@ export default function StoryBookPage() {
       }
     } catch (err) {
       console.error(err);
-      toast.error('فشل في جلب بيانات القصة');
+      toast.error(t('book.load_failed'));
     } finally {
       setIsLoading(false);
     }
@@ -148,7 +148,7 @@ export default function StoryBookPage() {
     return customPages;
   }, [storyData, customPages]);
 
-  if (isLoading) return <div className="min-h-screen bg-[#03060e] flex items-center justify-center text-gold-500 font-arabic">جاري تحميل القصة...</div>;
+  if (isLoading) return <div className="min-h-screen bg-[#03060e] flex items-center justify-center text-gold-500 font-arabic">{t('book.loading')}</div>;
 
   // Print-only order: the customer bought a physical book, not web access. The
   // backend already withholds the pages, so this explains why rather than

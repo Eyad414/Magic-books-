@@ -15,7 +15,7 @@ import ColoringBookView from '../components/book/ColoringBookView';
 export default function ColoringBookPage() {
   const { themeId } = useParams<{ themeId: string }>();
   const [params] = useSearchParams();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   // Show the child's name in the site's language (Arabic UI → بهاء, English → Baha).
   const rawName = params.get('name') || (i18n.language?.startsWith('ar') ? 'طفلك' : 'your child');
   const childName = localizeName(rawName, i18n.language);
@@ -42,7 +42,7 @@ export default function ColoringBookPage() {
   }, [themeId]);
 
   if (loading) {
-    return <div className="min-h-screen bg-[#03060e] flex items-center justify-center text-gold-500 font-arabic">جاري التحميل...</div>;
+    return <div className="min-h-screen bg-[#03060e] flex items-center justify-center text-gold-500 font-arabic">{t('common.loading')}</div>;
   }
 
   return <ColoringBookView childName={childName} place={place} cover={cover} backCover={backCover} pages={pages} />;
