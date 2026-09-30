@@ -71,6 +71,22 @@ export async function objectExists(objectPath: string): Promise<boolean> {
   }
 }
 
+/**
+ * When an object was last written, or null if it is not there / unreadable.
+ *
+ * Used to tell a cached derivative apart from a stale one: the thumbnailer
+ * builds a card image once and reuses it forever, so overwriting the source
+ * silently leaves the old picture on every card that shows it.
+ */
+export async function objectUpdatedAt(objectPath: string): Promise<Date | null> {
+  try {
+    const [meta] = await bucket.file(objectPath).getMetadata();
+    return meta.updated ? new Date(meta.updated) : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function uploadBuffer(
   buffer: Buffer,
   objectPath: string,

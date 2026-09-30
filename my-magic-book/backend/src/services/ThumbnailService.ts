@@ -1,5 +1,5 @@
 import sharp from 'sharp';
-import { getFileBuffer, uploadBuffer, objectExists } from './StorageService';
+import { getFileBuffer, uploadBuffer, objectUpdatedAt } from './StorageService';
 
 /**
  * Card-sized copies of the generated artwork.
@@ -14,6 +14,13 @@ import { getFileBuffer, uploadBuffer, objectExists } from './StorageService';
  * next to the original; every later request is a redirect to a file that already
  * exists. New books heal themselves the first time someone sees their card, so
  * nothing has to be remembered when artwork is added.
+ *
+ * …or REPLACED. That case was missed: the cache keyed on the derivative simply
+ * existing, so re-shooting a book left the old picture on its card forever
+ * while the full-size artwork underneath was correct. Six stories were re-drawn
+ * with a boy and the wizard kept showing the girls, because the covers a
+ * customer browses are the 320px derivatives and those were a day older than
+ * the art. A derivative is now only reused while it is NEWER than its source.
  */
 
 sharp.cache(false);
@@ -73,7 +80,13 @@ async function build(objectPath: string, width: ThumbWidth, dest: string): Promi
 export async function ensureThumb(objectPath: string, width: ThumbWidth): Promise<string | null> {
   const dest = thumbPath(objectPath, width);
   try {
-    if (await objectExists(dest)) return dest;
+    // Both in one round trip: a cached derivative is only good while it is at
+    // least as new as the artwork it was made from.
+    const [cached, source] = await Promise.all([objectUpdatedAt(dest), objectUpdatedAt(objectPath)]);
+    if (cached && (!source || cached >= source)) return dest;
+    if (cached && source && cached < source) {
+      console.log(`[Thumb] ${objectPath} @${width} — source is newer, rebuilding`);
+    }
   } catch {
     return null;
   }
