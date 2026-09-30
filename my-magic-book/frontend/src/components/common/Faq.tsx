@@ -17,7 +17,7 @@ import { ChevronDown } from 'lucide-react';
  * promise the shop has not made.
  */
 
-export default function HomeFaq() {
+export default function Faq() {
   const { t } = useTranslation();
   const [open, setOpen] = useState<number | null>(0);
 
@@ -61,6 +61,13 @@ export default function HomeFaq() {
       href: '/policy#refund',
       hrefLabel: t('home.faq_refund_link', 'اقرأ سياسة الاسترداد كاملة'),
     },
+    // These two lived on /about alone, and /about then linked here for the
+    // rest — which sent a reader off the page they were reading to find an
+    // answer. One list, shown in both places, is simpler than two partial ones
+    // and a link between them. The copy is the existing about.faqs entries, so
+    // all three languages already have it.
+    { q: t('about.faqs.5_q'), a: t('about.faqs.5_a') },
+    { q: t('about.faqs.6_q'), a: t('about.faqs.6_a') },
   ];
 
   return (

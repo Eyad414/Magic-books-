@@ -1,6 +1,7 @@
 import { Star, BookOpen, Heart, Award, Globe, Zap, Languages } from 'lucide-react';
 import { usePageMeta } from '../hooks/usePageMeta';
 import { useTranslation } from 'react-i18next';
+import Faq from '../components/common/Faq';
 import { Link } from 'react-router-dom';
 import { useSiteStats } from '../hooks/useSiteStats';
 
@@ -16,52 +17,6 @@ function ScrollIndicator() {
 }
 
 // FAQ section
-function FAQ() {
-  const { t } = useTranslation();
-  // Six questions used to sit here, four of which the home page now answers:
-  // how it works, how long it takes, what ages, and seeing it before buying.
-  // Asking a visitor to read the same answers twice is not thoroughness, it is
-  // just a longer page — so this keeps the two that belong to a page about the
-  // shop rather than the purchase, and points at the rest.
-  const faqs = [
-    { q: t('about.faqs.5_q'), a: t('about.faqs.5_a') },
-    { q: t('about.faqs.6_q'), a: t('about.faqs.6_a') },
-  ];
-
-  return (
-    <section className="py-20 px-4 sm:px-6 lg:px-8 mb-20 bg-dark-700/30 rounded-3xl mx-auto max-w-5xl">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="font-arabic font-black text-white text-3xl">
-            {t('about.faq_title_1')} <span className="shimmer-text">{t('about.faq_title_2')}</span>
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {faqs.map((faq, i) => (
-            <div key={i} className="glass-card p-6">
-              <h3 className="font-arabic font-bold text-white text-lg mb-3 flex items-start gap-2">
-                <span className="text-gold-500">❓</span> {faq.q}
-              </h3>
-              <p className="font-arabic text-white/70 text-sm leading-relaxed">{faq.a}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* The questions that moved to the home page are still answered, just
-            not twice. */}
-        <p className="text-center mt-6">
-          <Link
-            to="/#faq"
-            className="inline-flex items-center gap-1.5 font-arabic text-gold-500 text-sm font-bold hover:underline"
-          >
-            {t('about.faq_more', 'باقي الأسئلة — الأسعار، الصور، الدفع والتوصيل')} ←
-          </Link>
-        </p>
-      </div>
-    </section>
-  );
-}
-
 export default function AboutUs() {
   const { t } = useTranslation();
   usePageMeta(t('meta.about_title'), t('meta.about_desc'));
@@ -280,7 +235,7 @@ export default function AboutUs() {
 
       <ScrollIndicator />
 
-      <FAQ />
+      <Faq />
 
       {/* The «هل أنت مستعد؟» card sat here. Removed on the owner's request —
           the header already carries «ابدأ قصتك» on every page. */}

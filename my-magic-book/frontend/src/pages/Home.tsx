@@ -5,7 +5,7 @@ import HeroSection from '../components/home/HeroSection';
 import WorkFlow from '../components/home/WorkFlow';
 import BestSellers from '../components/home/BestSellers';
 import WhatYouGet from '../components/home/WhatYouGet';
-import HomeFaq from '../components/home/HomeFaq';
+import Faq from '../components/common/Faq';
 
 
 function ScrollIndicator() {
@@ -38,7 +38,7 @@ export default function Home() {
       <ScrollIndicator />
       
       <BestSellers />
-      <HomeFaq />
+      <Faq />
       <ScrollIndicator />
       {/* No mb here: the footer already carries mt-20 for every page, and this
           block's own bottom margin stacked on top of it. */}
