@@ -5,32 +5,46 @@ import { toCardUrl } from '../../api/mediaUrl';
 import { getThemeLabel } from '../../utils/themeLabel';
 
 /**
- * The book in the hero, as a deck instead of a single cover.
+ * The book half of the hero's "one photo → a printed book".
  *
- * It was one fixed image — the zoo book — standing in for a shop with
- * twenty-five stories. A visitor arriving from a reel saw one cover and had no
- * way to know there was a Jerusalem story, a dabke story, dinosaurs or space
- * behind it, and the thing they had come to judge was breadth.
+ * Every cover here was drawn from the one photograph shown beside it — the six
+ * stories re-shot from that child's face. That is the whole claim of the shop,
+ * and it is the one thing the page never actually demonstrated: it showed a
+ * cover, and a stranger had to take on faith that the child on it could be
+ * theirs. Six different books from one snapshot is the proof.
  *
- * The first frame stays the local webp. That was a deliberate choice and it
- * still is: it is the page's largest image, it paints without waiting on the
- * media proxy, and swapping it for a fetched one would trade the first
- * impression for the fourth. The live covers arrive afterwards and join the
- * rotation behind it.
+ * So this list is FIXED, not "whatever is ready". A cover drawn from some other
+ * child would quietly turn the demonstration into a lie, which is exactly what
+ * would happen if it pulled the newest themes instead.
+ *
+ * The first frame is a local webp: it is the page's largest image, it paints
+ * without waiting on the media proxy, and swapping it for a fetched one would
+ * trade the first impression for the fourth. The rest arrive afterwards.
  */
 
-/** The opening frame: local, instant, and the same file the page always used. */
-const FIRST_SRC = '/showcase/baha.webp';
-/** …and it is the zoo book, so it carries its name like every other slide. */
-const FIRST_THEME = 'zoo_adventure';
+/** The opening frame: local, instant — a copy of theme_world_adventure's cover. */
+const FIRST_SRC = '/showcase/hero-book.webp';
+const FIRST_THEME = 'world_adventure';
+
+/**
+ * The stories drawn from the photograph beside them, in the order they show.
+ * Adding a theme here without re-shooting it from that same photo breaks the
+ * only thing this section is for.
+ */
+const FROM_THIS_PHOTO = [
+  'world_adventure',
+  'little_vet',
+  'dabke',
+  'jerusalem_tale',
+  'jaffa_day',
+  'oud_lesson',
+] as const;
 
 interface Slide {
   src: string;
   label: string;
 }
 
-/** Enough to read as a catalogue, few enough to come back round. */
-const MAX_SLIDES = 7;
 const HOLD_MS = 3800;
 
 export default function HeroBookDeck() {
@@ -51,23 +65,21 @@ export default function HeroBookDeck() {
       .getSettings()
       .then((res) => {
         if (!alive) return;
-        const themes = (res?.settings?.themes ?? []).filter(
-          (th: any) => !th.isColoring && th.generatedCover,
+        const byId = new Map<string, any>(
+          (res?.settings?.themes ?? []).map((th: any) => [th.id, th]),
         );
-        // Spread across the catalogue rather than taking the first seven, which
-        // are all school-and-space: the point of the deck is the range.
-        const step = Math.max(1, Math.floor(themes.length / (MAX_SLIDES - 1)));
-        const picked: Slide[] = [];
-        for (let i = 0; i < themes.length && picked.length < MAX_SLIDES - 1; i += step) {
-          const th = themes[i];
-          picked.push({
+        // In the fixed order above, and only the ones still published: a story
+        // the owner hides must leave the hero with it.
+        const rest: Slide[] = [];
+        for (const id of FROM_THIS_PHOTO) {
+          if (id === FIRST_THEME) continue;
+          const th = byId.get(id);
+          if (!th?.generatedCover) continue;
+          rest.push({
             src: toCardUrl(th.generatedCover, 480),
             label: getThemeLabel(th, t as any, i18n.language),
           });
         }
-        // The opening frame is the zoo book; drop the duplicate the API also
-        // returns for it so it does not appear twice in one rotation.
-        const rest = picked.filter((p) => p.label !== first.label);
         setSlides([first, ...rest]);
       })
       .catch(() => {/* keep the local cover */});
