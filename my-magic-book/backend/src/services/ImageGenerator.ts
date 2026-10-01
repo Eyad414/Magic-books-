@@ -21,6 +21,19 @@ export function imagesGeneratedSoFar(): number {
   return _imagesGenerated;
 }
 
+/**
+ * Milliseconds this process has spent asleep waiting out a quota.
+ *
+ * Worth counting separately from generation: when AI Studio's prepaid credit
+ * ran out, every image fell through to Vertex's much tighter per-minute limit
+ * and three quarters of the wall time became waiting. That is a billing
+ * problem, and it was only visible by diffing file timestamps in the bucket.
+ */
+let _msWaitedOnQuota = 0;
+export function msWaitedOnQuota(): number {
+  return _msWaitedOnQuota;
+}
+
 const storage = new Storage({ projectId: process.env.GCP_PROJECT_ID });
 
 // Runs the image call resiliently across both billing backends (same model id
@@ -29,6 +42,56 @@ const storage = new Storage({ projectId: process.env.GCP_PROJECT_ID });
 // other. Within a backend, a TRANSIENT rate-limit (Vertex's low per-minute image
 // quota) is waited out and retried, since generation runs post-payment and a
 // slower, reliable pace is fine.
+/**
+ * How long the API itself said to wait, in ms, or null if it did not say.
+ *
+ * A 429 from Vertex carries google.rpc.RetryInfo telling you exactly when the
+ * quota window reopens. We were ignoring it and guessing 20s, then 40s, then
+ * 60s — and the guess is why a thirteen-page book took twelve minutes with
+ * three quarters of that spent asleep: the real gaps came out at 39s and 81s,
+ * which is the ladder, not the quota.
+ *
+ * The delay arrives in more than one shape depending on whether the SDK hands
+ * back a parsed error or the raw JSON body, so all of them are tried. Clamped
+ * because this value decides how long a paid build blocks: a malformed or
+ * hostile "retryDelay": "9999s" must not park an order for three hours.
+ */
+export function serverRetryDelayMs(err: unknown): number | null {
+  const e = err as any;
+  const seen: unknown[] = [];
+  const details: any[] = [];
+  for (const d of [e?.details, e?.error?.details, e?.response?.data?.error?.details]) {
+    if (Array.isArray(d)) details.push(...d);
+  }
+  // The SDK often stringifies the whole body into the message.
+  const msg = String(e?.message ?? e ?? '');
+  const brace = msg.indexOf('{');
+  if (brace !== -1) {
+    try {
+      const body = JSON.parse(msg.slice(brace));
+      const d = body?.error?.details ?? body?.details;
+      if (Array.isArray(d)) details.push(...d);
+    } catch { /* not JSON — fall through to the regex below */ }
+  }
+
+  for (const d of details) {
+    seen.push(d?.retryDelay);
+    if (typeof d?.retryDelay === 'string') {
+      const n = parseFloat(d.retryDelay);
+      if (Number.isFinite(n) && n > 0) return clampDelay(n * 1000);
+    }
+  }
+  // Last resort: the duration as it appears in a raw body we could not parse.
+  const m = msg.match(/"retryDelay"\s*:\s*"(\d+(?:\.\d+)?)s"/);
+  if (m) return clampDelay(parseFloat(m[1]) * 1000);
+  return null;
+}
+
+/** Never shorter than a second, never long enough to strand a paid build. */
+function clampDelay(ms: number): number {
+  return Math.min(Math.max(ms, 1000), 90_000);
+}
+
 async function generateContentRetrying(request: any): Promise<any> {
   const order = backendOrder();
   if (order.length === 0) throw new Error('No GenAI backend configured for image generation.');
@@ -54,8 +117,16 @@ async function generateContentRetrying(request: any): Promise<any> {
         // Transient rate-limit → wait out the window and retry the SAME backend.
         const rateLimited = code === 429 || /RESOURCE_EXHAUSTED|exhausted|quota|rate limit/i.test(msg);
         if (rateLimited && i < WAITS_MS.length) {
-          console.warn(`[ImageGenerator] ${b} rate-limited; waiting ${WAITS_MS[i] / 1000}s then retry ${i + 1}/${WAITS_MS.length}`);
-          await new Promise((r) => setTimeout(r, WAITS_MS[i]));
+          // Prefer what the API asked for; the ladder is only for when it is silent.
+          const asked = serverRetryDelayMs(err);
+          const wait = asked ?? WAITS_MS[i];
+          _msWaitedOnQuota += wait;
+          console.warn(
+            `[ImageGenerator] ${b} rate-limited; waiting ${(wait / 1000).toFixed(0)}s ` +
+            `(${asked === null ? 'no retryDelay given — using the fallback ladder' : 'asked for by the API'}) ` +
+            `then retry ${i + 1}/${WAITS_MS.length}`
+          );
+          await new Promise((r) => setTimeout(r, wait));
           continue;
         }
         // Exhausted this backend — try the next one if there is one.

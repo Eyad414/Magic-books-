@@ -10,7 +10,7 @@ import CustomerMessage from '../models/CustomerMessage';
 import { sendCustomerMessageEmail } from '../utils/mailer';
 import { pollPaymentsOnce } from '../services/PaymentPoller';
 import { arabicStoryPages, buildBookForOrder, reRenderPrintFilesForOrder, submitOrdersToBookPodTogether, submitStoriesToBookPodTogether, booksPrintReady, prepareLibraryPrintFiles, submitOrderToBookPod, reRenderColoringForOrder, submitColoringForOrder, buildPreviewPrintFiles, submitPreviewToBookPod } from '../services/BookBuilder';
-import { generateIllustration, COST_PER_IMAGE_USD } from '../services/ImageGenerator';
+import { msWaitedOnQuota, generateIllustration, COST_PER_IMAGE_USD } from '../services/ImageGenerator';
 import { buildIllustrationPrompt, buildPhotorealPrompt, buildCoverPrompt } from '../services/promptBuilder';
 import { swapFace } from '../services/FaceSwapService';
 import { buildScenePrompt, buildColoringCoverPrompt, buildColoringBackCoverPrompt, COLORING_PAGES, SCENE_TEMPLATES } from '../services/sceneTemplates';
@@ -1569,6 +1569,13 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
       (theme.generatedCover ? 1 : 0);
     const estimatedCostUsd = Number((imageCount * COST_PER_IMAGE_USD).toFixed(2));
 
+    // How much of that was spent asleep waiting out a quota. When AI Studio's
+    // prepaid credit runs out, every image falls through to Vertex's much
+    // tighter per-minute limit and most of the wall time becomes waiting — a
+    // billing problem that was previously only visible by comparing file
+    // timestamps in the bucket after the fact.
+    const waitedOnQuotaS = Math.round(msWaitedOnQuota() / 1000);
+
     res.json({
       success: true,
       cached: false,
@@ -1577,6 +1584,7 @@ export const generatePreviewIllustrations = async (req: Request, res: Response):
       generatedCover: theme.generatedCover,
       imageCount,
       estimatedCostUsd,
+      waitedOnQuotaS,
     });
   } catch (err: any) {
     console.error('generatePreviewIllustrations failed:', err);
