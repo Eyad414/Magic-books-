@@ -80,7 +80,11 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   { key: 'baha-space',      themeId: 'space_real',      name: 'Baha',  emoji: '🌌' },
   { key: 'baha-zoo',        themeId: 'zoo_adventure',   name: 'Baha',  emoji: '🦁' },
   { key: 'baha-magicbook',  themeId: 'magic_book',      name: 'Baha',  storyId: 'theme_magic_book', emoji: '📖' },
-  { key: 'lora-zoo',        themeId: 'zoo_adventure',   name: 'Lora',  storyId: '6a3bbaf645b418d21337de09', emoji: '🦁' },
+  // Lora's own zoo book — her real photograph, and the one card here still
+  // pointing at a storyId rather than a theme, so it was NOT re-shot with the
+  // others. It was gated by her name alone; the flag is what survives a
+  // rename, which is the whole reason the flag exists.
+  { key: 'lora-zoo',        themeId: 'zoo_adventure',   name: 'Lora',  storyId: '6a3bbaf645b418d21337de09', private: true, emoji: '🦁' },
   { key: 'baha-toycity',    themeId: 'toy_city',        name: 'Baha',  emoji: '🤖' },
   { key: 'adam-coloring',   themeId: 'zoo_coloring',    name: 'Adam',  emoji: '🖍️' },
   // Owner says this one is Lora's, despite the displayed name — off the public
@@ -114,14 +118,22 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   { key: 'baha-ramadan',    themeId: 'ramadan_first',      name: 'Baha',  emoji: '🌙' },
   { key: 'baha-eid',        themeId: 'eid_first',          name: 'Baha',  emoji: '🎁' },
   { key: 'baha-bigbrother', themeId: 'big_brother',        name: 'Baha',  emoji: '👶' },
-  // The girl books, written after a customer said every story on the site was
-  // for boys. All four were drawn from Lora's own photograph, so all four are
-  // `private: true` — the name alone would already gate them through
-  // PRIVATE_DEMO_CHILDREN, but the flag is what survives a rename, and it is
-  // her face on the cover either way. They sit in the dashboard waiting for a
-  // tick, and reach /stories only when her family has agreed.
-  { key: 'lora-dabke',      themeId: 'dabke',              name: 'Lora',  private: true, emoji: '🥁' },
-  { key: 'lora-jaffa',      themeId: 'jaffa_day',          name: 'Lora',  private: true, emoji: '⛵' },
-  { key: 'lora-oud',        themeId: 'oud_lesson',         name: 'Lora',  private: true, emoji: '🎶' },
-  { key: 'lora-jerusalem',  themeId: 'jerusalem_tale',     name: 'Lora',  private: true, emoji: '🏮' },
+  // These five were drawn from Lora's photograph and sat here as `private`,
+  // waiting on her family. That is no longer what is on the covers: all five
+  // themes were re-shot from Baha's photo on 2026-09-30, every page of every
+  // one, so the artwork these cards point at is not Lora's any more.
+  //
+  // Leaving them as they were was not "safe". A card carries the NAME into
+  // detectGender, which resolves the story's {masc|fem} tokens — so "Lora" over
+  // the new artwork reads a boy's picture out in feminine Arabic. And the
+  // privacy flag was holding back books that no longer need holding back,
+  // which is how five finished stories stayed invisible on /stories.
+  //
+  // The keys change with the names on purpose: a stored home/stories tick
+  // belongs to the card it was given to, and that card no longer exists.
+  { key: 'baha-vet',        themeId: 'little_vet',         name: 'Baha',  emoji: '🐾' },
+  { key: 'baha-dabke',      themeId: 'dabke',              name: 'Baha',  emoji: '🥁' },
+  { key: 'baha-jaffa',      themeId: 'jaffa_day',          name: 'Baha',  emoji: '⛵' },
+  { key: 'baha-oud',        themeId: 'oud_lesson',         name: 'Baha',  emoji: '🎶' },
+  { key: 'baha-jerusalem',  themeId: 'jerusalem_tale',     name: 'Baha',  emoji: '🏮' },
 ];
