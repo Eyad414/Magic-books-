@@ -40,6 +40,10 @@ const ALL_TEASERS = [
   { id: 'eid_first',          emoji: '🎁', fallback: 'في أول عيد' },
   { id: 'jerusalem_tale',     emoji: '🕌', fallback: 'في القدس' },
   { id: 'little_vet',         emoji: '🐾', fallback: 'في عيادة الحيوانات' },
+  { id: 'olive_harvest',        emoji: '🫒', fallback: 'في موسم الزيتون' },
+  { id: 'palestinian_thobe',    emoji: '🧵', fallback: 'وحكاية الثوب' },
+  { id: 'maamoul_day',          emoji: '🍪', fallback: 'ويوم المعمول' },
+  { id: 'my_birthday',          emoji: '🎂', fallback: 'في عيد ميلاده' },
 ];
 
 /** Colouring and photoreal variants share their parent's teaser. */

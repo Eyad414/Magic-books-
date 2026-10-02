@@ -538,7 +538,15 @@
     "theme_oud_lesson_desc": "A string, a rhythm and fingers learning patience until the tune arrives",
     "photo_privacy": "The photo is used only to illustrate your child's book. It never appears on the site and we never share it with anyone.",
     "photo_privacy_link": "Privacy policy",
-    "pkg_saving": "Save {{n}} ₪"
+    "pkg_saving": "Save {{n}} ₪",
+    "theme_olive_harvest": "The Olive Harvest",
+    "theme_olive_harvest_desc": "A day under the trees with Grandfather: a ladder, a cloth, and patience until the oil runs",
+    "theme_palestinian_thobe": "The Palestinian Thobe",
+    "theme_palestinian_thobe_desc": "Teta's chest is opened: a red stitch, a pattern for every village, a story kept",
+    "theme_maamoul_day": "Maamoul Day",
+    "theme_maamoul_day_desc": "Two days before the feast: semolina, dates, and a wooden mould far older than you",
+    "theme_my_birthday": "My Birthday",
+    "theme_my_birthday_desc": "Balloons, a candle and a wish — and a day that teaches whose day it really is"
   },
   "step3": {
     "title": "Customize Your Book",
@@ -1557,7 +1565,11 @@
     "bp_phone": "Phone number *",
     "bp_city": "City",
     "bp_street": "Street",
-    "bp_building": "Building number"
+    "bp_building": "Building number",
+    "teaser_olive_harvest": "The Olive Harvest",
+    "teaser_palestinian_thobe": "The Palestinian Thobe",
+    "teaser_maamoul_day": "Maamoul Day",
+    "teaser_my_birthday": "My Birthday"
   },
   "stories": {
     "zoo_adventure": {
@@ -2291,6 +2303,114 @@
         "11": "And one day the notes came out joined together for the first time. [NAME] had played a whole tune!",
         "12": "At the little concert [NAME] played for the family. When the string fell silent, the clapping rose.",
         "13": "[NAME] laid the oud gently back in its case, having learned that beautiful things take time — and that time is never wasted."
+      }
+    },
+    "olive_harvest": {
+      "title": "[NAME] and the Olive Harvest",
+      "tagline": "A day under the trees that teaches patience",
+      "moral": "Good things ripen slowly, and what we gather with our own hands tastes better than anything we buy.",
+      "conclusion": "Well done, [NAME]! You gathered your first olives with your own hands. 🫒✨",
+      "questions": [
+        "Why did Grandfather say \"take your time\"?",
+        "Why did the hero leave some olives for the little bird?",
+        "What have you made with your own hands that made you proud?"
+      ],
+      "dedication": "For [NAME], who knows that the land has a smell of its own — this story is yours.",
+      "pages": {
+        "0": "On a cold Tishreen morning, [NAME] woke before the sun. Today was not a school day — today was the olive harvest!",
+        "1": "Grandfather carried the ladder on his shoulder, and [NAME] carried the little bucket. Together they walked the stone path up to the grove.",
+        "2": "They spread the cloths under the biggest tree. “This tree is older than me and older than my father,” said Grandfather, “and it still gives.”",
+        "3": "Hero! On the right, the low branches you can pick by hand. On the left, the ladder that reaches the top. Where will you begin?",
+        "4": "[NAME] began with the branches close by. One by one the olives fell onto the cloth: tick… tick… tick…",
+        "5": "Soon both hands were tired. “Take your time,” said Grandfather. “The tree waited a whole year. Don’t rush it today.”",
+        "6": "A small bird landed on a branch and watched. [NAME] left some olives on the twig for her: “These are yours.”",
+        "7": "Hero! Among the silver leaves there is one big black olive, the ripest on the whole tree. Can you see it?",
+        "8": "At noon they sat on the stones: bread, oil from last year’s harvest, and za’atar. Nothing tastes better than food eaten under a tree.",
+        "9": "Then they gathered the four corners of the cloth, and the olives became a dark river pouring into the sack.",
+        "10": "At the press the great stones turned, and the whole room filled with a sharp green smell. [NAME] watched and did not say a word.",
+        "11": "At last the oil came down: a thread of green gold, shining. Grandfather filled a small tin and handed it over. “This one is from your own work.”",
+        "12": "That evening, [NAME] looked up at the little tin on the shelf, and understood that the best thing in the world is what hands make slowly."
+      }
+    },
+    "palestinian_thobe": {
+      "title": "[NAME] and the Story in the Thobe",
+      "tagline": "Every stitch has a name, and every pattern has a village",
+      "moral": "What we learn from our grandmothers is not lost — we keep it in our hands, not only in our heads.",
+      "conclusion": "Well done, [NAME]! You stitched your first stitch in a very long story. 🧵✨",
+      "questions": [
+        "Why did Teta say every pattern tells of a village?",
+        "What did the hero do when the first stitch came out crooked?",
+        "What old thing in your grandmother’s house do you love?"
+      ],
+      "dedication": "For [NAME], who asks the story behind every old thing — this story is yours.",
+      "pages": {
+        "0": "In Teta’s house there is an old wooden chest that nobody opens. Today Teta said: “Come. We will open it together.”",
+        "1": "Out of the chest came a black thobe, heavy with red embroidery. It smelled old and warm, like the house itself.",
+        "2": "“This was my mother’s,” said Teta. “Every stitch in it has a name, and every pattern tells of a village.”",
+        "3": "Hero! On the chest is the tall cypress pattern, and on the sleeve is the moon. Which one will you learn first?",
+        "4": "[NAME] chose the cypress. Teta sat by the window and handed over a needle and a red thread.",
+        "5": "The first stitch came out crooked. Teta laughed: “We all began like that. Undo it and do it again.”",
+        "6": "The second was better. The third came out perfectly straight, and Teta clapped her hands.",
+        "7": "Hero! In the basket are threads of many colours, and one deep red the same as the thobe. Can you find it?",
+        "8": "“Why always red, Teta?” [NAME] asked. She said: “Because it is the colour of the earth at sunset, and because our grandmothers loved it.”",
+        "9": "On the table Teta opened an old notebook full of patterns drawn in pen: one for every village, like a map.",
+        "10": "[NAME] finished one small square. Not a thobe — but the first thing made entirely by their own hands.",
+        "11": "Teta folded the thobe back into the chest and laid the little square on top of it. “Now it has a new neighbour.”",
+        "12": "[NAME] understood that a thobe is not only cloth — it is a story sewn stitch by stitch, and whoever learns it keeps it."
+      }
+    },
+    "maamoul_day": {
+      "title": "[NAME] and Maamoul Day",
+      "tagline": "The smell of the feast begins two days early",
+      "moral": "The sweetest thing we eat is the thing we made for someone else — and the broken ones are ours.",
+      "conclusion": "Well done, [NAME]! You made the feast maamoul with your own hands. 🍪✨",
+      "questions": [
+        "Why did Teta say the broken ones are for us?",
+        "Which filling would you have chosen: dates or walnuts?",
+        "What dish would you love to make for your guests?"
+      ],
+      "dedication": "For [NAME], who loves to feed people — this story is yours.",
+      "pages": {
+        "0": "Two days before the feast, the whole house fills with one smell: maamoul. And today [NAME] is going to make it with Teta.",
+        "1": "They lined everything up on the table: the semolina, the ghee, the blossom water, a dish of dates and a dish of walnuts.",
+        "2": "[NAME] washed both hands well and put on the apron. “A good cook starts with clean hands,” said Teta.",
+        "3": "Hero! On the right the sweet date filling, on the left the ground walnut filling. Which one will you choose?",
+        "4": "[NAME] chose the dates, rolling the filling into little balls, one after another, until the plate was full.",
+        "5": "Then came the dough. [NAME] kneaded with all their strength until it turned as smooth as silk.",
+        "6": "Teta took out the carved wooden mould. “This mould is much older than you are,” she said, smiling.",
+        "7": "Hero! On the table are three moulds: a round one, an oval one, and one very small. Where is the smallest?",
+        "8": "Press the dough into the mould, then knock it on the table — tock! — and out drops a beautiful patterned biscuit.",
+        "9": "The first one came out a little broken. “Never mind,” said Teta. “The broken ones are for us. The pretty ones are for the guests.”",
+        "10": "They lined up the trays and the oven took them in. [NAME] sat in front of the glass door, waiting, not moving at all.",
+        "11": "Out came the maamoul, golden and hot, and Teta scattered fine sugar over it like white snow.",
+        "12": "On the day of the feast, [NAME] carried the plate to the guests. The sweetest thing we eat is the thing we made for other people."
+      }
+    },
+    "my_birthday": {
+      "title": "[NAME]'s Birthday",
+      "tagline": "One candle, one wish, and a house full of laughing",
+      "moral": "A birthday is not the presents — it is having the people you love around you.",
+      "conclusion": "Happy birthday, [NAME]! 🎂✨",
+      "questions": [
+        "Why did the hero give the first slice to the smallest child?",
+        "Why was the drawing the best present of all?",
+        "What would you wish for on your birthday?"
+      ],
+      "dedication": "For [NAME], on their day — this story is yours.",
+      "pages": {
+        "0": "[NAME] woke up and something in the house was different: the light, the smell, the whispering behind the door. Today was the birthday!",
+        "1": "There were paper streamers on the bedroom door, and balloons on the floor that had got up before anyone else.",
+        "2": "In the kitchen Mother was decorating the cake. “Don’t look yet!” she laughed, and [NAME] covered both eyes.",
+        "3": "Hero! On the right the party hats, on the left the string of balloons. Which will you start decorating with?",
+        "4": "[NAME] started with the balloons, blowing up a big red one until both cheeks went red too, and everybody laughed.",
+        "5": "Then the friends arrived one by one, each of them holding a small box behind their back.",
+        "6": "They played in the garden: running, a ball, and laughing so loud it did not stop until their feet were tired.",
+        "7": "Hero! Among the presents is one box tied with a gold ribbon. Can you see it?",
+        "8": "Mother turned off the light, and in came the cake with a single candle trembling in the dark.",
+        "9": "Everybody sang. [NAME] closed both eyes, made a wish… and blew the candle out in one breath.",
+        "10": "When the cake was cut, [NAME] gave the first slice to the smallest child at the party, instead of taking it first.",
+        "11": "The presents were opened, but the loveliest thing of all was the picture a friend had drawn by hand.",
+        "12": "That night [NAME] fell asleep smiling, having learned that a birthday is not the presents — it is the people you love, around you."
       }
     }
   },

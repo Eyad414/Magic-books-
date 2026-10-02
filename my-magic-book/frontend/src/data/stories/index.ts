@@ -52,6 +52,10 @@ import { castleGuardian } from './story13_castle';
 // import { paintAdventure }    from './story18_paint';
 // import { musicAdventure }    from './story19_music';
 // import { friendshipStory }   from './story20_friendship';
+import { oliveHarvest } from './story28_oliveharvest';
+import { palestinianThobe } from './story29_thobe';
+import { maamoulDay } from './story30_maamoul';
+import { myBirthday } from './story31_birthday';
 
 /** All 20 stories sorted by display order */
 export const STORIES: StoryDefinition[] = [
@@ -99,6 +103,10 @@ export const STORIES: StoryDefinition[] = [
   // friendshipStory,
   alphabetAbc,
   arabicLetters,
+  oliveHarvest,
+  palestinianThobe,
+  maamoulDay,
+  myBirthday,
 ].sort((a, b) => a.order - b.order);
 
 /** Helper: look up a story by its id.

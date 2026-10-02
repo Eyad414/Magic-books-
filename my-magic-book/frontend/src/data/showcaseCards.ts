@@ -157,4 +157,12 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   { key: 'baha-jaffa',      themeId: 'jaffa_day',          name: 'Baha',  emoji: '⛵' },
   { key: 'baha-oud',        themeId: 'oud_lesson',         name: 'Baha',  emoji: '🎶' },
   { key: 'baha-jerusalem',  themeId: 'jerusalem_tale',     name: 'Baha',  emoji: '🏮' },
+  // Four stories written in October 2026 — olive season, the thobe, Eid
+  // maamoul and a birthday. Drawn from Baha's photo like the rest, so no
+  // permission question; they appear on /stories as soon as the artwork
+  // exists and the owner ticks them for the home page.
+  { key: 'baha-olive', themeId: 'olive_harvest', name: 'Baha', emoji: '🫒' },
+  { key: 'baha-thobe', themeId: 'palestinian_thobe', name: 'Baha', emoji: '🧵' },
+  { key: 'baha-maamoul', themeId: 'maamoul_day', name: 'Baha', emoji: '🍪' },
+  { key: 'baha-birthday', themeId: 'my_birthday', name: 'Baha', emoji: '🎂' },
 ];

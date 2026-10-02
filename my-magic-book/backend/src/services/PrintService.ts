@@ -86,6 +86,10 @@ export const BACK_TEASERS = [
   { theme: 'eid_first',          emoji: '🎁',  ar: 'في أول عيد' },
   { theme: 'jerusalem_tale',     emoji: '🕌',  ar: 'في القدس' },
   { theme: 'little_vet',         emoji: '🐾',  ar: 'في عيادة الحيوانات' },
+  { theme: 'olive_harvest',         emoji: '🫒',  ar: 'في موسم الزيتون' },
+  { theme: 'palestinian_thobe',     emoji: '🧵',  ar: 'وحكاية الثوب' },
+  { theme: 'maamoul_day',           emoji: '🍪',  ar: 'ويوم المعمول' },
+  { theme: 'my_birthday',           emoji: '🎂',  ar: 'في عيد ميلاده' },
 ];
 
 /** Colouring and photoreal variants share their parent's teaser. */
