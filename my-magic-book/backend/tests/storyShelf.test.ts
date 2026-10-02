@@ -8,12 +8,18 @@ import { isOnShelf, shelfStories } from '../../frontend/src/utils/storyShelf';
  * of nine was eight grey 📚 placeholders and one real cover — and the one book
  * the customer actually paid for looked like one of nine.
  *
- * The obvious rule, "only show stories that have a cover", is wrong in a way
- * that matters more than the bug: artwork is generated AFTER payment and takes
- * minutes. For that whole window a paid order has no cover, so hiding on
- * artwork alone would make an order vanish from the customer's account exactly
- * when they are most likely to open it and check. The cases below are mostly
- * about that window.
+ * "Only show stories that have a cover" is wrong on its own: artwork is
+ * generated AFTER payment and takes minutes, so for that window an order has
+ * none, and hiding it would make the order vanish exactly when the customer
+ * goes looking for it.
+ *
+ * Trusting the status instead is ALSO wrong, which the live data settled. The
+ * owner's account holds five rows claiming status 'ready' with zero images and
+ * no cover — they kept showing as 📚 cards that open an empty book, which is
+ * why the placeholders survived the first attempt at this. A status is a
+ * claim; artwork is a fact. 'ordered' and 'generating' are shelved on the
+ * claim because the pictures are genuinely on their way; 'ready' has to prove
+ * it.
  */
 describe('what belongs on the shelf', () => {
   it('shows a finished book', () => {
@@ -29,12 +35,23 @@ describe('what belongs on the shelf', () => {
     expect(isOnShelf({})).toBe(false);
   });
 
-  it('KEEPS a paid order that has no artwork yet', () => {
+  it('KEEPS an order whose artwork has not been made yet', () => {
     // The window between paying and the images existing. Hiding this is how a
     // customer concludes their order was lost.
-    for (const status of ['ordered', 'paid', 'generating', 'printing', 'shipped', 'completed']) {
+    for (const status of ['ordered', 'generating']) {
       expect(isOnShelf({ status }), `${status} must stay on the shelf`).toBe(true);
     }
+  });
+
+  it('HIDES a story that claims to be ready with nothing in it', () => {
+    // Five of these are sitting on the owner's account right now. "ready" with
+    // no pages is not ready, and the card opened an empty book.
+    expect(isOnShelf({ status: 'ready' })).toBe(false);
+    expect(isOnShelf({ status: 'ready', generatedImages: [] })).toBe(false);
+  });
+
+  it('keeps a ready story that really does have its artwork', () => {
+    expect(isOnShelf({ status: 'ready', generatedCover: 'x/page-00.png' })).toBe(true);
   });
 
   it('keeps a draft that somehow has artwork', () => {

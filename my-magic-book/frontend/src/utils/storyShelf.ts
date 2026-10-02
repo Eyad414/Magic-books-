@@ -7,15 +7,25 @@
  * showing it as a card next to a finished book makes the finished one look
  * like one of nine rather than the thing they paid for.
  *
- * The rule is NOT "has a cover", though that is how it was asked for. A story
- * that has been paid for has no artwork yet either: it is generated after
- * payment, and that takes minutes. Hiding on artwork alone would make an order
- * vanish from the customer's account in the window where they are most likely
- * to go looking for it — which is a far worse bug than the one being fixed.
+ * It is not simply "has a cover", because artwork is generated AFTER payment
+ * and takes minutes: for that window an order legitimately has none, and
+ * hiding it would make the order vanish from the customer's account exactly
+ * when they are most likely to open it and check.
  *
- * So: artwork OR a status past draft. An abandoned draft is the only thing
- * that disappears, and nothing is deleted — it is still there, still theirs,
- * and still returned by the API.
+ * But status alone cannot be trusted either, and the data says so. This
+ * account has five rows claiming status 'ready' with zero images and no cover
+ * — "ready" is not true of them, and they were still showing as 📚 cards that
+ * open an empty book. A status is a claim; artwork is a fact.
+ *
+ * So the two are split by what each one is good for:
+ *   - 'ordered' and 'generating' mean the customer has committed and the
+ *     pictures are on their way. Shelved on the status alone, because that is
+ *     the whole point of showing them.
+ *   - 'ready' and 'draft' are claims about a finished book. Shelved only if
+ *     the artwork is actually there to back them up.
+ *
+ * Nothing is deleted — the rows are still there, still theirs, still returned
+ * by the API. They are just not books yet.
  */
 
 export interface ShelfStory {
@@ -24,14 +34,21 @@ export interface ShelfStory {
   status?: string | null;
 }
 
-/** Statuses that mean the customer has committed — these always show. */
-const PAST_DRAFT = new Set(['generating', 'ready', 'ordered', 'paid', 'printing', 'shipped', 'completed']);
+/**
+ * The customer has committed and the pictures are still coming. These show
+ * with or without artwork; everything else has to prove it.
+ *
+ * The Story model's status enum is exactly draft | generating | ready |
+ * ordered, so there is nothing else to list. 'ready' is deliberately absent:
+ * a book that says it is ready and has no pages is not ready.
+ */
+const AWAITING_ARTWORK = new Set(['ordered', 'generating']);
 
 export function isOnShelf(story: ShelfStory): boolean {
   if (!story) return false;
   if (story.generatedCover) return true;
   if (Array.isArray(story.generatedImages) && story.generatedImages.length > 0) return true;
-  return PAST_DRAFT.has(String(story.status || 'draft'));
+  return AWAITING_ARTWORK.has(String(story.status || 'draft'));
 }
 
 export function shelfStories<T extends ShelfStory>(stories: readonly T[] | null | undefined): T[] {
