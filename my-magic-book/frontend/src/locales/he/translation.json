@@ -598,8 +598,7 @@
     "coupon_only_package": "הקוד תקף רק ל”{{pkg}}” — החליפו חבילה כדי להשתמש בו.",
     "loading_price": "טוען מחיר",
     "loading_prices": "טוען מחירים…",
-    "prices_failed": "לא הצלחנו לטעון את המחירים. לא נציג לך מחיר שאינו נכון.",
-    "free_delivery_plain": "חינם"
+    "prices_failed": "לא הצלחנו לטעון את המחירים. לא נציג לך מחיר שאינו נכון."
   },
   "step4": {
     "err_pickup_location": "אנא בחר נקודת איסוף",

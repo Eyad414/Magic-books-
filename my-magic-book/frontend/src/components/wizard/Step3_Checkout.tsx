@@ -580,7 +580,12 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
             {couponFreeDelivery && DELIVERY_FEE_ILS > 0 && (
               <Row label={t('step3.coupon_free_delivery_row', 'كود التوصيل المجاني')} value={`- ${DELIVERY_FEE_ILS} ₪`} />
             )}
-            <Row label={t('step5.delivery_fee')} value={deliveryFee === 0 ? `${t('step3.free_delivery_plain', 'مجاني')} 🎉` : `${deliveryFee} ₪`} />
+            {/* No "رسوم التوصيل: مجاني" line. Delivery is free for everyone
+                and has been since the 30 ₪ fee was dropped, so the row could
+                only ever print zero — a charge named in a price summary and
+                then waived, which reads as something that might one day not be
+                waived. The shop says "شامل التوصيل" on the home page, the
+                stories page and the packages; the total here is the total. */}
             <div className="mt-2 flex items-center justify-between rounded-2xl bg-gradient-to-l from-gold-500/25 to-gold-500/10 border border-gold-500/50 px-4 py-3.5 shadow-lg shadow-gold-500/10">
               <span className="font-arabic font-black text-white text-lg">{t('step5.total')}</span>
               {pricesReady ? (

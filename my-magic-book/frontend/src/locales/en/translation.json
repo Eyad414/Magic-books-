@@ -598,8 +598,7 @@
     "coupon_only_package": "This code only works with “{{pkg}}” — switch package to use it.",
     "loading_price": "Loading price",
     "loading_prices": "Loading prices…",
-    "prices_failed": "We couldn't load prices. We'd rather show you nothing than the wrong price.",
-    "free_delivery_plain": "Free"
+    "prices_failed": "We couldn't load prices. We'd rather show you nothing than the wrong price."
   },
   "step4": {
     "err_pickup_location": "Please choose a pickup point",

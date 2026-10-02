@@ -45,7 +45,9 @@ export default function Step4_Payment({ onPrev }: Props) {
       .catch(() => setCoupon(null));
   }, [storyConfig?.couponCode]);
 
-  const { selectedPkg, deliveryFee, discountedBase, totalPrice, liveSettings,
+  // deliveryFee is deliberately NOT destructured: the total already contains it
+  // (it is zero), and nothing on this screen should name a charge nobody pays.
+  const { selectedPkg, discountedBase, totalPrice, liveSettings,
           pricesReady, pricesFailed, retryPrices } = useCheckoutTotals({
     bookPackage: bookCustomization?.bookPackage,
     isPickup,
@@ -176,10 +178,6 @@ export default function Step4_Payment({ onPrev }: Props) {
       <div className="p-3 rounded-xl bg-dark-700 border border-white/10 space-y-1.5">
         <Row label={selectedPkg?.label || ''}
              value={pricesReady ? `${discountedBase} ₪` : <span className="inline-block h-4 w-14 rounded bg-white/15 animate-pulse" />} />
-        <Row
-          label={t('step5.delivery_fee')}
-          value={deliveryFee === 0 ? `${t('step3.free_delivery', 'مجاني')} 🎉` : `${deliveryFee} ₪`}
-        />
         <div className="mt-1 flex items-center justify-between rounded-xl bg-gold-500/15 border border-gold-500/40 px-3 py-2.5">
           <span className="font-arabic font-black text-white text-lg">{t('step5.total')}</span>
           {pricesReady ? (
