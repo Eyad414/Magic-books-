@@ -1437,7 +1437,10 @@
     "checking_permissions": "Checking permissions…",
     "child_photo_failed": "Could not load the child's photo",
     "child_photo_none": "No child photo on this order",
-    "child_photo_open": "Click to open the photo full size"
+    "child_photo_open": "Click to open the photo full size",
+    "live_count_capped": "{{live}} of {{total}}",
+    "live_not_shown": "not shown on the page",
+    "live_home_capped": "The home page shows only {{n}} — the faded ones never appear. Reorder them with the badges."
   },
   "title_page": {
     "presents": "Presented to",

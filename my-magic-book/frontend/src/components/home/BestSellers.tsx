@@ -6,7 +6,7 @@ import { publicApi } from '../../api/publicApi';
 import { toDisplayUrl, toCardUrl } from '../../api/mediaUrl';
 import { localizeName } from '../../utils/translit';
 import FlipbookPreview, { buildThemePreview } from '../wizard/FlipbookPreview';
-import { SHOWCASE_CARDS, type DemoVisibility, type HomeTag } from '../../data/showcaseCards';
+import { SHOWCASE_CARDS, HOME_CARD_LIMIT, homeTagRank, type DemoVisibility, type HomeTag } from '../../data/showcaseCards';
 
 // Some themes reuse another theme's scripted story text (mirrors Stories page).
 const TEXT_THEME: Record<string, string> = { space_real: 'space' };
@@ -103,10 +103,11 @@ export default function BestSellers() {
   // Always show the badges in the same order: new, then best seller, then
   // featured, then anything untagged. Before this the order was whatever the
   // books happened to arrive in, so the front page reshuffled itself.
-  const TAG_ORDER: Record<string, number> = { new: 0, bestseller: 1, featured: 2 };
-  const rank = (c: any) => TAG_ORDER[String((c as any).homeTag || '')] ?? 3;
-  const ordered = [...published].sort((a, b) => rank(a) - rank(b));
-  const cards = ordered.length ? ordered.slice(0, 4) : bestSellers;
+  // Shared with the dashboard, which previews exactly this: same order, same
+  // cut. A literal here and a different literal there is how the owner ends up
+  // promised four books that are not the four a visitor sees.
+  const ordered = [...published].sort((a, b) => homeTagRank((a as any).homeTag) - homeTagRank((b as any).homeTag));
+  const cards = ordered.length ? ordered.slice(0, HOME_CARD_LIMIT) : bestSellers;
 
   // Build the flipbook teaser for the selected showcase book. These previews
   // are LOCKED: the first ~30% of pages read normally, the rest are blurred

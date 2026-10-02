@@ -1437,7 +1437,10 @@
     "checking_permissions": "בודקים הרשאות…",
     "child_photo_failed": "לא ניתן היה לטעון את תמונת הילד/ה",
     "child_photo_none": "אין תמונת ילד/ה בהזמנה הזו",
-    "child_photo_open": "לחצו כדי לפתוח את התמונה בגודל מלא"
+    "child_photo_open": "לחצו כדי לפתוח את התמונה בגודל מלא",
+    "live_count_capped": "{{live}} מתוך {{total}}",
+    "live_not_shown": "לא מוצג בעמוד",
+    "live_home_capped": "עמוד הבית מציג רק {{n}} — המעומעמים לא מופיעים. סדרו אותם עם התגיות."
   },
   "title_page": {
     "presents": "מוגש ל",

@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { seriesBadge, seriesCounts } from '../utils/series';
 import { adminApi } from '../api/adminApi';
 import { publicApi } from '../api/publicApi';
-import { objectPathToUrl } from '../api/mediaUrl';
+import { objectPathToUrl, toCardUrl } from '../api/mediaUrl';
 import { ChildAvatar } from '../components/admin/ChildAvatar';
 import { createPortal } from 'react-dom';
 import { OrderPreview } from '../components/admin/OrderPreview';
@@ -16,7 +16,7 @@ import StatusBadge from '../components/common/StatusBadge';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { findStory } from '../data/stories';
-import { SHOWCASE_CARDS, demoOnHomePage, demoOnStoriesPage, isPrivateCard, HOME_TAGS, type DemoVisibility, type HomeTag } from '../data/showcaseCards';
+import { SHOWCASE_CARDS, demoOnHomePage, demoOnStoriesPage, isPrivateCard, HOME_TAGS, HOME_CARD_LIMIT, homeTagRank, type DemoVisibility, type HomeTag } from '../data/showcaseCards';
 import { localizeName } from '../utils/translit';
 import { formatMoney } from '../utils/money';
 
@@ -5314,16 +5314,35 @@ export default function AdminDashboard() {
                   );
                 })()}
 
+                {/* What each public page looks like right now — as the covers,
+                    not as a list of names.
+
+                    This was a run-on line of "بهاء — مغامرة حديقة الحيوان · …",
+                    nineteen of them on the stories panel, which is unreadable
+                    and the wrong medium: the owner is deciding what the SHOP
+                    looks like, and the answer is pictures.
+
+                    The home strip is also honest about the slice. The page
+                    shows HOME_CARD_LIMIT cards in homeTagRank order, so ticking
+                    ten put four on the site and quietly dropped six while this
+                    panel said "10". The ones that make it are shown bright; the
+                    rest are dimmed and counted. */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                   {([
                     { id: 'home' as const, icon: '🏠', title: t('admin.live_home', 'على الصفحة الرئيسية'),
-                      books: allBooks.filter((b: any) => b.showcase),
+                      books: allBooks
+                        .filter((b: any) => b.showcase)
+                        .sort((a: any, b: any) => homeTagRank(a.homeTag) - homeTagRank(b.homeTag)),
+                      limit: HOME_CARD_LIMIT,
                       empty: t('admin.live_home_empty', 'لا شيء مختار — تظهر البطاقات الافتراضية') },
                     { id: 'stories' as const, icon: '📚', title: t('admin.live_stories', 'على صفحة القصص'),
                       books: allBooks.filter((b: any) => b.showcaseStories),
+                      limit: Infinity,
                       empty: t('admin.live_stories_empty', 'لا شيء — الصفحة فارغة') },
                   ]).map((g) => {
                     const active = bookFilter === g.id;
+                    const live = g.books.slice(0, g.limit === Infinity ? g.books.length : g.limit);
+                    const overflow = g.books.length - live.length;
                     return (
                       <button
                         key={g.id}
@@ -5337,20 +5356,53 @@ export default function AdminDashboard() {
                             : 'border-white/10 bg-white/5 hover:border-white/25'
                         }`}
                       >
-                        <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center justify-between mb-2">
                           <span className="font-arabic font-bold text-white/80 text-xs">{g.icon} {g.title}</span>
                           <span className={`font-arabic text-[11px] px-2 py-0.5 rounded-full border ${
-                            g.books.length
+                            live.length
                               ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
                               : 'bg-white/5 border-white/10 text-white/40'
-                          }`}>{g.books.length}</span>
+                          }`}>
+                            {overflow > 0
+                              ? t('admin.live_count_capped', '{{live}} من {{total}}', { live: live.length, total: g.books.length })
+                              : g.books.length}
+                          </span>
                         </div>
+
                         {g.books.length === 0 ? (
                           <p className="font-arabic text-white/35 text-[11px]">{g.empty}</p>
                         ) : (
-                          <p className="font-arabic text-white/55 text-[11px] leading-relaxed">
-                            {g.books.map((b: any) => `${b.childName} — ${b.themeLabel}`).join(' · ')}
-                          </p>
+                          <>
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {g.books.slice(0, 12).map((b: any, i: number) => {
+                                const shown = i < live.length;
+                                return (
+                                  <span
+                                    key={b.key}
+                                    title={`${b.childName} — ${b.themeLabel}${shown ? '' : ` · ${t('admin.live_not_shown', 'لا يظهر على الصفحة')}`}`}
+                                    className={`relative block w-9 h-12 rounded-md overflow-hidden border ${
+                                      shown ? 'border-gold-500/40' : 'border-white/10 opacity-30 grayscale'
+                                    }`}
+                                  >
+                                    {b.cover ? (
+                                      <img src={toCardUrl(b.cover, 320)} alt="" loading="lazy"
+                                           className="w-full h-full object-cover" />
+                                    ) : (
+                                      <span className="flex items-center justify-center w-full h-full bg-dark-700 text-xs">{b.emoji || '📘'}</span>
+                                    )}
+                                  </span>
+                                );
+                              })}
+                              {g.books.length > 12 && (
+                                <span className="font-arabic text-white/40 text-[11px] px-1">+{g.books.length - 12}</span>
+                              )}
+                            </div>
+                            {overflow > 0 && (
+                              <p className="font-arabic text-amber-200/70 text-[10px] mt-1.5 leading-relaxed">
+                                {t('admin.live_home_capped', 'الصفحة الرئيسية تعرض {{n}} فقط — الباهتة لا تظهر. رتّبها بالوسوم.', { n: g.limit })}
+                              </p>
+                            )}
+                          </>
                         )}
                       </button>
                     );

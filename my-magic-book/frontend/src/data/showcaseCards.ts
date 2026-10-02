@@ -34,6 +34,27 @@ export type HomeTag = 'bestseller' | 'new' | 'featured';
 /** The three badges, in the order they appear in the dashboard. */
 export const HOME_TAGS: HomeTag[] = ['new', 'bestseller', 'featured'];
 
+/**
+ * How many of the owner's picks the home page actually shows.
+ *
+ * BestSellers slices the list, so ticking ten books puts four on the page and
+ * silently drops six — and the dashboard said "10" with no hint that most of
+ * them never appear. The number lives here because two screens read it: the
+ * page that enforces it and the panel that promises it.
+ */
+export const HOME_CARD_LIMIT = 4;
+
+/**
+ * The order the home page puts its cards in: new, then best seller, then
+ * featured, then untagged. It decides WHICH ones survive the slice above, so
+ * the dashboard preview has to sort the same way or it shows the owner four
+ * books that are not the four a visitor gets.
+ */
+export function homeTagRank(tag?: HomeTag | '' | null): number {
+  const order: Record<string, number> = { new: 0, bestseller: 1, featured: 2 };
+  return order[String(tag || '')] ?? 3;
+}
+
 /** Per-card publish flags, stored in SiteSettings.demoCards keyed by card key. */
 export type DemoVisibility = Record<string, { home?: boolean; stories?: boolean; tag?: HomeTag }>;
 

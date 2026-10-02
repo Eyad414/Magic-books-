@@ -1437,7 +1437,10 @@
     "checking_permissions": "جارٍ التحقق من الصلاحيات...",
     "child_photo_failed": "تعذّر تحميل صورة الطفل",
     "child_photo_none": "لا توجد صورة للطفل في هذا الطلب",
-    "child_photo_open": "اضغط لفتح الصورة بالحجم الكامل"
+    "child_photo_open": "اضغط لفتح الصورة بالحجم الكامل",
+    "live_count_capped": "{{live}} من {{total}}",
+    "live_not_shown": "لا يظهر على الصفحة",
+    "live_home_capped": "الصفحة الرئيسية تعرض {{n}} فقط — الباهتة لا تظهر. رتّبها بالوسوم."
   },
   "title_page": {
     "presents": "يُقدّم لـ",
