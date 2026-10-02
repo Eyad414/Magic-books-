@@ -15,6 +15,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { toCardUrl } from '../api/mediaUrl';
 import { localizeName } from '../utils/translit';
+import { shelfStories } from '../utils/storyShelf';
 import { SHOWCASE_CARDS } from '../data/showcaseCards';
 import { loadFavorites } from '../utils/favorites';
 
@@ -193,6 +194,10 @@ export default function Dashboard() {
     ordered: { label: t('dashboard.status_ordered'), color: 'text-gold-500', icon: Package },
   };
 
+  // Finished books and live orders. An abandoned draft is not a book the
+  // customer owns, and it is not deleted — just not shelved. See storyShelf.ts.
+  const shelf = shelfStories(stories);
+
   const favoriteStories = SHOWCASE_CARDS.filter((card) => favoriteIds.includes(card.key));
 
 
@@ -282,11 +287,11 @@ export default function Dashboard() {
               </div>
             ) : tab === 'stories' ? (
               <>
-                {stories.length === 0 ? (
+                {shelf.length === 0 ? (
                   <EmptyState emoji="📖" title={t('dashboard.empty_stories_title')} desc={t('dashboard.empty_stories_desc')} cta={t('dashboard.empty_stories_cta')} onClick={handleStartStory} />
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {stories.map((story) => {
+                    {shelf.map((story) => {
                       const status = statusMap[story.status] || statusMap.draft;
                       return (
                         <div key={story._id} className="relative bg-dark-700/50 rounded-2xl border border-white/5 p-5 hover:-translate-y-1 transition-transform group flex flex-col">
