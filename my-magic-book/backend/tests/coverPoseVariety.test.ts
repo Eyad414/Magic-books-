@@ -23,8 +23,10 @@ import { SCENE_TEMPLATES } from '../src/services/sceneTemplates';
 
 /**
  * The stories drawn from the same photograph, which therefore appear as a set:
- * the hero deck rotates them and the wizard grid lists them together. Keep this
- * in step with FROM_THIS_PHOTO in HeroBookDeck.tsx.
+ * the wizard grid lists them together and /stories shows their cards side by
+ * side. (The hero deck pinned this same list for a while, to sit beside the
+ * photograph they came from; that photograph is off the home page now, so the
+ * deck spreads across the whole catalogue again and this list stands alone.)
  */
 const SHOWN_TOGETHER = [
   'world_adventure',

@@ -129,10 +129,10 @@ export default function HeroSection() {
                       and left — every Instagram visitor so far opened this page
                       and no other.
                       It then spent months as ONE cover, the zoo book, for a
-                      shop with twenty-five stories. The deck keeps that file as
-                      its opening frame — local, so it still paints without
-                      waiting on the image proxy — and rotates the live covers in
-                      behind it. */}
+                      shop with twenty-five stories. The deck keeps a local file
+                      as its opening frame — so it still paints without waiting
+                      on the image proxy — and rotates the live covers in behind
+                      it. */}
                   <HeroBookDeck />
                 </div>
                 {/* Floating sparkles */}
@@ -151,52 +151,7 @@ export default function HeroSection() {
                   </div>
                 ))}
 
-                {/* The photograph the books beside it were drawn from.
-                    This is the shop's whole claim — send one photo, get a
-                    printed book with your child in it — and the page never
-                    showed it. It showed a cover, and a stranger had to take on
-                    faith that the child on it could be theirs. One snapshot and
-                    six different books from it is the proof, and it is the
-                    reason the deck's list is fixed rather than "newest first".
-
-                    It sits outside the book's frame, which clips its contents,
-                    and BELOW it rather than across it: any further in and it
-                    covers the story's name, which is the other half of what
-                    this is saying. */}
-                <div className="absolute -bottom-14 start-0 sm:-bottom-16 sm:-start-5 z-20 -rotate-6">
-                  <div className="p-1.5 rounded-2xl bg-white/90 shadow-2xl ring-1 ring-gold-500/40">
-                    <img
-                      src="/showcase/child-photo.webp"
-                      alt={t('hero.photo_alt')}
-                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl object-cover"
-                      width={96}
-                      height={96}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    <p className="font-arabic font-bold text-dark-900 text-[10px] text-center pt-1 pb-0.5">
-                      {t('hero.photo_label')}
-                    </p>
-                  </div>
-                </div>
-
-                {/* The arrow that turns two pictures into one sentence. It
-                    points from the photo back up to the book, so it follows the
-                    reading direction without needing to know it: `start` is the
-                    photo's side in either language. */}
-                <div className="absolute -bottom-10 start-24 sm:start-28 z-20 flex items-center gap-1.5">
-                  <span className="w-8 sm:w-10 h-0.5 rounded-full bg-gold-500/70" />
-                  <ArrowLeft className="w-4 h-4 text-gold-500 ltr:rotate-180" />
-                </div>
               </div>
-
-              {/* Said in words too. An arrow between two pictures is only
-                  obvious once you already know what the shop does — and the
-                  visitor this is for does not yet. Cleared past the photo
-                  card, which hangs below the book. */}
-              <p className="font-arabic text-white/55 text-xs sm:text-sm text-center mt-24 sm:mt-28 max-w-[22rem] mx-auto leading-relaxed">
-                {t('hero.photo_to_book')}
-              </p>
             </div>
           </div>
         </div>

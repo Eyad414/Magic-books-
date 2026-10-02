@@ -5,17 +5,17 @@ import { toCardUrl } from '../../api/mediaUrl';
 import { getThemeLabel } from '../../utils/themeLabel';
 
 /**
- * The book half of the hero's "one photo → a printed book".
+ * The book in the hero, as a deck instead of a single cover.
  *
- * Every cover here was drawn from the one photograph shown beside it — the six
- * stories re-shot from that child's face. That is the whole claim of the shop,
- * and it is the one thing the page never actually demonstrated: it showed a
- * cover, and a stranger had to take on faith that the child on it could be
- * theirs. Six different books from one snapshot is the proof.
+ * It was one fixed image for a shop with twenty-five stories. A visitor
+ * arriving from a reel saw one cover and had no way to know there was a
+ * Jerusalem story, a dabke story, dinosaurs or space behind it, and breadth is
+ * what they came to judge.
  *
- * So this list is FIXED, not "whatever is ready". A cover drawn from some other
- * child would quietly turn the demonstration into a lie, which is exactly what
- * would happen if it pulled the newest themes instead.
+ * The list was briefly pinned to the six books drawn from one photograph, to
+ * sit beside that photograph and prove they were all the same child. The
+ * photograph has been taken off the home page, so the pinning has nothing left
+ * to demonstrate — and spreading across the catalogue is what the hero is for.
  *
  * The first frame is a local webp: it is the page's largest image, it paints
  * without waiting on the media proxy, and swapping it for a fetched one would
@@ -26,19 +26,8 @@ import { getThemeLabel } from '../../utils/themeLabel';
 const FIRST_SRC = '/showcase/hero-book.webp';
 const FIRST_THEME = 'world_adventure';
 
-/**
- * The stories drawn from the photograph beside them, in the order they show.
- * Adding a theme here without re-shooting it from that same photo breaks the
- * only thing this section is for.
- */
-const FROM_THIS_PHOTO = [
-  'world_adventure',
-  'little_vet',
-  'dabke',
-  'jerusalem_tale',
-  'jaffa_day',
-  'oud_lesson',
-] as const;
+/** Enough to read as a catalogue, few enough to come back round. */
+const MAX_SLIDES = 7;
 
 interface Slide {
   src: string;
@@ -65,22 +54,22 @@ export default function HeroBookDeck() {
       .getSettings()
       .then((res) => {
         if (!alive) return;
-        const byId = new Map<string, any>(
-          (res?.settings?.themes ?? []).map((th: any) => [th.id, th]),
+        const themes = (res?.settings?.themes ?? []).filter(
+          (th: any) => !th.isColoring && th.generatedCover,
         );
-        // In the fixed order above, and only the ones still published: a story
-        // the owner hides must leave the hero with it.
-        const rest: Slide[] = [];
-        for (const id of FROM_THIS_PHOTO) {
-          if (id === FIRST_THEME) continue;
-          const th = byId.get(id);
-          if (!th?.generatedCover) continue;
-          rest.push({
+        // Spread across the catalogue rather than taking the first seven, which
+        // are all school-and-space: the point of the deck is the range.
+        const step = Math.max(1, Math.floor(themes.length / (MAX_SLIDES - 1)));
+        const picked: Slide[] = [];
+        for (let i = 0; i < themes.length && picked.length < MAX_SLIDES - 1; i += step) {
+          const th = themes[i];
+          picked.push({
             src: toCardUrl(th.generatedCover, 480),
             label: getThemeLabel(th, t as any, i18n.language),
           });
         }
-        setSlides([first, ...rest]);
+        // Drop the duplicate of whatever the opening frame already shows.
+        setSlides([first, ...picked.filter((x) => x.label !== first.label)]);
       })
       .catch(() => {/* keep the local cover */});
     return () => { alive = false; };
