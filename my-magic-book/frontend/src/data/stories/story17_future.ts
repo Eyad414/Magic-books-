@@ -22,7 +22,7 @@ const AR_PAGES: string[] = [
 export const futureHero: StoryDefinition = {
   id: 'future_hero',
   order: 17,
-  titleAr: 'مُغَامَرَةُ [NAME] وَبَطَلُ الْمُسْتَقْبَلِ',
+  titleAr: 'مُغَامَرَةُ [NAME] وَبَطَل{ُ|َةُ} الْمُسْتَقْبَلِ',
   taglineAr: 'مِهَنٌ كَثِيرَةٌ وَحُلْمٌ وَاحِدٌ كَبِيرٌ',
   moralAr: 'كُلُّ مِهْنَةٍ تَحْتَاجُ إِلَى الصِّدْقِ وَالْعِلْمِ وَحُبِّ مُسَاعَدَةِ الْآخَرِينَ.',
   questionsAr: [

@@ -22,7 +22,7 @@ const AR_PAGES: string[] = [
 export const castleGuardian: StoryDefinition = {
   id: 'castle_guardian',
   order: 13,
-  titleAr: 'مُغَامَرَةُ [NAME] وَحَارِسُ الْقَلْعَةِ التَّارِيخِيَّةِ',
+  titleAr: 'مُغَامَرَةُ [NAME] وَحَارِس{ُ|َةُ} الْقَلْعَةِ التَّارِيخِيَّةِ',
   taglineAr: 'قَلْعَةٌ قَدِيمَةٌ، وَلُغْزٌ، وَوِسَامُ حَارِسِ التَّارِيخِ',
   moralAr: 'مَعْرِفَةُ التَّارِيخِ وَالْحِفَاظُ عَلَى الْآثَارِ يَمْنَحَانِنَا الْحِكْمَةَ وَالشَّجَاعَةَ.',
   questionsAr: [
