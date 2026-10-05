@@ -98,15 +98,19 @@ export function isPrivateCard(card: ShowcaseCard): boolean {
 
 export const SHOWCASE_CARDS: ShowcaseCard[] = [
   { key: 'liam-space',      themeId: 'space',           name: 'Liam',  storyId: '6a43cbf500c3ecaed9218b3c', emoji: '🚀' },
-  { key: 'baha-space',      themeId: 'space_real',      name: 'Baha',  emoji: '🌌' },
-  { key: 'baha-zoo',        themeId: 'zoo_adventure',   name: 'Baha',  emoji: '🦁' },
-  { key: 'baha-magicbook',  themeId: 'magic_book',      name: 'Baha',  storyId: 'theme_magic_book', emoji: '📖' },
+  { key: 'mariam-space', themeId: 'space_real', name: 'Mariam',  emoji: '🌌' },
+  { key: 'tala-zoo', themeId: 'zoo_adventure', name: 'Tala',  emoji: '🦁' },
+  { key: 'salma-magicbook', themeId: 'magic_book', name: 'Salma',  storyId: 'theme_magic_book', emoji: '📖' },
   // Lora's own zoo book — her real photograph, and the one card here still
   // pointing at a storyId rather than a theme, so it was NOT re-shot with the
   // others. It was gated by her name alone; the flag is what survives a
   // rename, which is the whole reason the flag exists.
+  // NOT re-cast. This card is pinned to a storyId — Lora's own generated
+  // book, drawn from her real photograph — so it is not the zoo THEME demo
+  // and renaming it put her artwork under another child's name. A card with
+  // a storyId belongs to a specific child and must be left alone.
   { key: 'lora-zoo',        themeId: 'zoo_adventure',   name: 'Lora',  storyId: '6a3bbaf645b418d21337de09', private: true, emoji: '🦁' },
-  { key: 'baha-toycity',    themeId: 'toy_city',        name: 'Baha',  emoji: '🤖' },
+  { key: 'tala-toycity', themeId: 'toy_city', name: 'Tala',  emoji: '🤖' },
   { key: 'adam-coloring',   themeId: 'zoo_coloring',    name: 'Adam',  emoji: '🖍️' },
   // Owner says this one is Lora's, despite the displayed name — off the public
   // page until her family agrees.
@@ -122,14 +126,14 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   //   2. Match the displayed name to the gender in that artwork. The name drives
   //      detectGender, which resolves the story's {masc|fem} tokens, so a boy's
   //      name over a picture of a girl gives masculine text on a girl's cover.
-  { key: 'baha-dinosaur',   themeId: 'dinosaur_adventure', name: 'Baha',  emoji: '🦕' },
-  { key: 'baha-ocean',     themeId: 'ocean_adventure',    name: 'Baha', emoji: '🐋' },
-  { key: 'baha-pirate',     themeId: 'pirate_adventure',   name: 'Baha',  emoji: '🏴‍☠️' },
-  { key: 'baha-school',     themeId: 'school_hero',        name: 'Baha',  emoji: '🏫' },
-  { key: 'ahmad-world',      themeId: 'world_adventure',    name: 'Ahmad',  emoji: '🌍' },
-  { key: 'baha-deepsea',   themeId: 'deep_sea',           name: 'Baha', emoji: '🐬' },
-  { key: 'baha-chef',       themeId: 'little_chef',        name: 'Baha',  emoji: '🍳' },
-  { key: 'baha-castle',     themeId: 'castle_guardian',    name: 'Baha',  emoji: '🏰' },
+  { key: 'mariam-dinosaur', themeId: 'dinosaur_adventure', name: 'Mariam',  emoji: '🦕' },
+  { key: 'omar-ocean', themeId: 'ocean_adventure', name: 'Omar', emoji: '🐋' },
+  { key: 'karim-pirate', themeId: 'pirate_adventure', name: 'Karim',  emoji: '🏴‍☠️' },
+  { key: 'tala-school', themeId: 'school_hero', name: 'Tala',  emoji: '🏫' },
+  { key: 'tala-world', themeId: 'world_adventure', name: 'Tala',  emoji: '🌍' },
+  { key: 'mariam-deepsea', themeId: 'deep_sea', name: 'Mariam', emoji: '🐬' },
+  { key: 'salma-chef', themeId: 'little_chef', name: 'Salma',  emoji: '🍳' },
+  { key: 'salma-castle', themeId: 'castle_guardian', name: 'Salma',  emoji: '🏰' },
   // Re-cast in October 2026 onto five SYNTHETIC children — تالا, سلمى, مريم,
   // كريم, عمر — so the shop stops being one boy twenty times over. The faces
   // are AI-generated and belong to nobody, which is why these carry no
@@ -139,14 +143,14 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   // The keys changed with the names on purpose: a stored home/stories tick
   // belonged to Baha's card, and that card is gone.
   { key: 'tala-kinder',     themeId: 'happy_kindergarten', name: 'Tala',   emoji: '🧸' },
-  { key: 'baha-firstday',   themeId: 'first_day_school',   name: 'Baha',  emoji: '🎒' },
-  { key: 'baha-grade1',    themeId: 'first_grade',        name: 'Baha', emoji: '✏️' },
-  { key: 'baha-future',     themeId: 'future_hero',        name: 'Baha',  emoji: '🚀' },
-  { key: 'baha-engineer',   themeId: 'little_engineer',    name: 'Baha',  emoji: '🛠️' },
+  { key: 'salma-firstday', themeId: 'first_day_school', name: 'Salma',  emoji: '🎒' },
+  { key: 'karim-grade1', themeId: 'first_grade', name: 'Karim', emoji: '✏️' },
+  { key: 'karim-future', themeId: 'future_hero', name: 'Karim',  emoji: '🚀' },
+  { key: 'mariam-engineer', themeId: 'little_engineer', name: 'Mariam',  emoji: '🛠️' },
   // سلسلة الهلال — both generated from Baha's photo, so no permission question.
-  { key: 'baha-ramadan',    themeId: 'ramadan_first',      name: 'Baha',  emoji: '🌙' },
-  { key: 'baha-eid',        themeId: 'eid_first',          name: 'Baha',  emoji: '🎁' },
-  { key: 'baha-bigbrother', themeId: 'big_brother',        name: 'Baha',  emoji: '👶' },
+  { key: 'omar-ramadan', themeId: 'ramadan_first', name: 'Omar',  emoji: '🌙' },
+  { key: 'tala-eid', themeId: 'eid_first', name: 'Tala',  emoji: '🎁' },
+  { key: 'mariam-bigbrother', themeId: 'big_brother', name: 'Mariam',  emoji: '👶' },
   // These five were drawn from Lora's photograph and sat here as `private`,
   // waiting on her family. That is no longer what is on the covers: all five
   // themes were re-shot from Baha's photo on 2026-09-30, every page of every
@@ -161,16 +165,16 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   // The keys change with the names on purpose: a stored home/stories tick
   // belongs to the card it was given to, and that card no longer exists.
   { key: 'salma-vet',       themeId: 'little_vet',         name: 'Salma',  emoji: '🐾' },
-  { key: 'baha-dabke',      themeId: 'dabke',              name: 'Baha',  emoji: '🥁' },
-  { key: 'baha-jaffa',      themeId: 'jaffa_day',          name: 'Baha',  emoji: '⛵' },
+  { key: 'salma-dabke', themeId: 'dabke', name: 'Salma',  emoji: '🥁' },
+  { key: 'karim-jaffa', themeId: 'jaffa_day', name: 'Karim',  emoji: '⛵' },
   { key: 'mariam-oud',      themeId: 'oud_lesson',         name: 'Mariam', emoji: '🎶' },
-  { key: 'baha-jerusalem',  themeId: 'jerusalem_tale',     name: 'Baha',  emoji: '🏮' },
+  { key: 'omar-jerusalem', themeId: 'jerusalem_tale', name: 'Omar',  emoji: '🏮' },
   // Four stories written in October 2026 — olive season, the thobe, Eid
   // maamoul and a birthday. Drawn from Baha's photo like the rest, so no
   // permission question; they appear on /stories as soon as the artwork
   // exists and the owner ticks them for the home page.
   { key: 'karim-olive',     themeId: 'olive_harvest',      name: 'Karim',  emoji: '🫒' },
-  { key: 'baha-thobe', themeId: 'palestinian_thobe', name: 'Baha', emoji: '🧵' },
-  { key: 'baha-maamoul', themeId: 'maamoul_day', name: 'Baha', emoji: '🍪' },
+  { key: 'omar-thobe', themeId: 'palestinian_thobe', name: 'Omar', emoji: '🧵' },
+  { key: 'karim-maamoul', themeId: 'maamoul_day', name: 'Karim', emoji: '🍪' },
   { key: 'omar-birthday',   themeId: 'my_birthday',        name: 'Omar',   emoji: '🎂' },
 ];
