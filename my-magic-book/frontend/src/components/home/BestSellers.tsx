@@ -46,7 +46,9 @@ export default function BestSellers() {
   // was slow/unreliable — kids' photos appeared missing). The preview modal still
   // uses the full-res cover.
   const bestSellers = [
-    { id: 1, themeId: 'zoo_adventure', name: 'Baha', emoji: '🦁', tag: t('bestsellers.tag_best_seller'), colors: ['#33691e', '#558b2f'], localCover: '/showcase/baha.webp' },
+    // Tala, not Baha: the zoo theme was re-shot onto the new demo children, so
+    // the card was showing one child's face above another child's book.
+    { id: 1, themeId: 'zoo_adventure', name: 'Tala', emoji: '🦁', tag: t('bestsellers.tag_best_seller'), colors: ['#33691e', '#558b2f'], localCover: '/showcase/tala.webp' },
     { id: 2, themeId: 'space', name: 'Liam', emoji: '🚀', tag: t('bestsellers.tag_new'), colors: ['#1a237e', '#311b92'], coverPath: 'magic-fanoose/generated/6a43cbf500c3ecaed9218b3c/page-00.png', localCover: '/showcase/liam.webp' },
     { id: 3, themeId: 'school_coloring', name: 'Yosef', emoji: '🎒', tag: t('bestsellers.tag_featured'), colors: ['#4a148c', '#6a1b9a'], localCover: '/showcase/yosef.webp' },
     { id: 4, themeId: 'space_coloring', name: 'Hamza', emoji: '🎨', tag: '', colors: ['#006064', '#00838f'], localCover: '/showcase/hamza.webp' },

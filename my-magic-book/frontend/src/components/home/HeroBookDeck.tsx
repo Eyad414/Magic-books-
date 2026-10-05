@@ -22,7 +22,17 @@ import { getThemeLabel } from '../../utils/themeLabel';
  * trade the first impression for the fourth. The rest arrive afterwards.
  */
 
-/** The opening frame: local, instant — a copy of theme_world_adventure's cover. */
+/**
+ * The opening frame: local, instant — a copy of theme_world_adventure's cover.
+ *
+ * Being a COPY is the catch. When that theme is re-shot onto a different demo
+ * child, this file does not follow, and the home page goes on opening with the
+ * child who used to be in it — then rotates to the new one a few seconds later,
+ * from the same theme, under the same name. That is how the page kept showing
+ * Baha for weeks after every book had been re-cast. Re-export this file
+ * whenever world_adventure's cover is regenerated, and trim the painted frame
+ * off it: the covers carry one and this image is shown full-bleed.
+ */
 const FIRST_SRC = '/showcase/hero-book.webp';
 const FIRST_THEME = 'world_adventure';
 

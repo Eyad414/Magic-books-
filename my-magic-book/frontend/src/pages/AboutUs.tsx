@@ -133,7 +133,7 @@ export default function AboutUs() {
               to="/create"
               className="inline-flex items-center gap-2 min-h-[44px] px-5 rounded-2xl bg-white/5 border border-gold-500/30 text-gold-500 font-arabic font-bold text-sm hover:bg-gold-500/10 hover:border-gold-500/50 transition-all"
             >
-              ✨ {t('about.follow_cta', 'أو ابدأ قصة طفلك الآن')}
+              ✨ {t('about.follow_cta', 'ابدأ قصة طفلك الآن')}
             </Link>
           </div>
         </div>
