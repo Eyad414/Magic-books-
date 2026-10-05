@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { BrandMark, BrandWordmark, BrandLamp } from '../common/BrandLogo';
 
 interface BackCoverProps {
   childName: string;
@@ -120,7 +121,7 @@ export default function BackCover({ childName, childPhoto, currentStoryId }: Bac
             <div key={tz.id} className="bc-story-card">
               <div className="bc-story-thumb-wrap">
                 <div className="bc-story-thumb-clip">
-                  <img src="/logo.png?v=7" alt="Magic Fanoos" className="bc-story-logo" decoding="async" />
+                  <BrandLamp className="bc-story-logo" />
                 </div>
                 <span className="bc-story-emoji" aria-hidden="true">{tz.emoji}</span>
               </div>
@@ -133,10 +134,10 @@ export default function BackCover({ childName, childPhoto, currentStoryId }: Bac
       <div className="bc-divider" aria-hidden="true" />
 
       {/* Footer */}
-      <div className="bc-footer">
-        <img src="/logo.png?v=7" alt="Magic Fanoos" className="bc-footer-logo" />
+      <div className="bc-footer" dir="ltr">
+        <BrandMark className="bc-footer-logo" />
         <div className="bc-footer-text">
-          <span className="bc-footer-brand">Magic Fanoos</span>
+          <BrandWordmark tone="onDark" className="bc-footer-word" />
           <span className="bc-footer-url">🌐 MagicFanoos.com</span>
         </div>
       </div>
@@ -327,6 +328,7 @@ export default function BackCover({ childName, childPhoto, currentStoryId }: Bac
           margin-top: auto;
           width: 100%;
         }
+        .bc-footer-word { height: 22px; width: auto; }
         .bc-footer-logo {
           width: 42px;
           height: 42px;

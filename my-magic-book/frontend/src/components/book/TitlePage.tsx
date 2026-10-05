@@ -3,6 +3,7 @@
 // Dark navy / starfield aesthetic.
 
 import { useTranslation } from 'react-i18next';
+import { BrandMark, BrandWordmark } from '../common/BrandLogo';
 
 interface TitlePageProps {
   storyTitle: string;   // already has child's name baked in
@@ -28,8 +29,8 @@ export default function TitlePage({ storyTitle, childName }: TitlePageProps) {
 
       {/* Logo + brand */}
       <div className="tp-brand">
-        <img src="/logo.png?v=7" alt="Magic Fanoos" className="tp-logo" />
-        <span className="tp-brand-name">Magic Fanoos</span>
+        <BrandMark className="tp-logo" />
+        <BrandWordmark tone="onDark" className="tp-brand-word" />
       </div>
 
       {/* Divider */}
@@ -87,9 +88,11 @@ export default function TitlePage({ storyTitle, childName }: TitlePageProps) {
         .tp-logo {
           width: 72px;
           height: 72px;
-          border-radius: 50%;
-          object-fit: contain;
-          filter: drop-shadow(0 0 16px rgba(212,169,55,0.6));
+          filter: drop-shadow(0 0 16px rgba(212,169,55,0.45));
+        }
+        .tp-brand-word {
+          height: 26px;
+          width: auto;
         }
         .tp-brand-name {
           font-size: 1rem;

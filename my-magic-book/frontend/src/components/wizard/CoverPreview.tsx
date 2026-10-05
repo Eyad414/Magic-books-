@@ -7,6 +7,7 @@ import { storyApi } from '../../api/storyApi';
 import { toDisplayUrl } from '../../api/mediaUrl';
 import { resolveGender, applyGenderTokens } from '../../utils/gender';
 import { localizeName } from '../../utils/translit';
+import { BrandMark, BrandWordmark } from '../common/BrandLogo';
 
 interface Props {
   childName: string;
@@ -162,10 +163,10 @@ export default function CoverPreview({ childName, childGender, childPhotoUrl, th
                   {storyTitle}
                 </h3>
               )}
-              <div className="flex items-center justify-center gap-1.5">
-                <img src="/logo.png?v=7" alt="" className="w-5 h-5 object-contain" />
-                <div className="flex flex-col items-start leading-none">
-                  <span className="font-brand text-gold-500 text-[10px] tracking-wide">Magic Fanoos</span>
+              <div className="flex items-center justify-center gap-1.5" dir="ltr">
+                <BrandMark className="w-5 h-5" />
+                <div className="flex flex-col items-start leading-none gap-0.5">
+                  <BrandWordmark tone="onDark" className="h-3 w-auto" />
                   <span className="font-arabic text-white/45 text-[7px] mt-0.5">
                     {t('storybook.cover_brand_tag', 'قصة بتصميم شخصي من Magic Fanoos')}
                   </span>

@@ -4,6 +4,7 @@ import HTMLFlipBook from 'react-pageflip';
 import { resolveGender, applyGenderTokens } from '../../utils/gender';
 import { localizeName } from '../../utils/translit';
 import { asSpreads } from '../../utils/bookSpreads';
+import { BrandMark, BrandWordmark, BrandLamp } from '../common/BrandLogo';
 
 /*
  * A note on `text-paper` throughout this file.
@@ -333,9 +334,9 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                   <div className="h-full w-full relative" style={{ background: '#0a1426' }} dir={dir}>
                     <img src={page.image} alt="" className="absolute inset-0 w-full h-full object-cover" onError={hideOnError} />
                     <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(5,10,21,0.92) 0%, rgba(5,10,21,0.05) 42%, rgba(5,10,21,0.45) 100%)' }} />
-                    <div className="absolute top-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
-                      <img src="/logo.png?v=7" alt="" className="w-6 h-6 object-contain" />
-                      <span className="font-brand text-gold-500 text-[11px] tracking-wide">Magic Fanoos</span>
+                    <div className="absolute top-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5" dir="ltr">
+                      <BrandMark className="w-6 h-6" />
+                      <BrandWordmark tone="onDark" className="h-[13px] w-auto" />
                     </div>
                     <h3 className="absolute bottom-4 left-0 right-0 px-4 font-arabic font-black text-paper text-base leading-snug text-center drop-shadow-lg">{page.title}</h3>
                   </div>
@@ -345,8 +346,8 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                     style={{ background: 'radial-gradient(ellipse at 50% 28%, #17294a 0%, #0a1426 68%, #050a15 100%)' }}
                     dir={dir}
                   >
-                    <img src="/logo.png?v=7" alt="" className="w-16 h-16 object-contain mb-2 drop-shadow-[0_0_12px_rgba(212,169,55,0.5)]" />
-                    <span className="font-brand text-gold-500 text-sm tracking-wide">Magic Fanoos</span>
+                    <BrandMark className="w-16 h-16 mb-2 drop-shadow-[0_0_12px_rgba(212,169,55,0.4)]" />
+                    <BrandWordmark tone="onDark" className="h-[18px] w-auto" />
                     <div className="w-10 h-px bg-gold-500/50 my-2.5" />
                     <h3 className="font-arabic font-black text-paper text-base leading-snug">{page.title}</h3>
                   </div>
@@ -360,8 +361,8 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                 >
                   <span className="fbp-spark" style={{ top: '14%', left: '16%' }}>✦</span>
                   <span className="fbp-spark" style={{ top: '76%', right: '14%', animationDelay: '1.2s' }}>✦</span>
-                  <img src="/logo.png?v=7" alt="" className="w-11 h-11 object-contain mb-1 drop-shadow-[0_0_12px_rgba(212,169,55,0.5)]" />
-                  <span className="font-brand text-gold-500 text-[11px] tracking-wide">Magic Fanoos</span>
+                  <BrandMark className="w-11 h-11 mb-1 drop-shadow-[0_0_12px_rgba(212,169,55,0.4)]" />
+                  <BrandWordmark tone="onDark" className="h-[13px] w-auto" />
                   <div className="fbp-cdiv my-2" />
                   <p className="font-arabic text-gold-400/85 text-[8px] mb-1">
                     ✦ {ftLocal('title_page.presents', 'يُقدّم لـ')} {page.childName} ✦
@@ -396,9 +397,9 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                   style={{ background: 'linear-gradient(165deg, #0a1628 0%, #050a15 100%)' }}
                   dir={dir}
                 >
-                  <div className="flex items-center gap-1.5">
-                    <img src="/logo.png?v=7" alt="" className="w-6 h-6 object-contain" />
-                    <span className="font-brand text-gold-500 text-[10px] tracking-wide">Magic Fanoos</span>
+                  <div className="flex items-center gap-1.5" dir="ltr">
+                    <BrandMark className="w-6 h-6" />
+                    <BrandWordmark tone="onDark" className="h-3 w-auto" />
                   </div>
                   <div className="fbp-cdiv" />
                   <p className="font-arabic text-gold-300/80 text-[7px]">✦ MagicFanoos.com</p>
@@ -465,12 +466,21 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                   dir={dir}
                 >
                   <div className="relative mb-1.5">
-                    <img
-                      src={page.image || '/logo.png?v=7'}
-                      alt=""
-                      className="w-16 h-16 rounded-full object-cover border-2 border-gold-500/70 shadow-[0_0_14px_rgba(212,169,55,0.45)]"
-                      onError={hideOnError}
-                    />
+                    {page.image ? (
+                      <img
+                        src={page.image}
+                        alt=""
+                        className="w-16 h-16 rounded-full object-cover border-2 border-gold-500/70 shadow-[0_0_14px_rgba(212,169,55,0.45)]"
+                        onError={hideOnError}
+                      />
+                    ) : (
+                      <div
+                        className="w-16 h-16 rounded-full border-2 border-gold-500/70 shadow-[0_0_14px_rgba(212,169,55,0.45)] flex items-center justify-center"
+                        style={{ background: 'radial-gradient(circle at 50% 45%, #11233f, #0a1628)' }}
+                      >
+                        <BrandLamp className="w-[86%] h-[86%]" />
+                      </div>
+                    )}
                     <span className="absolute -top-1 -right-1 text-gold-400 text-[8px]">✦</span>
                     <span className="absolute -bottom-1 -left-1 text-gold-400 text-[8px]">✧</span>
                   </div>
@@ -495,10 +505,10 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                   )}
 
                   <div className="fbp-cdiv" />
-                  <div className="flex items-center gap-1.5">
-                    <img src="/logo.png?v=7" alt="" className="w-5 h-5 object-contain" />
-                    <div className="flex flex-col items-start leading-none">
-                      <span className="font-brand text-gold-500 text-[9px] tracking-wide">Magic Fanoos</span>
+                  <div className="flex items-center gap-1.5" dir="ltr">
+                    <BrandMark className="w-5 h-5" />
+                    <div className="flex flex-col items-start leading-none gap-0.5">
+                      <BrandWordmark tone="onDark" className="h-[11px] w-auto" />
                       <span className="font-arabic text-paper/30 text-[7px] mt-0.5">🌐 MagicFanoos.com</span>
                     </div>
                   </div>

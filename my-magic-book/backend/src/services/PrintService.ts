@@ -33,19 +33,32 @@ async function websiteQrDataUri(): Promise<string> {
   return _qrUri;
 }
 
-// The Magic Fanoos brand logo, embedded (base64) so the server-side PDF render
-// can show it without a network fetch. Read once and cached.
-let _logoDataUri: string | null = null;
-function logoDataUri(): string {
-  if (_logoDataUri !== null) return _logoDataUri;
+// The Magic Fanoos brand, embedded (base64) so the server-side PDF render can
+// show it without a network fetch. It is the same artwork the website draws
+// (frontend BrandLogo.tsx): the lamp in a starry-night tile, and "magic
+// fanoos" with its letters already outlined, so no font is needed to print it.
+// SVG, so the printer gets vector edges at any size rather than a 512px PNG.
+// Each copy goes in as its own <img>, so their gradient ids can't collide.
+// Read once and cached.
+const _brand: Record<string, string> = {};
+function brandAsset(name: 'mark' | 'wordmark-on-dark' | 'lamp'): string {
+  if (name in _brand) return _brand[name];
   try {
-    const buf = fs.readFileSync(path.join(process.cwd(), 'assets', 'logo.png'));
-    _logoDataUri = `data:image/png;base64,${buf.toString('base64')}`;
+    const buf = fs.readFileSync(path.join(process.cwd(), 'assets', 'brand', `${name}.svg`));
+    _brand[name] = `data:image/svg+xml;base64,${buf.toString('base64')}`;
   } catch (e: any) {
-    console.warn('[PrintService] logo.png not found for cover:', e?.message || e);
-    _logoDataUri = '';
+    console.warn(`[PrintService] brand/${name}.svg not found:`, e?.message || e);
+    _brand[name] = '';
   }
-  return _logoDataUri;
+  return _brand[name];
+}
+const markDataUri = () => brandAsset('mark');
+const wordmarkDataUri = () => brandAsset('wordmark-on-dark');
+const brandLampDataUri = () => brandAsset('lamp');
+/** The wordmark as an image, or the name as plain text if the asset is missing. */
+function brandWord(cls: string, fallbackCls: string): string {
+  const w = wordmarkDataUri();
+  return w ? `<img class="${cls}" src="${w}" alt="Magic Fanoos" />` : `<div class="${fallbackCls}">Magic Fanoos</div>`;
 }
 
 // The magic-lamp emblem shown on the story text pages (embedded, cached).
@@ -461,7 +474,8 @@ const SHARED_CSS = `
   /* ── Rich interior pages (match the on-screen book) ─────────────────────── */
   /* Inside title page */
   .pt-page { background: linear-gradient(160deg,#050a15,#0a1628 50%,#0e1f3d); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7mm; padding:24mm; text-align:center; }
-  .pt-logo { width:42mm; height:42mm; object-fit:contain; filter:drop-shadow(0 0 8mm rgba(212,169,55,0.6)); }
+  .pt-logo { width:42mm; height:42mm; filter:drop-shadow(0 0 8mm rgba(212,169,55,0.45)); }
+  .pt-word { height:14mm; width:auto; }
   .pt-brand-name { font-size:15pt; font-weight:800; color:#D4A937; letter-spacing:2px; }
   .pt-rule { width:44mm; height:0.6mm; background:linear-gradient(90deg,transparent,#D4A937,transparent); }
   .pt-presents { font-size:13pt; color:rgba(212,169,55,0.8); font-weight:600; letter-spacing:1px; margin-bottom:4mm; }
@@ -470,7 +484,9 @@ const SHARED_CSS = `
   .pt-website { font-size:11pt; color:rgba(212,169,55,0.6); letter-spacing:2px; font-weight:600; }
   /* Full-logo separator page */
   .fp-page { background:radial-gradient(ellipse at center,#1a2440,#0a1020); display:flex; align-items:center; justify-content:center; padding:20mm; }
-  .fp-logo { max-width:82%; max-height:82%; object-fit:contain; border-radius:6mm; filter:drop-shadow(0 6mm 20mm rgba(0,0,0,0.55)); }
+  .fp-brand { display:flex; flex-direction:column; align-items:center; gap:14mm; }
+  .fp-mark { width:96mm; height:96mm; filter:drop-shadow(0 6mm 20mm rgba(0,0,0,0.55)); }
+  .fp-word { width:138mm; height:auto; }
   /* Dedication page */
   .ded2-page { background:linear-gradient(145deg,#fdf8ee,#fef3d0 50%,#fff8e1); border:2mm solid #D4A937; display:flex; flex-direction:column; align-items:center; gap:6mm; padding:22mm 18mm; text-align:center; }
   .ded2-photo-empty { background:radial-gradient(circle at 50% 35%, #fffdf6, #f6e7bd); }
@@ -500,7 +516,8 @@ const SHARED_CSS = `
   .fsp2-qr-img { width:30mm; height:30mm; display:block; }
   /* Copyright / contact page */
   .cp2-page { background:linear-gradient(160deg,#0a1628,#050a15); display:flex; flex-direction:column; align-items:center; gap:5mm; padding:22mm 18mm; text-align:center; direction:rtl; }
-  .cp2-logo { width:36mm; height:36mm; object-fit:contain; filter:drop-shadow(0 0 6mm rgba(212,169,55,0.55)); }
+  .cp2-logo { width:36mm; height:36mm; filter:drop-shadow(0 0 6mm rgba(212,169,55,0.45)); }
+  .cp2-word { height:12mm; width:auto; }
   .cp2-brand { font-size:15pt; font-weight:800; color:#D4A937; letter-spacing:2px; }
   .cp2-divider { width:100%; height:0.4mm; background:linear-gradient(90deg,transparent,rgba(212,169,55,0.3),transparent); }
   .cp2-info-row { display:flex; align-items:center; justify-content:center; gap:3mm; font-size:13pt; }
@@ -552,14 +569,14 @@ function finalStoryPageHtml(title: string, moral: string, questions: string[], c
   </div>`;
 }
 function copyrightPageHtml(qr = ''): string {
-  const logo = logoDataUri();
+  const mark = markDataUri();
   const lantern = lanternDataUri();
   return `<div class="page cp2-page">
-    ${logo ? `<img class="cp2-logo" src="${logo}" alt="" />` : ''}
-    <div class="cp2-brand">Magic Fanoos</div>
+    ${mark ? `<img class="cp2-logo" src="${mark}" alt="" />` : ''}
+    ${brandWord('cp2-word', 'cp2-brand')}
     <div class="cp2-divider"></div>
     <div class="cp2-info-row">${sparkSpan(4)} <span class="cp2-link">MagicFanoos.com</span></div>
-    <div class="cp2-info-row">${sparkSpan(4)} <span class="cp2-link">magicfanoose@gmail.com</span></div>
+    <div class="cp2-info-row">${sparkSpan(4)} <span class="cp2-link">hello@magicfanoos.com</span></div>
     <div class="cp2-divider"></div>
     <div class="cp2-policy">
       <p><strong>سياسة المحتوى:</strong> القصة والصور مخصّصة لطفلك للاستخدام العائلي فقط، ولا يجوز إعادة بيعها أو توزيعها تجاريًا.</p>
@@ -606,10 +623,10 @@ function storyTextPageHtml(text: string, idx = 0, lantern = ''): string {
     `<div class="stp-divider"></div><div class="stp-txt">${text}</div></div></div>`;
 }
 function titlePageHtml(title: string, childName = ''): string {
-  const logo = logoDataUri();
+  const mark = markDataUri();
   return `<div class="page pt-page">
-    ${logo ? `<img class="pt-logo" src="${logo}" alt="" />` : ''}
-    <div class="pt-brand-name">Magic Fanoos</div>
+    ${mark ? `<img class="pt-logo" src="${mark}" alt="" />` : ''}
+    ${brandWord('pt-word', 'pt-brand-name')}
     <div class="pt-rule"></div>
     <div>
       ${childName ? `<div class="pt-presents">✦ يُقدّم لـ ${childName} ✦</div>` : ''}
@@ -621,8 +638,10 @@ function titlePageHtml(title: string, childName = ''): string {
   </div>`;
 }
 function fanoosPageHtml(): string {
-  const logo = logoDataUri();
-  return `<div class="page fp-page">${logo ? `<img class="fp-logo" src="${logo}" alt="Magic Fanoos" />` : '<div class="fanoos-emblem">🏮</div>'}</div>`;
+  const mark = markDataUri();
+  return `<div class="page fp-page">${mark
+    ? `<div class="fp-brand"><img class="fp-mark" src="${mark}" alt="" />${brandWord('fp-word', 'pt-brand-name')}</div>`
+    : '<div class="fanoos-emblem">🏮</div>'}</div>`;
 }
 function endPageHtml(childName: string): string {
   return `<div class="page end-page"><div class="end-mark">🌟 ✦ 🌟</div><div class="ded-text">${childName} 💛<br/>Magic Fanoos</div></div>`;
@@ -667,10 +686,11 @@ interface WraparoundDocArgs {
 }
 
 function wraparoundDoc(a: WraparoundDocArgs): string {
-  const logo = logoDataUri();
+  const mark = markDataUri();
+  const lamp = brandLampDataUri();
   // Front cover: title + the brand logo + name (falls back to a text brand line).
-  const brand = logo
-    ? `<div class="cover-brand"><img class="cover-brand-logo" src="${logo}" alt="" /><span class="cover-brand-name">Magic Fanoos</span></div>`
+  const brand = mark
+    ? `<div class="cover-brand"><img class="cover-brand-logo" src="${mark}" alt="" />${brandWord('cover-brand-word', 'cover-brand-name')}</div>`
     : `<div class="cover-sub">${a.kind === 'coloring' ? '🖍️ كتاب تلوين · Magic Fanoos' : '✨ Magic Fanoos'}</div>`;
   const frontPanel = `<div class="panel">
     <img class="bleed" src="${a.frontSrc}" alt="front" />
@@ -683,13 +703,13 @@ function wraparoundDoc(a: WraparoundDocArgs): string {
   if (a.kind === 'story') {
     const teasers = pickTeasers(a.theme, a.childName).map((tz) => `
       <div class="bc-card">
-        <div class="bc-thumb">${logo ? `<img class="bc-thumb-logo" src="${logo}" alt="" />` : ''}<span class="bc-emoji">${tz.emoji}</span></div>
+        <div class="bc-thumb">${lamp ? `<img class="bc-thumb-logo" src="${lamp}" alt="" />` : ''}<span class="bc-emoji">${tz.emoji}</span></div>
         <div class="bc-card-title">${a.childName} ${tz.ar}</div>
       </div>`).join('');
     backPanel = `<div class="panel back-designed" dir="rtl">
       <div class="bc-hero">
         <div class="bc-photo-frame"><div class="bc-photo-ring"></div><img class="bc-photo" src="${a.childPhotoSrc || a.backSrc}" alt="" /></div>
-        ${logo ? `<img class="bc-greet-logo" src="${logo}" alt="Magic Fanoos" />` : ''}
+        ${mark ? `<img class="bc-greet-logo" src="${mark}" alt="Magic Fanoos" />` : ''}
         <div class="bc-greeting">${sparkSpan(5)} أحسنت يا ${a.childName}! ${sparkSpan(5)}</div>
         <div class="bc-subtxt">أتممت قراءة قصتك السحرية — استمر في المغامرة!</div>
       </div>
@@ -699,7 +719,7 @@ function wraparoundDoc(a: WraparoundDocArgs): string {
         <div class="bc-grid">${teasers}</div>
       </div>
       <div class="bc-line"></div>
-      <div class="bc-foot">${logo ? `<img class="bc-foot-logo" src="${logo}" alt="" />` : ''}<div class="bc-foot-text"><span class="bc-foot-brand">Magic Fanoos</span><span class="bc-foot-url">${sparkSpan(3.5)} MagicFanoos.com</span></div></div>
+      <div class="bc-foot">${mark ? `<img class="bc-foot-logo" src="${mark}" alt="" />` : ''}<div class="bc-foot-text">${brandWord('bc-foot-word', 'bc-foot-brand')}<span class="bc-foot-url">${sparkSpan(3.5)} MagicFanoos.com</span></div></div>
     </div>`;
   } else {
     backPanel = `<div class="panel">
@@ -725,7 +745,8 @@ function wraparoundDoc(a: WraparoundDocArgs): string {
 
   /* Front cover brand row (logo + name) */
   .cover-brand { display: flex; align-items: center; justify-content: center; gap: 4mm; margin-top: 5mm; }
-  .cover-brand-logo { width: 16mm; height: 16mm; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6)); }
+  .cover-brand-logo { width: 16mm; height: 16mm; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6)); }
+  .cover-brand-word { height: 9mm; width: auto; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.6)); }
   .cover-brand-name { color: #ffd479; font-weight: 900; font-size: 15pt; }
 
   /* Designed story back cover — mirrors the on-screen back cover */
@@ -738,7 +759,7 @@ function wraparoundDoc(a: WraparoundDocArgs): string {
   .bc-photo-frame { position: relative; width: 56mm; height: 56mm; display: flex; align-items: center; justify-content: center; }
   .bc-photo-ring { position: absolute; inset: -3mm; border-radius: 50%; background: conic-gradient(from 0deg, #D4A937, #fff3c4, #D4A937, #b88c20, #D4A937); }
   .bc-photo { position: relative; width: 52mm; height: 52mm; border-radius: 50%; object-fit: cover; object-position: center 30%; border: 1.8mm solid #0a1628; box-shadow: 0 4mm 12mm rgba(0,0,0,0.6); }
-  .bc-greet-logo { width: 17mm; height: 17mm; object-fit: contain; filter: drop-shadow(0 0 3mm rgba(212,169,55,0.5)); }
+  .bc-greet-logo { width: 17mm; height: 17mm; filter: drop-shadow(0 0 3mm rgba(212,169,55,0.4)); }
   .bc-greeting { font-size: 26pt; font-weight: 900; color: #D4A937; }
   .bc-subtxt { font-size: 12pt; color: rgba(255,255,255,0.62); max-width: 130mm; line-height: 1.5; }
   .bc-line { width: 88%; height: 0.4mm; background: linear-gradient(90deg, transparent, rgba(212,169,55,0.4), transparent); }
@@ -750,8 +771,10 @@ function wraparoundDoc(a: WraparoundDocArgs): string {
   .bc-thumb-logo { width: 94%; height: 94%; object-fit: contain; }
   .bc-emoji { position: absolute; bottom: -1mm; right: -1mm; width: 8mm; height: 8mm; display: flex; align-items: center; justify-content: center; font-size: 10pt; background: #0a1628; border: 0.5mm solid rgba(212,169,55,0.5); border-radius: 50%; }
   .bc-card-title { font-size: 10pt; font-weight: 700; color: rgba(255,255,255,0.85); line-height: 1.4; }
-  .bc-foot { display: flex; align-items: center; justify-content: center; gap: 4mm; margin-top: auto; }
-  .bc-foot-logo { width: 15mm; height: 15mm; object-fit: contain; filter: drop-shadow(0 0 3mm rgba(212,169,55,0.5)); }
+  /* A logo reads the same way everywhere: icon, then name — even inside the RTL back panel. */
+  .bc-foot { display: flex; align-items: center; justify-content: center; gap: 4mm; margin-top: auto; direction: ltr; }
+  .bc-foot-logo { width: 15mm; height: 15mm; filter: drop-shadow(0 0 3mm rgba(212,169,55,0.4)); }
+  .bc-foot-word { height: 7mm; width: auto; margin-bottom: 1mm; }
   .bc-foot-text { display: flex; flex-direction: column; align-items: center; }
   .bc-foot-brand { font-size: 13pt; font-weight: 800; color: #D4A937; }
   .bc-foot-url { font-size: 10pt; color: rgba(212,169,55,0.65); font-weight: 600; }
@@ -1147,3 +1170,10 @@ export async function uploadPrintFiles(idKey: string, files: PrintFiles): Promis
     spineMm: files.spineMm,
   };
 }
+
+/**
+ * The pages that carry the brand, on their own — so a change to the logo can be
+ * checked by rendering exactly what the printer receives, without downloading
+ * artwork or building a whole book. Used by scripts/render-brand-pages.ts.
+ */
+export const brandedPagesForReview = { squareDoc, titlePageHtml, fanoosPageHtml, copyrightPageHtml, wraparoundDoc };

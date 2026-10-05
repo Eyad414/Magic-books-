@@ -6,8 +6,10 @@
 //   variant="cover" — glossy gold-on-dark used on the front cover
 //   variant="page"  — subtle gold pinstripe used on inner pages
 //
-// Logo source: /logo.png (already in frontend/public/). When the real logo
-// lands next week, drop the new file at the same path; no code change needed.
+// Logo: BrandMark + BrandWordmark (components/common/BrandLogo.tsx), the same
+// artwork the print pipeline embeds from backend/assets/brand/.
+
+import { BrandMark, BrandWordmark } from '../common/BrandLogo';
 
 interface BookBrandFooterProps {
   variant?: 'cover' | 'page';
@@ -17,9 +19,9 @@ interface BookBrandFooterProps {
 export default function BookBrandFooter({ variant = 'page', pageNumber }: BookBrandFooterProps) {
   return (
     <div className={`bbf bbf--${variant}`} aria-hidden="true">
-      <div className="bbf-inner">
-        <img src="/logo.png?v=7" alt="" className="bbf-logo" />
-        <span className="bbf-name">Magic Fanoos</span>
+      <div className="bbf-inner" dir="ltr">
+        <BrandMark className="bbf-logo" />
+        <BrandWordmark tone="onDark" className="bbf-word" />
         <span className="bbf-dot">•</span>
         <span className="bbf-url">MagicFanoos.com</span>
       </div>
@@ -44,6 +46,7 @@ export default function BookBrandFooter({ variant = 'page', pageNumber }: BookBr
           gap: 0.5rem;
           letter-spacing: 0.04em;
         }
+        .bbf-word { height: 13px; width: auto; }
         .bbf-logo {
           width: 22px;
           height: 22px;

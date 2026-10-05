@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { BrandMark, BrandWordmark } from '../common/BrandLogo';
 
 export default function CopyrightPage() {
   const { t, i18n } = useTranslation();
@@ -9,8 +10,8 @@ export default function CopyrightPage() {
 
       {/* Logo */}
       <div className="cp-logo-row">
-        <img src="/logo.png?v=7" alt="Magic Fanoos" className="cp-logo" />
-        <span className="cp-brand">Magic Fanoos</span>
+        <BrandMark className="cp-logo" />
+        <BrandWordmark tone="onDark" className="cp-brand-word" />
       </div>
 
       <div className="cp-divider" aria-hidden="true" />
@@ -100,9 +101,11 @@ export default function CopyrightPage() {
         .cp-logo {
           width: 64px;
           height: 64px;
-          border-radius: 50%;
-          object-fit: contain;
-          filter: drop-shadow(0 0 14px rgba(212,169,55,0.55));
+          filter: drop-shadow(0 0 14px rgba(212,169,55,0.45));
+        }
+        .cp-brand-word {
+          height: 24px;
+          width: auto;
         }
         .cp-brand {
           font-size: 1rem;

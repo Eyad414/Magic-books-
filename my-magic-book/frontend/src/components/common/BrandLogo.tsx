@@ -16,8 +16,9 @@ import { useId } from 'react';
  * follows the light/dark theme like the rest of the site; the mark carries its
  * own night sky and looks the same in both.
  *
- * The printed books keep their own branding — they mirror what goes to the
- * printer and are deliberately not changed from here.
+ * The books use it too — the on-screen book, the flipbook preview and the
+ * covers — with tone="onDark", and the print pipeline embeds the same artwork
+ * from backend/assets/brand/, so the preview and the printed page match.
  */
 
 const MAGIC = 'M7.8 0.6Q4.8 0.6 3.6 -0.3Q2.3 -1.2 2.1 -2.6Q1.8 -4 1.8 -5.4V-27Q1.8 -28.5 2.1 -29.9Q2.4 -31.2 3.6 -32.1Q4.9 -32.9 7.9 -32.9Q10.9 -32.9 12.2 -31.8Q13.6 -30.6 13.6 -28.1L12.5 -28.4Q12.5 -28.4 13 -29.1Q13.5 -29.8 14.4 -30.7Q15.4 -31.6 16.8 -32.3Q18.2 -33 19.9 -33Q22 -33 23.7 -32.5Q25.4 -31.9 26.8 -30.9Q28.2 -29.8 29.3 -28.2Q30 -29 31.3 -30.2Q32.5 -31.3 34.3 -32.1Q36 -33 38.2 -33Q42.1 -33 44.8 -31Q47.6 -29 49 -25.3Q50.4 -21.5 50.4 -16.2V-5.4Q50.4 -4 50.2 -2.6Q49.9 -1.2 48.6 -0.3Q47.4 0.6 44.4 0.6Q41.4 0.6 40.1 -0.3Q38.9 -1.3 38.6 -2.6Q38.4 -4 38.4 -5.5V-16.2Q38.4 -17.8 38 -18.8Q37.7 -19.9 37 -20.4Q36.3 -20.9 35.2 -20.9Q34.1 -20.9 33.4 -20.5Q32.7 -20 32.4 -19Q32.1 -18 32.1 -16.2V-5.4Q32.1 -4 31.9 -2.6Q31.6 -1.2 30.4 -0.3Q29.1 0.6 26.1 0.6Q23.1 0.6 21.8 -0.3Q20.6 -1.3 20.4 -2.6Q20.1 -4 20.1 -5.5V-16.2Q20.1 -17.8 19.8 -18.9Q19.5 -19.9 18.8 -20.4Q18.1 -20.9 17 -20.9Q15.6 -20.9 15 -20.3Q14.3 -19.6 14.1 -18.5Q13.9 -17.5 13.9 -16.2V-5.3Q13.9 -3.9 13.6 -2.5Q13.3 -1.1 12.1 -0.3Q10.8 0.6 7.8 0.6Z M80.5 0.5Q77.5 0.5 76.1 -0.5Q74.7 -1.5 74.7 -2.8H75.7Q75.3 -2.3 74.4 -1.6Q73.4 -0.8 71.8 -0.2Q70.3 0.5 67.9 0.5Q65 0.5 62.2 -0.9Q59.5 -2.2 57.3 -4.6Q55.2 -7 53.9 -10Q52.7 -13 52.7 -16.3Q52.7 -19.5 53.9 -22.5Q55.2 -25.5 57.4 -27.8Q59.6 -30.2 62.3 -31.5Q65 -32.9 67.9 -32.9Q70.2 -32.9 71.7 -32.2Q73.3 -31.5 74.2 -30.8Q75.2 -30 75.5 -29.4H74.8Q74.7 -31.1 76.2 -32Q77.6 -32.9 80.5 -32.9Q83.5 -32.9 84.7 -32Q86 -31.2 86.2 -29.8Q86.5 -28.4 86.5 -26.9V-5.5Q86.5 -4 86.2 -2.6Q86 -1.3 84.7 -0.4Q83.5 0.5 80.5 0.5ZM69.6 -11.5Q70.8 -11.5 71.9 -12.1Q72.9 -12.8 73.5 -13.9Q74.1 -15 74.1 -16.2Q74.1 -17.6 73.5 -18.6Q72.9 -19.7 71.8 -20.3Q70.8 -21 69.5 -21Q68.1 -21 67.1 -20.3Q66 -19.7 65.3 -18.6Q64.6 -17.5 64.6 -16.2Q64.6 -14.9 65.3 -13.9Q66 -12.8 67.1 -12.1Q68.3 -11.5 69.6 -11.5Z M105.5 14.5Q103.1 14.5 100.7 13.9Q98.3 13.3 96.3 12.2Q94.2 11.2 93 9.9Q91.7 8.7 91.7 7.5Q91.7 6.2 92.2 5.1Q92.7 4 93.7 2.9Q94.8 1.8 95.6 1.1Q96.4 0.5 97.5 0.5Q98.5 0.5 99.2 0.9Q100 1.4 100.8 1.9Q101.6 2.5 102.7 3Q103.9 3.4 105.7 3.4Q106.6 3.4 107.5 3Q108.4 2.6 109 1.8Q109.6 1.1 110 0Q110.4 -1 110.4 -2.2V-29.4Q110.7 -31.4 112.1 -32.2Q113.4 -33.1 116.3 -33.1Q119.2 -33.1 120.4 -32.2Q121.6 -31.4 121.8 -30Q122 -28.6 122 -27.2V-1.8Q122 2.1 120.5 5.1Q119.1 8.2 116.6 10.3Q114.2 12.3 111.3 13.4Q108.4 14.5 105.5 14.5ZM103.8 -0.4Q100.9 -0.4 98.2 -1.7Q95.6 -3 93.4 -5.3Q91.3 -7.7 90.1 -10.6Q88.9 -13.5 88.9 -16.8Q88.9 -19.9 90.1 -22.8Q91.3 -25.7 93.5 -28Q95.6 -30.2 98.3 -31.6Q101 -32.9 103.8 -32.9Q106.7 -32.9 108.6 -31.7Q110.5 -30.6 111.6 -28.4Q112.7 -26.2 113.1 -23.2Q113.6 -20.2 113.6 -16.6Q113.6 -11.6 112.8 -7.9Q111.9 -4.3 109.8 -2.3Q107.7 -0.4 103.8 -0.4ZM105.4 -12Q106.6 -12 107.7 -12.7Q108.7 -13.3 109.3 -14.4Q109.9 -15.4 109.9 -16.6Q109.9 -18 109.3 -19Q108.7 -20.1 107.6 -20.7Q106.6 -21.3 105.3 -21.3Q104 -21.3 103 -20.7Q101.9 -20 101.3 -18.9Q100.6 -17.9 100.6 -16.6Q100.6 -15.4 101.3 -14.4Q102 -13.3 103 -12.7Q104.1 -12 105.4 -12Z M131.3 0.6Q128.3 0.6 127.1 -0.3Q125.8 -1.2 125.6 -2.6Q125.4 -4 125.4 -5.4V-26.9Q125.4 -28.4 125.6 -29.7Q125.9 -31.1 127.1 -32Q128.4 -32.9 131.4 -32.9Q134.3 -32.9 135.5 -32Q136.8 -31.1 137 -29.7Q137.3 -28.3 137.3 -26.8V-5.3Q137.3 -3.9 137 -2.5Q136.8 -1.1 135.5 -0.3Q134.3 0.6 131.3 0.6Z M156.9 0.9Q154.2 0.9 151.2 -0.2Q148.2 -1.3 145.6 -3.4Q142.9 -5.5 141.3 -8.8Q139.6 -12 139.6 -16.3Q139.6 -20.5 141.3 -23.7Q142.9 -26.9 145.5 -29Q148.1 -31.2 151.2 -32.2Q154.2 -33.3 156.8 -33.3Q159.3 -33.3 161.2 -32.8Q163 -32.3 164.2 -31.6Q165.4 -31 165.9 -30.7Q167.2 -29.9 168.4 -28.9Q169.5 -27.9 169.5 -26.1Q169.5 -25.3 169.2 -24.4Q168.9 -23.5 168.1 -22.4Q165.8 -18.7 163.4 -18.7Q162.3 -18.7 161.5 -19.1Q160.8 -19.5 160.1 -19.9Q159.4 -20.4 158.7 -20.8Q157.9 -21.1 156.8 -21.1Q155.5 -21.1 154.4 -20.5Q153.2 -19.8 152.6 -18.7Q151.9 -17.6 151.9 -16.2Q151.9 -14.9 152.6 -13.7Q153.2 -12.6 154.3 -11.9Q155.4 -11.3 156.7 -11.3Q157.6 -11.3 158.2 -11.5Q158.8 -11.7 159.2 -11.9Q159.5 -12.1 159.6 -12.1Q160.5 -12.7 161.3 -13.1Q162.1 -13.6 163 -13.6Q164.1 -13.6 165.3 -12.8Q166.5 -11.9 167.9 -10.1Q169.3 -8.4 169.5 -6.9Q169.7 -5.4 168.7 -4.1Q167.8 -2.8 165.9 -1.7Q165.7 -1.5 164.6 -0.9Q163.4 -0.3 161.5 0.3Q159.6 0.9 156.9 0.9Z';
@@ -85,12 +86,53 @@ export function BrandMark({ className = 'h-12 w-12' }: { className?: string }) {
   );
 }
 
-export function BrandWordmark({ className = 'h-7 w-auto' }: { className?: string }) {
+/**
+ * `tone="theme"` follows the site's light/dark theme (header, footer, sign-in).
+ * `tone="onDark"` is for the BOOK: its pages are dark in both themes because
+ * they mirror the printed page, so a theme-following "fanoos" would turn navy
+ * on navy in light mode and vanish.
+ */
+export function BrandWordmark({
+  className = 'h-7 w-auto',
+  tone = 'theme',
+}: {
+  className?: string;
+  tone?: 'theme' | 'onDark';
+}) {
+  const fixed = tone === 'onDark';
   return (
-    <svg viewBox={WORDMARK_VIEWBOX} className={`mf-wordmark ${className}`} aria-hidden="true" focusable="false">
-      <path d={MAGIC} className="mf-gold" />
-      <path d={I_DOT} className="mf-gold" />
-      <path d={FANOOS} className="mf-ink" />
+    <svg viewBox={WORDMARK_VIEWBOX} className={`${fixed ? '' : 'mf-wordmark '}${className}`} aria-hidden="true" focusable="false">
+      <path d={MAGIC} className={fixed ? undefined : 'mf-gold'} fill={fixed ? '#FBBF24' : undefined} />
+      <path d={I_DOT} className={fixed ? undefined : 'mf-gold'} fill={fixed ? '#FBBF24' : undefined} />
+      <path d={FANOOS} className={fixed ? undefined : 'mf-ink'} fill={fixed ? '#FFFFFF' : undefined} />
+    </svg>
+  );
+}
+
+/** The lamp on its own, glowing, without the tile — for small round frames. */
+export function BrandLamp({ className = 'h-10 w-10' }: { className?: string }) {
+  const u = useUid();
+  return (
+    <svg viewBox="0 0 120 120" className={className} aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id={`${u}g`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#FDE68A" />
+          <stop offset="1" stopColor="#F59E0B" />
+        </linearGradient>
+        <radialGradient id={`${u}l`} cx="50%" cy="50%" r="50%">
+          <stop offset="0" stopColor="#FDE68A" stopOpacity=".5" />
+          <stop offset="1" stopColor="#FDE68A" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <circle cx="60" cy="62" r="50" fill={`url(#${u}l)`} />
+      <g transform="translate(4 30) scale(.92)" fill={`url(#${u}g)`}>
+        {LAMP.map((d) => <path key={d} d={d} />)}
+        <circle cx="63" cy="22.5" r="4.5" />
+        <rect x="57" y="59" width="12" height="7" />
+        <rect x="49" y="65" width="28" height="7" rx="3.5" />
+        <path d="M95 33 A12 12 0 1 1 95 54" fill="none" stroke={`url(#${u}g)`} strokeWidth="7" strokeLinecap="round" />
+      </g>
+      {SPARKS.map((d) => <path key={d} d={d} fill="#FDE68A" />)}
     </svg>
   );
 }

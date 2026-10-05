@@ -9,6 +9,7 @@
 // back to the kid portrait, then the theme background, then an avatar.
 
 import { useTranslation } from 'react-i18next';
+import { BrandMark, BrandWordmark } from '../common/BrandLogo';
 
 interface FrontCoverProps {
   childName: string;
@@ -41,10 +42,10 @@ export default function FrontCover({ childName, storyTitle, coverImage, childPho
       <div className="cover-overlay-content">
         <h1 className="cover-title">{storyTitle}</h1>
 
-        <div className="cover-brand">
-          <img src="/logo.png?v=7" alt="" className="cover-brand-logo" />
+        <div className="cover-brand" dir="ltr">
+          <BrandMark className="cover-brand-logo" />
           <div className="cover-brand-text">
-            <span className="cover-brand-name">Magic Fanoos</span>
+            <BrandWordmark tone="onDark" className="cover-brand-word" />
             <span className="cover-brand-tag">{t('storybook.cover_brand_tag', 'قصة بتصميم شخصي من Magic Fanoos')}</span>
           </div>
         </div>
@@ -117,9 +118,12 @@ export default function FrontCover({ childName, storyTitle, coverImage, childPho
         .cover-brand-logo {
           width: 34px;
           height: 34px;
-          object-fit: contain;
-          border-radius: 50%;
-          filter: drop-shadow(0 0 8px rgba(212,169,55,0.7));
+          filter: drop-shadow(0 0 8px rgba(212,169,55,0.55));
+        }
+        .cover-brand-word {
+          height: 20px;
+          width: auto;
+          margin-bottom: 2px;
         }
         .cover-brand-text {
           display: flex;
