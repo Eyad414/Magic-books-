@@ -36,3 +36,10 @@ faceswap-proto/
 
 # Local DB backups written by scripts/cleanupTestData.ts — never commit customer data
 my-magic-book/backend/backups/
+
+# Finder's duplicate-file naming ("HeroSection 2.tsx", "translation 2.json").
+# macOS makes these on a copy or an iCloud conflict; they are stale snapshots
+# that nothing imports. Two of them reached a commit once by being swept up in
+# a `git add` of a whole directory, so they are ignored by name instead.
+* 2.*
+* 3.*

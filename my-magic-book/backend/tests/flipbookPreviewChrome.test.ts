@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'fs';
+import { asSpreads } from '../../frontend/src/utils/bookSpreads';
 import path from 'path';
 
 /**
@@ -54,42 +55,114 @@ describe('the preview book keeps its own colours', () => {
   });
 });
 
-describe('the preview book sits on the centre line', () => {
-  it('parks itself by the sheet that is actually showing', () => {
-    expect(src).toMatch(/data-at=\{at\}/);
-    expect(src).toMatch(/data-at="front"\]\s*\{\s*transform:\s*translateX\(-25%\)/);
-    expect(src).toMatch(/data-at="back"\]\s*\{\s*transform:\s*translateX\(25%\)/);
+/**
+ * The book stays in one place.
+ *
+ * Centring it was done first by sliding it — half a page left on the lone
+ * cover, half a page right on the lone last sheet — which centred every state
+ * but made the book visibly move as it opened. The owner asked for it still.
+ *
+ * It is still because every sheet now has a partner, so the frame is always
+ * full and always the same width. That rests entirely on the counting below:
+ * an even number of sheets before the body, and an even number in total. Get
+ * the first one wrong and nothing looks broken — the book just quietly shows
+ * every page's words beside the NEXT page's picture, all the way through.
+ */
+describe('asSpreads — every sheet gets a partner', () => {
+  const cover = { type: 'cover' as const };
+  const title = { type: 'title' as const };
+  const dedication = { type: 'dedication' as const };
+  const lock = { type: 'lock' as const };
+  const policy = () => ({ type: 'policy' as const });
+  /** A story body: each page is its words, then that page's picture. */
+  const body = (n: number) =>
+    Array.from({ length: n * 2 }, (_, i) =>
+      i % 2 === 0 ? { type: 'text' as const, words: i / 2 } : { type: 'text' as const, picture: (i - 1) / 2 },
+    );
+
+  it('gives a bare cover a title page to face', () => {
+    const out = asSpreads([cover], body(13), [lock], title, policy);
+    expect(out[0].type).toBe('cover');
+    expect(out[1].type).toBe('title');
   });
 
-  it('knows which sheets have no partner', () => {
-    // Sheet 0 is the cover. After it the sheets pair up, so the only other lone
-    // sheet is a last one with nothing to pair with.
-    expect(src).toContain("sheet === 0 ? 'front'");
-    expect(src).toMatch(/sheet === lastSheet && sheet % 2 === 1/);
+  it('never leaves a sheet without a partner', () => {
+    // Odd lengths are the whole problem: 1 cover + 26 body + 1 lock = 28, and
+    // adding the title page makes 29.
+    for (const pages of [1, 2, 5, 12, 13]) {
+      const out = asSpreads([cover], body(pages), [lock], title, policy);
+      expect(out.length % 2, `${pages} story pages leaves a half-empty frame`).toBe(0);
+    }
   });
 
-  it('follows the page turns', () => {
-    expect(src, 'without onFlip the book never learns it has been opened').toMatch(/onFlip=/);
+  it('keeps every page’s words beside that page’s own picture', () => {
+    const out = asSpreads([cover], body(13), [lock], title, policy);
+    for (let k = 0; k < 13; k++) {
+      const words = out[2 + 2 * k] as any;
+      const picture = out[3 + 2 * k] as any;
+      expect(words.words, `page ${k + 1}'s words moved`).toBe(k);
+      expect(picture.picture, `page ${k + 1} is facing the wrong picture`).toBe(k);
+      // Same spread: an even index and the odd one after it.
+      expect(Math.floor((2 + 2 * k) / 2)).toBe(Math.floor((3 + 2 * k) / 2));
+    }
   });
 
-  it('gives itself room to move', () => {
-    // Three pages wide: two for the book, one for the half-page slide either
-    // way. Narrower than that and the slide pushes the cover off the stage.
-    expect(src).toMatch(/\.fbp-stage\s*\{[^}]*max-width:840px/);
-    expect(src).toMatch(/\.fbp-book\s*\{\s*width:66\.6667%/);
+  it('does not print the copyright page twice', () => {
+    // A full book already opens on a title page, so the front is evened up
+    // with the copyright sheet — which then has to leave the back.
+    const out = asSpreads(
+      [cover, title, dedication],
+      body(13),
+      [{ type: 'final' as const }, policy(), { type: 'back' as const }],
+      title,
+      policy,
+    );
+    expect(out.filter((p) => p.type === 'policy')).toHaveLength(1);
+    expect(out.length % 2).toBe(0);
+    // The body still starts on a left-hand sheet.
+    const first = out.findIndex((p: any) => p.words === 0);
+    expect(first % 2, 'the body starts on a right-hand sheet, so every page faces the wrong picture').toBe(0);
   });
 
-  it('only slides where there is room for it', () => {
-    // A phone has no spare third of a screen, and goes to a single page
-    // instead, so the slide must stay behind the desktop breakpoint.
-    const mq = src.indexOf('@media (min-width: 768px)');
-    expect(mq).toBeGreaterThan(-1);
-    expect(src.indexOf('data-at="front"'), 'the slide escaped its media query').toBeGreaterThan(mq);
+  it('leaves an already-even front alone', () => {
+    // A coloring book has a title page and no dedication.
+    const out = asSpreads([cover, title], body(6), [lock], title, policy);
+    expect(out.slice(0, 2).map((p) => p.type)).toEqual(['cover', 'title']);
+    expect(out.filter((p) => p.type === 'title')).toHaveLength(1);
+  });
+
+  it('copes with a book that is nothing but a cover and a lock', () => {
+    const out = asSpreads([cover], [], [lock], title, policy);
+    expect(out.map((p) => p.type)).toEqual(['cover', 'title', 'lock', 'policy']);
+  });
+
+  it('does not mutate what it was given', () => {
+    const front = [cover];
+    const back = [lock];
+    asSpreads(front, body(3), back, title, policy);
+    expect(front).toHaveLength(1);
+    expect(back).toHaveLength(1);
+  });
+});
+
+describe('the book is fixed in one place', () => {
+  it('has no slide left in it', () => {
+    for (const gone of ['data-at', 'fbp-stage', 'translateX(-25%)', 'translateX(25%)']) {
+      expect(src, `${gone} is the slide the owner asked to remove`).not.toContain(gone);
+    }
+  });
+
+  it('is one centred box of a fixed width', () => {
+    expect(src).toMatch(/\.fbp-book\s*\{\s*width:100%;\s*max-width:560px;\s*margin:0 auto/);
+  });
+
+  it('does not give the cover a sheet of its own', () => {
+    // showCover is what isolates the cover, and a lone sheet is what made the
+    // book move.
+    expect(src).toContain('showCover={false}');
   });
 
   it('lets a narrow screen fall back to one page', () => {
-    // Pinned to landscape, a phone laid out a 360px spread inside a 293px box
-    // and the overflow-hidden cut the cover in half.
     expect(src).toContain('usePortrait={true}');
     expect(src, 'minWidth drives the portrait switch at 2x its value').toContain('minWidth={180}');
   });

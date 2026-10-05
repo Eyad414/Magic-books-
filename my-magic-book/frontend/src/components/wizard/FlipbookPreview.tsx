@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import HTMLFlipBook from 'react-pageflip';
 import { resolveGender, applyGenderTokens } from '../../utils/gender';
 import { localizeName } from '../../utils/translit';
+import { asSpreads } from '../../utils/bookSpreads';
 
 /*
  * A note on `text-paper` throughout this file.
@@ -167,17 +168,21 @@ export function buildThemePreview(opts: {
       const imgPages: PreviewPage[] = pageImages.map((img, idx): PreviewPage => ({
         type: 'text', image: img, content: '', blur: idx >= readable,
       }));
-      return [
-        { type: 'cover', title: fallbackTitle, image: coverImage },
-        ...(full ? openingPages() : []),
-        ...imgPages,
-        ...(full ? closingPages() : [{ type: 'lock', content: lockMsg } as PreviewPage]),
-      ];
+      return asSpreads(
+        [{ type: 'cover', title: fallbackTitle, image: coverImage }, ...(full ? openingPages() : [])],
+        imgPages,
+        full ? closingPages() : [{ type: 'lock', content: lockMsg } as PreviewPage],
+        { type: 'title', title: fallbackTitle, childName: name },
+        (): PreviewPage => ({ type: 'policy' }),
+      );
     }
-    return [
-      { type: 'cover', title: fallbackTitle, image: coverImage },
-      { type: 'lock', content: lockMsg },
-    ];
+    return asSpreads(
+      [{ type: 'cover', title: fallbackTitle, image: coverImage }],
+      [],
+      [{ type: 'lock', content: lockMsg } as PreviewPage],
+      { type: 'title', title: fallbackTitle, childName: name },
+      (): PreviewPage => ({ type: 'policy' }),
+    );
   }
   // Show the first ~30% of the story readable; blur the rest until the end.
   // Like the real book: each story page is a TEXT page + its own IMAGE page
@@ -190,12 +195,13 @@ export function buildThemePreview(opts: {
     bodyPages.push({ type: 'text', content: personalize(pagesObj[k]), blur: locked });
     if (pageImages[idx]) bodyPages.push({ type: 'text', image: pageImages[idx], blur: locked });
   });
-  return [
-    { type: 'cover', title: bookTitle, image: coverImage },
-    ...(full ? openingPages() : []),
-    ...bodyPages,
-    ...(full ? closingPages() : [{ type: 'lock', content: lockMsg } as PreviewPage]),
-  ];
+  return asSpreads(
+    [{ type: 'cover', title: bookTitle, image: coverImage }, ...(full ? openingPages() : [])],
+    bodyPages,
+    full ? closingPages() : [{ type: 'lock', content: lockMsg } as PreviewPage],
+    { type: 'title', title: bookTitle, childName: name },
+    (): PreviewPage => ({ type: 'policy' }),
+  );
 }
 
 interface Props {
@@ -238,29 +244,15 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
   }, [resolved.length, language]);
 
   /*
-   * Which sheet is showing — so the book can sit on the centre line.
+   * The book does not move.
    *
-   * This is a two-page book (`usePortrait={false}`), and the pairing is
-   * deliberate: the sheets are built as text-then-picture, so a spread shows a
-   * page's words beside that page's illustration, the way the printed book
-   * does. But the COVER has no partner — `showCover` gives it a sheet of its
-   * own, and a lone sheet in a two-page frame fills one half and leaves the
-   * other empty. Measured: the frame spans 560px, the cover occupies the right
-   * 280 of it, and the owner reported exactly that — "it is in the right side
-   * more than the left".
-   *
-   * So the book is parked by its VISIBLE page rather than by its frame. Closed
-   * at the front it slides half a page left; closed at the back (the lock sheet
-   * is also unpartnered, 28 sheets being cover + 26 + lock) it slides half a
-   * page right; open on a spread it sits where it is. The stage around it is
-   * three pages wide so there is room to slide without clipping.
+   * It used to. `showCover` gave the cover a sheet of its own, and a lone
+   * sheet in a two-page frame fills one half and leaves the other empty, so
+   * the book either sat off to one side or slid across to centre itself as you
+   * opened it — and the owner wanted it still. buildThemePreview pairs every
+   * sheet into a spread instead (see asSpreads), so the frame is always full,
+   * always the same width, and always in the same place.
    */
-  const [sheet, setSheet] = useState(0);
-  useEffect(() => { setSheet(0); }, [flipKey]);
-  const lastSheet = resolved.length - 1;
-  // Sheet 0 is the cover. After it the sheets pair up, so the only other lone
-  // sheet is the last one, and only when it has no partner to pair with.
-  const at = sheet === 0 ? 'front' : sheet === lastSheet && sheet % 2 === 1 ? 'back' : 'open';
 
   const hideOnError = (e: any) => { e.currentTarget.style.display = 'none'; };
 
@@ -295,26 +287,14 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
         .fbp-qitem { color:rgba(255,255,255,0.75); font-size:6.5px; line-height:1.55; padding-inline-start:8px; position:relative; }
         .fbp-qitem::before { content:"◆"; position:absolute; inset-inline-start:0; color:#D4A937; font-size:4.5px; top:3px; }
         @keyframes fbp-tw { 0%,100%{opacity:0.35; transform:scale(0.8);} 50%{opacity:1; transform:scale(1.1);} }
-        /* The stage: three pages wide, so a two-page book can slide half a
-           page either way and still be fully on screen. */
-        .fbp-stage { width:100%; max-width:840px; margin:0 auto; }
-        .fbp-book { width:100%; margin:0 auto; transition: transform 500ms cubic-bezier(0.4,0,0.2,1); }
-        /* Only once there is room: on a phone the book already uses the whole
-           stage, so there is nothing to slide into and nothing to centre. */
-        @media (min-width: 768px) {
-          .fbp-book { width:66.6667%; }
-          /* 25% of a two-page book is half of one page — exactly the offset
-             that puts a lone cover, or a lone back sheet, on the centre line. */
-          .fbp-book[data-at="front"] { transform: translateX(-25%); }
-          .fbp-book[data-at="back"] { transform: translateX(25%); }
-        }
+        /* One fixed box, centred, the width of the two-page book. There is
+           nothing to slide any more, so there is no spare third to leave. */
+        .fbp-book { width:100%; max-width:560px; margin:0 auto; }
       `}</style>
-      <div className="fbp-stage">
-        <div className="fbp-book relative shadow-2xl" data-at={at}>
+      <div className="fbp-book relative shadow-2xl">
         {/* @ts-ignore — react-pageflip has loose types */}
         <HTMLFlipBook
           key={flipKey}
-          onFlip={(e: any) => setSheet(Number(e?.data) || 0)}
           width={250}
           height={250}
           size="stretch"
@@ -323,7 +303,9 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
           minHeight={180}
           maxHeight={280}
           maxShadowOpacity={0.5}
-          showCover={true}
+          /* The cover faces a title page (asSpreads) rather than standing
+             alone, which is what keeps the frame full and the book still. */
+          showCover={false}
           mobileScrollSupport={true}
           /*
            * Two pages where there is room for two, one where there is not.
@@ -586,7 +568,6 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
             </div>
           ))}
         </HTMLFlipBook>
-        </div>
       </div>
     </div>
   );
