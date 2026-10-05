@@ -69,7 +69,7 @@ export default function Step1_ChildDetails({ onNext }: Props) { // To move to th
           </span>
           <span className="text-white/15">·</span>
           <span className="font-arabic text-white/60 text-[11px]">
-            {t('step1.reassure_preview', 'تشوف القصة كاملة قبل ما تدفع')}
+            {t('step1.reassure_preview', 'تشوف القصة قبل ما تدفع')}
           </span>
           <span className="text-white/15">·</span>
           <span className="font-arabic text-gold-500 text-[11px] font-bold">

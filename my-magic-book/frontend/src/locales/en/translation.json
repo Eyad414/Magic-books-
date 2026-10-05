@@ -165,7 +165,7 @@
     "cta_btn": "✨ Start Your Magic Story",
     "trust_place": "Made in Jerusalem",
     "trust_langs": "عربي · English · עברית",
-    "trust_preview": "See the whole story before you pay",
+    "trust_preview": "See the story before you pay",
     "follow_cta": "Start your child's story now"
   },
   "contact": {
@@ -385,7 +385,7 @@
     "photo_label_optional": "Would you like to add a photo of your child? (Optional)",
     "err_child_gender": "Choose boy or girl — the whole story changes with it",
     "reassure_steps": "3 steps after this one",
-    "reassure_preview": "See the whole story before you pay",
+    "reassure_preview": "See the story before you pay",
     "reassure_free": "The preview is free"
   },
   "step2": {

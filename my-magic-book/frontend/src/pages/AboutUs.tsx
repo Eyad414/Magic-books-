@@ -111,7 +111,7 @@ export default function AboutUs() {
             {[
               { icon: '🏛️', text: t('about.trust_place', 'يُصنع في القدس') },
               { icon: '🌍', text: t('about.trust_langs', 'عربي · English · עברית') },
-              { icon: '👀', text: t('about.trust_preview', 'تشوف القصة كاملة قبل ما تدفع') },
+              { icon: '👀', text: t('about.trust_preview', 'تشوف القصة قبل ما تدفع') },
             ].map((b) => (
               <span
                 key={b.text}
