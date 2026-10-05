@@ -4,6 +4,23 @@ import HTMLFlipBook from 'react-pageflip';
 import { resolveGender, applyGenderTokens } from '../../utils/gender';
 import { localizeName } from '../../utils/translit';
 
+/*
+ * A note on `text-paper` throughout this file.
+ *
+ * Tailwind's `white` here is NOT white: the config maps it to
+ * `rgb(var(--c-fg))`, the theme's FOREGROUND, so `text-white` is pale on the
+ * dark site and deep indigo in light mode. That is right almost everywhere,
+ * because almost every surface flips with the theme.
+ *
+ * The pages of this book do not flip. They are a printed book's pages, with
+ * their colors written into the markup — navy covers, dark front matter, the
+ * colored text cards — and they look the same whichever theme the site is in.
+ * So the foreground colour followed the theme while the page under it stayed
+ * dark, and in light mode the story's own title turned indigo-on-navy and
+ * disappeared. `paper` is the escape hatch: a real #ffffff that ignores the
+ * theme, which is what ink on a dark page needs.
+ */
+
 // Rotating page background colors for the decorative text pages.
 const PAGE_COLORS = ['#F2607A', '#7C5CE0', '#159B8A', '#2E7BD6', '#E17055', '#3FA34D'];
 
@@ -220,6 +237,31 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
     return () => clearTimeout(t);
   }, [resolved.length, language]);
 
+  /*
+   * Which sheet is showing — so the book can sit on the centre line.
+   *
+   * This is a two-page book (`usePortrait={false}`), and the pairing is
+   * deliberate: the sheets are built as text-then-picture, so a spread shows a
+   * page's words beside that page's illustration, the way the printed book
+   * does. But the COVER has no partner — `showCover` gives it a sheet of its
+   * own, and a lone sheet in a two-page frame fills one half and leaves the
+   * other empty. Measured: the frame spans 560px, the cover occupies the right
+   * 280 of it, and the owner reported exactly that — "it is in the right side
+   * more than the left".
+   *
+   * So the book is parked by its VISIBLE page rather than by its frame. Closed
+   * at the front it slides half a page left; closed at the back (the lock sheet
+   * is also unpartnered, 28 sheets being cover + 26 + lock) it slides half a
+   * page right; open on a spread it sits where it is. The stage around it is
+   * three pages wide so there is room to slide without clipping.
+   */
+  const [sheet, setSheet] = useState(0);
+  useEffect(() => { setSheet(0); }, [flipKey]);
+  const lastSheet = resolved.length - 1;
+  // Sheet 0 is the cover. After it the sheets pair up, so the only other lone
+  // sheet is the last one, and only when it has no partner to pair with.
+  const at = sheet === 0 ? 'front' : sheet === lastSheet && sheet % 2 === 1 ? 'back' : 'open';
+
   const hideOnError = (e: any) => { e.currentTarget.style.display = 'none'; };
 
   return (
@@ -253,11 +295,26 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
         .fbp-qitem { color:rgba(255,255,255,0.75); font-size:6.5px; line-height:1.55; padding-inline-start:8px; position:relative; }
         .fbp-qitem::before { content:"◆"; position:absolute; inset-inline-start:0; color:#D4A937; font-size:4.5px; top:3px; }
         @keyframes fbp-tw { 0%,100%{opacity:0.35; transform:scale(0.8);} 50%{opacity:1; transform:scale(1.1);} }
+        /* The stage: three pages wide, so a two-page book can slide half a
+           page either way and still be fully on screen. */
+        .fbp-stage { width:100%; max-width:840px; margin:0 auto; }
+        .fbp-book { width:100%; margin:0 auto; transition: transform 500ms cubic-bezier(0.4,0,0.2,1); }
+        /* Only once there is room: on a phone the book already uses the whole
+           stage, so there is nothing to slide into and nothing to centre. */
+        @media (min-width: 768px) {
+          .fbp-book { width:66.6667%; }
+          /* 25% of a two-page book is half of one page — exactly the offset
+             that puts a lone cover, or a lone back sheet, on the centre line. */
+          .fbp-book[data-at="front"] { transform: translateX(-25%); }
+          .fbp-book[data-at="back"] { transform: translateX(25%); }
+        }
       `}</style>
-      <div className="relative shadow-2xl" style={{ width: '100%', maxWidth: '700px' }}>
+      <div className="fbp-stage">
+        <div className="fbp-book relative shadow-2xl" data-at={at}>
         {/* @ts-ignore — react-pageflip has loose types */}
         <HTMLFlipBook
           key={flipKey}
+          onFlip={(e: any) => setSheet(Number(e?.data) || 0)}
           width={250}
           height={250}
           size="stretch"
@@ -268,7 +325,22 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
           maxShadowOpacity={0.5}
           showCover={true}
           mobileScrollSupport={true}
-          usePortrait={false}
+          /*
+           * Two pages where there is room for two, one where there is not.
+           *
+           * This was pinned to landscape, which a phone cannot honour. The
+           * library goes portrait when the box is narrower than two minWidths
+           * (360px here) — but only if it is allowed to, and it was not, so it
+           * laid out a 360px spread inside a 293px box instead and the
+           * container's overflow-hidden cut the cover in half down the middle
+           * of the screen, on the handsets that are nearly all of this traffic.
+           * Allowing the fallback gives a phone ONE page at the full 293px
+           * rather than two clipped halves, and leaves the desktop spread —
+           * with its text-beside-its-picture pairing — exactly as it was.
+           * minWidth is load-bearing for that switch: lower it and a phone goes
+           * back to two pages, unclipped but half the size.
+           */
+          usePortrait={true}
           flippingTime={1200}
           className="flipbook-container"
         >
@@ -283,7 +355,7 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                       <img src="/logo.png?v=7" alt="" className="w-6 h-6 object-contain" />
                       <span className="font-brand text-gold-500 text-[11px] tracking-wide">Magic Fanoos</span>
                     </div>
-                    <h3 className="absolute bottom-4 left-0 right-0 px-4 font-arabic font-black text-white text-base leading-snug text-center drop-shadow-lg">{page.title}</h3>
+                    <h3 className="absolute bottom-4 left-0 right-0 px-4 font-arabic font-black text-paper text-base leading-snug text-center drop-shadow-lg">{page.title}</h3>
                   </div>
                 ) : (
                   <div
@@ -294,7 +366,7 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                     <img src="/logo.png?v=7" alt="" className="w-16 h-16 object-contain mb-2 drop-shadow-[0_0_12px_rgba(212,169,55,0.5)]" />
                     <span className="font-brand text-gold-500 text-sm tracking-wide">Magic Fanoos</span>
                     <div className="w-10 h-px bg-gold-500/50 my-2.5" />
-                    <h3 className="font-arabic font-black text-white text-base leading-snug">{page.title}</h3>
+                    <h3 className="font-arabic font-black text-paper text-base leading-snug">{page.title}</h3>
                   </div>
                 )
               ) : page.type === 'title' ? (
@@ -312,7 +384,7 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                   <p className="font-arabic text-gold-400/85 text-[8px] mb-1">
                     ✦ {ftLocal('title_page.presents', 'يُقدّم لـ')} {page.childName} ✦
                   </p>
-                  <h3 className="font-arabic font-black text-white text-[12px] leading-snug max-w-[88%]">{page.title}</h3>
+                  <h3 className="font-arabic font-black text-paper text-[12px] leading-snug max-w-[88%]">{page.title}</h3>
                 </div>
               ) : page.type === 'dedication' ? (
                 /* Dedication — the child's photo in a gold frame + the message. */
@@ -333,7 +405,7 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                       onError={hideOnError}
                     />
                   )}
-                  <p className="font-arabic text-white/85 text-[8px] leading-relaxed max-w-[86%]">{page.content}</p>
+                  <p className="font-arabic text-paper/85 text-[8px] leading-relaxed max-w-[86%]">{page.content}</p>
                 </div>
               ) : page.type === 'policy' ? (
                 /* Copyright / policy sheet — the printed CopyrightPage in brief. */
@@ -350,12 +422,12 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                   <p className="font-arabic text-gold-300/80 text-[7px]">✦ MagicFanoos.com</p>
                   <p className="font-arabic text-gold-300/80 text-[7px]">✦ hello@magicfanoos.com</p>
                   <div className="fbp-cdiv fbp-cdiv--sm" />
-                  <p className="font-arabic text-white/60 text-[6.5px] leading-relaxed max-w-[92%]">
-                    <strong className="text-white/80">{ftLocal('storybook.policy_content', 'سياسة المحتوى')}:</strong>{' '}
+                  <p className="font-arabic text-paper/60 text-[6.5px] leading-relaxed max-w-[92%]">
+                    <strong className="text-paper/80">{ftLocal('storybook.policy_content', 'سياسة المحتوى')}:</strong>{' '}
                     {ftLocal('storybook.policy_content_text', 'القصة والصور مخصّصة لطفلك للاستخدام العائلي فقط، ولا يجوز إعادة بيعها أو توزيعها تجاريًا.')}
                   </p>
-                  <p className="font-arabic text-white/60 text-[6.5px] leading-relaxed max-w-[92%] mt-1">
-                    <strong className="text-white/80">{ftLocal('storybook.policy_printing', 'سياسة الطباعة')}:</strong>{' '}
+                  <p className="font-arabic text-paper/60 text-[6.5px] leading-relaxed max-w-[92%] mt-1">
+                    <strong className="text-paper/80">{ftLocal('storybook.policy_printing', 'سياسة الطباعة')}:</strong>{' '}
                     {ftLocal('storybook.policy_printing_text', '')}
                   </p>
                 </div>
@@ -421,7 +493,7 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                     <span className="absolute -bottom-1 -left-1 text-gold-400 text-[8px]">✧</span>
                   </div>
                   <h3 className="font-arabic font-black text-gold-500 text-[10px] leading-snug">{page.title}</h3>
-                  <p className="font-arabic text-white/55 text-[8px] leading-snug mt-0.5 max-w-[92%]">{page.content}</p>
+                  <p className="font-arabic text-paper/55 text-[8px] leading-snug mt-0.5 max-w-[92%]">{page.content}</p>
 
                   {!!page.teasers?.length && (
                     <>
@@ -431,9 +503,9 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                       </h4>
                       <div className="grid grid-cols-3 gap-1 w-full px-1">
                         {page.teasers.map((tz) => (
-                          <div key={tz.id} className="rounded-md bg-white/[0.06] border border-gold-500/20 p-1 flex flex-col items-center gap-0.5">
+                          <div key={tz.id} className="rounded-md bg-paper/[0.06] border border-gold-500/20 p-1 flex flex-col items-center gap-0.5">
                             <span className="text-[11px] leading-none">{tz.emoji}</span>
-                            <span className="font-arabic text-white/60 text-[6.5px] leading-tight">{page.childName} {tz.label}</span>
+                            <span className="font-arabic text-paper/60 text-[6.5px] leading-tight">{page.childName} {tz.label}</span>
                           </div>
                         ))}
                       </div>
@@ -445,7 +517,7 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                     <img src="/logo.png?v=7" alt="" className="w-5 h-5 object-contain" />
                     <div className="flex flex-col items-start leading-none">
                       <span className="font-brand text-gold-500 text-[9px] tracking-wide">Magic Fanoos</span>
-                      <span className="font-arabic text-white/30 text-[7px] mt-0.5">🌐 MagicFanoos.com</span>
+                      <span className="font-arabic text-paper/30 text-[7px] mt-0.5">🌐 MagicFanoos.com</span>
                     </div>
                   </div>
                 </div>
@@ -472,7 +544,7 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                   {page.content && (
                   <div className="absolute bottom-0 left-0 right-0 px-3 pt-6 pb-2" style={{ background: 'linear-gradient(to top, rgba(5,10,21,0.94) 0%, rgba(5,10,21,0) 100%)' }}>
                     <p
-                      className="font-arabic text-white text-[11px] sm:text-xs font-bold leading-snug text-center drop-shadow"
+                      className="font-arabic text-paper text-[11px] sm:text-xs font-bold leading-snug text-center drop-shadow"
                       style={page.blur ? { filter: 'blur(4px)', userSelect: 'none' } : undefined}
                     >
                       {page.content}
@@ -484,7 +556,7 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                       <span className="text-3xl drop-shadow">🔒</span>
                     </div>
                   )}
-                  <span className="absolute top-2 right-2 text-white/40 font-bold text-[10px]">{i}</span>
+                  <span className="absolute top-2 right-2 text-paper/40 font-bold text-[10px]">{i}</span>
                 </div>
               ) : (
                 /* Decorative story-text page — magic-lantern gold card on a
@@ -514,6 +586,7 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
             </div>
           ))}
         </HTMLFlipBook>
+        </div>
       </div>
     </div>
   );
