@@ -24,7 +24,7 @@ export default function Faq() {
   const QA: { q: string; a: string; href?: string; hrefLabel?: string }[] = [
     {
       q: t('home.faq_q_preview', 'أشوف القصة قبل ما أدفع؟'),
-      a: t('home.faq_a_preview', 'نعم. تختار القصة وترفع صورة طفلك، وتشوف الغلاف والصفحات كاملة قبل أي دفع. إذا ما أعجبتك، ما تدفع.'),
+      a: t('home.faq_a_preview', 'نعم. تختار القصة وترفع صورة طفلك، وتشوف الغلاف وبداية القصة قبل أي دفع. إذا ما أعجبتك، ما تدفع.'),
     },
     {
       q: t('home.faq_q_photo', 'ليش تحتاجون صورة طفلي؟ وين تروح؟'),
