@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Heart, Mail, Phone } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import BrandLogo from './BrandLogo';
 
 export default function Footer() {
   const location = useLocation();
@@ -29,11 +30,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           {/* Brand */}
           <div className="md:col-span-1">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center drop-shadow-[0_0_10px_rgba(212,169,55,0.6)]">
-                <img src="/logo.png?v=7" alt="Magic Fanoos" className="w-full h-full object-contain" />
-              </div>
-              <span className="font-arabic font-bold text-gold-500 text-lg">{t('nav.home_brand')}</span>
+            <div className="mb-4">
+              <BrandLogo markClassName="h-12 w-12" wordClassName="h-7 w-auto" />
             </div>
             <p className="text-white/50 text-sm font-arabic leading-relaxed">
               {t('footer.description')}

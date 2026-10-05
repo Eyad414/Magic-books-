@@ -5,6 +5,7 @@ import MagicButton from '../components/common/MagicButton';
 import { Lock, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import BrandLogo from '../components/common/BrandLogo';
 
 /** Choose a new password, using the token from the emailed link. */
 export default function ResetPassword() {
@@ -45,15 +46,7 @@ export default function ResetPassword() {
 
       <div className="w-full max-w-md relative z-10">
         <Link to="/" className="flex items-center gap-3 justify-center mb-8">
-          <img
-            src="/logo.png?v=7"
-            alt="Magic Fanoos"
-            className="h-14 w-auto object-contain drop-shadow-[0_0_12px_rgba(212,169,55,0.5)]"
-          />
-          <div className="flex flex-col leading-tight">
-            <span className="font-brand font-bold text-gold-500 text-xl tracking-wider">Magic Fanoos</span>
-            <span className="font-['Marhey'] font-bold text-gold-500/75 text-base">الفانوس السحري</span>
-          </div>
+          <BrandLogo markClassName="h-14 w-14" wordClassName="h-8 w-auto" />
         </Link>
 
         <div className="glass-card p-8">

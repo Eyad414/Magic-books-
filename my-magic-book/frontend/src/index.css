@@ -582,3 +582,12 @@ html.highlight-links a {
   .bg-white\/5      { background-color: rgb(var(--c-fg) / 0.045); }
   .bg-white\/10     { background-color: rgb(var(--c-fg) / 0.07); }
 }
+
+/* The logo's wordmark (BrandLogo.tsx). Its letters are shapes, so their colour
+   is set here: gold "magic" and a white "fanoos" on the dark site. On the light
+   site the gold deepens to amber — the bright gold measured as too faint on the
+   pale page — and "fanoos" turns to the theme's ink. */
+.mf-wordmark .mf-gold { fill: #FBBF24; }
+.mf-wordmark .mf-ink { fill: #FFFFFF; }
+:root[data-theme="light"] .mf-wordmark .mf-gold { fill: #D97706; }
+:root[data-theme="light"] .mf-wordmark .mf-ink { fill: #141A4A; }

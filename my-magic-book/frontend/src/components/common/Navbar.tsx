@@ -6,6 +6,7 @@ import { useStoryProgress } from '../../context/StoryProgressContext';
 import LanguageSwitcher from './LanguageSwitcher';
 import ThemeToggle from './ThemeToggle';
 import { useTranslation } from 'react-i18next';
+import BrandLogo from './BrandLogo';
 
 const navLinks = [
   { to: '/', labelKey: 'home' },
@@ -52,16 +53,11 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo + name */}
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <img
-              src="/logo.png?v=7"
-              alt="Magic Fanoos"
-              className="h-12 md:h-14 w-auto object-contain transition-transform group-hover:scale-105 drop-shadow-[0_0_10px_rgba(212,169,55,0.45)]"
+          <Link to="/" className="flex items-center group">
+            <BrandLogo
+              markClassName="h-11 w-11 md:h-14 md:w-14 transition-transform group-hover:scale-105 drop-shadow-[0_0_10px_rgba(245,158,11,0.35)]"
+              wordClassName="h-6 md:h-8 w-auto"
             />
-            <div className="flex flex-col leading-tight">
-              <span className="font-brand font-bold text-gold-500 text-base md:text-xl tracking-wider">Magic Fanoos</span>
-              <span className="font-['Marhey'] font-bold text-gold-500/75 text-sm md:text-base">الفانوس السحري</span>
-            </div>
           </Link>
 
           {/* Desktop Nav */}

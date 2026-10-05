@@ -6,6 +6,7 @@ import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import GoogleButton from '../components/auth/GoogleButton';
+import BrandLogo from '../components/common/BrandLogo';
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -44,15 +45,7 @@ export default function Login() {
 
       <div className="w-full max-w-md relative z-10">
         <Link to="/" className="flex items-center gap-3 justify-center mb-8">
-          <img
-            src="/logo.png?v=7"
-            alt="Magic Fanoos"
-            className="h-14 w-auto object-contain drop-shadow-[0_0_12px_rgba(212,169,55,0.5)]"
-          />
-          <div className="flex flex-col leading-tight">
-            <span className="font-brand font-bold text-gold-500 text-xl tracking-wider">Magic Fanoos</span>
-            <span className="font-['Marhey'] font-bold text-gold-500/75 text-base">الفانوس السحري</span>
-          </div>
+          <BrandLogo markClassName="h-14 w-14" wordClassName="h-8 w-auto" />
         </Link>
 
         <div className="glass-card p-8">
