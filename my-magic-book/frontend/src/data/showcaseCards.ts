@@ -130,7 +130,15 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   { key: 'baha-deepsea',   themeId: 'deep_sea',           name: 'Baha', emoji: '🐬' },
   { key: 'baha-chef',       themeId: 'little_chef',        name: 'Baha',  emoji: '🍳' },
   { key: 'baha-castle',     themeId: 'castle_guardian',    name: 'Baha',  emoji: '🏰' },
-  { key: 'baha-kinder',     themeId: 'happy_kindergarten', name: 'Baha',  emoji: '🧸' },
+  // Re-cast in October 2026 onto five SYNTHETIC children — تالا, سلمى, مريم,
+  // كريم, عمر — so the shop stops being one boy twenty times over. The faces
+  // are AI-generated and belong to nobody, which is why these carry no
+  // `private` flag: there is no family to ask. Baha's versions of these five
+  // are archived in the bucket under generated/baha/.
+  //
+  // The keys changed with the names on purpose: a stored home/stories tick
+  // belonged to Baha's card, and that card is gone.
+  { key: 'tala-kinder',     themeId: 'happy_kindergarten', name: 'Tala',   emoji: '🧸' },
   { key: 'baha-firstday',   themeId: 'first_day_school',   name: 'Baha',  emoji: '🎒' },
   { key: 'baha-grade1',    themeId: 'first_grade',        name: 'Baha', emoji: '✏️' },
   { key: 'baha-future',     themeId: 'future_hero',        name: 'Baha',  emoji: '🚀' },
@@ -152,17 +160,17 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   //
   // The keys change with the names on purpose: a stored home/stories tick
   // belongs to the card it was given to, and that card no longer exists.
-  { key: 'baha-vet',        themeId: 'little_vet',         name: 'Baha',  emoji: '🐾' },
+  { key: 'salma-vet',       themeId: 'little_vet',         name: 'Salma',  emoji: '🐾' },
   { key: 'baha-dabke',      themeId: 'dabke',              name: 'Baha',  emoji: '🥁' },
   { key: 'baha-jaffa',      themeId: 'jaffa_day',          name: 'Baha',  emoji: '⛵' },
-  { key: 'baha-oud',        themeId: 'oud_lesson',         name: 'Baha',  emoji: '🎶' },
+  { key: 'mariam-oud',      themeId: 'oud_lesson',         name: 'Mariam', emoji: '🎶' },
   { key: 'baha-jerusalem',  themeId: 'jerusalem_tale',     name: 'Baha',  emoji: '🏮' },
   // Four stories written in October 2026 — olive season, the thobe, Eid
   // maamoul and a birthday. Drawn from Baha's photo like the rest, so no
   // permission question; they appear on /stories as soon as the artwork
   // exists and the owner ticks them for the home page.
-  { key: 'baha-olive', themeId: 'olive_harvest', name: 'Baha', emoji: '🫒' },
+  { key: 'karim-olive',     themeId: 'olive_harvest',      name: 'Karim',  emoji: '🫒' },
   { key: 'baha-thobe', themeId: 'palestinian_thobe', name: 'Baha', emoji: '🧵' },
   { key: 'baha-maamoul', themeId: 'maamoul_day', name: 'Baha', emoji: '🍪' },
-  { key: 'baha-birthday', themeId: 'my_birthday', name: 'Baha', emoji: '🎂' },
+  { key: 'omar-birthday',   themeId: 'my_birthday',        name: 'Omar',   emoji: '🎂' },
 ];
