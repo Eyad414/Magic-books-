@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast';
 import MainLayout from './layouts/MainLayout';
 import Home from './pages/Home';
 import Stories from './pages/Stories';
+import StoryDetail from './pages/StoryDetail';
 
 import AccessibilityWidget from './components/common/AccessibilityWidget';
 import AdminBookGuard from './components/common/AdminBookGuard';
@@ -22,7 +23,7 @@ import BirthdayPrompt from './components/common/BirthdayPrompt';
  * a link on their phone to look at the home page. 402 KB of compressed
  * JavaScript before anything could be read.
  *
- * Home and Stories stay eager on purpose: they are where people land, and a
+ * Home, Stories and the story pages stay eager on purpose: they are where people land, and a
  * spinner on the page someone arrives at costs more than the bytes it saves.
  */
 const CreateStory = lazy(() => import('./pages/CreateStory'));
@@ -127,6 +128,9 @@ export default function App() {
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
           <Route path="stories" element={<Stories />} />
+          {/* One page per story — where a parent lands from a search. Eager for
+              the same reason as Stories: it is a front door. */}
+          <Route path="stories/:slug" element={<StoryDetail />} />
           {/* Open to visitors. Creating a story DOES need an account — the photo
               upload and the cover-preview quota are both per-account — but
               asking for one at the door meant a parent met a login form before

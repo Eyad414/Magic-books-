@@ -2543,5 +2543,27 @@
     "finished": "You finished the colouring book · Magic Fanoos",
     "front_cover": "Front cover",
     "back_cover": "Back cover"
+  },
+  "story_page": {
+    "meta_title": "{{story}} — a children's book starring your child",
+    "meta_desc": "{{desc}}. A printed children's book with your child's name and face on every page. Free preview.",
+    "breadcrumb": "Breadcrumb",
+    "breadcrumb_stories": "Stories",
+    "eyebrow": "A story made for your child",
+    "hero_named": "In this preview the hero is {{name}} — in your book, it's your child",
+    "bullet_name": "Your child's name and face on every page",
+    "bullet_photo": "One photo of their face is all it takes",
+    "bullet_pages": "13 illustrated scenes, with your child in every one",
+    "bullet_delivery": "A printed book delivered to you, or a digital copy",
+    "see_preview": "See the preview",
+    "excerpt_title": "From the story",
+    "page_n": "Page {{n}}",
+    "moral_title": "What your child takes from the story",
+    "preview_title": "Flip through the story",
+    "more_title": "More stories you might like",
+    "all_stories": "All stories",
+    "details_link": "Everything about this story",
+    "not_found_title": "We couldn't find that story",
+    "not_found_desc": "The link may be old. All our stories are here:"
   }
 }

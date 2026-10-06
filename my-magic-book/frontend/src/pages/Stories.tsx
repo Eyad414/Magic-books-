@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { usePageMeta } from '../hooks/usePageMeta';
 import { Eye, X, Heart } from 'lucide-react';
 import FlipbookPreview, { buildThemePreview } from '../components/wizard/FlipbookPreview';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStoryProgress } from '../context/StoryProgressContext';
 import { publicApi } from '../api/publicApi';
@@ -15,10 +15,7 @@ import { useAuth } from '../context/AuthContext';
 import { usePackages } from '../hooks/usePackages';
 import toast from 'react-hot-toast';
 
-// Some themes reuse another theme's scripted story text (e.g. the realistic
-// space variant shares the space story).
-const TEXT_THEME: Record<string, string> = { space_real: 'space' };
-const textThemeFor = (id: string) => TEXT_THEME[id] || id;
+import { textThemeFor, storySlug } from '../data/storyPages';
 
 const storyImgs = (id: string) =>
   Array.from({ length: 13 }, (_, i) => `magic-fanoose/generated/${id}/page-${String(i + 1).padStart(2, '0')}.png`);
@@ -441,6 +438,15 @@ export default function Stories() {
                   ✨ {t('stories_page.modal_cta_theme', 'اصنع هذه القصة لطفلك')}
                 </button>
               </div>
+              {/* The story's own page: a link worth sending to someone, and
+                  the moral and opening pages the modal has no room for. */}
+              <Link
+                to={`/stories/${storySlug(textThemeFor(selected.themeId))}`}
+                onClick={() => setSelected(null)}
+                className="mt-3 inline-block font-arabic text-gold-500 text-sm font-bold hover:underline"
+              >
+                {t('story_page.details_link', 'كل تفاصيل القصة')}
+              </Link>
             </div>
           </div>
         </div>
