@@ -190,11 +190,21 @@ export function buildThemePreview(opts: {
   // (separate sheets), not text overlaid on the photo.
   const allKeys = Object.keys(pagesObj).sort((a, b) => Number(a) - Number(b));
   const readable = full ? allKeys.length : Math.max(1, Math.ceil(allKeys.length * 0.3));
+  // Most demo stories were shot only as far as the preview is readable — a
+  // cover and four pages — so everything after the lock was blurred text with
+  // no picture beside it: half the book grey padlocks, at the exact moment a
+  // parent decides whether to pay. A blurred picture says "there is a book
+  // here"; a bare padlock says there isn't. So a LOCKED page with no artwork of
+  // its own borrows one of the story's existing pictures, still blurred. Never
+  // on a readable page, where a repeat would be plain to see, and never in the
+  // full admin preview, which must show exactly what the book holds.
+  const shot = pageImages.filter(Boolean);
   const bodyPages: PreviewPage[] = [];
   allKeys.forEach((k, idx) => {
     const locked = idx >= readable;
     bodyPages.push({ type: 'text', content: personalize(pagesObj[k]), blur: locked });
-    if (pageImages[idx]) bodyPages.push({ type: 'text', image: pageImages[idx], blur: locked });
+    const image = pageImages[idx] || (locked && !full && shot.length ? shot[(idx - readable) % shot.length] : undefined);
+    if (image) bodyPages.push({ type: 'text', image, blur: locked });
   });
   return asSpreads(
     [{ type: 'cover', title: bookTitle, image: coverImage }, ...(full ? openingPages() : [])],
