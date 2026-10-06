@@ -1,5 +1,5 @@
 import { DELIVERY_FEE_ILS } from '../../config/delivery';
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePackages } from '../../hooks/usePackages';
 import { useStoryProgress } from '../../context/StoryProgressContext';
 import { useAuth } from '../../context/AuthContext';
@@ -11,6 +11,9 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { localizeName } from '../../utils/translit';
 import { placeName } from '../../data/placeNames';
+import GoogleButton from '../auth/GoogleButton';
+import { storyApi } from '../../api/storyApi';
+import { ensureStoryRecord } from '../../utils/ensureStory';
 
 // Step 3 — the customer's details and a review of what they are buying.
 // Payment is its own step (Step4_Payment), so the card is entered on a screen
@@ -218,26 +221,59 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
   };
 
   // Step 3 ends at the customer's details: validate, save the address, and hand
-  // over to the payment step. Placing the order now happens there.
-  const handleContinue = () => {
-    // This is now the wizard's ONLY account wall, and the first one a customer
-    // meets. It has to keep everything they filled in — child, photo, story,
-    // package, address — or they have done all that work for nothing. The
-    // progress lives in localStorage, and `from` brings them back to the step
-    // they were on; `reason` makes the login screen explain itself rather than
-    // appearing as a bare wall.
-    if (!isAuthenticated) {
-      toast.error(t('step5.err_login'));
-      navigate('/login', { state: { from: '/create', reason: 'create' } });
-      return;
+  // over to the payment step. Placing the order happens there.
+  //
+  // This is where an account is asked for now — after the story, the package,
+  // the price and the address, not before any of them. The address is saved
+  // FIRST, so a trip to the login page and back loses nothing; and the ask
+  // happens on this page, with "Continue with Google" as one tap, rather than
+  // by sending them away to a login screen.
+  const [needsAccount, setNeedsAccount] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const accountRef = useRef<HTMLDivElement>(null);
+
+  const proceed = async () => {
+    setSaving(true);
+    try {
+      // A story chosen while signed out is saved now that they are signed in.
+      const id = await ensureStoryRecord(progress.storyConfig, setStoryConfig, storyApi.create);
+      if (!id) {
+        toast.error(t('checkout.err_no_story', 'اختر القصة أولاً — رجعناك لخطوة القصة.'));
+        onPrev();
+        return;
+      }
+      onNext();
+    } catch (err: any) {
+      console.error('[Step3] story save failed:', err?.response?.data?.message || err?.message || err);
+      toast.error(t('step2.err_save_failed', 'تعذّر حفظ القصة — تأكد من اكتمال بيانات طفلك ثم حاول مرة أخرى.'));
+    } finally {
+      setSaving(false);
     }
+  };
+  // GoogleButton redraws whenever its callback changes, so hand it a stable one
+  // that always runs the latest `proceed`.
+  const proceedRef = useRef(proceed);
+  proceedRef.current = proceed;
+  const onGoogleDone = useCallback(() => { void proceedRef.current(); }, []);
+
+  const handleContinue = () => {
     if (!validateShipping()) {
       toast.error(t('checkout.err_shipping', 'يرجى إكمال بيانات الشحن أولاً'));
       return;
     }
     setShippingAddress(shippingForm);
-    onNext();
+    if (!isAuthenticated) {
+      setNeedsAccount(true);
+      return;
+    }
+    void proceed();
   };
+
+  // Bring the sign-in box into view when it appears — on a phone it opens
+  // below the fold, under the button they just pressed.
+  useEffect(() => {
+    if (needsAccount && !isAuthenticated) accountRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [needsAccount, isAuthenticated]);
 
   return (
     <div className="space-y-6">
@@ -623,15 +659,43 @@ export default function Step3_Checkout({ onNext, onPrev }: Props) {
           </button>
         </div>
 
+      {/* The account ask — above the buttons, never squeezed between them. */}
+      {needsAccount && !isAuthenticated && (
+        <div ref={accountRef} className="rounded-2xl border border-gold-500/40 bg-gold-500/10 p-5 text-center">
+          <h3 className="font-arabic font-black text-white text-lg mb-1">{t('checkout.account_title', 'خطوة أخيرة قبل الدفع')}</h3>
+          <p className="font-arabic text-white/70 text-sm leading-relaxed">
+            {t('checkout.account_desc', 'سجّل دخولك عشان نحفظ القصة وطلبك — كل اللي عبّيته محفوظ.')}
+          </p>
+          <GoogleButton onDone={onGoogleDone} />
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mt-1">
+            <button
+              type="button"
+              onClick={() => navigate('/login', { state: { from: '/create', reason: 'create' } })}
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-white/20 text-white/85 font-arabic font-bold text-sm hover:border-gold-500/50 hover:text-gold-500 transition-all"
+            >
+              {t('checkout.account_login', 'عندي حساب — تسجيل الدخول')}
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/register', { state: { from: '/create' } })}
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-white/20 text-white/85 font-arabic font-bold text-sm hover:border-gold-500/50 hover:text-gold-500 transition-all"
+            >
+              {t('checkout.account_register', 'حساب جديد بالإيميل')}
+            </button>
+          </div>
+        </div>
+      )}
       {/* Navigation */}
       <div className="flex gap-3">
         <MagicButton variant="outline" size="lg" onClick={onPrev} icon={<ChevronRight className="w-5 h-5 nav-icon" />}>
           {t('wizard.prev_btn')}
         </MagicButton>
-        <MagicButton fullWidth size="lg" onClick={handleContinue} disabled={!pricesReady} icon={<CreditCard className="w-5 h-5" />}>
-          {pricesReady
-            ? t('checkout.to_payment', 'التالي — الدفع')
-            : t('step3.loading_prices', 'جاري تحميل الأسعار…')}
+        <MagicButton fullWidth size="lg" onClick={handleContinue} disabled={!pricesReady || saving} icon={<CreditCard className="w-5 h-5" />}>
+          {!pricesReady
+            ? t('step3.loading_prices', 'جاري تحميل الأسعار…')
+            : saving
+              ? t('checkout.saving', 'جاري حفظ القصة…')
+              : t('checkout.to_payment', 'التالي — الدفع')}
         </MagicButton>
       </div>
     </div>

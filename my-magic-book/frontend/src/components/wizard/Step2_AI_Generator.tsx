@@ -324,15 +324,39 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
       return;
     }
 
-    // Everything past this point is persisted: POST /stories/create is
-    // `protect`ed, so a signed-out visitor got a 401 and the generic "couldn't
-    // save your story" toast — a dead end with no way out of it. This is the
-    // real earliest point an account is needed, and by now they have browsed
-    // all twenty stories, chosen one, added a photo and seen the cover, which
-    // is a far better moment to ask than the front door was.
+    // Saving the story needs an account (POST /stories/create is `protect`ed).
+    // Asking for one HERE turned people away before they had seen a single
+    // price: measured over ten days, three visitors reached this screen and
+    // none reached the next. So a signed-out visitor choosing a ready-made
+    // story is NOT stopped. We keep the exact request we would have sent and
+    // carry on to step 3; it is sent once they sign in, at the end of step 3
+    // (utils/ensureStory.ts) — after they have seen the package, the price and
+    // typed their address, with "Continue with Google" right there.
+    //
+    // An AI-written story is different: generating it already needed an
+    // account, so that path still asks here, exactly as before.
     if (!isAuthenticated) {
-      setStoryConfig({ ...form, mode, generatedText: mode === 'ai' ? generatedText : undefined });
-      navigate('/login', { state: { from: '/create', reason: 'create' } });
+      if (mode === 'ai') {
+        setStoryConfig({ ...form, mode, generatedText });
+        navigate('/login', { state: { from: '/create', reason: 'create' } });
+        return;
+      }
+      setStoryConfig({
+        ...form,
+        mode,
+        generatedText: undefined,
+        storyId: undefined,
+        pendingStory: {
+          ...progress.childDetails,
+          ...form,
+          // Same name the cover and the preview showed.
+          childName: effectiveName,
+          mode: 'template',
+          templatePages: effectiveTemplate, // raw, placeholders intact
+        },
+      });
+      setBookCustomization({ bookPackage, coverColor: progress.bookCustomization?.coverColor || '#1B1F5E' });
+      onNext();
       return;
     }
 
@@ -369,6 +393,8 @@ export default function Step2_AI_Generator({ onNext, onPrev }: Props) { // To mo
       mode,
       generatedText: mode === 'ai' ? generatedText : undefined,
       storyId: nextStoryId,
+      // A request kept from a signed-out visit is spent now that the story exists.
+      pendingStory: undefined,
     });
     // Persist the chosen format so the checkout step can price the order.
     setBookCustomization({ bookPackage, coverColor: progress.bookCustomization?.coverColor || '#1B1F5E' });

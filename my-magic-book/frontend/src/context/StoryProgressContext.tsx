@@ -24,6 +24,16 @@ export interface StoryConfig {
   mode?: StoryMode;
   /** The discount code the customer applied in step 3, carried to the order. */
   couponCode?: string;
+  /**
+   * A ready-made story chosen while signed out, waiting to be saved.
+   *
+   * Saving a story needs an account (POST /stories/create is protected), but
+   * choosing one, seeing the price and typing an address do not. So step 2
+   * keeps the exact request it would have sent, and it is sent once the
+   * customer signs in — at the end of step 3, or in step 4 as a backstop
+   * (utils/ensureStory.ts). Cleared the moment the story exists.
+   */
+  pendingStory?: Record<string, unknown>;
 }
 
 export interface BookCustomization {

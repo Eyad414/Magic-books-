@@ -2449,7 +2449,13 @@
     "trust_quality": "Premium printing",
     "desc": "Enter your delivery details and review your order, then continue to payment.",
     "err_shipping": "Please complete your shipping details first",
-    "to_payment": "Next — payment"
+    "to_payment": "Next — payment",
+    "account_title": "One last step before payment",
+    "account_desc": "Sign in so we can save the story and your order — everything you filled in is kept.",
+    "account_login": "I have an account — sign in",
+    "account_register": "New account with email",
+    "saving": "Saving your story…",
+    "err_no_story": "Choose a story first — we took you back to that step."
   },
   "cover_preview": {
     "title": "See your child on the cover",

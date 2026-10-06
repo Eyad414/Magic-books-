@@ -9,6 +9,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useCheckoutTotals } from '../../hooks/useCheckoutTotals';
 import { publicApi } from '../../api/publicApi';
+import { storyApi } from '../../api/storyApi';
+import { ensureStoryRecord } from '../../utils/ensureStory';
 
 /**
  * Step 4 — payment only.
@@ -23,7 +25,7 @@ interface Props { onPrev: () => void; }
 
 
 export default function Step4_Payment({ onPrev }: Props) {
-  const { progress, resetProgress } = useStoryProgress();
+  const { progress, resetProgress, setStoryConfig } = useStoryProgress();
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -119,8 +121,18 @@ export default function Step4_Payment({ onPrev }: Props) {
     }
     setIsProcessing(true);
     try {
+      // Backstop for a story chosen while signed out: step 3 saves it, but if
+      // anything let a customer reach this button without that, save it here
+      // rather than placing an order for no book.
+      const storyId = await ensureStoryRecord(storyConfig || {}, setStoryConfig, storyApi.create);
+      if (!storyId) {
+        toast.error(t('checkout.err_no_story', 'اختر القصة أولاً — رجعناك لخطوة القصة.'));
+        setIsProcessing(false);
+        onPrev();
+        return;
+      }
       const res = await orderApi.createCheckout({
-        storyId: storyConfig?.storyId,
+        storyId,
         shippingAddress,
         totalPrice,
         paymentMethod,
