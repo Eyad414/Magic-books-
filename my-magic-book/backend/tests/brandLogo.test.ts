@@ -191,3 +191,44 @@ describe('the story-card emblem', () => {
     }
   });
 });
+
+/**
+ * Search engines kept showing the OLD logo a day after the new one shipped.
+ * Google's favicon cache still held the illustrated v6 icon, and the site gave
+ * it little to replace it with: only 16px and 32px icons were declared, while
+ * Google Search uses a favicon whose size is a multiple of 48px; /favicon.ico
+ * did not exist, so the SPA fallback answered it with HTML; /favicon.svg was
+ * still Vite's purple lightning bolt; and the old artwork stayed reachable at
+ * /logo.png and /icon-*-v6.png. Every one of those URLs now carries the new
+ * lamp, so whichever one a crawler or an old share has cached, it gets that.
+ */
+describe('every icon URL a crawler might ask for shows the new logo', () => {
+  const pub = (f: string) => path.join(FE, 'public', f);
+  const html = () => fs.readFileSync(path.join(FE, 'index.html'), 'utf8');
+
+  it('declares a favicon Google Search can use (a multiple of 48px)', () => {
+    const sizes = [...html().matchAll(/rel="icon"[^>]*sizes="(\d+)x\1"[^>]*href="([^"]+)"/g)];
+    const usable = sizes.filter(([, n]) => Number(n) % 48 === 0);
+    expect(usable.length).toBeGreaterThan(0);
+    for (const [, , href] of usable) {
+      expect(href).toMatch(/-v7\.png$/);
+      expect(fs.existsSync(pub(href.slice(1))), href).toBe(true);
+    }
+  });
+
+  it('serves a real /favicon.ico instead of the home page HTML', () => {
+    const ico = fs.readFileSync(pub('favicon.ico'));
+    // ICO header: reserved 0, type 1, then the image count.
+    expect([ico[0], ico[1], ico[2], ico[3]]).toEqual([0, 0, 1, 0]);
+    expect(ico.readUInt16LE(4)).toBeGreaterThanOrEqual(3);
+  });
+
+  it('has no old logo left at an old address', () => {
+    const v7 = (f: string) => fs.readFileSync(pub(f));
+    for (const size of ['16', '32', '192', '512', 'touch']) {
+      expect(v7(`icon-${size}-v6.png`).equals(v7(`icon-${size}-v7.png`)), `icon-${size}-v6.png`).toBe(true);
+    }
+    expect(v7('logo.png').equals(v7('icon-512-v7.png')), 'logo.png').toBe(true);
+    expect(fs.readFileSync(pub('favicon.svg'), 'utf8')).toBe(fs.readFileSync(pub('brand/mark.svg'), 'utf8'));
+  });
+});
