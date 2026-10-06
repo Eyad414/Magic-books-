@@ -125,8 +125,14 @@ function storyRoute(s) {
       ],
     },
   ];
+  // Its own share card when one has been made (backend/scripts/make-story-share-cards.ts),
+  // so a story link in WhatsApp shows that story, not the generic logo card.
+  const card = `og/stories/${s.slug}.jpg`;
+  const image = fs.existsSync(path.join(root, 'public', card)) ? `${ORIGIN}/${card}` : '';
   return {
     path: `/stories/${s.slug}`,
+    image,
+    imageAlt: s.label,
     title: fill(sp.meta_title || '{{story}}', { story: s.label }),
     desc: fill(sp.meta_desc || '{{desc}}', { desc: s.desc || s.label }),
     jsonLd: ld,
@@ -216,6 +222,16 @@ for (const r of ROUTES) {
   html = setAttr(html, 'meta[^>]*property="og:description"', 'content', r.desc || brandDesc);
   html = setAttr(html, 'meta[^>]*name="twitter:title"', 'content', fullTitle);
   html = setAttr(html, 'meta[^>]*name="twitter:description"', 'content', r.desc || brandDesc);
+  if (r.image) {
+    html = setAttr(html, 'meta[^>]*property="og:image"', 'content', r.image);
+    html = setAttr(html, 'meta[^>]*name="twitter:image"', 'content', r.image);
+    html = setAttr(html, 'meta[^>]*property="og:image:alt"', 'content', r.imageAlt || r.title);
+  }
+  // Language alternates are per page. index.html carries the home page's, and
+  // copied unchanged they told Google that the Arabic, English and Hebrew
+  // versions of every story were the home page. ?lng= works on any route.
+  html = html.replace(/(<link rel="alternate" hreflang="(ar|x-default)" href=")[^"]*(")/g, `$1${url}$3`);
+  html = html.replace(/(<link rel="alternate" hreflang="(en|he)" href=")[^"]*(")/g, (_m, a, lang, b) => `${a}${url}?lng=${lang}${b}`);
 
   // Sits inside #root, so React's first render replaces it wholesale. Painted
   // in the site's own background so the swap is not a flash of white, and the

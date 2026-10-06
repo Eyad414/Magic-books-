@@ -104,3 +104,39 @@ describe('which child illustrates a story page', () => {
     expect(textThemeFor('space_real')).toBe('space');
   });
 });
+
+/** Width × height of a JPEG, read from its start-of-frame marker. */
+function jpegSize(buf: Buffer): [number, number] | null {
+  let i = 2;
+  while (i < buf.length) {
+    if (buf[i] !== 0xff) return null;
+    const marker = buf[i + 1];
+    const len = buf.readUInt16BE(i + 2);
+    if (marker >= 0xc0 && marker <= 0xc3) return [buf.readUInt16BE(i + 7), buf.readUInt16BE(i + 5)];
+    i += 2 + len;
+  }
+  return null;
+}
+
+describe('sharing a story link', () => {
+  it('every story has its own share card, sized for link previews and small enough for WhatsApp', () => {
+    // A story link in WhatsApp used to preview as the generic logo card for
+    // all thirty-one stories. WhatsApp drops a preview image over ~300KB.
+    for (const id of STORIES) {
+      const file = path.join(root, `frontend/public/og/stories/${storySlug(id)}.jpg`);
+      expect(fs.existsSync(file), `no share card for ${id} — run scripts/make-story-share-cards.ts`).toBe(true);
+      const buf = fs.readFileSync(file);
+      expect(buf.length, id).toBeLessThan(300 * 1024);
+      expect(jpegSize(buf), id).toEqual([1200, 630]);
+    }
+  });
+
+  it('the build points each story page at its own card and its own language versions', () => {
+    const prerender = fs.readFileSync(path.join(root, 'frontend/scripts/prerender.mjs'), 'utf8');
+    expect(prerender).toContain('og/stories/${s.slug}.jpg');
+    // index.html's hreflang names the HOME page; copied unchanged, every story
+    // told Google its other-language versions were the home page.
+    expect(prerender).toMatch(/hreflang="\(ar\|x-default\)"/);
+    expect(prerender).toMatch(/\?lng=\$\{lang\}/);
+  });
+});
