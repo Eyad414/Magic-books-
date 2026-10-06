@@ -60,7 +60,7 @@ export interface IStory extends Document {
    */
   sentByAdmin?: boolean;
   sentAt?: Date;
-  /** Shown to the customer above the book, e.g. "هدية من الفانوس السحري". */
+  /** Shown to the customer above the book, e.g. "هدية من ماجيك فانوس". */
   sentNote?: string;
   status: StoryStatus;
   // Step 3: Customization

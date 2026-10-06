@@ -33,7 +33,7 @@ export async function sendPasswordReset(data: {
   const greeting = data.name ? `مرحباً ${data.name}` : 'مرحباً';
   const text = `${greeting},
 
-وصلنا طلب لإعادة تعيين كلمة المرور لحسابك في الفانوس السحري.
+وصلنا طلب لإعادة تعيين كلمة المرور لحسابك في ماجيك فانوس.
 
 افتح هذا الرابط لاختيار كلمة مرور جديدة (صالح لمدة ساعة واحدة):
 ${data.resetUrl}
@@ -43,12 +43,12 @@ ${data.resetUrl}
   const html = `
     <div style="font-family: Arial, sans-serif; direction: rtl; text-align: right; padding: 24px; max-width: 560px; margin: 0 auto; background-color: #fafafa; border: 1px solid #eee; border-radius: 8px;">
       <h2 style="color: #6d28d9; margin-top: 0;">🔑 إعادة تعيين كلمة المرور</h2>
-      <p style="color: #333; line-height: 1.7;">${greeting}، وصلنا طلب لإعادة تعيين كلمة المرور لحسابك في <strong>الفانوس السحري</strong>.</p>
+      <p style="color: #333; line-height: 1.7;">${greeting}، وصلنا طلب لإعادة تعيين كلمة المرور لحسابك في <strong>ماجيك فانوس</strong>.</p>
       <p style="text-align: center; margin: 28px 0;">
         <a href="${data.resetUrl}" style="background-color: #6d28d9; color: #fff; text-decoration: none; padding: 12px 28px; border-radius: 6px; display: inline-block; font-weight: bold;">اختيار كلمة مرور جديدة</a>
       </p>
       <p style="color: #666; font-size: 13px;">الرابط صالح لمدة ساعة واحدة. إذا لم تطلب ذلك، تجاهل هذه الرسالة — كلمة مرورك لم تتغير.</p>
-      <p style="font-size: 11px; color: #999; margin-top: 24px; border-top: 1px solid #eee; padding-top: 10px;">الفانوس السحري · magicfanoos.com</p>
+      <p style="font-size: 11px; color: #999; margin-top: 24px; border-top: 1px solid #eee; padding-top: 10px;">ماجيك فانوس · magicfanoos.com</p>
     </div>
   `;
 
@@ -59,7 +59,7 @@ ${data.resetUrl}
       // hello@ is a sending address with no mailbox behind it — the `send` MX
       // only carries bounces. Without this, a customer who simply hits Reply
       // is writing into nothing and hears back never.
-      body: JSON.stringify({ from, to: [data.to], reply_to: replyTo, subject: 'إعادة تعيين كلمة المرور — الفانوس السحري', text, html }),
+      body: JSON.stringify({ from, to: [data.to], reply_to: replyTo, subject: 'إعادة تعيين كلمة المرور — ماجيك فانوس', text, html }),
     });
     if (!res.ok) {
       const body = await res.text().catch(() => '');
@@ -204,7 +204,7 @@ export async function sendCustomerMessageEmail(data: {
   const preview = data.preview.length > 140 ? `${data.preview.slice(0, 140)}…` : data.preview;
   const text = `${greeting},
 
-في رسالة جديدة إلك من الفانوس السحري:
+في رسالة جديدة إلك من ماجيك فانوس:
 
 "${preview}"
 
@@ -214,12 +214,12 @@ ${url}`;
   const html = `
     <div style="font-family: Arial, sans-serif; direction: rtl; text-align: right; padding: 24px; max-width: 560px; margin: 0 auto; background-color: #fafafa; border: 1px solid #eee; border-radius: 8px;">
       <h2 style="color: #6d28d9; margin-top: 0;">✉️ رسالة جديدة إلك</h2>
-      <p style="color: #333; line-height: 1.7;">${greeting}، في رسالة جديدة إلك من <strong>الفانوس السحري</strong>:</p>
+      <p style="color: #333; line-height: 1.7;">${greeting}، في رسالة جديدة إلك من <strong>ماجيك فانوس</strong>:</p>
       <blockquote style="margin: 18px 0; padding: 12px 16px; background: #fff; border-right: 4px solid #6d28d9; color: #444; line-height: 1.7;">${preview}</blockquote>
       <p style="text-align: center; margin: 28px 0;">
         <a href="${url}" style="background-color: #6d28d9; color: #fff; text-decoration: none; padding: 12px 28px; border-radius: 6px; display: inline-block; font-weight: bold;">افتح حسابك واقرأ الرسالة</a>
       </p>
-      <p style="font-size: 11px; color: #999; margin-top: 24px; border-top: 1px solid #eee; padding-top: 10px;">الفانوس السحري · magicfanoos.com</p>
+      <p style="font-size: 11px; color: #999; margin-top: 24px; border-top: 1px solid #eee; padding-top: 10px;">ماجيك فانوس · magicfanoos.com</p>
     </div>
   `;
 
@@ -228,7 +228,7 @@ ${url}`;
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       // Same reason as the reset mail: this one invites a reply by its nature.
-      body: JSON.stringify({ from, to: [data.to], reply_to: replyTo, subject: 'رسالة جديدة من الفانوس السحري', text, html }),
+      body: JSON.stringify({ from, to: [data.to], reply_to: replyTo, subject: 'رسالة جديدة من ماجيك فانوس', text, html }),
     });
     if (!res.ok) {
       const body = await res.text().catch(() => '');

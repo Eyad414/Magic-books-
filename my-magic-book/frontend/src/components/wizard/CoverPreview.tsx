@@ -124,7 +124,7 @@ export default function CoverPreview({ childName, childGender, childPhotoUrl, th
 
   const remaining = quota ? Math.max(0, quota.limit - quota.used) : null;
   const stage =
-    pct < 30 ? t('cover_preview.stage_1', '✨ نحضّر الفانوس السحري…')
+    pct < 30 ? t('cover_preview.stage_1', '✨ نُشعل الفانوس…')
     : pct < 60 ? t('cover_preview.stage_2', '🎨 نرسم ملامح طفلك…')
     : pct < 90 ? t('cover_preview.stage_3', '🌟 نضيف اللمسات الأخيرة…')
     : t('cover_preview.stage_4', '📖 غلافك جاهز تقريباً!');

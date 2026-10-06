@@ -281,7 +281,7 @@ export const createCheckout = async (req: Request, res: Response): Promise<void>
             unit_amount: Math.round(totalPrice * 100),
             product_data: {
               name: `كتاب ${story.childName} — ${story.theme}`,
-              description: 'كتاب أطفال مخصّص من الفانوس السحري',
+              description: 'كتاب أطفال مخصّص من ماجيك فانوس',
             },
           },
           quantity: 1,

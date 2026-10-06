@@ -416,7 +416,7 @@ export default function Dashboard() {
                           </Link>
                         )}
                         <p className="font-arabic text-white/35 text-[11px] mt-2">
-                          {m.fromAdmin ? t('dashboard.msg_from_shop', 'من الفانوس السحري') : t('dashboard.msg_from_you', 'أنت')}
+                          {m.fromAdmin ? t('dashboard.msg_from_shop', 'من ماجيك فانوس') : t('dashboard.msg_from_you', 'أنت')}
                           {' · '}
                           {new Date(m.createdAt).toLocaleString(i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'he' ? 'he-IL' : 'en-US')}
                         </p>

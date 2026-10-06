@@ -84,14 +84,14 @@ export async function grantIfDue(userId: string, now = new Date()): Promise<{ co
   const isRealBirthday = !!user.birthday;
   const body = isRealBirthday
     ? `كل عام وأنت بخير يا ${user.name || 'صديقنا'} 🎂🎉 هديتنا لك في عيد ميلادك: كود «${code}» — اصنع قصة كاملة مجاناً (نسخة رقمية). استخدمه عند الدفع.`
-    : `كل عام وأنت بخير 🎉 مرّت سنة على انضمامك إلى «الفانوس السحري»، وهدية هذا العام كود «${code}» — نسخة رقمية مجانية بالكامل من أي قصة. استخدمه عند الدفع.`;
+    : `كل عام وأنت بخير 🎉 مرّت سنة على انضمامك إلى «ماجيك فانوس»، وهدية هذا العام كود «${code}» — نسخة رقمية مجانية بالكامل من أي قصة. استخدمه عند الدفع.`;
   // Send first, then record what happened. Swallowing the result left the
   // owner unable to tell a gift that arrived from one that never left.
   const mail = user.email
     ? await sendCustomerMessageEmail({ to: user.email, name: user.name, preview: body }).catch((e: any) => ({ sent: false, reason: e?.message || 'error' }))
     : { sent: false, reason: 'no-email' };
   await CustomerMessage.create({
-    userId, body, fromAdmin: true, adminName: 'الفانوس السحري',
+    userId, body, fromAdmin: true, adminName: 'ماجيك فانوس',
     emailed: (mail as any).sent, emailReason: (mail as any).sent ? undefined : (mail as any).reason,
   }).catch(() => { /* the coupon is what matters */ });
 
@@ -121,7 +121,7 @@ export async function grantNow(userId: string, now = new Date()): Promise<{ code
     ? await sendCustomerMessageEmail({ to: user.email, name: user.name, preview: body }).catch((e: any) => ({ sent: false, reason: e?.message || 'error' }))
     : { sent: false, reason: 'no-email' };
   await CustomerMessage.create({
-    userId, body, fromAdmin: true, adminName: 'الفانوس السحري',
+    userId, body, fromAdmin: true, adminName: 'ماجيك فانوس',
     emailed: (mail as any).sent, emailReason: (mail as any).sent ? undefined : (mail as any).reason,
   }).catch(() => {});
   return { code, year };
