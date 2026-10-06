@@ -4,7 +4,7 @@ import HTMLFlipBook from 'react-pageflip';
 import { resolveGender, applyGenderTokens } from '../../utils/gender';
 import { localizeName } from '../../utils/translit';
 import { asSpreads } from '../../utils/bookSpreads';
-import { BrandMark, BrandWordmark, BrandLamp } from '../common/BrandLogo';
+import { BrandMark, BrandWordmark, BrandLamp, BrandEmblem } from '../common/BrandLogo';
 
 /*
  * A note on `text-paper` throughout this file.
@@ -266,8 +266,9 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
         .fbp-card { position:relative; width:100%; max-width:205px; background: radial-gradient(120% 90% at 50% 0%, #fffdf8 0%, #fdf4dd 70%, #f8ead0 100%);
           border-radius:16px; padding:22px 14px 16px; box-shadow: 0 10px 24px rgba(0,0,0,0.28), 0 0 0 1.5px rgba(255,255,255,0.6) inset; z-index:2; }
         .fbp-card::before { content:''; position:absolute; inset:7px; border:1.5px dashed rgba(201,150,40,0.55); border-radius:11px; pointer-events:none; }
-        .fbp-lantern { position:absolute; top:-14px; left:50%; transform:translateX(-50%); width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-size:15px;
-          border-radius:50%; background: radial-gradient(circle at 50% 35%, #fff6da, #f3d98f 70%, #d4a937); box-shadow: 0 0 12px rgba(212,169,55,0.85), 0 3px 8px rgba(0,0,0,0.25); border:2px solid #fff; z-index:3; }
+        .fbp-lantern { position:absolute; top:-14px; left:50%; transform:translateX(-50%); width:30px; height:30px; display:flex; align-items:center; justify-content:center;
+          border-radius:50%; overflow:hidden; background:#0F1035; box-shadow: 0 0 12px rgba(212,169,55,0.85), 0 3px 8px rgba(0,0,0,0.25); border:2px solid #fff; z-index:3; }
+        .fbp-emblem { width:100%; height:100%; display:block; }
         .fbp-corner { position:absolute; color:rgba(201,150,40,0.8); font-size:8px; z-index:3; }
         .fbp-divider { width:44px; height:2px; margin:0 auto 8px; border-radius:999px; background: linear-gradient(90deg, transparent, #d4a937, transparent); }
         .fbp-text { font-family:'Noto Kufi Arabic','Inter',sans-serif; color:#3a2c10; font-weight:700; font-size:11px; line-height:1.7; text-align:center; position:relative; z-index:1; }
@@ -559,7 +560,7 @@ export default function FlipbookPreview({ pages, text, language = 'ar' }: Props)
                   <span className="fbp-spark" style={{ top: '20%', right: '11%', animationDelay: '1.8s' }}>✦</span>
                   <span className="fbp-spark" style={{ bottom: '13%', left: '18%', animationDelay: '0.6s' }}>✦</span>
                   <div className="fbp-card">
-                    <div className="fbp-lantern">🏮</div>
+                    <div className="fbp-lantern"><BrandEmblem className="fbp-emblem" /></div>
                     <span className="fbp-corner" style={{ top: '6px', left: '8px' }}>✦</span>
                     <span className="fbp-corner" style={{ top: '6px', right: '8px' }}>✦</span>
                     <span className="fbp-corner" style={{ bottom: '6px', left: '8px' }}>✦</span>

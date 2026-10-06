@@ -41,7 +41,7 @@ async function websiteQrDataUri(): Promise<string> {
 // Each copy goes in as its own <img>, so their gradient ids can't collide.
 // Read once and cached.
 const _brand: Record<string, string> = {};
-function brandAsset(name: 'mark' | 'wordmark-on-dark' | 'lamp'): string {
+function brandAsset(name: 'mark' | 'wordmark-on-dark' | 'lamp' | 'emblem'): string {
   if (name in _brand) return _brand[name];
   try {
     const buf = fs.readFileSync(path.join(process.cwd(), 'assets', 'brand', `${name}.svg`));
@@ -61,16 +61,10 @@ function brandWord(cls: string, fallbackCls: string): string {
   return w ? `<img class="${cls}" src="${w}" alt="Magic Fanoos" />` : `<div class="${fallbackCls}">Magic Fanoos</div>`;
 }
 
-// The magic-lamp emblem shown on the story text pages (embedded, cached).
-let _lanternUri: string | null = null;
-function lanternDataUri(): string {
-  if (_lanternUri !== null) return _lanternUri;
-  try {
-    const buf = fs.readFileSync(path.join(process.cwd(), 'assets', 'lantern.png'));
-    _lanternUri = `data:image/png;base64,${buf.toString('base64')}`;
-  } catch { _lanternUri = ''; }
-  return _lanternUri;
-}
+// The round emblem at the top of every story card: the brand lamp on a
+// starry-night circle — the same drawing the on-screen book shows
+// (BrandEmblem). It replaced an old green-swirl oil lamp (assets/lantern.png).
+const emblemDataUri = () => brandAsset('emblem');
 
 // "More adventures" teasers on the back cover.
 //
@@ -443,7 +437,7 @@ const SHARED_CSS = `
   .stp-page { display: flex; align-items: center; justify-content: center; padding: 16mm; }
   .stp-card { position: relative; z-index: 1; width: 82%; background: radial-gradient(120% 90% at 50% 0%, #fffdf8 0%, #fdf4dd 70%, #f8ead0 100%); border-radius: 14mm; padding: 26mm 16mm 20mm; box-shadow: 0 8mm 18mm rgba(0,0,0,0.25); }
   .stp-card::before { content: ''; position: absolute; inset: 5mm; border: 0.8mm dashed rgba(201,150,40,0.6); border-radius: 10mm; }
-  .stp-lantern { position: absolute; z-index: 2; top: -13mm; left: 50%; transform: translateX(-50%); width: 26mm; height: 26mm; border-radius: 50%; background-size: cover; background-position: center 42%; border: 1.4mm solid #fff; box-shadow: 0 0 8mm rgba(212,169,55,0.7); }
+  .stp-lantern { position: absolute; z-index: 2; top: -13mm; left: 50%; transform: translateX(-50%); width: 26mm; height: 26mm; border-radius: 50%; background-color: #0F1035; background-size: cover; background-position: center; border: 1.4mm solid #fff; box-shadow: 0 0 8mm rgba(212,169,55,0.7); }
   .stp-lantern--emoji { background: radial-gradient(circle at 50% 35%, #fff6da, #f3d98f 70%, #d4a937); display: flex; align-items: center; justify-content: center; font-size: 26pt; }
   .stp-spark { position: absolute; z-index: 0; }
   .stp-spark svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 1.2mm rgba(255,255,255,0.55)); }
@@ -570,7 +564,7 @@ function finalStoryPageHtml(title: string, moral: string, questions: string[], c
 }
 function copyrightPageHtml(qr = ''): string {
   const mark = markDataUri();
-  const lantern = lanternDataUri();
+  const emblem = emblemDataUri();
   return `<div class="page cp2-page">
     ${mark ? `<img class="cp2-logo" src="${mark}" alt="" />` : ''}
     ${brandWord('cp2-word', 'cp2-brand')}
@@ -584,7 +578,7 @@ function copyrightPageHtml(qr = ''): string {
     </div>
     <div class="cp2-divider"></div>
     <div class="cp2-qr-row">
-      <div class="cp2-qr-text"><div class="cp2-qr-label">${lantern ? `<img src="${lantern}" style="width:7mm;height:7mm;border-radius:50%;object-fit:cover;vertical-align:-2mm;margin-left:1.5mm;" />` : '🏮'} زر موقعنا</div><div class="cp2-qr-sub">امسح الكود لزيارة MagicFanoos.com واكتشاف المزيد من القصص</div></div>
+      <div class="cp2-qr-text"><div class="cp2-qr-label">${emblem ? `<img src="${emblem}" style="width:7mm;height:7mm;border-radius:50%;object-fit:cover;vertical-align:-2mm;margin-left:1.5mm;" />` : '🏮'} زر موقعنا</div><div class="cp2-qr-sub">امسح الكود لزيارة MagicFanoos.com واكتشاف المزيد من القصص</div></div>
       ${qr ? `<div class="cp2-qr-box"><img class="cp2-qr-img" src="${qr}" alt="QR" /></div>` : ''}
     </div>
     <div class="cp2-copy">© ${new Date().getFullYear()} Magic Fanoos. جميع الحقوق محفوظة.<br/>هذه القصة مُولَّدة بواسطة الذكاء الاصطناعي وتم تخصيصها خصيصًا لطفلك.</div>
@@ -609,10 +603,10 @@ function sparklesHtml(): string {
     `<div class="stp-spark" style="top:${p.t}%;left:${p.l}%;width:${p.s}mm;height:${p.s}mm">${GEMINI_SPARK}</div>`
   ).join('');
 }
-function storyTextPageHtml(text: string, idx = 0, lantern = ''): string {
+function storyTextPageHtml(text: string, idx = 0, emblemUri = ''): string {
   const bg = PRINT_PAGE_COLORS[idx % PRINT_PAGE_COLORS.length];
-  const emblem = lantern
-    ? `<div class="stp-lantern" style="background-image:url(${lantern})"></div>`
+  const emblem = emblemUri
+    ? `<div class="stp-lantern" style="background-image:url(${emblemUri})"></div>`
     : `<div class="stp-lantern stp-lantern--emoji">🏮</div>`;
   return `<div class="page stp-page" style="background:${bg}">` +
     sparklesHtml() +
@@ -1078,7 +1072,7 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
   photoSrc = (await portraitFrom(input.childPhotoPath)) || (await portraitFrom(input.backPath));
 
   const qrSrc = await websiteQrDataUri();
-  const lanternUri = lanternDataUri();
+  const emblemUri = emblemDataUri();
   const interior: string[] = [];
   // Front matter: inside title, then the dedication (before the logo separator).
   interior.push(titlePageHtml(input.title, input.childName));
@@ -1086,7 +1080,7 @@ export async function buildStoryPrintFiles(input: StoryPrintInput): Promise<Prin
   interior.push(fanoosPageHtml());
   // Body: each story page is a decorative TEXT page + its full-bleed illustration.
   for (let i = 0; i < input.imagePaths.length; i++) {
-    interior.push(storyTextPageHtml(input.pageTexts[i] || '', i, lanternUri));
+    interior.push(storyTextPageHtml(input.pageTexts[i] || '', i, emblemUri));
     interior.push(linePageHtml(imageFiles[i]));
   }
   logMem('interior html built');
@@ -1176,4 +1170,4 @@ export async function uploadPrintFiles(idKey: string, files: PrintFiles): Promis
  * checked by rendering exactly what the printer receives, without downloading
  * artwork or building a whole book. Used by scripts/render-brand-pages.ts.
  */
-export const brandedPagesForReview = { squareDoc, titlePageHtml, fanoosPageHtml, copyrightPageHtml, wraparoundDoc };
+export const brandedPagesForReview = { squareDoc, titlePageHtml, fanoosPageHtml, copyrightPageHtml, wraparoundDoc, storyTextPageHtml, emblemDataUri };

@@ -24,6 +24,7 @@ async function main() {
     P.titlePageHtml('مُغَامَرَةُ تالا فِي حَدِيقَةِ الْحَيَوَانَاتِ', 'تالا'),
     P.fanoosPageHtml(),
     P.copyrightPageHtml(''),
+    P.storyTextPageHtml('فَتَحَتْ بيلا الْكِتَابَ، فَخَرَجَ مِنْهُ ضَوْءٌ ذَهَبِيٌّ دَافِئٌ.', 0, P.emblemDataUri()),
   ];
   const spine = 10;
   const wrap = P.wraparoundDoc({
@@ -49,7 +50,7 @@ async function main() {
     await page.setViewport({ width: 2000, height: 1000, deviceScaleFactor: 1 });
 
     await load(page, P.squareDoc(pages, true), 'interior');
-    const names = ['title', 'fanoos', 'copyright'];
+    const names = ['title', 'fanoos', 'copyright', 'story-card'];
     const els = await page.$$('.page');
     for (let i = 0; i < els.length; i++) await els[i].screenshot({ path: path.join(out, `${names[i]}.png`) });
     await page.pdf({ path: path.join(out, 'interior.pdf'), preferCSSPageSize: true, printBackground: true });

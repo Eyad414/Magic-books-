@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { BrandMark, BrandWordmark } from '../common/BrandLogo';
+import { BrandMark, BrandWordmark, BrandEmblem } from '../common/BrandLogo';
 
 export default function CopyrightPage() {
   const { t, i18n } = useTranslation();
@@ -49,7 +49,7 @@ export default function CopyrightPage() {
       {/* QR code to website */}
       <div className="cp-qr-row">
         <div className="cp-qr-text">
-          <p className="cp-qr-label">{t('storybook.visit_website', '🏮 زر موقعنا')}</p>
+          <p className="cp-qr-label"><BrandEmblem className="cp-qr-emblem" />{t('storybook.visit_website', 'زر موقعنا')}</p>
           <p className="cp-qr-sub">{t('storybook.scan_website', 'امسح الكود لزيارة MagicFanoos.com واكتشاف المزيد من القصص')}</p>
         </div>
         <div className="cp-qr-box" aria-label={t('storybook.qr_website_aria', 'QR code لموقع MagicFanoos.com')}>
@@ -178,6 +178,7 @@ export default function CopyrightPage() {
           max-width: 360px;
         }
         .cp-qr-text { flex: 1; text-align: right; }
+        .cp-qr-emblem { width: 1.4em; height: 1.4em; vertical-align: -0.35em; margin-inline-end: 0.35em; display: inline-block; }
         .cp-qr-label {
           font-size: 0.9rem;
           font-weight: 800;

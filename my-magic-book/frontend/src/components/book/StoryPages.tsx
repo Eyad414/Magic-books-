@@ -4,6 +4,8 @@
 
 
 // ── Text page ─────────────────────────────────────────────────────────────────
+import { BrandEmblem } from '../common/BrandLogo';
+
 interface StoryTextPageProps {
   pageNumber: number;
   text: string;        // already has child's name baked in
@@ -58,7 +60,7 @@ export function StoryTextPage({ pageNumber, text, childName, rtl = true }: Story
       {/* ── Magic-lantern story card ── */}
       <div className="stp-card" aria-label={childName}>
         {/* Glowing lantern emblem hugging the top edge */}
-        <div className="stp-lantern" aria-hidden="true">🏮</div>
+        <div className="stp-lantern" aria-hidden="true"><BrandEmblem className="stp-emblem" /></div>
 
         {/* Decorative corner flourishes */}
         <span className="stp-corner stp-corner--tl" aria-hidden="true">✦</span>
@@ -136,7 +138,8 @@ export function StoryTextPage({ pageNumber, text, childName, rtl = true }: Story
           filter: blur(8px);
         }
 
-        /* Lantern emblem */
+        /* Lantern emblem — the round brand emblem, same drawing as print */
+        .stp-emblem { width: 100%; height: 100%; display: block; }
         .stp-lantern {
           position: absolute;
           top: -26px;
@@ -147,9 +150,9 @@ export function StoryTextPage({ pageNumber, text, childName, rtl = true }: Story
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 1.7rem;
           border-radius: 50%;
-          background: radial-gradient(circle at 50% 35%, #fff6da, #f3d98f 70%, #d4a937);
+          overflow: hidden;
+          background: #0F1035;
           box-shadow: 0 0 18px rgba(212,169,55,0.85), 0 6px 14px rgba(0,0,0,0.25);
           border: 2px solid #fff;
           z-index: 3;

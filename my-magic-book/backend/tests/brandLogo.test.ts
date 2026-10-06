@@ -157,3 +157,37 @@ describe('the printed book carries the same logo', () => {
     expect(read('src/components/book/CopyrightPage.tsx')).toContain('hello@magicfanoos.com');
   });
 });
+
+/**
+ * The round emblem on every story card. Print showed an old green-swirl oil
+ * lamp there and the screen showed a 🏮 emoji — neither matched the other, and
+ * neither matched the brand. Both now draw the same emblem: the brand lamp on
+ * a starry-night circle.
+ */
+describe('the story-card emblem', () => {
+  it('is the same drawing in print and on screen', () => {
+    expect(readBE('assets/brand/emblem.svg')).toBe(read('public/brand/emblem.svg'));
+  });
+
+  it('is what the printed story cards use, not the old lamp', () => {
+    const ps = readBE('src/services/PrintService.ts');
+    expect(ps).toContain("brandAsset('emblem')");
+    expect(ps, 'the print pipeline loads the old lantern.png again').not.toMatch(/readFileSync\([^)]*lantern\.png/);
+  });
+
+  it('is what the on-screen story cards use, not an emoji', () => {
+    for (const file of ['src/components/book/StoryPages.tsx', 'src/components/wizard/FlipbookPreview.tsx']) {
+      const src = read(file);
+      expect(src, file).toContain('<BrandEmblem');
+      expect(src, `${file} puts the 🏮 back on the story card`).not.toMatch(/lantern"[^>]*>🏮</);
+    }
+  });
+
+  it('stands in front of "visit our website" instead of the emoji in the text', () => {
+    expect(read('src/components/book/CopyrightPage.tsx')).toContain('<BrandEmblem className="cp-qr-emblem"');
+    for (const lang of ['ar', 'en', 'he']) {
+      const t = JSON.parse(read(`src/locales/${lang}/translation.json`));
+      expect(t.storybook.visit_website, lang).not.toContain('🏮');
+    }
+  });
+});

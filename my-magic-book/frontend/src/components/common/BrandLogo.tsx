@@ -137,6 +137,82 @@ export function BrandLamp({ className = 'h-10 w-10' }: { className?: string }) {
   );
 }
 
+/** [x, y, radius, opacity] — the round emblem's night sky. */
+const EMBLEM_STARS: [number, number, number, number][] = [
+  [74.7, 89.0, 1.1, 0.75],
+  [78.2, 63.6, 0.8, 0.3],
+  [77.9, 108.1, 0.6, 0.5],
+  [56.3, 29.6, 1.1, 0.3],
+  [68.9, 1.6, 0.6, 0.5],
+  [33.5, 110.0, 0.8, 0.3],
+  [91.4, 8.6, 1.1, 0.75],
+  [53.4, 15.9, 0.6, 0.3],
+  [92.8, 115.2, 0.6, 0.3],
+  [34.7, 115.4, 1.1, 0.75],
+  [75.1, 21.8, 1.1, 0.3],
+  [116.0, 107.2, 0.8, 0.3],
+  [43.3, 19.9, 0.6, 0.5],
+  [7.8, 36.2, 1.1, 0.75],
+  [0.4, 81.4, 0.8, 0.3],
+  [37.2, 98.2, 0.8, 0.75],
+  [37.9, 57.7, 1.1, 0.3],
+  [6.8, 117.0, 0.6, 0.75],
+  [42.9, 48.5, 1.1, 0.5],
+  [43.9, 69.4, 0.6, 0.5],
+  [5.6, 21.7, 0.6, 0.3],
+  [90.7, 111.6, 0.8, 0.5],
+  [61.5, 107.1, 0.8, 0.5],
+  [13.0, 89.8, 0.8, 0.5],
+  [4.4, 113.5, 0.6, 0.3],
+  [40.9, 73.3, 0.6, 0.5],
+];
+const EMBLEM_SPARKS = ['M24.00 29.50L25.95 34.05L30.50 36.00L25.95 37.95L24.00 42.50L22.05 37.95L17.50 36.00L22.05 34.05Z', 'M35.00 20.40L36.08 22.92L38.60 24.00L36.08 25.08L35.00 27.60L33.92 25.08L31.40 24.00L33.92 22.92Z', 'M22.00 22.40L22.78 24.22L24.60 25.00L22.78 25.78L22.00 27.60L21.22 25.78L19.40 25.00L21.22 24.22Z'];
+
+/**
+ * The round emblem: the lamp on a starry-night circle. It sits at the top of
+ * every story card — in the customer's book, in the preview and in print
+ * (backend/assets/brand/emblem.svg is the same drawing) — where an old
+ * green-swirl oil lamp, and on screen a 🏮 emoji, used to be. It draws its own
+ * circle, so it needs no clipping from its container.
+ */
+export function BrandEmblem({ className = 'h-10 w-10' }: { className?: string }) {
+  const u = useUid();
+  return (
+    <svg viewBox="0 0 120 120" className={className} aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id={`${u}n`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#0F1035" />
+          <stop offset="1" stopColor="#5B21B6" />
+        </linearGradient>
+        <linearGradient id={`${u}g`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#FDE68A" />
+          <stop offset="1" stopColor="#F59E0B" />
+        </linearGradient>
+        <radialGradient id={`${u}l`} cx="50%" cy="50%" r="50%">
+          <stop offset="0" stopColor="#FDE68A" stopOpacity=".55" />
+          <stop offset="1" stopColor="#FDE68A" stopOpacity="0" />
+        </radialGradient>
+        <clipPath id={`${u}c`}>
+          <circle cx="60" cy="60" r="60" />
+        </clipPath>
+      </defs>
+      <g clipPath={`url(#${u}c)`}>
+        <rect width="120" height="120" fill={`url(#${u}n)`} />
+        {EMBLEM_STARS.map(([x, y, r, o], i) => <circle key={i} cx={x} cy={y} r={r} fill="#FFFFFF" opacity={o} />)}
+        <circle cx="60" cy="62" r="46" fill={`url(#${u}l)`} />
+        <g transform="translate(10.49 23.75) scale(0.85)" fill={`url(#${u}g)`}>
+          {LAMP.map((d) => <path key={d} d={d} />)}
+          <circle cx="63" cy="22.5" r="4.5" />
+          <rect x="57" y="59" width="12" height="7" />
+          <rect x="49" y="65" width="28" height="7" rx="3.5" />
+          <path d="M95 33 A12 12 0 1 1 95 54" fill="none" stroke={`url(#${u}g)`} strokeWidth="7" strokeLinecap="round" />
+        </g>
+        {EMBLEM_SPARKS.map((d) => <path key={d} d={d} fill="#FDE68A" />)}
+      </g>
+    </svg>
+  );
+}
+
 /**
  * Mark + wordmark. Always laid out left-to-right — it is a Latin name — even on
  * the Arabic and Hebrew pages, where the surrounding layout runs right-to-left.
