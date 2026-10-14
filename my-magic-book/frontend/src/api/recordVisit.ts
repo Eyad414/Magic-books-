@@ -13,6 +13,9 @@ export function recordVisit(
   path: string,
   extra: { userId?: string; lang?: string; device?: 'mobile' | 'desktop' } = {}
 ): void {
+  // Automated browsers announce themselves; they are not visitors. The server
+  // also screens crawlers by user agent (backend/src/utils/isBot.ts).
+  if (typeof navigator !== 'undefined' && navigator.webdriver) return;
   let visitorId: string | null = null;
   try {
     visitorId = localStorage.getItem('mmb_visitor');

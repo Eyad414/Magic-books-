@@ -1448,7 +1448,8 @@
     "child_photo_open": "לחצו כדי לפתוח את התמונה בגודל מלא",
     "live_count_capped": "{{live}} מתוך {{total}}",
     "live_not_shown": "לא מוצג בעמוד",
-    "live_home_capped": "עמוד הבית מציג רק {{n}} — המעומעמים לא מופיעים. סדרו אותם עם התגיות."
+    "live_home_capped": "עמוד הבית מציג רק {{n}} — המעומעמים לא מופיעים. סדרו אותם עם התגיות.",
+    "visits_owner_excluded": "ללא הביקורים שלך ({{n}})"
   },
   "title_page": {
     "presents": "מוגש ל",

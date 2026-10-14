@@ -896,7 +896,7 @@ export default function AdminDashboard() {
     const bothDates = visitFrom && visitTo;
     setVisits(null);
     adminApi.getVisits(visitDays, bothDates ? visitFrom : undefined, bothDates ? visitTo : undefined)
-      .then((r) => { if (r.success) { setVisits(r.visits); setVisitWeek(r.week || []); setBehaviour(r.behaviour || null); } })
+      .then((r) => { if (r.success) { setVisits(r.visits); setVisitWeek(r.week || []); setBehaviour(r.behaviour || null); setOwnerExcluded(r.ownerExcluded || 0); } })
       .catch(() => setVisits([]));
   }, [tab, visitDays, visitFrom, visitTo]);
 
@@ -938,7 +938,7 @@ export default function AdminDashboard() {
   const loadCustomers = async () => {
     try {
       adminApi.getVisits(1)
-        .then((r) => { if (r.success) { setVisits(r.visits); setVisitWeek(r.week || []); setBehaviour(r.behaviour || null); } })
+        .then((r) => { if (r.success) { setVisits(r.visits); setVisitWeek(r.week || []); setBehaviour(r.behaviour || null); setOwnerExcluded(r.ownerExcluded || 0); } })
         .catch(() => { /* the list is extra */ });
       const res = await adminApi.getCustomers();
       if (res.success) setCustomers(res);
@@ -1730,6 +1730,8 @@ export default function AdminDashboard() {
   const [visitWeek, setVisitWeek] = useState<any[] | null>(null);
   /** What visitors looked at and where they stopped, not just how many came. */
   const [behaviour, setBehaviour] = useState<any | null>(null);
+  /** Visits from the owner's own browsers, left out of every number in the tab. */
+  const [ownerExcluded, setOwnerExcluded] = useState(0);
   // Sending a demo book is a real, paid print run, so it is deliberate: pick a
   // book, fill in who it ships to, confirm.
   const [sendBook, setSendBook] = useState<{ id: string; label?: string } | null>(null);
@@ -2914,6 +2916,14 @@ export default function AdminDashboard() {
                       <div className="mt-5 pt-4 border-t border-white/10">
                         <p className="font-arabic text-white/70 text-[11px] font-bold mb-2">
                           👣 {t('admin.visits_week', 'آخر ٧ أيام')}
+                          {/* Without this the owner's own browsing — searching
+                              for the shop, checking a page — was most of the
+                              traffic the tab reported. */}
+                          {ownerExcluded > 0 && (
+                            <span className="font-normal text-white/45">
+                              {' · '}{t('admin.visits_owner_excluded', 'بدون زياراتك أنت ({{n}})', { n: ownerExcluded })}
+                            </span>
+                          )}
                         </p>
 
                         {/* Where people stop. Counted once per VISITOR per

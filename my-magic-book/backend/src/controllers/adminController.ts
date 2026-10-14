@@ -27,6 +27,7 @@ import { submitPrintJob, isBookPodConfigured, fetchOurJobStatuses, payOrderWithC
 import { trimStoredImage, measureWhiteFrame } from '../services/TrimBorders';
 import { resolveBirthdayCoupon, grantNow } from '../services/BirthdayCoupon';
 import { optionalUserId } from '../utils/authMiddleware';
+import { isBotUserAgent } from '../utils/isBot';
 import { getFileBuffer } from '../services/StorageService';
 
 // The kid photo (already in the bucket) used as the reference face for ADMIN
@@ -2213,6 +2214,12 @@ function hostOf(referrer: string): string {
  */
 export const trackVisit = async (req: Request, res: Response): Promise<void> => {
   try {
+    // Crawlers run the page's JavaScript too. Answer as if counted, so a
+    // crawler sees nothing different, and keep it out of the numbers.
+    if (isBotUserAgent(req.get('user-agent'))) {
+      res.json({ success: true });
+      return;
+    }
     const visitorId = String(req.body?.visitorId || '').slice(0, 64).trim();
     if (!visitorId) {
       res.status(400).json({ success: false });
@@ -2270,7 +2277,19 @@ export const listVisits = async (req: Request, res: Response): Promise<void> => 
       : new Date(Date.now() - (days - 1) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     const to = isDay(req.query.to) ? String(req.query.to) : null;
     const range: any = to ? { $gte: from, $lte: to } : { $gte: from };
-    const rows = await Visit.find({ day: range })
+
+    // The owner's own browsing, out of the owner's numbers. Any browser that
+    // has ever been signed in to an admin account is the owner's device, on
+    // every day — including the days they browsed signed out, which is how
+    // 42 of 55 "visits from Google" since August turned out to be the owner
+    // searching for their own shop. They are left out of everything below and
+    // counted, so the dashboard can say how many it left out.
+    const adminIds = (await User.find({ role: 'admin' }).select('_id').lean()).map((u: any) => u._id);
+    const ownerIds: string[] = adminIds.length ? await Visit.distinct('visitorId', { userId: { $in: adminIds } }) : [];
+    const notOwner = { visitorId: { $nin: ownerIds } };
+    const ownerExcluded = ownerIds.length ? await Visit.countDocuments({ day: range, visitorId: { $in: ownerIds } }) : 0;
+
+    const rows = await Visit.find({ day: range, ...notOwner })
       .sort({ updatedAt: -1 })
       .limit(200)
       .populate('userId', 'name email')
@@ -2280,7 +2299,7 @@ export const listVisits = async (req: Request, res: Response): Promise<void> => 
     // without reading every row.
     const weekFrom = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     const week = await Visit.aggregate([
-      { $match: { day: { $gte: weekFrom } } },
+      { $match: { day: { $gte: weekFrom }, ...notOwner } },
       { $group: { _id: '$day', visitors: { $sum: 1 }, views: { $sum: '$views' } } },
       { $sort: { _id: 1 } },
     ]);
@@ -2288,7 +2307,7 @@ export const listVisits = async (req: Request, res: Response): Promise<void> => 
     // What the visitors in this window actually did. Answering "how many came"
     // was never the hard part — "what did they look at, and where did they
     // stop" is, and it is the difference between a number and a decision.
-    const inWindow = await Visit.find({ day: range }).select('paths views day').lean();
+    const inWindow = await Visit.find({ day: range, ...notOwner }).select('paths views day').lean();
     const pageCount: Record<string, number> = {};
     let multiPage = 0;
     let totalViews = 0;
@@ -2318,6 +2337,7 @@ export const listVisits = async (req: Request, res: Response): Promise<void> => 
 
     res.json({
       success: true,
+      ownerExcluded,
       week: week.map((d: any) => ({ day: d._id, visitors: d.visitors, views: d.views })),
       behaviour: {
         visitors: inWindow.length,

@@ -1448,7 +1448,8 @@
     "child_photo_open": "Click to open the photo full size",
     "live_count_capped": "{{live}} of {{total}}",
     "live_not_shown": "not shown on the page",
-    "live_home_capped": "The home page shows only {{n}} — the faded ones never appear. Reorder them with the badges."
+    "live_home_capped": "The home page shows only {{n}} — the faded ones never appear. Reorder them with the badges.",
+    "visits_owner_excluded": "excluding your own visits ({{n}})"
   },
   "title_page": {
     "presents": "Presented to",

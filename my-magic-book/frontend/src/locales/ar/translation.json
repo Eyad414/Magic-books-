@@ -1448,7 +1448,8 @@
     "child_photo_open": "اضغط لفتح الصورة بالحجم الكامل",
     "live_count_capped": "{{live}} من {{total}}",
     "live_not_shown": "لا يظهر على الصفحة",
-    "live_home_capped": "الصفحة الرئيسية تعرض {{n}} فقط — الباهتة لا تظهر. رتّبها بالوسوم."
+    "live_home_capped": "الصفحة الرئيسية تعرض {{n}} فقط — الباهتة لا تظهر. رتّبها بالوسوم.",
+    "visits_owner_excluded": "بدون زياراتك أنت ({{n}})"
   },
   "title_page": {
     "presents": "يُقدّم لـ",
