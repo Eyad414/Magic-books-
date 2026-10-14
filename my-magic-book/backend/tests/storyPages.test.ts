@@ -140,3 +140,15 @@ describe('sharing a story link', () => {
     expect(prerender).toMatch(/\?lng=\$\{lang\}/);
   });
 });
+
+describe('the home page\'s main picture', () => {
+  it('is named in the HTML so it starts loading with the page, and is the deck\'s real first cover', () => {
+    const prerender = fs.readFileSync(path.join(root, 'frontend/scripts/prerender.mjs'), 'utf8');
+    const deck = fs.readFileSync(path.join(root, 'frontend/src/components/home/HeroBookDeck.tsx'), 'utf8');
+    const preload = prerender.match(/preloadImage:\s*'([^']+)'/)?.[1];
+    const first = deck.match(/const FIRST_SRC = '([^']+)'/)?.[1];
+    expect(preload).toBeDefined();
+    expect(preload).toBe(first);
+    expect(fs.existsSync(path.join(root, 'frontend/public', preload!))).toBe(true);
+  });
+});

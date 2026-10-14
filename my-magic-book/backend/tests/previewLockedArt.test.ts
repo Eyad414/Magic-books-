@@ -76,3 +76,31 @@ describe('locked preview pages', () => {
     expect(pictures(build([]))).toHaveLength(0);
   });
 });
+
+/**
+ * …and every picture in the teaser is asked for at the size it is shown.
+ * Opening one story page on a phone used to pull 21.5MB of full-size PNGs
+ * and still be loading 110 seconds later on mobile data.
+ */
+describe('preview picture sizes', () => {
+  const proxy = (n: number) =>
+    `https://api.test/api/uploads/image?path=${encodeURIComponent(`magic-fanoose/generated/theme_demo/page-${String(n).padStart(2, '0')}.png`)}`;
+  const shot4 = [proxy(1), proxy(2), proxy(3), proxy(4)];
+
+  it('asks for 960px on the cover and readable pages, 320px on blurred ones', () => {
+    const pages = buildThemePreview({
+      theme: 'demo', language: 'en', childName: 'Tala', coverImage: proxy(0), pageImages: shot4, i18n: fakeI18n,
+    });
+    expect(pages.find((p) => p.type === 'cover')?.image).toBe(`${proxy(0)}&w=960`);
+    for (const p of pictures(pages)) {
+      expect(p.image).toMatch(p.blur ? /&w=320$/ : /&w=960$/);
+    }
+  });
+
+  it('leaves the full admin preview at full size, where artwork is checked', () => {
+    const pages = buildThemePreview({
+      theme: 'demo', language: 'en', childName: 'Tala', coverImage: proxy(0), pageImages: shot4, i18n: fakeI18n, full: true,
+    });
+    for (const p of [pages.find((x) => x.type === 'cover')!, ...pictures(pages)]) expect(p.image).not.toContain('&w=');
+  });
+});

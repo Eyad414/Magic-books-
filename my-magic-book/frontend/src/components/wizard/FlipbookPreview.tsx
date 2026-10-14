@@ -4,6 +4,7 @@ import HTMLFlipBook from 'react-pageflip';
 import { resolveGender, applyGenderTokens } from '../../utils/gender';
 import { localizeName } from '../../utils/translit';
 import { asSpreads } from '../../utils/bookSpreads';
+import { withWidth } from '../../api/mediaUrl';
 import { BrandMark, BrandWordmark, BrandLamp, BrandEmblem } from '../common/BrandLogo';
 
 /*
@@ -74,7 +75,21 @@ export function buildThemePreview(opts: {
   /** Admin full preview: show the WHOLE book readable, no blur, no lock page. */
   full?: boolean;
 }): PreviewPage[] {
-  const { theme, language, childName = '', childGender, coverImage, pageImages = [], portraitImage, i18n, full = false } = opts;
+  const { theme, language, childName = '', childGender, portraitImage, i18n, full = false } = opts;
+  /**
+   * The teaser asks for pictures the size it shows them.
+   *
+   * Every page was the full generation-size PNG, ~1.6MB each, so opening one
+   * story page on a phone pulled 21.5MB and was still loading 110 seconds in
+   * on mobile data — for a book drawn about 340px wide, nine of its pages
+   * blurred. Readable pages and the cover come as 960px WebP (sharp on a
+   * phone's screen); blurred ones as 320px, which the blur hides anyway. The
+   * full admin preview keeps the originals: that is where artwork is checked.
+   * withWidth leaves anything that is not an image-proxy URL untouched.
+   */
+  const sized = (url: string | undefined, w: 320 | 960) => (url && !full ? withWidth(url, w) : url);
+  const coverImage = sized(opts.coverImage, 960);
+  const pageImages = (opts.pageImages || []).map((u) => u || '');
   const name = localizeName(
     childName || (language === 'ar' ? 'طفلك' : language === 'he' ? 'הילד' : 'your child'),
     language,
@@ -167,7 +182,7 @@ export function buildThemePreview(opts: {
     if (pageImages.length) {
       const readable = full ? pageImages.length : Math.max(1, Math.ceil(pageImages.length * 0.3));
       const imgPages: PreviewPage[] = pageImages.map((img, idx): PreviewPage => ({
-        type: 'text', image: img, content: '', blur: idx >= readable,
+        type: 'text', image: sized(img, idx >= readable ? 320 : 960), content: '', blur: idx >= readable,
       }));
       return asSpreads(
         [{ type: 'cover', title: fallbackTitle, image: coverImage }, ...(full ? openingPages() : [])],
@@ -204,7 +219,7 @@ export function buildThemePreview(opts: {
     const locked = idx >= readable;
     bodyPages.push({ type: 'text', content: personalize(pagesObj[k]), blur: locked });
     const image = pageImages[idx] || (locked && !full && shot.length ? shot[(idx - readable) % shot.length] : undefined);
-    if (image) bodyPages.push({ type: 'text', image, blur: locked });
+    if (image) bodyPages.push({ type: 'text', image: sized(image, locked ? 320 : 960), blur: locked });
   });
   return asSpreads(
     [{ type: 'cover', title: bookTitle, image: coverImage }, ...(full ? openingPages() : [])],

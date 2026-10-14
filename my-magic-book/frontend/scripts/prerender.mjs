@@ -158,6 +158,11 @@ const NAV = [
 const ROUTES = [
   {
     path: '/',
+    // The home page's largest picture is the hero deck's first cover, and the
+    // browser only learned of it after the app's JavaScript ran: 3.8s to the
+    // main picture on mobile. Naming it in the HTML starts it with the page.
+    // Must match FIRST_SRC in src/components/home/HeroBookDeck.tsx.
+    preloadImage: '/showcase/hero-book.webp',
     title: t.meta?.home_title || SUFFIX,
     desc: brandDesc,
     body: `<h1>${esc(SUFFIX)} — قصص مخصّصة لطفلك</h1><p>${esc(brandDesc)}</p>
@@ -244,6 +249,9 @@ for (const r of ROUTES) {
     `<nav>${NAV.filter(([p]) => p !== r.path).map(([p, l]) => `<a href="${p}" style="color:#f0c45a;margin-left:14px">${esc(l)}</a>`).join('')}</nav>` +
     `</div>`;
   html = html.replace(/(<div id="root">)(\s*)(<\/div>)/i, `$1${seo}$3`);
+  if (r.preloadImage) {
+    html = html.replace('</head>', `<link rel="preload" as="image" type="image/webp" href="${r.preloadImage}" fetchpriority="high"></head>`);
+  }
   if (r.jsonLd) {
     // `<` escaped so no string in a story can close the script tag.
     const ld = r.jsonLd.map((o) => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, '\\u003c')}</script>`).join('');
