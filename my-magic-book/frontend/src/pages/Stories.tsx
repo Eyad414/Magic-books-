@@ -111,38 +111,14 @@ export default function Stories() {
   };
 
   /**
-   * Boys / girls filter.
+   * Every public story, for every child.
    *
-   * A customer told the owner "every story on your site is for boys". They were
-   * very nearly right — the demo generator was hardcoded male, so 24 of 25
-   * showcase books were boys. That is fixed and the girl books exist now, but a
-   * parent scrolling a grid of twenty-five covers still has no way to ask the
-   * question that customer asked. So they can ask it here.
-   *
-   * Gender comes from the card's name via detectGender, the same helper the book
-   * text uses to conjugate Arabic, so the filter agrees with the pages.
+   * There was a girls / boys filter here, keyed on the demo child's name.
+   * The owner removed it: every story is written for a boy and a girl alike —
+   * the text conjugates for either, and the customer's own child is the hero —
+   * so sorting books by the demo child's sex told parents something untrue.
    */
-  const [audience, setAudience] = useState<'all' | 'girls' | 'boys'>('all');
-
-  const publicCards = useMemo(() => CARDS.filter(isVisible), [vis]);
-  const counts = useMemo(() => {
-    let girls = 0;
-    for (const c of publicCards) if (detectGender(c.name) === 'female') girls++;
-    return { all: publicCards.length, girls, boys: publicCards.length - girls };
-  }, [publicCards]);
-  const shownCards = useMemo(
-    () =>
-      audience === 'all'
-        ? publicCards
-        : publicCards.filter((c) => (detectGender(c.name) === 'female') === (audience === 'girls')),
-    [publicCards, audience],
-  );
-
-  const AUDIENCES: { id: 'all' | 'girls' | 'boys'; label: string; emoji: string }[] = [
-    { id: 'all', label: t('stories_page.filter_all', 'كل القصص'), emoji: '✨' },
-    { id: 'girls', label: t('stories_page.filter_girls', 'للبنات'), emoji: '🎀' },
-    { id: 'boys', label: t('stories_page.filter_boys', 'للأولاد'), emoji: '🚀' },
-  ];
+  const shownCards = useMemo(() => CARDS.filter(isVisible), [vis]);
 
   /** Owner-set badge from the dashboard — a real flag, not an invented score. */
   const TAG_LABEL: Record<string, string> = {
@@ -195,7 +171,7 @@ export default function Stories() {
     <div className="min-h-screen pt-24 pb-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-10">
           <h1 className="font-arabic font-black text-white mb-4">
             {t('stories_page.title')} <span className="shimmer-text">{t('stories_page.title_shimmer')}</span>
           </h1>
@@ -228,35 +204,6 @@ export default function Stories() {
               {t('stories_page.price_preview', 'المعاينة مجانية')}
             </span>
           </div>
-        </div>
-
-        {/* Audience filter — the question a real customer asked out loud. */}
-        <div className={`flex-wrap items-center justify-center gap-2 mb-10 ${counts.girls > 0 && counts.boys > 0 ? 'flex' : 'hidden'}`}>
-          {/* A filter that leads to an empty grid is worse than no filter: it
-              advertises the gap instead of hiding it. Chips appear only once
-              they have something to show, so «للبنات» surfaces by itself the
-              moment the girl books get showcase cards. */}
-          {AUDIENCES.filter((a) => a.id === 'all' || counts[a.id] > 0).map((a) => {
-            const on = audience === a.id;
-            return (
-              <button
-                key={a.id}
-                onClick={() => setAudience(a.id)}
-                aria-pressed={on}
-                className={`inline-flex items-center gap-2 min-h-[44px] px-4 rounded-2xl font-arabic font-bold text-sm border transition-all duration-300 ${
-                  on
-                    ? 'bg-magic-gradient text-dark-900 border-transparent shadow-lg shadow-gold-500/20 scale-[1.03]'
-                    : 'bg-white/5 text-white/65 border-white/10 hover:border-gold-500/30 hover:text-white'
-                }`}
-              >
-                <span aria-hidden>{a.emoji}</span>
-                {a.label}
-                <span className={`text-[11px] font-black ${on ? 'text-dark-900/60' : 'text-white/35'}`} dir="ltr">
-                  {counts[a.id]}
-                </span>
-              </button>
-            );
-          })}
         </div>
 
         {/* Stories grid.
@@ -381,12 +328,6 @@ export default function Stories() {
             );
           })}
         </div>
-
-        {shownCards.length === 0 && (
-          <p className="font-arabic text-white/45 text-center py-14">
-            {t('stories_page.filter_empty', 'ما في قصص بهذا التصنيف بعد — جرب «كل القصص».')}
-          </p>
-        )}
 
         {/* Bottom CTA */}
         <div className="text-center mt-14 glass-card p-10">

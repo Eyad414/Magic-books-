@@ -177,3 +177,14 @@ describe('draft stories stay off the public site', () => {
     for (const id of DRAFT_STORIES) expect(ar.stories[id]?.title, id).toBeTruthy();
   });
 });
+
+describe('the stories page', () => {
+  it('shows every story to every child — no girls/boys filter', () => {
+    // The owner removed it on 2026-10-17: every story is written for a boy and a
+    // girl alike, so sorting books by the demo child's sex told parents
+    // something untrue.
+    const page = fs.readFileSync(path.join(root, 'frontend/src/pages/Stories.tsx'), 'utf8');
+    expect(page).not.toMatch(/filter_girls|filter_boys|للبنات|للأولاد/);
+    expect(page).toContain('const shownCards = useMemo(() => CARDS.filter(isVisible), [vis]);');
+  });
+});
