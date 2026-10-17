@@ -101,6 +101,12 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   { key: 'mariam-space', themeId: 'space_real', name: 'Mariam',  emoji: '🌌' },
   { key: 'tala-zoo', themeId: 'zoo_adventure', name: 'Tala',  emoji: '🦁' },
   { key: 'salma-magicbook', themeId: 'magic_book', name: 'Salma',  storyId: 'theme_magic_book', emoji: '📖' },
+  // Three stories written in October 2026 for the youngest readers — half of all
+  // real orders were for ages 1–3. Near the top so they are seen; synthetic demo
+  // children, so no permission question.
+  { key: 'tala-goodnight', themeId: 'good_night', name: 'Tala', emoji: '🌙' },
+  { key: 'omar-firsttooth', themeId: 'first_tooth', name: 'Omar', emoji: '🦷' },
+  { key: 'karim-winter', themeId: 'winter_rain', name: 'Karim', emoji: '🌧️' },
   // Lora's own zoo book — her real photograph, and the one card here still
   // pointing at a storyId rather than a theme, so it was NOT re-shot with the
   // others. It was gated by her name alone; the flag is what survives a

@@ -12,7 +12,5 @@
  * plain list of string literals.
  */
 export const DRAFT_STORIES: readonly string[] = [
-  'good_night',
-  'first_tooth',
-  'winter_rain',
+  // none right now — good_night, first_tooth and winter_rain were published 2026-10-17
 ];

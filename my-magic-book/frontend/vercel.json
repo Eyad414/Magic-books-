@@ -37,6 +37,9 @@
     { "source": "/stories/palestinian-thobe", "destination": "/stories/palestinian-thobe/index.html" },
     { "source": "/stories/maamoul-day", "destination": "/stories/maamoul-day/index.html" },
     { "source": "/stories/my-birthday", "destination": "/stories/my-birthday/index.html" },
+    { "source": "/stories/good-night", "destination": "/stories/good-night/index.html" },
+    { "source": "/stories/first-tooth", "destination": "/stories/first-tooth/index.html" },
+    { "source": "/stories/winter-rain", "destination": "/stories/winter-rain/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
