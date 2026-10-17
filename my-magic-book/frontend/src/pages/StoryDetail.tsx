@@ -13,7 +13,7 @@ import { localizeName } from '../utils/translit';
 import { detectGender, applyGenderTokens } from '../utils/gender';
 import { type DemoVisibility } from '../data/showcaseCards';
 import {
-  storySlug, storyIdFromSlug, cardForStory, wizardThemeFor, themeCoverPath,
+  storySlug, storyIdFromSlug, cardForStory, wizardThemeFor, themeCoverPath, isDraftStory,
 } from '../data/storyPages';
 
 /** How many opening pages of the story the page quotes — enough to read, not the book. */
@@ -55,7 +55,7 @@ export default function StoryDetail() {
 
   const ft = useMemo(() => i18n.getFixedT(i18n.language), [i18n.language]);
   const rawTitle = ft(`stories.${storyId}.title`, '') as string;
-  const exists = !!rawTitle;
+  const exists = !!rawTitle && !isDraftStory(storyId);
 
   const card = exists ? cardForStory(storyId, vis) : undefined;
   const wizardTheme = wizardThemeFor(storyId, vis);

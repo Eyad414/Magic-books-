@@ -1,4 +1,8 @@
 import { SHOWCASE_CARDS, demoOnStoriesPage, type DemoVisibility, type ShowcaseCard } from './showcaseCards';
+import { DRAFT_STORIES } from './draftStories';
+
+/** Written but not yet approved — no public page, no sitemap entry. */
+export const isDraftStory = (storyId: string) => DRAFT_STORIES.includes(storyId);
 
 /**
  * One public page per story, at /stories/<slug>.

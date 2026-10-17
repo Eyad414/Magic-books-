@@ -71,10 +71,15 @@ function publicArt() {
 }
 const ART = publicArt();
 
+/** Drafts (src/data/draftStories.ts) get no page, no sitemap entry and no rewrite until approved. */
+const DRAFTS = new Set(
+  [...fs.readFileSync(path.join(root, 'src/data/draftStories.ts'), 'utf8').matchAll(/^\s*'([a-z0-9_]+)',?\s*$/gm)].map((m) => m[1]),
+);
+
 /** The scripted stories, labelled the way the wizard labels them. */
 function storyList() {
   return Object.entries(t.stories || {})
-    .filter(([, v]) => v && typeof v === 'object' && v.title)
+    .filter(([id, v]) => v && typeof v === 'object' && v.title && !DRAFTS.has(id))
     .map(([id, v]) => ({
       id,
       // Same rule as storySlug() in src/data/storyPages.ts: the id, hyphenated.

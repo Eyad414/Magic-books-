@@ -546,7 +546,13 @@
     "theme_maamoul_day": "Maamoul Day",
     "theme_maamoul_day_desc": "Two days before the feast: semolina, dates, and a wooden mould far older than you",
     "theme_my_birthday": "My Birthday",
-    "theme_my_birthday_desc": "Balloons, a candle and a wish — and a day that teaches whose day it really is"
+    "theme_my_birthday_desc": "Balloons, a candle and a wish — and a day that teaches whose day it really is",
+    "theme_good_night": "Bedtime Story",
+    "theme_good_night_desc": "A ride on the moon's boat to say goodnight to everyone they love",
+    "theme_first_tooth": "Ya Shams Ya Shammoosa",
+    "theme_first_tooth_desc": "A first wobbly tooth, Teita's song for the sun — and a goodbye without fear",
+    "theme_winter_rain": "A Rainy Winter Day",
+    "theme_winter_rain_desc": "The first rain, a big puddle, and sahlab and chestnuts by the stove"
   },
   "step3": {
     "title": "Customize Your Book",
@@ -2412,6 +2418,87 @@
         "10": "When the cake was cut, [NAME] gave the first slice to the smallest child at the party, instead of taking it first.",
         "11": "The presents were opened, but the loveliest thing of all was the picture a friend had drawn by hand.",
         "12": "That night [NAME] fell asleep smiling, having learned that a birthday is not the presents — it is the people you love, around you."
+      }
+    },
+    "good_night": {
+      "title": "Goodnight, [NAME]",
+      "tagline": "A little trip on the moon's boat before bed",
+      "moral": "Before we sleep, we remember everyone we love — and the heart sleeps peacefully.",
+      "conclusion": "Sleep well, [NAME]! Tomorrow the sun will be waiting for you. 🌙✨",
+      "questions": [
+        "Who did [NAME] say goodnight to?",
+        "What did the sheep say in Grandfather's field?",
+        "Who would you like to say goodnight to tonight?"
+      ],
+      "dedication": "To [NAME], the sweetest sleeper under this moon — sleep well and sweet dreams.",
+      "pages": {
+        "1": "The sun went down behind the hills, and the moon rose, big and round. \"Time for bed, [NAME],\" said Mum.",
+        "2": "[NAME] put on the starry pyjamas and brushed until every tooth shone like a pearl.",
+        "3": "[NAME] snuggled into bed with a little teddy bear and whispered to the moon: \"I won't sleep until I've said goodnight to everyone I love!\"",
+        "4": "The moon smiled and lowered a little silver boat to the window. Hero! Will you climb aboard the moon's boat?",
+        "5": "[NAME] climbed into the boat, teddy and all, and it floated gently over the rooftops and their little lights.",
+        "6": "In the tree there was a tiny nest. \"Goodnight, little birds!\" The birds tucked their heads under their wings.",
+        "7": "In Grandfather's field the sheep were sleepy. \"Goodnight, sheep!\" Baaa… baaa… Hero! Can you see the LITTLE LAMB that isn't asleep yet?",
+        "8": "The boat stopped by the old olive tree. \"Goodnight, olive tree!\" Its leaves whispered: shhh… sleep softly.",
+        "9": "Over the sea the moonlight sparkled. \"Goodnight, little fish!\" The fish blew tiny bubbles: blub… blub… blub…",
+        "10": "A warm light glowed in Teita's window. \"Goodnight, Teita!\" Teita waved and blew [NAME] a kiss.",
+        "11": "The boat rose up to the stars. \"Goodnight, stars!\" The stars twinkled, and [NAME] gave a great big yawn: haaaah…",
+        "12": "The boat drifted softly back to the window. Mum and Dad came in, and [NAME] said: \"Goodnight, Dad! Goodnight, Mum!\"",
+        "13": "The moon whispered: \"And goodnight to you, [NAME].\" [NAME] closed both eyes and fell asleep, heart full of everyone [NAME] loves."
+      }
+    },
+    "first_tooth": {
+      "title": "[NAME]'s First Tooth",
+      "tagline": "Ya shams ya shammoosa — take the donkey's tooth and give me the gazelle's",
+      "moral": "We don't need to fear change: every tooth that goes makes room for a stronger one.",
+      "conclusion": "Well done, [NAME]! You grew a whole tooth bigger today! ☀️🦷",
+      "questions": [
+        "What did [NAME] sing to the sun?",
+        "How did [NAME]'s first tooth come out?",
+        "Have you lost your first tooth yet? What did you do with it?"
+      ],
+      "dedication": "To [NAME], owner of the sweetest smile — even with a little window in it!",
+      "pages": {
+        "1": "At breakfast, [NAME] bit into a piece of za'atar bread… and suddenly: \"Mum! My tooth is wobbling!\"",
+        "2": "Mum looked and smiled: \"That's your first tooth saying goodbye. A big, strong tooth will grow in its place.\"",
+        "3": "All day long, [NAME] wiggled the tooth with the tip of the tongue: right… left… right… laughing, and a little bit scared at the same time.",
+        "4": "Grandfather said: \"I know two ways to help a tooth come out: a crunchy apple, or a little patience.\" Hero! Which one do you choose?",
+        "5": "[NAME] chose the apple. Crunch! And — tick… the tiny tooth dropped into [NAME]'s palm, white as a grain of rice.",
+        "6": "[NAME] ran to the mirror and laughed: \"There's a little window in my mouth!\"",
+        "7": "Teita said: \"We don't throw the first tooth just anywhere… we give it to the sun!\" Hero! Can you see the SUN hiding behind the cloud?",
+        "8": "At noon, [NAME] climbed up to the roof with Teita, and the sun came out from behind the cloud as if it had been waiting.",
+        "9": "[NAME] held the tooth up high and sang with Teita: \"Ya shams, ya shammoosa — take the donkey's tooth and give me the gazelle's!\"",
+        "10": "Then [NAME] threw the tooth towards the sun with all their might… it sparkled in the light for a moment — and vanished!",
+        "11": "That evening [NAME] asked: \"Will the sun really give me a gazelle's tooth?\" Dad laughed: \"Yes — if you brush your teeth every night.\"",
+        "12": "A few days later, a tiny white tip peeked out of the little window! [NAME] jumped for joy: \"The gazelle's tooth is here!\"",
+        "13": "And ever since that day, [NAME] brushes every night, knowing that growing up comes… one tooth at a time."
+      }
+    },
+    "winter_rain": {
+      "title": "[NAME]'s Rainy Winter Day",
+      "tagline": "The first rain, a big puddle, and a warm home",
+      "moral": "Winter is cold outside, but warm when the family is together.",
+      "conclusion": "What a winter's day, [NAME]! You jumped in the rain and got warm with love. 🌧️☕",
+      "questions": [
+        "What sound woke [NAME] up?",
+        "What did Teita put on top of the stove?",
+        "What's your favourite thing about winter?"
+      ],
+      "dedication": "To [NAME], who loves the sound of the rain — this warmth is for you.",
+      "pages": {
+        "1": "[NAME] woke up to a new sound on the window: tap… tap… tap… It was the first rain of winter!",
+        "2": "[NAME] opened the window and took a deep breath. The smell of wet earth filled the room — the best smell in the world.",
+        "3": "Dad brought out the red raincoat and the rubber boots: \"Come on, [NAME], the rain is waiting for you!\"",
+        "4": "In the yard there were two puddles: a small one, and a very, very big one! Hero! Which puddle will you jump into first?",
+        "5": "[NAME] jumped into the big puddle: SPLASH! Water flew everywhere, and Dad laughed so hard he got soaked too.",
+        "6": "Snails had come out on the old stone wall, creeping slowly along. [NAME] counted them quietly: one… two… three!",
+        "7": "The rain stopped for a moment, and the sun peeked out between the clouds. Hero! Can you see the RAINBOW over the hill?",
+        "8": "[NAME] came home soaked from head to toe and sat down by the warm stove.",
+        "9": "Teita put sweet potatoes and chestnuts on top of the stove, and the whole house filled with a warm, delicious smell.",
+        "10": "Mum brought a cup of hot sahlab sprinkled with cinnamon. [NAME] blew on it — fooooh… — and took the first sip, slowly.",
+        "11": "Under the big blanket, Grandfather told of a great snow long ago, when the whole village turned white.",
+        "12": "With one finger, [NAME] drew a little snowman on the misty window and said: \"Maybe the snow will come tomorrow!\"",
+        "13": "At night the rain sang a soft song on the roof, and [NAME] fell asleep, warm and cosy… because winter is cold outside, but warm when we're together."
       }
     }
   },

@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { DRAFT_STORIES } from '../../frontend/src/data/draftStories';
 import fs from 'fs';
 import path from 'path';
 
@@ -62,7 +63,9 @@ function privateNames(): string[] {
  * the owner has never published; they get a card when they are ready. Anything
  * else missing is the little_vet mistake happening again.
  */
-const NO_CARD_ON_PURPOSE = new Set(['alphabet_ar', 'alphabet_abc']);
+// Drafts get their card on the day they are approved; until then a card would
+// put an unapproved story on /stories.
+const NO_CARD_ON_PURPOSE = new Set(['alphabet_ar', 'alphabet_abc', ...DRAFT_STORIES]);
 
 describe('a real child is never published by accident', () => {
   it('finds cards to check', () => {

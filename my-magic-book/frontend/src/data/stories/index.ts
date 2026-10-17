@@ -56,6 +56,9 @@ import { oliveHarvest } from './story28_oliveharvest';
 import { palestinianThobe } from './story29_thobe';
 import { maamoulDay } from './story30_maamoul';
 import { myBirthday } from './story31_birthday';
+import { goodNight } from './story32_goodnight';
+import { firstTooth } from './story33_firsttooth';
+import { winterRain } from './story34_winterrain';
 
 /** All 20 stories sorted by display order */
 export const STORIES: StoryDefinition[] = [
@@ -107,6 +110,9 @@ export const STORIES: StoryDefinition[] = [
   palestinianThobe,
   maamoulDay,
   myBirthday,
+  goodNight,
+  firstTooth,
+  winterRain,
 ].sort((a, b) => a.order - b.order);
 
 /** Helper: look up a story by its id.

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import {
-  storySlug, storyIdFromSlug, cardForStory, wizardThemeFor, textThemeFor,
+  storySlug, storyIdFromSlug, cardForStory, wizardThemeFor, textThemeFor, isDraftStory,
 } from '../../frontend/src/data/storyPages';
 import { SHOWCASE_CARDS, isPrivateCard } from '../../frontend/src/data/showcaseCards';
 
@@ -20,7 +20,8 @@ import { SHOWCASE_CARDS, isPrivateCard } from '../../frontend/src/data/showcaseC
 
 const root = path.resolve(__dirname, '../..');
 const ar = JSON.parse(fs.readFileSync(path.join(root, 'frontend/src/locales/ar/translation.json'), 'utf8'));
-const STORIES = Object.keys(ar.stories).filter((id) => ar.stories[id]?.title);
+import { DRAFT_STORIES } from '../../frontend/src/data/draftStories';
+const STORIES = Object.keys(ar.stories).filter((id) => ar.stories[id]?.title && !DRAFT_STORIES.includes(id));
 
 describe('story page URLs', () => {
   it('round-trips every story id through its slug', () => {
@@ -150,5 +151,29 @@ describe('the home page\'s main picture', () => {
     expect(preload).toBeDefined();
     expect(preload).toBe(first);
     expect(fs.existsSync(path.join(root, 'frontend/public', preload!))).toBe(true);
+  });
+});
+
+describe('draft stories stay off the public site', () => {
+  const prerender = fs.readFileSync(path.join(root, 'frontend/scripts/prerender.mjs'), 'utf8');
+  const src = fs.readFileSync(path.join(root, 'frontend/src/data/draftStories.ts'), 'utf8');
+
+  it('the build reads the same draft list the app does', () => {
+    // prerender.mjs parses draftStories.ts as text, one quoted id per line.
+    const parsed = [...src.matchAll(/^\s*'([a-z0-9_]+)',?\s*$/gm)].map((m) => m[1]);
+    expect(parsed).toEqual([...DRAFT_STORIES]);
+    expect(prerender).toContain('!DRAFTS.has(id)');
+  });
+
+  it('a draft has no story page, rewrite or sitemap entry', () => {
+    const vercel = fs.readFileSync(path.join(root, 'frontend/vercel.json'), 'utf8');
+    for (const id of DRAFT_STORIES) {
+      expect(vercel, id).not.toContain(`/stories/${storySlug(id)}"`);
+      expect(isDraftStory(id), id).toBe(true);
+    }
+  });
+
+  it('every draft is a real, fully written story', () => {
+    for (const id of DRAFT_STORIES) expect(ar.stories[id]?.title, id).toBeTruthy();
   });
 });
