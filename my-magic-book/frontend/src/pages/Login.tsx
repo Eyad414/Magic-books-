@@ -19,6 +19,10 @@ export default function Login() {
   // RequireAuth stores where the visitor was headed (e.g. /create), so send
   // them back there after login instead of dumping them on the dashboard.
   const from = (location.state as any)?.from as string | undefined;
+  // With nowhere in particular to return to, a login lands on «ابدأ قصة»
+  // rather than the account page — the owner's call (2026-10-19): someone who
+  // signs in has come to make a book, and the account is one tap away.
+  const afterLogin = from || '/create';
   // Someone sent here from the wizard is not "back" — they were part-way
   // through making a book, and a page that greets them with «مرحباً بعودتك»
   // reads as if they are in the wrong place and their work is gone.
@@ -30,7 +34,7 @@ export default function Login() {
     try {
       await login(form.email, form.password);
       toast.success(t('auth.login_success'));
-      navigate(from || '/dashboard');
+      navigate(afterLogin);
     } catch (err: any) {
       toast.error(err?.response?.data?.message || t('auth.login_error'));
     } finally {
@@ -124,7 +128,7 @@ export default function Login() {
 
           {/* One tap instead of a password. Renders nothing until a Google
               client id is configured, so it never appears half-working. */}
-          <GoogleButton onDone={() => navigate(from || '/dashboard')} />
+          <GoogleButton onDone={() => navigate(afterLogin)} />
 
           <p className="font-arabic text-white/40 text-sm text-center mt-6">
             {t('auth.no_account')}

@@ -5,7 +5,7 @@ import path from 'path';
 /**
  * Sending someone to sign in must not lose where they were.
  *
- * Login already honours a `from` location — `navigate(from || '/dashboard')` —
+ * Login already honours a `from` location — `navigate(from || '/create')` since 2026-10-19 —
  * and step 3 of the wizard passes it, with a comment explaining that `reason`
  * lets the login screen explain itself. Step 4 did not. So a customer who
  * reached the payment screen, with the address filled in and the book chosen,
@@ -44,6 +44,15 @@ describe('redirects to login keep the customer’s place', () => {
   it('Login still reads the return path it is given', () => {
     const login = fs.readFileSync(path.join(FRONTEND, 'pages/Login.tsx'), 'utf8');
     expect(login).toMatch(/location\.state as any\)\?\.from/);
-    expect(login, 'the redirect must actually use it').toMatch(/navigate\(from \|\| /);
+    expect(login, 'the redirect must actually use it').toMatch(/const afterLogin = from \|\| /);
+  });
+
+  it('with nowhere to return to, a login lands on «ابدأ قصة», not the account page', () => {
+    // The owner's call (2026-10-19): someone who signs in has come to make a
+    // book. Both the email form and "Continue with Google" follow it.
+    const login = fs.readFileSync(path.join(FRONTEND, 'pages/Login.tsx'), 'utf8');
+    expect(login).toContain("const afterLogin = from || '/create';");
+    expect(login.match(/navigate\(afterLogin\)/g)?.length).toBe(2);
+    expect(login).not.toContain("'/dashboard'");
   });
 });
