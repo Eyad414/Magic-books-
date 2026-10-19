@@ -95,8 +95,8 @@ export default function HeroSection() {
             {/* Stats */}
             <div className="flex items-center justify-center lg:justify-end gap-8 mt-10">
               {[
-                { value: stats.storiesCreated, label: t('hero.stats_stories_created') },
-                { value: stats.happyFamilies, label: t('hero.stats_happy_families') },
+                { value: stats.pictures, label: t('hero.stats_pictures') },
+                { value: stats.illustratedBooks, label: t('hero.stats_illustrated_books') },
                 { value: stats.readyStories, label: t('hero.stats_ready_stories') },
                 { value: stats.languages, label: t('hero.stats_rating') },
               ].map((stat) => (

@@ -90,10 +90,13 @@ export interface ITheme {
 
 /** Editable "trust" counters shown on the home hero (admin-controlled). */
 export interface IHomeStats {
+  /** Unused since 2026-10-19 (the hero shows pictures + illustrated books); kept so old documents still load. */
   storiesCreated: string;
   happyFamilies: string;
   readyStories: string;
   rating: string;
+  pictures?: string;
+  illustratedBooks?: string;
 }
 
 /**
@@ -252,6 +255,8 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
       happyFamilies: { type: String, default: '' },
       readyStories: { type: String, default: '' },
       rating: { type: String, default: '' },
+      pictures: { type: String, default: '' },
+      illustratedBooks: { type: String, default: '' },
     },
     transferPayment: {
       enabled: { type: Boolean, default: false },

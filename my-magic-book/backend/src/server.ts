@@ -8,6 +8,7 @@ import cors from 'cors';
 import { connectDB } from './config/db';
 import { startPaymentPolling } from './services/PaymentPoller';
 import { maybeResetAdmin } from './utils/resetAdmin';
+import { warmArtCount } from './controllers/adminController';
 
 // Routes
 import authRoutes from './routes/authRoutes';
@@ -33,6 +34,7 @@ connectDB().then(() => {
   // BookPod has no webhook, so we ask it who paid. Starts only after the DB is
   // up — the poller reads Orders on its first tick.
   startPaymentPolling();
+  warmArtCount();
 });
 
 // Middleware

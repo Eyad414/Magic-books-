@@ -15,6 +15,10 @@ import { publicApi } from '../api/publicApi';
  * number is not.
  */
 export interface SiteStats {
+  /** Illustrations in books, rounded DOWN for display (1,595 shows as "+1,500"). */
+  pictures: string;
+  /** Books that have artwork, rounded down the same way. */
+  illustratedBooks: string;
   /** Stories created, whatever their state. */
   storiesCreated: string;
   /** Distinct children who have starred in one. */
@@ -25,7 +29,23 @@ export interface SiteStats {
   languages: string;
 }
 
+/**
+ * A large count, shown the way shops show it — but only ever rounded DOWN, so
+ * "+1,500" can never claim more than was done. Small counts stay exact, and a
+ * figure the owner typed in the dashboard (a string) is shown exactly as typed.
+ */
+export function displayCount(v: number | string | null | undefined): string {
+  if (v == null || v === '') return '—';
+  if (typeof v === 'string') return v;
+  if (!Number.isFinite(v) || v < 0) return '—';
+  const step = v >= 1000 ? 100 : v >= 100 ? 50 : 1;
+  const shown = Math.floor(v / step) * step;
+  return (shown < v ? '+' : '') + shown.toLocaleString('en-US');
+}
+
 const PLACEHOLDER: SiteStats = {
+  pictures: '—',
+  illustratedBooks: '—',
   storiesCreated: '—',
   happyFamilies: '—',
   readyStories: '—',
@@ -40,8 +60,10 @@ export function useSiteStats(): SiteStats {
     publicApi.getStats()
       .then((res) => {
         if (!alive || !res?.stats) return;
-        const { books, children, ready, languages } = res.stats;
+        const { books, children, ready, languages, pictures, illustrated } = res.stats;
         setStats({
+          pictures: displayCount(pictures),
+          illustratedBooks: displayCount(illustrated),
           storiesCreated: books == null ? '—' : String(books),
           happyFamilies: children == null ? '—' : String(children),
           readyStories: ready == null ? '—' : String(ready),

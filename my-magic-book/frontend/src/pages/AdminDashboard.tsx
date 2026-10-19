@@ -3894,8 +3894,8 @@ export default function AdminDashboard() {
                     </p>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {[
-                        { key: 'storiesCreated', label: t('hero.stats_stories_created'), real: liveStats?.books },
-                        { key: 'happyFamilies', label: t('hero.stats_happy_families'), real: liveStats?.children },
+                        { key: 'pictures', label: t('hero.stats_pictures'), real: liveStats?.pictures },
+                        { key: 'illustratedBooks', label: t('hero.stats_illustrated_books'), real: liveStats?.illustrated },
                         { key: 'readyStories', label: t('hero.stats_ready_stories'), real: liveStats?.ready },
                         { key: 'rating', label: t('hero.stats_rating'), real: liveStats?.languages },
                       ].map((s) => {

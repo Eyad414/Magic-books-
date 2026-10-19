@@ -758,11 +758,51 @@ const SCHOOL = (part: number) => ({ series: 'school', seriesName: 'سلسلة ا
  * distinct accounts with a settled order, so one buyer with three books is one
  * family. Ready stories is what a customer can actually pick today.
  */
+/**
+ * Pictures drawn and books illustrated, counted from the bucket itself.
+ *
+ * The owner wanted bigger numbers on the home page. «45 قصة مُنشأة» and «14
+ * طفلاً» were true and small; inventing larger ones was not an option, so the
+ * hero now counts things that ARE large: every illustration in a book (1,595 on
+ * 2026-10-19) and every book that has artwork (108). Both include the demo
+ * books and the owner's own, which is fine — those pictures were drawn and
+ * those books were illustrated.
+ *
+ * Listing the bucket takes a second or two, so the result is kept for six
+ * hours and refreshed in the background; the home page never waits on it
+ * after the first request.
+ */
+const ART_COUNT_TTL_MS = 6 * 60 * 60 * 1000;
+let artCount: { at: number; pictures: number; books: number } | null = null;
+let artCountPending: Promise<void> | null = null;
+async function refreshArtCount(): Promise<void> {
+  const objects = await listObjects('magic-fanoose/generated/');
+  // Pages and covers only (page-NN.png). Card thumbnails (@480.webp) and the
+  // one-off proof pictures for unpublished drafts are not book pictures.
+  const pictures = objects.map((o) => o.path).filter((p) => /\/page-\d+\.png$/.test(p) && !p.includes('/proof_'));
+  artCount = { at: Date.now(), pictures: pictures.length, books: new Set(pictures.map((p) => p.split('/')[2])).size };
+}
+/** Counted once at boot so the first visitor's hero never waits on the bucket listing. */
+export function warmArtCount(): void {
+  void getArtCount().catch(() => {});
+}
+async function getArtCount(): Promise<{ pictures: number; books: number } | null> {
+  const stale = !artCount || Date.now() - artCount.at > ART_COUNT_TTL_MS;
+  if (stale && !artCountPending) {
+    artCountPending = refreshArtCount()
+      .catch((e) => console.warn('[stats] art count failed:', e?.message || e))
+      .finally(() => { artCountPending = null; });
+  }
+  if (!artCount && artCountPending) await artCountPending;
+  return artCount;
+}
+
 export const getLiveStats = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const [stories, settings] = await Promise.all([
+    const [stories, settings, art] = await Promise.all([
       Story.find({}).select('childName').lean(),
       SiteSettings.findOne().lean(),
+      getArtCount().catch(() => null),
     ]);
 
     // Counted as broadly as is still TRUE. "Stories created" is every story a
@@ -803,8 +843,10 @@ export const getLiveStats = async (_req: Request, res: Response): Promise<void> 
         children: pick('happyFamilies', children),
         ready: pick('readyStories', ready),
         languages: pick('rating', languages),
+        pictures: art ? pick('pictures', art.pictures) : null,
+        illustrated: art ? pick('illustratedBooks', art.books) : null,
       },
-      counted: { books, children, ready, languages },
+      counted: { books, children, ready, languages, pictures: art?.pictures ?? null, illustrated: art?.books ?? null },
     });
   } catch (err: any) {
     // The page has its own fallback; a failed count must never blank the hero.

@@ -219,8 +219,8 @@ export default function AboutUs() {
       <section className="px-4 sm:px-6 lg:px-8 mb-20">
         <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-5">
           {[
-            { value: stats.storiesCreated, label: t('hero.stats_stories_created'), emoji: '📖' },
-            { value: stats.happyFamilies, label: t('hero.stats_happy_families'), emoji: '👨‍👩‍👧‍👦' },
+            { value: stats.pictures, label: t('hero.stats_pictures'), emoji: '🎨' },
+            { value: stats.illustratedBooks, label: t('hero.stats_illustrated_books'), emoji: '📖' },
             { value: stats.readyStories, label: t('about.stats_themes'), emoji: '🌟' },
             { value: stats.languages, label: t('about.stats_languages'), emoji: '🌍' },
           ].map((stat) => (
