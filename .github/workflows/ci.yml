@@ -29,10 +29,14 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: my-magic-book/backend/package-lock.json
+          cache-dependency-path: |
+            my-magic-book/backend/package-lock.json
+            my-magic-book/frontend/package-lock.json
       # `npm run build` also downloads Chrome for Puppeteer, which CI does not
       # need — typecheck covers the same compile step in a fraction of the time.
       - run: npm ci
+      # Some backend tests import frontend modules, which need react.
+      - run: npm ci --prefix ../frontend
       - run: npm run typecheck
       - run: npm test
 
