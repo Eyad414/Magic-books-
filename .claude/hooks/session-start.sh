@@ -10,9 +10,9 @@ fi
 mkdir -p "$HOME/.reel-editor"
 cp "$CLAUDE_PROJECT_DIR/.reel-editor/config.json" "$HOME/.reel-editor/config.json"
 
-# Python packages the skill needs
+# Python packages the skill needs (av 19 dropped an argument faster-whisper 1.2 passes)
 python3 -m pip install -q --disable-pip-version-check \
-  pillow numpy arabic-reshaper python-bidi faster-whisper onnxruntime fonttools
+  pillow numpy arabic-reshaper python-bidi faster-whisper onnxruntime fonttools "av<17"
 
 # ffmpeg and an Arabic font for captions
 need=()
